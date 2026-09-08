@@ -1,0 +1,54 @@
+No es un archivo XLSX real, pero dejé la estructura base para que lo conviertas en Excel y vayas completando tareas.
+
+Si querés, abrí este archivo en Excel/Sheets y usá estas columnas:
+
+- ID
+- Estado
+- Prioridad
+- Título
+- Descripción
+- Motivo / objetivo
+- Criterio de aceptación
+- Dificultad
+- Responsable
+- Fecha de inicio
+- Fecha límite
+- Notas
+- Ideas / mejoras futuras
+
+Tareas sugeridas:
+
+1. Preparar el proyecto para web real en Vercel
+2. Confirmar Supabase real con auth por email
+3. Verificar RLS y persistencia por usuario
+4. Quitar bloqueos de auth local para trabajar sin Google
+5. Probar flujo de login con email magic link
+6. Hacer deploy en Vercel de la app web
+7. PWA / íconos / manifest
+8. Revisar UX base de la app
+9. Mejorar registro de comida por IA
+10. Validar cálculos diarios y métricas
+11. Crear pantalla de “hoy” para registro rápido
+12. Verificar pasos y entreno
+13. Añadir configuración de objetivo y ajustes
+14. Mejorar comparativas semanales
+15. Definir métricas para clientes / gimnasio
+16. Armar MVP para app Android via Capacitor
+17. Diseñar iconos y splash para APK
+18. Pruebas en dispositivo real
+19. Versionado y release notes
+20. Ideas futuras: recetas, historial, export, coach dashboard
+
+Ideas generales para la app:
+
+- Dashboard de progreso por mes
+- Ranking por densidad proteica
+- Reportes por semana
+- Guardado de recetas favoritas
+- Notificaciones de entrenamiento / comida
+- Modo “coach” para ver clientes
+- Exportación CSV / PDF
+- Integración con sensores o Apple Health
+- Filtros por objetivo / déficit
+- View de “mañana” y “hoy”
+

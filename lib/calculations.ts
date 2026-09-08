@@ -1,0 +1,165 @@
+import { DayEntry, MealKey, MEAL_LABELS } from "./types";
+
+/** Total kcal consumidas en el día (suma de las 4 comidas). */
+export function dayTotal(d: DayEntry): number {
+  return (d.desK || 0) + (d.almK || 0) + (d.merK || 0) + (d.cenK || 0);
+}
+
+/** Total de proteína (g) consumida en el día. */
+export function dayProt(d: DayEntry): number {
+  return (d.desP || 0) + (d.almP || 0) + (d.merP || 0) + (d.cenP || 0);
+}
+
+/**
+ * Estima el gasto calórico diario (TDEE) en base a pasos + si hubo entrenamiento.
+ * Si el día no tiene pasos cargados, cae al valor de referencia de settings.
+ *
+ * IMPORTANTE (ver spec de producto, sección 2.3): estos umbrales son una
+ * aproximación conversacional para un caso puntual. En una versión real,
+ * reemplazar por una fórmula calibrada por usuario (Mifflin-St Jeor + factor
+ * de actividad), usando peso/altura/edad/sexo reales.
+ */
+export function estimateGasto(d: DayEntry, tdeeFallback: number): number {
+  if (!d.pasos || d.pasos <= 0) return tdeeFallback;
+  if (!d.entreno) {
+    if (d.pasos < 6000) return 2800;
+    if (d.pasos < 12000) return 3100;
+    return 3300;
+  }
+  return d.pasos >= 12000 ? 3600 : 3400;
+}
+
+/** Déficit (positivo) o superávit (negativo) de un día dado. */
+export function dayDeficit(d: DayEntry, tdeeFallback: number): number {
+  return estimateGasto(d, tdeeFallback) - dayTotal(d);
+}
+
+export interface WeekSummary {
+  avgKcal: number;
+  avgProt: number;
+  avgSteps: number;
+  avgGasto: number;
+  trainedDays: number;
+  totalDays: number;
+  deficitAcumulado: number;
+}
+
+export function summarizeWeek(days: DayEntry[], tdeeFallback: number): WeekSummary {
+  const present = days.filter((d) => dayTotal(d) > 0);
+  const n = present.length || 1;
+  const avgKcal = Math.round(present.reduce((a, d) => a + dayTotal(d), 0) / n);
+  const avgProt = Math.round(present.reduce((a, d) => a + dayProt(d), 0) / n);
+  const avgSteps = Math.round(present.reduce((a, d) => a + (d.pasos || 0), 0) / n);
+  const gastos = present.map((d) => estimateGasto(d, tdeeFallback));
+  const avgGasto = Math.round(gastos.reduce((a, b) => a + b, 0) / (gastos.length || 1));
+  const trainedDays = present.filter((d) => d.entreno).length;
+  const deficitAcumulado = present.reduce((a, d) => a + dayDeficit(d, tdeeFallback), 0);
+  return { avgKcal, avgProt, avgSteps, avgGasto, trainedDays, totalDays: present.length, deficitAcumulado };
+}
+
+/** Gramos de proteína cada 100 kcal — métrica de "eficiencia" usada en el ranking. */
+export function proteinDensity(kcal: number, protein: number): number | null {
+  if (kcal <= 0) return null;
+  return (protein * 100) / kcal;
+}
+
+export interface RankedDay {
+  day: DayEntry;
+  total: number;
+  protein: number;
+  density: number;
+  bestMeal: { label: string; density: number } | null;
+  worstMeal: { label: string; density: number | null } | null;
+}
+
+/** Rankea días por densidad de proteína (g proteína / 100 kcal), de mejor a peor. */
+export function rankDays(days: DayEntry[]): RankedDay[] {
+  const mealKeys: MealKey[] = ["des", "alm", "mer", "cen"];
+  const complete = days.filter((d) => dayTotal(d) > 0);
+
+  const scored: RankedDay[] = complete.map((d) => {
+    const total = dayTotal(d);
+    const protein = dayProt(d);
+    const density = proteinDensity(total, protein) ?? 0;
+
+    const meals = mealKeys
+      .map((k) => {
+        const kcal = (d[`${k}K`] as number) || 0;
+        const prot = (d[`${k}P`] as number) || 0;
+        return { label: MEAL_LABELS[k].toLowerCase(), kcal, density: proteinDensity(kcal, prot) };
+      })
+      .filter((m) => m.kcal > 0)
+      .sort((a, b) => (b.density ?? -1) - (a.density ?? -1));
+
+    return {
+      day: d,
+      total,
+      protein,
+      density,
+      bestMeal: meals[0] ? { label: meals[0].label, density: meals[0].density ?? 0 } : null,
+      worstMeal: meals.length ? meals[meals.length - 1] : null,
+    };
+  });
+
+  return scored.sort((a, b) => b.density - a.density);
+}
+
+export interface GoalCalcResult {
+  diasRestantes: number;
+  kgABajar: number;
+  deficitDiarioNecesario: number;
+  kcalObjetivoSugerido: number;
+  pctDelGasto: number;
+  kgPorSemana: number;
+  esAgresivo: boolean;
+}
+
+/**
+ * Calculadora de objetivo → déficit necesario.
+ * Es una herramienta de validación: no modifica el objetivo diario configurado
+ * por el usuario, solo indica si su plan actual es coherente con su meta.
+ */
+export function calcGoalDeficit(
+  pesoActual: number,
+  pesoObjetivo: number,
+  fechaObjetivo: string,
+  gastoReferencia: number
+): GoalCalcResult | { error: string } {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const objetivo = new Date(`${fechaObjetivo}T00:00:00`);
+  const diasRestantes = Math.round((objetivo.getTime() - hoy.getTime()) / 86400000);
+  const kgABajar = pesoActual - pesoObjetivo;
+
+  if (diasRestantes <= 0) return { error: "La fecha objetivo ya pasó o es hoy — elegí una fecha futura." };
+  if (kgABajar <= 0) return { error: "El peso objetivo es igual o mayor al actual — no hay déficit que calcular." };
+
+  const kcalTotalesNecesarias = kgABajar * 7700;
+  const deficitDiarioNecesario = Math.round(kcalTotalesNecesarias / diasRestantes);
+  const kcalObjetivoSugerido = Math.round(gastoReferencia - deficitDiarioNecesario);
+  const pctDelGasto = (deficitDiarioNecesario / gastoReferencia) * 100;
+  const kgPorSemana = kgABajar / (diasRestantes / 7);
+  const pctPesoPorSemana = (kgPorSemana / pesoActual) * 100;
+  const esAgresivo = pctDelGasto > 30 || pctPesoPorSemana > 1;
+
+  return { diasRestantes, kgABajar, deficitDiarioNecesario, kcalObjetivoSugerido, pctDelGasto, kgPorSemana, esAgresivo };
+}
+
+/** Devuelve el lunes (inicio de semana) de la fecha dada. */
+export function isoMonday(dateStr: string): Date {
+  const d = new Date(`${dateStr}T00:00:00`);
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return d;
+}
+
+export function fmtDate(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+export function addDays(d: Date, n: number): Date {
+  const nd = new Date(d);
+  nd.setDate(nd.getDate() + n);
+  return nd;
+}

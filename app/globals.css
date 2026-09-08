@@ -1,0 +1,36 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  background: #1C1B18;
+  color: #EDE7DA;
+  -webkit-font-smoothing: antialiased;
+}
+
+* { box-sizing: border-box; }
+
+input, select, textarea {
+  background: #1C1B18;
+  border: 1px solid #3A362F;
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: #EDE7DA;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  width: 100%;
+}
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid #C9A227;
+  outline-offset: 1px;
+}
+label {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9C958A;
+  display: block;
+  margin-bottom: 4px;
+}
