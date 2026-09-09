@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { DayEntry, TrainingIntensity, INTENSITY_STYLES } from "@/lib/types";
 import { estimateTrainingCalories } from "@/lib/calculations";
+import { clampNumber } from "@/lib/inputLimits";
 
 export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: (entry: DayEntry) => void }) {
   const [pasos, setPasos] = useState(entry.pasos ? String(entry.pasos) : "");
@@ -13,7 +14,7 @@ export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: 
   const handleSave = () => {
     onSave({
       ...entry,
-      pasos: Math.max(0, Number(pasos) || 0),
+      pasos: clampNumber(Number(pasos) || 0),
       entreno: intensidad !== "ninguno",
       entrenoIntensidad: intensidad !== "ninguno" ? intensidad : undefined,
       entrenoMinutos: intensidad !== "ninguno" ? entry.entrenoMinutos || 60 : undefined,
@@ -30,6 +31,7 @@ export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: 
         <input
           type="number"
           min="0"
+          max="999999"
           step="100"
           inputMode="numeric"
           value={pasos}
@@ -61,6 +63,9 @@ export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: 
               </button>
             );
           })}
+        </div>
+        <div className="mt-2 rounded-lg border border-border bg-bg/40 p-2.5 text-[11px] text-textMuted">
+          {INTENSITY_STYLES[intensidad].description}
         </div>
       </div>
 

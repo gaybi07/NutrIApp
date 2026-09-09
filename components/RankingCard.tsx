@@ -17,14 +17,15 @@ const TIER_STYLE: Record<ProteinQualityTier, { label: string; color: string; dot
 };
 
 export function RankingCard({ days, weightKg }: { days: DayEntry[]; weightKg: number }) {
-  const ranked = rankDays(days);
+  const ranked = rankDays(days).sort((a, b) => b.protein - a.protein);
   const target = proteinTargetForWeight(weightKg);
-  const buenos = ranked
-    .filter((r) => proteinDailyTier(r.protein, target) === "bueno")
-    .sort((a, b) => b.protein - a.protein);
-  const paraMejorar = ranked
-    .filter((r) => proteinDailyTier(r.protein, target) !== "bueno")
-    .sort((a, b) => a.protein - b.protein);
+
+  const n = ranked.length;
+  const bestEnd = Math.min(3, n);
+  const worstStart = Math.max(bestEnd, n - 3);
+  const best = ranked.slice(0, bestEnd);
+  const middle = ranked.slice(bestEnd, worstStart).slice(0, 3);
+  const worst = ranked.slice(worstStart, n);
 
   return (
     <Collapsible eyebrow="Semana" title="Ranking de días">
@@ -42,22 +43,21 @@ export function RankingCard({ days, weightKg }: { days: DayEntry[]; weightKg: nu
             <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-rust" /> &lt;{Math.round(target * 0.9)}g a mejorar</span>
           </div>
 
-          <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted mb-1">
-            Buenos días (llegaron al objetivo)
-          </div>
-          {buenos.length === 0 ? (
-            <div className="py-2 text-[11px] text-textMuted italic">Todavía ningún día llegó a {target}g.</div>
-          ) : (
-            buenos.map((r) => <RankRow key={r.day.fecha} r={r} target={target} />)
+          <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted mb-1">Los 3 mejores</div>
+          {best.map((r) => <RankRow key={r.day.fecha} r={r} target={target} />)}
+
+          {middle.length > 0 && (
+            <>
+              <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted mt-3 mb-1">Los 3 del medio</div>
+              {middle.map((r) => <RankRow key={r.day.fecha} r={r} target={target} />)}
+            </>
           )}
 
-          <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted mt-3 mb-1">
-            Días para mejorar
-          </div>
-          {paraMejorar.length === 0 ? (
-            <div className="py-2 text-[11px] text-sage italic">🎉 Todos tus días llegaron al objetivo.</div>
-          ) : (
-            paraMejorar.map((r) => <RankRow key={r.day.fecha} r={r} target={target} />)
+          {worst.length > 0 && (
+            <>
+              <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted mt-3 mb-1">Los 3 peores</div>
+              {worst.map((r) => <RankRow key={r.day.fecha} r={r} target={target} />)}
+            </>
           )}
 
           <div className="mt-3 rounded-lg border border-gold/30 bg-gold/10 p-2.5 text-[11px] text-textMuted">

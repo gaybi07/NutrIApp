@@ -1,7 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, emptyDay } from "@/lib/types";
+import { countDigits, MAX_DIGITS, MAX_MINUTES_DIGITS, MAX_TEXT_LENGTH } from "@/lib/inputLimits";
+
+const MEAL_SUGGESTIONS = [
+  "Milanesa con puré",
+  "Asado con ensalada",
+  "2 empanadas de carne",
+  "Tostadas con palta y huevo",
+  "Yogur con granola y banana",
+  "Pastel de papa",
+  "Pollo al horno con batatas",
+  "Fideos con salsa y queso",
+  "Sándwich de milanesa",
+  "Tarta de verdura",
+  "Mate con tostadas",
+  "Choripán",
+];
+
+// SpeechRecognition no está tipado en TS DOM lib estándar.
+type SpeechRecognitionInstance = {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  start: () => void;
+  stop: () => void;
+  onresult: ((event: { results: { [index: number]: { [index: number]: { transcript: string } } } }) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+};
 
 export function AiEntryForm({
   days,
@@ -23,6 +51,44 @@ export function AiEntryForm({
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
   const [preview, setPreview] = useState<{ kcal: number; protein: number; detalle: string } | null>(null);
+  const [recording, setRecording] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+
+  useEffect(() => {
+    const SpeechRecognitionCtor =
+      (window as unknown as { SpeechRecognition?: new () => SpeechRecognitionInstance }).SpeechRecognition ||
+      (window as unknown as { webkitSpeechRecognition?: new () => SpeechRecognitionInstance }).webkitSpeechRecognition;
+    setSpeechSupported(Boolean(SpeechRecognitionCtor));
+  }, []);
+
+  const toggleRecording = () => {
+    if (recording) {
+      recognitionRef.current?.stop();
+      return;
+    }
+    const SpeechRecognitionCtor =
+      (window as unknown as { SpeechRecognition?: new () => SpeechRecognitionInstance }).SpeechRecognition ||
+      (window as unknown as { webkitSpeechRecognition?: new () => SpeechRecognitionInstance }).webkitSpeechRecognition;
+    if (!SpeechRecognitionCtor) return;
+
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = "es-AR";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setText((prev) => (prev ? `${prev} ${transcript}` : transcript));
+    };
+    recognition.onerror = () => {
+      setRecording(false);
+      setStatus("No pude escucharte, probá de nuevo o escribilo a mano.");
+    };
+    recognition.onend = () => setRecording(false);
+    recognitionRef.current = recognition;
+    recognition.start();
+    setRecording(true);
+  };
 
   useEffect(() => {
     const existing = days.find((d) => d.fecha === fecha);
@@ -115,18 +181,45 @@ export function AiEntryForm({
         </div>
       </div>
       <div className="mt-2">
-        <label>Contame qué comiste (podés dictarlo con el micrófono del teclado)</label>
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <label className="mb-0">Contame qué comiste</label>
+          {speechSupported && (
+            <button
+              type="button"
+              onClick={toggleRecording}
+              className={`shrink-0 rounded-full border px-2.5 py-1 font-mono text-[9px] uppercase tracking-wide ${
+                recording ? "border-rust bg-rust/15 text-rust" : "border-border bg-bg text-textMuted"
+              }`}
+            >
+              {recording ? "● Grabando… tocá para parar" : "🎙️ Grabar"}
+            </button>
+          )}
+        </div>
         <textarea
           rows={3}
+          maxLength={MAX_TEXT_LENGTH}
           placeholder="Ej: 2 huevos, una tostada con queso crema y una banana"
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {MEAL_SUGGESTIONS.map((suggestion) => (
+            <button
+              key={suggestion}
+              type="button"
+              onClick={() => setText(suggestion)}
+              className="rounded-full border border-border bg-bg px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-wide text-textMuted hover:border-gold/60"
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="mt-2">
         <label>Ingredientes usados del inventario (opcional)</label>
         <input
           type="text"
+          maxLength={MAX_TEXT_LENGTH}
           placeholder="Ej: 300 g pollo, 2 huevos, 150 g papa"
           value={inventoryText}
           onChange={(e) => setInventoryText(e.target.value)}
@@ -138,11 +231,31 @@ export function AiEntryForm({
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label>Pasos</label>
-            <input type="number" min="0" step="100" value={pasos} onChange={(e) => setPasos(e.target.value)} placeholder="Ej: 8500" />
+            <input
+              type="number"
+              min="0"
+              max="999999"
+              step="100"
+              value={pasos}
+              onChange={(e) => {
+                if (countDigits(e.target.value) <= MAX_DIGITS) setPasos(e.target.value);
+              }}
+              placeholder="Ej: 8500"
+            />
           </div>
           <div>
             <label>Peso (kg)</label>
-            <input type="number" min="1" step="0.1" value={pesoKg} onChange={(e) => setPesoKg(e.target.value)} placeholder="Ej: 114.8" />
+            <input
+              type="number"
+              min="1"
+              max="999999"
+              step="0.1"
+              value={pesoKg}
+              onChange={(e) => {
+                if (countDigits(e.target.value) <= MAX_DIGITS) setPesoKg(e.target.value);
+              }}
+              placeholder="Ej: 114.8"
+            />
           </div>
           <div>
             <label>Entrenamiento</label>
@@ -159,7 +272,16 @@ export function AiEntryForm({
           <div className="mt-2 grid grid-cols-2 gap-2">
             <div>
               <label>Duración (min)</label>
-              <input type="number" min="1" step="5" value={entrenoMinutos} onChange={(e) => setEntrenoMinutos(e.target.value)} />
+              <input
+                type="number"
+                min="1"
+                max="9999"
+                step="5"
+                value={entrenoMinutos}
+                onChange={(e) => {
+                  if (countDigits(e.target.value) <= MAX_MINUTES_DIGITS) setEntrenoMinutos(e.target.value);
+                }}
+              />
             </div>
             <div>
               <label>Intensidad</label>
@@ -188,11 +310,25 @@ export function AiEntryForm({
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label>Kcal</label>
-              <input type="number" value={preview.kcal} onChange={(e) => setPreview({ ...preview, kcal: Number(e.target.value) })} />
+              <input
+                type="number"
+                max="999999"
+                value={preview.kcal}
+                onChange={(e) => {
+                  if (countDigits(e.target.value) <= MAX_DIGITS) setPreview({ ...preview, kcal: Number(e.target.value) });
+                }}
+              />
             </div>
             <div>
               <label>Proteína (g)</label>
-              <input type="number" value={preview.protein} onChange={(e) => setPreview({ ...preview, protein: Number(e.target.value) })} />
+              <input
+                type="number"
+                max="999999"
+                value={preview.protein}
+                onChange={(e) => {
+                  if (countDigits(e.target.value) <= MAX_DIGITS) setPreview({ ...preview, protein: Number(e.target.value) });
+                }}
+              />
             </div>
           </div>
           {preview.detalle && <div className="text-[11px] text-textMuted italic my-2">{preview.detalle}</div>}

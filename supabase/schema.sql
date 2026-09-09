@@ -22,7 +22,8 @@ create table public.user_settings (
   goal integer not null default 2400,
   tdee_fallback integer not null default 3200,
   weekly_weights jsonb not null default '{}'::jsonb,
-  calculator_profile jsonb
+  calculator_profile jsonb,
+  tour_done boolean not null default false
 );
 
 alter table public.days enable row level security;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useEscapeKey } from "@/lib/useEscapeKey";
 
 const STOPS = [
   {
@@ -49,10 +50,11 @@ export function AppTour({ onFinish }: { onFinish: () => void }) {
   const [index, setIndex] = useState(0);
   const stop = STOPS[index];
   const isLast = index === STOPS.length - 1;
+  useEscapeKey(onFinish, true);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/90 p-4 backdrop-blur-sm">
-      <div className="relative w-full max-w-md rounded-2xl border border-gold/40 bg-surface p-4 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/90 p-4 backdrop-blur-sm" onClick={onFinish}>
+      <div className="relative w-full max-w-md rounded-2xl border border-gold/40 bg-surface p-4 shadow-2xl" onClick={(event) => event.stopPropagation()}>
         <button
           type="button"
           onClick={onFinish}

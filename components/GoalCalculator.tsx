@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { computeGoal, bmiInfo, addDays, fmtDate } from "@/lib/calculations";
 import { CalculatorProfile, GoalMode } from "@/lib/types";
+import { countDigits, MAX_DIGITS } from "@/lib/inputLimits";
 
 export function GoalCalculator({
   tdeeFallback,
@@ -23,6 +24,10 @@ export function GoalCalculator({
   const [result, setResult] = useState<React.ReactNode>(null);
 
   const bmi = bmiInfo(Number(actual), Number(altura));
+
+  const setNum = (setter: (value: string) => void) => (value: string) => {
+    if (countDigits(value) <= MAX_DIGITS) setter(value);
+  };
 
   const applySuggestion = () => {
     if (!bmi) return;
@@ -108,17 +113,17 @@ export function GoalCalculator({
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label>Peso actual (kg)</label>
-          <input type="number" step="0.1" value={actual} onChange={(e) => setActual(e.target.value)} />
+          <input type="number" step="0.1" max="999999" value={actual} onChange={(e) => setNum(setActual)(e.target.value)} />
         </div>
         <div>
           <label>Altura (cm)</label>
-          <input type="number" value={altura} onChange={(e) => setAltura(e.target.value)} />
+          <input type="number" max="999999" value={altura} onChange={(e) => setNum(setAltura)(e.target.value)} />
         </div>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2">
         <div>
           <label>Edad</label>
-          <input type="number" value={edad} onChange={(e) => setEdad(e.target.value)} />
+          <input type="number" max="999999" value={edad} onChange={(e) => setNum(setEdad)(e.target.value)} />
         </div>
         <div>
           <label>Perfil metabólico</label>
@@ -150,7 +155,7 @@ export function GoalCalculator({
           <div className="mt-2 grid grid-cols-2 gap-2">
             <div>
               <label>Peso objetivo (kg)</label>
-              <input type="number" step="0.1" value={meta} onChange={(e) => setMeta(e.target.value)} />
+              <input type="number" step="0.1" max="999999" value={meta} onChange={(e) => setNum(setMeta)(e.target.value)} />
             </div>
             <div>
               <label>Fecha objetivo</label>

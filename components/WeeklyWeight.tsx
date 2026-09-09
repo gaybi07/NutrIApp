@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { addDays, fmtDate } from "@/lib/calculations";
 import { GoalMode } from "@/lib/types";
+import { useEscapeKey } from "@/lib/useEscapeKey";
+import { clampNumber } from "@/lib/inputLimits";
 
 function computeStreak(weights: Record<string, number>, weekKey: string): number {
   let streak = 0;
@@ -28,13 +30,14 @@ export function WeeklyWeight({
   const savedWeight = weights[weekKey];
   const [value, setValue] = useState(savedWeight ? String(savedWeight) : "");
   const [open, setOpen] = useState(false);
+  useEscapeKey(() => setOpen(false), open);
 
   useEffect(() => {
     setValue(savedWeight ? String(savedWeight) : "");
   }, [savedWeight]);
 
   const handleSave = () => {
-    const weight = Number(value);
+    const weight = clampNumber(Number(value));
     if (weight > 0) onSave(weekKey, weight);
   };
 
@@ -56,6 +59,7 @@ export function WeeklyWeight({
           className="mt-3 w-full"
           type="number"
           min="1"
+          max="999999"
           step="0.1"
           placeholder="Ej: 82.4"
           value={value}

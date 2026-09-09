@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { DayEntry, emptyDay } from "@/lib/types";
 import { Collapsible } from "@/components/Collapsible";
+import { clampNumber } from "@/lib/inputLimits";
 
 export function DailySteps({ weekDates, weekDays, onUpsert }: { weekDates: string[]; weekDays: (DayEntry | null)[]; onUpsert: (entry: DayEntry) => void }) {
   const [status, setStatus] = useState("");
 
   const saveSteps = (date: string, value: string) => {
-    const steps = Math.max(0, Number(value) || 0);
+    const steps = clampNumber(Number(value) || 0);
     const existing = weekDays[weekDates.indexOf(date)] || emptyDay(date);
     onUpsert({ ...existing, pasos: steps });
     setStatus(`Pasos guardados para ${date}`);
@@ -33,6 +34,7 @@ export function DailySteps({ weekDates, weekDays, onUpsert }: { weekDates: strin
               <input
                 type="number"
                 min="0"
+                max="999999"
                 step="100"
                 inputMode="numeric"
                 aria-label={`Pasos del ${date}`}

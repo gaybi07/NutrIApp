@@ -4,6 +4,7 @@ import { useState } from "react";
 import { DayEntry, emptyDay, TrainingIntensity, INTENSITY_STYLES } from "@/lib/types";
 import { dayTotal, dayProt, dayDeficit, estimateTrainingCalories } from "@/lib/calculations";
 import { Collapsible } from "@/components/Collapsible";
+import { useEscapeKey } from "@/lib/useEscapeKey";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
@@ -23,6 +24,7 @@ export function Ledger({
 }) {
   const anyData = weekDays.some((d) => d);
   const [activeDate, setActiveDate] = useState<string | null>(null);
+  useEscapeKey(() => setActiveDate(null), activeDate !== null);
 
   const activeDay = activeDate ? weekDays[weekDates.indexOf(activeDate)] : null;
   const activeIntensity = activeDay?.entreno ? activeDay.entrenoIntensidad || "moderado" : "ninguno";

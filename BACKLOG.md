@@ -221,3 +221,43 @@ algo puntual.
 - **2026-09-09**: bajado el umbral del ranking de proteína de 1.6g/kg a 1.3g/kg a
   pedido del usuario (lo encontró más alcanzable). Cambiado en `proteinTargetForWeight()`
   y en los textos de `RankingCard.tsx` y `AppTour.tsx` que mencionaban el número viejo.
+- **2026-09-09**: tanda grande de pedidos (numerados 6 a 14 en la conversación):
+  1. Google Sheets como base de datos → **no implementado, se explicó por qué no
+     conviene** (sin RLS real, límites de API, auth por usuario más compleja que
+     Supabase). Se sugirió en cambio un futuro "exportar a Sheets" como reporte,
+     no como base.
+  2. Selector de ritmo de pérdida en `GuidedGoalCalculator`: botones de
+     0.25/0.5/0.75/1 kg por semana en el paso de fecha, que calculan la fecha
+     automáticamente, más feedback en vivo ("con esa fecha, el ritmo es de Xkg
+     por semana") si el usuario toca una fecha a mano.
+  3. Onboarding: sacada la pregunta de peso duplicada (ya se pedía en la
+     calculadora); el paso de "pasos típicos" pasó a ser "nivel de actividad"
+     (Leve/Moderado/Alto/Exigente) con descripción de cada uno y un valor de
+     pasos representativo por nivel (3000/6000/9000/12000).
+  4. `AiEntryForm`: lista de sugerencias de comidas comunes (chips que llenan el
+     texto al tocarlas) + botón de dictado por voz con la Web Speech API del
+     navegador (se oculta solo si el navegador no la soporta, ej. Safari viejo).
+  5. **Bug real encontrado y arreglado**: `settings.tourDone` nunca se guardaba
+     ni se leía en `/api/data` — por eso el tour volvía a aparecer en cada carga
+     para cuentas sincronizadas con Supabase (el GET pisaba `tourDone` con
+     `undefined` siempre). Se agregó la columna `tour_done` a
+     `supabase/schema.sql` + migración
+     (`migration_2026-09-09b_add_tour_done.sql`) y se incluyó en el GET/PUT de
+     `app/api/data/route.ts`.
+  6. Modales cerrables con click afuera o tecla Escape: nuevo hook
+     `lib/useEscapeKey.ts`, aplicado en los 4 modales de `page.tsx`
+     (calc/ai/entreno/datos), `WeeklyWeight`, `Ledger` y `AppTour`. Click afuera
+     ya lo tenían `WeeklyWeight` y `Ledger`; se agregó a los demás.
+  7. Límites en campos de texto/número (`lib/inputLimits.ts`): números tope 6
+     dígitos (kcal, kg, pasos, edad, altura), minutos tope 4 dígitos, texto libre
+     tope 500 caracteres. Aplicado en `GoalCalculator`, `GuidedGoalCalculator`,
+     `TrainingEntryForm`, `DailySteps`, `WeeklyWeight`, `AiEntryForm`,
+     `ShoppingLog`.
+  8. Descripción de cada intensidad de entrenamiento debajo de los botones en
+     `TrainingEntryForm` (ya existía en el modal de `Ledger`, reutiliza el mismo
+     campo `description` de `INTENSITY_STYLES`).
+  9. Ranking de días: en vez de listar todos los días agrupados en dos baldes
+     (buenos / para mejorar) sin límite, ahora muestra como máximo "los 3
+     mejores", "los 3 del medio" y "los 3 peores" por posición, sin superponerse
+     entre grupos (con pocos días, el grupo del medio puede quedar vacío o con
+     menos de 3).

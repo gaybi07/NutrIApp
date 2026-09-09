@@ -3,6 +3,7 @@
 import { ChangeEvent, useMemo, useState } from "react";
 import { InventoryItem } from "@/lib/types";
 import { Collapsible } from "@/components/Collapsible";
+import { MAX_TEXT_LENGTH } from "@/lib/inputLimits";
 
 export function ShoppingLog({ items, addInventoryText, replaceItems }: { items: InventoryItem[]; addInventoryText: (text: string) => void; replaceItems: (items: InventoryItem[]) => void }) {
   const [raw, setRaw] = useState("");
@@ -125,6 +126,7 @@ export function ShoppingLog({ items, addInventoryText, replaceItems }: { items: 
       </label>
       <textarea
         rows={4}
+        maxLength={MAX_TEXT_LENGTH}
         value={raw}
         onChange={(e) => setRaw(e.target.value)}
         placeholder="Ej: 1 kg pollo, 2 tomates, queso 200g, arroz, yogurt"

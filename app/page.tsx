@@ -21,6 +21,7 @@ import { OnboardingWizard } from "@/components/OnboardingWizard";
 import { AppTour } from "@/components/AppTour";
 import { Collapsible } from "@/components/Collapsible";
 import { isSupabaseConfigured } from "@/lib/supabase/browser";
+import { useEscapeKey } from "@/lib/useEscapeKey";
 import { useInventory } from "@/lib/useInventory";
 import { DayEntry, emptyDay, MealKey } from "@/lib/types";
 
@@ -33,6 +34,7 @@ export default function Home() {
   const [panel, setPanel] = useState<"calc" | "ai" | "entreno" | "datos" | null>(null);
   const [authenticated, setAuthenticated] = useState(!isSupabaseConfigured);
   const handleAuthChange = useCallback((value: boolean) => setAuthenticated(value), []);
+  useEscapeKey(() => setPanel(null), panel !== null);
 
   const monday = useMemo(() => {
     const base =
@@ -221,8 +223,11 @@ export default function Home() {
       </div>
 
       {panel === "calc" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm">
-          <div className="relative my-4 max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-3 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>
+          <div
+            className="relative my-4 max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-3 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
             <button
               onClick={() => setPanel(null)}
               className="absolute right-3 top-3 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
@@ -242,8 +247,8 @@ export default function Home() {
       )}
 
       {panel === "ai" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg rounded-2xl border border-border bg-surface p-3 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>
+          <div className="relative w-full max-w-lg rounded-2xl border border-border bg-surface p-3 shadow-2xl" onClick={(event) => event.stopPropagation()}>
             <button
               onClick={() => setPanel(null)}
               className="absolute right-3 top-3 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
@@ -256,8 +261,8 @@ export default function Home() {
       )}
 
       {panel === "entreno" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg rounded-2xl border border-border bg-surface p-3 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>
+          <div className="relative w-full max-w-lg rounded-2xl border border-border bg-surface p-3 shadow-2xl" onClick={(event) => event.stopPropagation()}>
             <button
               onClick={() => setPanel(null)}
               className="absolute right-3 top-3 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
@@ -276,8 +281,8 @@ export default function Home() {
       )}
 
       {panel === "datos" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg rounded-2xl border border-border bg-surface p-3 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>
+          <div className="relative w-full max-w-lg rounded-2xl border border-border bg-surface p-3 shadow-2xl" onClick={(event) => event.stopPropagation()}>
             <button
               onClick={() => setPanel(null)}
               className="absolute right-3 top-3 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"

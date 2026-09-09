@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { computeGoal, bmiInfo, addDays, fmtDate } from "@/lib/calculations";
 import { CalculatorProfile, GoalMode } from "@/lib/types";
+import { countDigits, MAX_DIGITS } from "@/lib/inputLimits";
 
 type StepId = "modo" | "actual" | "altura" | "edad" | "sexo" | "meta" | "fecha" | "resultado";
 
@@ -53,6 +54,21 @@ export function GuidedGoalCalculator({
     setMeta(String(objetivo));
     setFecha(fmtDate(addDays(new Date(), semanas * 7)));
   };
+
+  const kgABajar = Number(actual) - Number(meta);
+  const setFechaPorRitmo = (kgPorSemana: number) => {
+    if (kgABajar <= 0) return;
+    const semanas = Math.max(1, Math.ceil(kgABajar / kgPorSemana));
+    setFecha(fmtDate(addDays(new Date(), semanas * 7)));
+  };
+  const ritmoActual = (() => {
+    if (!fecha || kgABajar <= 0) return null;
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const diasRestantes = Math.round((new Date(`${fecha}T00:00:00`).getTime() - hoy.getTime()) / 86400000);
+    if (diasRestantes <= 0) return null;
+    return kgABajar / (diasRestantes / 7);
+  })();
 
   const computation =
     step === "resultado" && sexo
@@ -213,9 +229,30 @@ export function GuidedGoalCalculator({
       {step === "fecha" && (
         <StepShell
           pregunta="¿Para cuándo?"
-          info="Con la fecha calculamos las semanas disponibles y el déficit diario necesario. Recomendamos no bajar más de 1kg por semana para no perder masa muscular."
+          info="Con la fecha calculamos las semanas disponibles y el déficit diario necesario. Elegí un ritmo de bajada, o tocá una fecha vos mismo y te decimos a cuánto por semana equivale."
         >
+          <div className="mb-2 grid grid-cols-2 gap-1.5">
+            {[0.25, 0.5, 0.75, 1].map((rate) => (
+              <button
+                key={rate}
+                type="button"
+                onClick={() => setFechaPorRitmo(rate)}
+                className="rounded-lg border border-border bg-bg px-2 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted hover:border-gold/60"
+              >
+                {rate}kg / semana
+              </button>
+            ))}
+          </div>
           <input type="date" value={fecha} onChange={(event) => setFecha(event.target.value)} className="w-full" />
+          {ritmoActual != null && (
+            <div className="mt-2 text-[11px] text-textMuted">
+              Con esa fecha, el ritmo es de{" "}
+              <span className={`font-mono ${ritmoActual > 1 ? "text-rust" : "text-sage"}`}>
+                {ritmoActual.toFixed(2)}kg por semana
+              </span>
+              {ritmoActual > 1 && " — más de 1kg/semana puede llevarse masa muscular además de grasa."}
+            </div>
+          )}
           {error && <div className="mt-2 text-[11px] text-rust">{error}</div>}
           <button
             type="button"
@@ -309,9 +346,12 @@ function NumberField({
           type="number"
           step="0.1"
           min="0"
+          max="999999"
           autoFocus
           value={value}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(event) => {
+            if (countDigits(event.target.value) <= MAX_DIGITS) onChange(event.target.value);
+          }}
           onKeyDown={(event) => {
             if (event.key === "Enter") onSubmit();
           }}
