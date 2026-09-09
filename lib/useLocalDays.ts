@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import seedDays from "@/registro_export.json";
 import { DayEntry, Settings } from "./types";
 import { isSupabaseConfigured } from "./supabase/browser";
 
@@ -49,9 +48,6 @@ export function useLocalDays() {
 
       if (rawDays) {
         nextDays = JSON.parse(rawDays);
-      } else if (Array.isArray(seedDays) && seedDays.length > 0) {
-        nextDays = seedDays as DayEntry[];
-        localStorage.setItem(DAYS_KEY, JSON.stringify(nextDays));
       }
 
       setDays(nextDays);
