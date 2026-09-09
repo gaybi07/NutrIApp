@@ -15,6 +15,7 @@ import { WeeklyWeight } from "@/components/WeeklyWeight";
 import { AuthPanel } from "@/components/AuthPanel";
 import { DailySteps } from "@/components/DailySteps";
 import { DataImport } from "@/components/DataImport";
+import { TodayCard } from "@/components/TodayCard";
 import { isSupabaseConfigured } from "@/lib/supabase/browser";
 import { useInventory } from "@/lib/useInventory";
 import { DayEntry, emptyDay, MealKey } from "@/lib/types";
@@ -86,6 +87,13 @@ export default function Home() {
   return (
     <main>
       <AuthPanel onAuthChange={handleAuthChange} />
+
+      <TodayCard
+        entry={todayEntry}
+        goal={settings.goal}
+        onUpsert={upsertDay}
+        onLogMeal={() => setPanel("ai")}
+      />
 
       <div className="mt-2 rounded-2xl border border-border/80 bg-surface/70 px-3 py-2.5 shadow-[0_0_0_1px_rgba(58,54,47,0.4)]">
         <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-gold mb-1.5">Semana del</div>

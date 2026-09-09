@@ -25,8 +25,10 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
       — `AiEntryForm.tsx` + `/api/parse-meal`
 - [x] 10. Validar cálculos diarios y métricas
       — `lib/calculations.ts`, y `RecipePlanner` ahora muestra kcal restantes del día
-- [ ] 11. Crear pantalla de "hoy" para registro rápido
-      — hoy solo existe la vista semanal (Ledger); falta una vista enfocada en el día actual
+- [x] 11. Crear pantalla de "hoy" para registro rápido
+      — `TodayCard.tsx`: siempre visible arriba de todo, muestra kcal consumidas/restantes
+      y proteína de hoy, pasos y entrenamiento editables al toque, y acceso directo a
+      "Cargar comida" (abre `AiEntryForm`, que ya cubre la carga manual/IA)
 - [x] 12. Verificar pasos y entreno
       — pasos editables por día (`DailySteps.tsx`, recién conectado) + intensidad de entreno en `Ledger.tsx`
 - [x] 13. Añadir configuración de objetivo y ajustes
@@ -36,9 +38,9 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
 - [ ] 15. Definir métricas para clientes / gimnasio
 - [ ] 16. Armar MVP para app Android vía Capacitor
 - [ ] 17. Diseñar íconos y splash para APK
-- [~] 18. Pruebas en dispositivo real
-      — login (magic link + Google) probado y funcionando en el celular; falta probar
-      "Agregar a pantalla de inicio" (PWA) y el resto de las pantallas en uso real
+- [x] 18. Pruebas en dispositivo real
+      — login (magic link + Google) y "Agregar a pantalla de inicio" (PWA) probados
+      y funcionando en el celular
 - [ ] 19. Versionado y release notes
 - [~] 20. Ideas futuras: recetas, historial, export, coach dashboard
       — `RecipePlanner.tsx` y `ShoppingLog.tsx` avanzados; `DataImport.tsx` (import/export de respaldo)
@@ -79,3 +81,5 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
   `redirect_uri_mismatch` — faltaba autorizar `https://<project-ref>.supabase.co/auth/v1/callback`
   en Google Cloud Console (Credentials → OAuth Client). Ambos métodos de login
   funcionan ahora en producción. (No fue un cambio de código, solo de config.)
+- **2026-09-09**: agregado `TodayCard.tsx` (tarea #11). Se extrajo `INTENSITY_STYLES`
+  a `lib/types.ts` para compartirlo entre `Ledger.tsx` y `TodayCard.tsx` sin duplicar.
