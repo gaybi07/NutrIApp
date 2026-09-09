@@ -69,3 +69,7 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
   que `page.tsx` no pasaba). Conectados `DailySteps.tsx` y `DataImport.tsx`, que existían
   como componentes huérfanos sin usar. Reemplazado el botón duplicado "Consumo / objetivo"
   por "Datos" (abre `DataImport`).
+- **2026-09-09**: primer intento de deploy en Vercel falló — `lib/useLocalDays.ts`
+  importaba `@/registro_export.json` (datos personales, gitignoreados) como seed para
+  usuarios nuevos, y Vercel no podía resolver el import. Se sacó el seed: usuarios/
+  dispositivos nuevos ahora arrancan vacíos, que es lo correcto para un producto real.
