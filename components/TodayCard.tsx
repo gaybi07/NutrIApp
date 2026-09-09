@@ -1,6 +1,6 @@
 "use client";
 
-import { DayEntry } from "@/lib/types";
+import { DayEntry, INTENSITY_STYLES } from "@/lib/types";
 import { dayTotal, dayProt, dayGoal } from "@/lib/calculations";
 
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
@@ -26,6 +26,8 @@ export function TodayCard({
   const protein = dayProt(entry);
   const over = consumed > adjustedGoal;
   const pct = adjustedGoal > 0 ? Math.min(100, Math.round((consumed / adjustedGoal) * 100)) : 0;
+  const intensidad = entry.entreno ? entry.entrenoIntensidad || "moderado" : "ninguno";
+  const trainingStyle = INTENSITY_STYLES[intensidad];
 
   return (
     <section className="mb-4 rounded-2xl border border-gold/40 bg-surface p-3">
@@ -75,9 +77,15 @@ export function TodayCard({
         <button
           type="button"
           onClick={onLogTraining}
-          className="rounded-xl border border-sage/60 bg-sage px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-bg"
+          className="flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em]"
+          style={
+            entry.entreno
+              ? { background: trainingStyle.background, color: trainingStyle.color, borderColor: trainingStyle.background }
+              : { background: "#8A9A7C", color: "#1C1B18", borderColor: "rgba(138,154,124,0.6)" }
+          }
         >
-          + Entrenamiento
+          {entry.entreno && <span className="h-2 w-2 rounded-full bg-current opacity-70" />}
+          {entry.entreno ? trainingStyle.label : "+ Entrenamiento"}
         </button>
       </div>
     </section>

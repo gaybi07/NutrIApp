@@ -118,13 +118,14 @@ export default function Home() {
             </button>
           </div>
         </div>
-        <div className="mt-2 font-mono text-[11px] tracking-[0.12em] uppercase text-textMuted">
+        <div className="mt-2 mb-3 font-mono text-[11px] tracking-[0.12em] uppercase text-textMuted">
           {monday.getDate()} {MONTHS[monday.getMonth()]} — {sunday.getDate()} {MONTHS[sunday.getMonth()]}
         </div>
+
+        <WeeklyWeight weekKey={fmtDate(monday)} weights={settings.weeklyWeights || {}} onSave={saveWeeklyWeight} />
       </div>
 
       <SummaryCards summary={summary} goal={summary.avgGoal || settings.goal} weight={settings.weeklyWeights?.[fmtDate(monday)]} />
-      <WeeklyWeight weekKey={fmtDate(monday)} weights={settings.weeklyWeights || {}} onSave={saveWeeklyWeight} />
 
       <div className="mb-4 grid grid-cols-2 gap-2">
         <button

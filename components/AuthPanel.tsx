@@ -62,10 +62,27 @@ export function AuthPanel({ onAuthChange }: { onAuthChange?: (authenticated: boo
   };
 
   if (userEmail) {
+    const initial = userEmail.trim().charAt(0).toUpperCase();
     return (
-      <div className="flex items-center justify-between gap-2 mb-4 text-[11px] text-textMuted">
-        <span>{userEmail}</span>
-        <button onClick={signOut} className="text-gold underline">Salir</button>
+      <div className="mb-4 flex items-center justify-between gap-2 rounded-xl border border-border bg-[linear-gradient(135deg,rgba(201,162,39,0.08),rgba(36,34,32,0.9))] px-3 py-2 shadow-[0_0_0_1px_rgba(58,54,47,0.4)]">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gold/50 bg-gold/15 font-display text-sm text-gold">
+            {initial}
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1 font-mono text-[8.5px] uppercase tracking-[0.16em] text-sage">
+              <span className="h-1.5 w-1.5 rounded-full bg-sage" />
+              Sesión activa
+            </div>
+            <div className="truncate text-[11px] text-textMuted">{userEmail}</div>
+          </div>
+        </div>
+        <button
+          onClick={signOut}
+          className="shrink-0 rounded-lg border border-border bg-bg/60 px-2.5 py-1.5 font-mono text-[9px] uppercase tracking-[0.12em] text-textMuted transition-colors hover:border-rust/60 hover:text-rust"
+        >
+          Salir
+        </button>
       </div>
     );
   }

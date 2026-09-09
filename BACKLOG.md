@@ -107,3 +107,9 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
 - **2026-09-09**: "Indicadores" (`SummaryCards`) y "Tabla de la semana" (`Ledger`)
   ahora también arrancan colapsados con `Collapsible.tsx`, para que lo primero que se
   vea de la sección semanal sea el gráfico.
+- **2026-09-09**: `WeeklyWeight` ("Control semanal") se movió adentro de la tarjeta
+  "Semana del ..." en vez de ser una tarjeta suelta aparte. El botón "+ Entrenamiento"
+  de `TodayCard` ahora muestra la intensidad ya cargada (ej. "Exigente") con el mismo
+  color que usa `INTENSITY_STYLES`, en vez de un botón genérico sin estado. Se mejoró
+  visualmente la barra de sesión activa en `AuthPanel.tsx` (avatar con inicial,
+  indicador de "sesión activa", botón "Salir" con hover en rojo).
