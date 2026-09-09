@@ -27,7 +27,16 @@ export function useLocalDays() {
     if (isSupabaseConfigured) {
       fetch("/api/data")
         .then(async (response) => {
-          if (!response.ok) throw new Error("Sesión no autenticada");
+          if (!response.ok) {
+            let detail = `HTTP ${response.status}`;
+            try {
+              const body = await response.json();
+              if (body?.error) detail = body.error;
+            } catch {
+              // la respuesta no era JSON, nos quedamos con el código HTTP
+            }
+            throw new Error(detail);
+          }
           return response.json();
         })
         .then((data: { days: DayEntry[]; settings: Settings }) => {
@@ -35,8 +44,11 @@ export function useLocalDays() {
           setSettings(data.settings);
           setSyncError(null);
         })
-        .catch(() => {
-          setSyncError("No se pudo traer tus datos de la nube — estás viendo la copia guardada en este dispositivo.");
+        .catch((e) => {
+          const detail = e instanceof Error ? e.message : "error desconocido";
+          setSyncError(
+            `No se pudo traer tus datos de la nube (${detail}) — estás viendo la copia guardada en este dispositivo.`
+          );
           loadLocalData();
         })
         .finally(() => setLoaded(true));
