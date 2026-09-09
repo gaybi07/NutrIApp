@@ -25,7 +25,7 @@ import { DayEntry, emptyDay, MealKey } from "@/lib/types";
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
 export default function Home() {
-  const { days, settings, loaded, upsertDay, saveDays, saveSettings } = useLocalDays();
+  const { days, settings, loaded, syncError, upsertDay, saveDays, saveSettings } = useLocalDays();
   const { items: inventory, addText, consumeByText, consumeItem, consumeAmounts, persist: replaceInventory } = useInventory();
   const [weekOffset, setWeekOffset] = useState(0);
   const [panel, setPanel] = useState<"calc" | "ai" | "entreno" | "datos" | null>(null);
@@ -90,6 +90,12 @@ export default function Home() {
     <main>
       <AuthPanel onAuthChange={handleAuthChange} />
 
+      {syncError && (
+        <div className="mb-4 rounded-xl border border-rust/40 bg-rust/10 px-3 py-2 text-[11px] text-rust">
+          ⚠ {syncError}
+        </div>
+      )}
+
       <TodayCard
         entry={todayEntry}
         goal={settings.goal}
@@ -123,7 +129,12 @@ export default function Home() {
           {monday.getDate()} {MONTHS[monday.getMonth()]} — {sunday.getDate()} {MONTHS[sunday.getMonth()]}
         </div>
 
-        <WeeklyWeight weekKey={fmtDate(monday)} weights={settings.weeklyWeights || {}} onSave={saveWeeklyWeight} />
+        <WeeklyWeight
+          weekKey={fmtDate(monday)}
+          weights={settings.weeklyWeights || {}}
+          goalMode={settings.calculatorProfile?.modo}
+          onSave={saveWeeklyWeight}
+        />
 
         <SummaryCards summary={summary} goal={summary.avgGoal || settings.goal} weight={settings.weeklyWeights?.[fmtDate(monday)]} />
 
@@ -152,15 +163,14 @@ export default function Home() {
           >
             Cargar con IA
           </button>
+          <button
+            onClick={() => setPanel("datos")}
+            className="col-span-2 rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
+          >
+            Datos (importar / exportar respaldo)
+          </button>
         </div>
       </Collapsible>
-
-      <button
-        onClick={() => setPanel("datos")}
-        className="mb-4 w-full rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
-      >
-        Datos
-      </button>
 
       {panel === "calc" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm">

@@ -121,3 +121,23 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
   suelto, y `RankingCard` (ya renombrado "Ranking de días", con su propio colapsable
   interno) se renderiza directo en la página en vez de abrir como modal — separado de
   la sección de calculadora/IA.
+- **2026-09-09**: bug real encontrado — `upsertDay`/`saveSettings` en `lib/useLocalDays.ts`
+  nunca revisaban `response.ok` del PUT a `/api/data`, así que un guardado rechazado por
+  Supabase (401/500) fallaba en silencio y el usuario nunca se enteraba de que el cambio
+  no llegó a la nube. Se agregó chequeo de `response.ok` + un `syncError` visible en la
+  UI (banner rojo debajo del header) tanto para fallos de guardado como de carga inicial.
+  Usuario confirmó que usa la misma cuenta en PC y celu, así que se descartó el caso de
+  cuentas distintas — pendiente confirmar si el banner nuevo revela la causa real la
+  próxima vez que pase.
+- **2026-09-09**: arreglada inconsistencia en `RankingCard`: el color rojo/verde de cada
+  día salía por posición relativa (mejores 3 / peores 3), mientras que el detalle por
+  comida usaba un umbral fijo (2.5g/100kcal = bueno). Un día con densidad 4.6 (bueno por
+  umbral) podía salir en rojo solo por haber otros días con más. Se creó
+  `proteinQualityTier()` en `lib/calculations.ts` como única fuente de verdad, usada
+  tanto para clasificar cada día (ahora "Buenos días" / "Días para mejorar" según el
+  umbral, no por posición) como cada comida en el detalle. Se agregó leyenda de colores
+  y un bloque de tips para subir la densidad proteica.
+- **2026-09-09**: rediseñado `WeeklyWeight` a pedido del usuario: una vez cargado el
+  peso de la semana, el botón grande desaparece y queda una fila discreta con el peso,
+  la comparación vs la semana anterior (flecha + color según si el modo de objetivo es
+  "perder"/"aumentar"/"recomponer") y una racha 🔥 de semanas seguidas con peso cargado.

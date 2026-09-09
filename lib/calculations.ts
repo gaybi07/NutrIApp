@@ -79,6 +79,20 @@ export function proteinDensity(kcal: number, protein: number): number | null {
   return (protein * 100) / kcal;
 }
 
+export type ProteinQualityTier = "bueno" | "medio" | "malo";
+
+/**
+ * Umbral único de densidad proteica, compartido por el ranking de días y el
+ * detalle por comida — así un mismo valor siempre se clasifica igual en toda
+ * la app (antes el ranking usaba "mejores 3 / peores 3" relativos mientras el
+ * detalle usaba este umbral fijo, y podían contradecirse).
+ */
+export function proteinQualityTier(density: number): ProteinQualityTier {
+  if (density >= 2.5) return "bueno";
+  if (density >= 1.5) return "medio";
+  return "malo";
+}
+
 export interface RankedDay {
   day: DayEntry;
   total: number;

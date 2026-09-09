@@ -21,6 +21,7 @@ export function useLocalDays() {
   const [days, setDays] = useState<DayEntry[]>([]);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [loaded, setLoaded] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isSupabaseConfigured) {
@@ -32,8 +33,12 @@ export function useLocalDays() {
         .then((data: { days: DayEntry[]; settings: Settings }) => {
           setDays(data.days);
           setSettings(data.settings);
+          setSyncError(null);
         })
-        .catch(() => loadLocalData())
+        .catch(() => {
+          setSyncError("No se pudo traer tus datos de la nube — estás viendo la copia guardada en este dispositivo.");
+          loadLocalData();
+        })
         .finally(() => setLoaded(true));
       return;
     }
@@ -103,7 +108,15 @@ export function useLocalDays() {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ day: entry }),
-        }).catch((e) => console.error("Error guardando día remoto", e));
+        })
+          .then((response) => {
+            if (!response.ok) throw new Error("No se pudo guardar el día en la nube");
+            setSyncError(null);
+          })
+          .catch((e) => {
+            console.error("Error guardando día remoto", e);
+            setSyncError("No se pudo guardar en la nube. El cambio quedó solo en este dispositivo.");
+          });
       }
     },
     []
@@ -121,9 +134,17 @@ export function useLocalDays() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ settings: next }),
-      }).catch((e) => console.error("Error guardando ajustes remotos", e));
+      })
+        .then((response) => {
+          if (!response.ok) throw new Error("No se pudieron guardar los ajustes en la nube");
+          setSyncError(null);
+        })
+        .catch((e) => {
+          console.error("Error guardando ajustes remotos", e);
+          setSyncError("No se pudo guardar en la nube. El cambio quedó solo en este dispositivo.");
+        });
     }
   }, []);
 
-  return { days, settings, loaded, saveDays, upsertDay, saveSettings };
+  return { days, settings, loaded, syncError, saveDays, upsertDay, saveSettings };
 }
