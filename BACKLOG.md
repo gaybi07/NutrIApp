@@ -65,6 +65,8 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
   tienen labels claros para alguien que no conoce la app.
 - Pensar si "Datos" (import/export) debería vivir en un ajuste separado en vez de
   compartir grilla con las acciones diarias.
+- ~~"Pasos de la semana" y "Compras / ticket" ahora arrancan colapsadas~~ (hecho 2026-09-09,
+  `Collapsible.tsx`)
 
 ## Registro de cambios
 
@@ -83,3 +85,14 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
   funcionan ahora en producción. (No fue un cambio de código, solo de config.)
 - **2026-09-09**: agregado `TodayCard.tsx` (tarea #11). Se extrajo `INTENSITY_STYLES`
   a `lib/types.ts` para compartirlo entre `Ledger.tsx` y `TodayCard.tsx` sin duplicar.
+- **2026-09-09**: usuario reportó que en la tarjeta Hoy los botones de entrenamiento
+  "no reaccionan" y los pasos "no se reflejan en otro lado". Se probó el mismo código
+  con un navegador automatizado (Playwright) contra el dev server local: el click sí
+  cambia el estilo del botón al instante y el valor de pasos se guarda correctamente
+  en `localStorage`. No se pudo reproducir el bug en ese entorno — sospecha de timing
+  con el deploy de Vercel todavía en curso al momento de la prueba, o algo específico
+  del dispositivo/navegador real. Pendiente confirmar si persiste tras el redeploy.
+- **2026-09-09**: agregado `Collapsible.tsx` y aplicado a `DailySteps.tsx` (Pasos de
+  la semana) y `ShoppingLog.tsx` (Ticket / foto) — ambas secciones arrancan cerradas
+  y se despliegan al tocar el header, a pedido del usuario (ya no son necesarias todo
+  el tiempo ahora que existe `TodayCard`, pero se mantienen como respaldo).

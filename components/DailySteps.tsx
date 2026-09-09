@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { DayEntry, emptyDay } from "@/lib/types";
+import { Collapsible } from "@/components/Collapsible";
 
 export function DailySteps({ weekDates, weekDays, onUpsert }: { weekDates: string[]; weekDays: (DayEntry | null)[]; onUpsert: (entry: DayEntry) => void }) {
   const [status, setStatus] = useState("");
@@ -15,14 +16,11 @@ export function DailySteps({ weekDates, weekDays, onUpsert }: { weekDates: strin
   };
 
   return (
-    <section className="mb-4 rounded-2xl border border-border bg-surface/70 p-3">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Movimiento diario</div>
-          <h2 className="font-display text-xl leading-none">Pasos de la semana</h2>
-        </div>
-        {status && <div className="font-mono text-[9px] uppercase text-sage">{status}</div>}
-      </div>
+    <Collapsible
+      eyebrow="Movimiento diario"
+      title="Pasos de la semana"
+      badge={status ? <div className="font-mono text-[9px] uppercase text-sage">{status}</div> : undefined}
+    >
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {weekDates.map((date, index) => {
           const day = new Date(`${date}T00:00:00`);
@@ -46,6 +44,6 @@ export function DailySteps({ weekDates, weekDays, onUpsert }: { weekDates: strin
           );
         })}
       </div>
-    </section>
+    </Collapsible>
   );
 }
