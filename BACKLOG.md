@@ -36,7 +36,9 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
 - [ ] 15. Definir métricas para clientes / gimnasio
 - [ ] 16. Armar MVP para app Android vía Capacitor
 - [ ] 17. Diseñar íconos y splash para APK
-- [ ] 18. Pruebas en dispositivo real
+- [~] 18. Pruebas en dispositivo real
+      — login (magic link + Google) probado y funcionando en el celular; falta probar
+      "Agregar a pantalla de inicio" (PWA) y el resto de las pantallas en uso real
 - [ ] 19. Versionado y release notes
 - [~] 20. Ideas futuras: recetas, historial, export, coach dashboard
       — `RecipePlanner.tsx` y `ShoppingLog.tsx` avanzados; `DataImport.tsx` (import/export de respaldo)
@@ -72,3 +74,8 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
   importaba `@/registro_export.json` (datos personales, gitignoreados) como seed para
   usuarios nuevos, y Vercel no podía resolver el import. Se sacó el seed: usuarios/
   dispositivos nuevos ahora arrancan vacíos, que es lo correcto para un producto real.
+- **2026-09-09**: deploy en Vercel (https://nutriapp-rose-six.vercel.app) probado en
+  celular real. Magic link por email funcionó de entrada. Login con Google daba
+  `redirect_uri_mismatch` — faltaba autorizar `https://<project-ref>.supabase.co/auth/v1/callback`
+  en Google Cloud Console (Credentials → OAuth Client). Ambos métodos de login
+  funcionan ahora en producción. (No fue un cambio de código, solo de config.)
