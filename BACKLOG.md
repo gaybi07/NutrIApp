@@ -135,7 +135,7 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
   esquema en commits posteriores a cuando corrió el script original). Se agregó
   `supabase/migration_2026-09-09_add_missing_columns.sql` con `alter table ... add
   column if not exists` para que el usuario la corra una vez en el SQL Editor.
-  Pendiente: confirmar que desaparece el banner de sync después de correrla.
+  Confirmado: usuario corrió la migración y el sync ya funciona entre dispositivos.
 - **2026-09-09**: arreglada inconsistencia en `RankingCard`: el color rojo/verde de cada
   día salía por posición relativa (mejores 3 / peores 3), mientras que el detalle por
   comida usaba un umbral fijo (2.5g/100kcal = bueno). Un día con densidad 4.6 (bueno por
@@ -148,3 +148,13 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
   peso de la semana, el botón grande desaparece y queda una fila discreta con el peso,
   la comparación vs la semana anterior (flecha + color según si el modo de objetivo es
   "perder"/"aumentar"/"recomponer") y una racha 🔥 de semanas seguidas con peso cargado.
+- **2026-09-09**: cambiado el criterio de "bueno/medio/malo" del ranking de días a
+  pedido del usuario — antes usaba densidad de proteína (g/100kcal), que consideró
+  demasiado fácil de lograr. Ahora `proteinDailyTier()` compara la proteína TOTAL del
+  día contra un objetivo real de mantenimiento muscular: `1.6g × peso corporal`
+  (constante citada en nutrición deportiva como piso para no perder masa magra en
+  déficit). Bueno = llegó al objetivo, medio = 90–100% del objetivo, malo = menos del
+  90%. El peso se toma del último dato disponible (peso diario cargado > peso semanal
+  > peso del perfil de la calculadora > 75kg de fallback). El detalle por comida sigue
+  usando la densidad por caloría sin cambios, porque ahí compara comidas entre sí, no
+  contra un objetivo diario.

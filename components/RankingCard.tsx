@@ -1,7 +1,7 @@
 "use client";
 
 import { DayEntry } from "@/lib/types";
-import { rankDays, proteinQualityTier, ProteinQualityTier } from "@/lib/calculations";
+import { rankDays, proteinQualityTier, proteinTargetForWeight, proteinDailyTier, ProteinQualityTier } from "@/lib/calculations";
 import { Collapsible } from "@/components/Collapsible";
 
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
@@ -16,12 +16,15 @@ const TIER_STYLE: Record<ProteinQualityTier, { label: string; color: string; dot
   malo: { label: "malo", color: "text-rust", dot: "bg-rust", panel: "border-l-rust/70" },
 };
 
-export function RankingCard({ days }: { days: DayEntry[] }) {
+export function RankingCard({ days, weightKg }: { days: DayEntry[]; weightKg: number }) {
   const ranked = rankDays(days);
-  const buenos = ranked.filter((r) => proteinQualityTier(r.density) === "bueno");
+  const target = proteinTargetForWeight(weightKg);
+  const buenos = ranked
+    .filter((r) => proteinDailyTier(r.protein, target) === "bueno")
+    .sort((a, b) => b.protein - a.protein);
   const paraMejorar = ranked
-    .filter((r) => proteinQualityTier(r.density) !== "bueno")
-    .sort((a, b) => a.density - b.density);
+    .filter((r) => proteinDailyTier(r.protein, target) !== "bueno")
+    .sort((a, b) => a.protein - b.protein);
 
   return (
     <Collapsible eyebrow="Semana" title="Ranking de días">
@@ -29,40 +32,43 @@ export function RankingCard({ days }: { days: DayEntry[] }) {
         <div className="text-center text-textMuted text-sm py-4">Cargá al menos 2 días para ver el ranking.</div>
       ) : (
         <>
+          <div className="mb-2 text-[11px] text-textMuted">
+            Objetivo diario: <span className="font-mono text-text">{target}g</span> de proteína (1.6g × {weightKg}kg,
+            piso para mantener masa muscular).
+          </div>
           <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[9.5px] uppercase tracking-wide text-textMuted">
-            <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-sage" /> ≥2.5 bueno</span>
-            <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-gold" /> 1.5–2.5 medio</span>
-            <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-rust" /> &lt;1.5 a mejorar</span>
+            <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-sage" /> ≥{target}g bueno</span>
+            <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-gold" /> {Math.round(target * 0.9)}–{target}g medio</span>
+            <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-rust" /> &lt;{Math.round(target * 0.9)}g a mejorar</span>
           </div>
 
           <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted mb-1">
-            Buenos días (más proteína por caloría)
+            Buenos días (llegaron al objetivo)
           </div>
           {buenos.length === 0 ? (
-            <div className="py-2 text-[11px] text-textMuted italic">Todavía ningún día llegó a 2.5g/100kcal.</div>
+            <div className="py-2 text-[11px] text-textMuted italic">Todavía ningún día llegó a {target}g.</div>
           ) : (
-            buenos.map((r) => <RankRow key={r.day.fecha} r={r} />)
+            buenos.map((r) => <RankRow key={r.day.fecha} r={r} target={target} />)
           )}
 
           <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted mt-3 mb-1">
             Días para mejorar
           </div>
           {paraMejorar.length === 0 ? (
-            <div className="py-2 text-[11px] text-sage italic">🎉 Todos tus días están en buen nivel.</div>
+            <div className="py-2 text-[11px] text-sage italic">🎉 Todos tus días llegaron al objetivo.</div>
           ) : (
-            paraMejorar.map((r) => <RankRow key={r.day.fecha} r={r} />)
+            paraMejorar.map((r) => <RankRow key={r.day.fecha} r={r} target={target} />)
           )}
 
           <div className="mt-3 rounded-lg border border-gold/30 bg-gold/10 p-2.5 text-[11px] text-textMuted">
-            <div className="mb-1 font-mono text-[9px] uppercase tracking-[0.14em] text-gold">Cómo subir la densidad</div>
-            Sumá una porción de proteína magra (pollo, pescado, claras de huevo, yogur o queso fresco) en las
-            comidas con más calorías "vacías" (harinas, frituras, salsas con azúcar). El objetivo es superar
-            2.5g de proteína cada 100 kcal en cada comida, no solo en el total del día.
+            <div className="mb-1 font-mono text-[9px] uppercase tracking-[0.14em] text-gold">Cómo llegar al objetivo</div>
+            Sumá una porción de proteína magra (pollo, pescado, claras de huevo, yogur o queso fresco) en la comida
+            más floja del día. Repartir {target}g entre 4 comidas es ~{Math.round(target / 4)}g por comida.
           </div>
 
           <div className="text-[11px] text-textMuted italic mt-3">
-            Puntaje = gramos de proteína cada 100 kcal del día. Más alto = comiste más proteína en relación a las
-            calorías totales.
+            El detalle por comida usa una métrica distinta (g de proteína cada 100 kcal) para comparar qué tan
+            "eficiente" fue cada comida, no el objetivo diario de arriba.
           </div>
         </>
       )}
@@ -70,20 +76,17 @@ export function RankingCard({ days }: { days: DayEntry[] }) {
   );
 }
 
-function RankRow({ r }: { r: ReturnType<typeof rankDays>[number] }) {
-  const tier = proteinQualityTier(r.density);
+function RankRow({ r, target }: { r: ReturnType<typeof rankDays>[number]; target: number }) {
+  const tier = proteinDailyTier(r.protein, target);
   const tierColor = TIER_STYLE[tier].color;
+  const pct = target > 0 ? Math.round((r.protein / target) * 100) : 0;
 
   const reason =
     tier === "bueno"
       ? r.bestMeal
         ? `Mucha proteína por caloría en ${r.bestMeal.label} (${r.bestMeal.density.toFixed(1)}g/100kcal)`
         : ""
-      : r.worstMeal
-      ? `${r.worstMeal.label.charAt(0).toUpperCase() + r.worstMeal.label.slice(1)} aportó pocas kcal de proteína (${(
-          r.worstMeal.density ?? 0
-        ).toFixed(1)}g/100kcal)`
-      : "";
+      : `Te faltaron ${Math.max(0, target - r.protein)}g para llegar a los ${target}g del objetivo.`;
 
   const segments = [
     { key: "des", label: "Desayuno", kcal: r.day.desK, protein: r.day.desP },
@@ -98,10 +101,10 @@ function RankRow({ r }: { r: ReturnType<typeof rankDays>[number] }) {
 
   const improvementText =
     tier === "bueno"
-      ? "Buen equilibrio general. Mantené esta estructura de comidas."
+      ? "Llegaste al objetivo del día. Mantené esta estructura de comidas."
       : weakSegment
-      ? `Mejorá ${weakSegment.label.toLowerCase()} con más proteína y menos calorías vacías.`
-      : "Muy buen balance general. Mantené la consistencia en la estructura diaria.";
+      ? `Mejorá ${weakSegment.label.toLowerCase()} con más proteína (agregá una porción de carne, huevo, yogur o queso).`
+      : "Sumá una fuente de proteína en cada comida para acercarte al objetivo.";
 
   return (
     <div className="group relative">
@@ -112,8 +115,9 @@ function RankRow({ r }: { r: ReturnType<typeof rankDays>[number] }) {
           </div>
           <div className="text-[11px] text-textMuted mt-0.5">{reason}</div>
         </div>
-        <div className={`font-mono text-sm font-semibold ${tierColor}`}>
-          {r.density.toFixed(1)}
+        <div className={`text-right font-mono text-sm font-semibold ${tierColor}`}>
+          {pct}%
+          <span className="block text-[9px] font-normal uppercase tracking-wide">obj.</span>
         </div>
       </div>
 

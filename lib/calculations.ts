@@ -93,6 +93,27 @@ export function proteinQualityTier(density: number): ProteinQualityTier {
   return "malo";
 }
 
+/**
+ * Proteína diaria (g) para mantener masa muscular sin pérdidas, según el peso.
+ * 1.6 g/kg/día es el piso citado habitualmente en la literatura de nutrición
+ * deportiva para preservar masa magra incluso en déficit calórico.
+ */
+export function proteinTargetForWeight(weightKg: number): number {
+  return Math.round(weightKg * 1.6);
+}
+
+/**
+ * Clasifica la proteína TOTAL de un día contra el objetivo de mantenimiento
+ * muscular (no contra la densidad por caloría, que es una medida distinta
+ * usada para comparar comidas entre sí, no días contra un objetivo real).
+ */
+export function proteinDailyTier(totalProtein: number, target: number): ProteinQualityTier {
+  if (target <= 0) return "malo";
+  if (totalProtein >= target) return "bueno";
+  if (totalProtein >= target * 0.9) return "medio";
+  return "malo";
+}
+
 export interface RankedDay {
   day: DayEntry;
   total: number;

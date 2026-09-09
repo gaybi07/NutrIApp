@@ -57,6 +57,16 @@ export default function Home() {
   }, [days]);
   const todayKcal = todayEntry.desK + todayEntry.almK + todayEntry.merK + todayEntry.cenK;
 
+  const currentWeightKg = useMemo(() => {
+    const lastDailyWeight = [...days].sort((a, b) => b.fecha.localeCompare(a.fecha)).find((d) => d.pesoKg)?.pesoKg;
+    if (lastDailyWeight) return lastDailyWeight;
+    const weekKeys = Object.keys(settings.weeklyWeights || {}).sort();
+    const lastWeeklyWeight = weekKeys.length ? settings.weeklyWeights![weekKeys[weekKeys.length - 1]] : undefined;
+    if (lastWeeklyWeight) return lastWeeklyWeight;
+    const profileWeight = settings.calculatorProfile?.actual ? Number(settings.calculatorProfile.actual) : undefined;
+    return profileWeight || 75;
+  }, [days, settings]);
+
   const saveWeeklyWeight = useCallback(
     (weekKey: string, weight: number) => {
       saveSettings({
@@ -147,7 +157,7 @@ export default function Home() {
         />
       </div>
 
-      <RankingCard days={days} />
+      <RankingCard days={days} weightKg={currentWeightKg} />
 
       <Collapsible eyebrow="Herramientas" title="Calculadora y carga con IA">
         <div className="grid grid-cols-2 gap-2">
