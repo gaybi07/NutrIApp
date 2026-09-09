@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { calcGoalDeficit } from "@/lib/calculations";
+import { calcGoalDeficit, addDays, fmtDate } from "@/lib/calculations";
 import { CalculatorProfile, GoalMode } from "@/lib/types";
 
 export function GoalCalculator({
@@ -21,6 +21,34 @@ export function GoalCalculator({
   const [fecha, setFecha] = useState(initialProfile?.fecha || "");
   const [modo, setModo] = useState<GoalMode>(initialProfile?.modo || "perder");
   const [result, setResult] = useState<React.ReactNode>(null);
+
+  const alturaNum = Number(altura);
+  const actualNum = Number(actual);
+  const alturaValida = alturaNum > 0;
+  const pesoValido = actualNum > 0;
+  const alturaM = alturaNum / 100;
+  const bmiActual = alturaValida && pesoValido ? actualNum / (alturaM * alturaM) : null;
+  const bmiCategoria =
+    bmiActual == null
+      ? null
+      : bmiActual < 18.5
+      ? "bajo peso"
+      : bmiActual < 25
+      ? "normal"
+      : bmiActual < 30
+      ? "sobrepeso"
+      : "obesidad";
+  const pesoSaludableMin = alturaValida ? Math.round(18.5 * alturaM * alturaM * 10) / 10 : null;
+  const pesoSaludableMax = alturaValida ? Math.round(24.9 * alturaM * alturaM * 10) / 10 : null;
+
+  const applySuggestion = () => {
+    if (pesoSaludableMax == null || !pesoValido) return;
+    const objetivo = actualNum > pesoSaludableMax ? pesoSaludableMax : pesoSaludableMin ?? pesoSaludableMax;
+    const kgABajar = actualNum - objetivo;
+    const semanasNecesarias = Math.max(1, Math.ceil(kgABajar / 1));
+    setMeta(String(objetivo));
+    setFecha(fmtDate(addDays(new Date(), semanasNecesarias * 7)));
+  };
 
   const handleCalc = () => {
     const a = Number(actual);
@@ -133,16 +161,35 @@ export function GoalCalculator({
         </div>
       </div>
       {modo === "perder" && (
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          <div>
-            <label>Peso objetivo (kg)</label>
-            <input type="number" step="0.1" value={meta} onChange={(e) => setMeta(e.target.value)} />
+        <>
+          {bmiActual != null && pesoSaludableMin != null && pesoSaludableMax != null && (
+            <div className="mt-2 rounded-lg border border-sage/30 bg-sage/10 p-2.5 text-[11px] text-textMuted">
+              <div className="mb-1">
+                Tu IMC actual es <span className="font-mono text-text">{bmiActual.toFixed(1)}</span> ({bmiCategoria}).
+                Para tu altura, un peso saludable (IMC 18.5–24.9) está entre{" "}
+                <span className="font-mono text-text">{pesoSaludableMin}kg</span> y{" "}
+                <span className="font-mono text-text">{pesoSaludableMax}kg</span>.
+              </div>
+              <button
+                type="button"
+                onClick={applySuggestion}
+                className="mt-1 w-full rounded-lg border border-sage/50 bg-sage/15 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-sage"
+              >
+                Usar sugerencia (máx. 1kg/semana)
+              </button>
+            </div>
+          )}
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <div>
+              <label>Peso objetivo (kg)</label>
+              <input type="number" step="0.1" value={meta} onChange={(e) => setMeta(e.target.value)} />
+            </div>
+            <div>
+              <label>Fecha objetivo</label>
+              <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+            </div>
           </div>
-          <div>
-            <label>Fecha objetivo</label>
-            <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
-          </div>
-        </div>
+        </>
       )}
       <button
         onClick={handleCalc}

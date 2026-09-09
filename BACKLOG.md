@@ -68,6 +68,23 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
 - ~~"Pasos de la semana" y "Compras / ticket" ahora arrancan colapsadas~~ (hecho 2026-09-09,
   `Collapsible.tsx`)
 
+## UX grande pendiente (pedido 2026-09-09, sin implementar todavía salvo lo marcado)
+
+1. [x] Sugerencia de peso objetivo por IMC + altura en `GoalCalculator` (rango
+       saludable IMC 18.5–24.9, botón "usar sugerencia" que respeta máx. 1kg/semana).
+2. [ ] Onboarding guiado: registrarte → popup de calculadora → después recién el
+       resto de los datos/pantallas. Mismo pedido que el ítem 5 de abajo — se
+       resuelven juntos con un asistente de primeros pasos.
+3. [ ] Layout distinto para PC/escritorio (hoy todo es mobile-first a una columna).
+4. [ ] Más info contextual por sección — qué hace y para qué sirve cada ítem
+       (tooltips o texto expandible "¿Qué es esto?").
+5. [ ] Wizard de primera vez: paso a paso con ayuda para completar toda la
+       configuración inicial, y recién cuando está listo se habilita el resto de
+       la app (mismo pedido que el ítem 2).
+
+Antes de construir 2/3/4/5 conviene decidir el orden — quedó pendiente la
+confirmación del usuario sobre por cuál seguir primero.
+
 ## Registro de cambios
 
 - **2026-09-09**: arreglado build roto (`RecipePlanner` pedía `dailyGoal`/`consumedKcal`
