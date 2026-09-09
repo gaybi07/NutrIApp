@@ -127,8 +127,15 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
   no llegó a la nube. Se agregó chequeo de `response.ok` + un `syncError` visible en la
   UI (banner rojo debajo del header) tanto para fallos de guardado como de carga inicial.
   Usuario confirmó que usa la misma cuenta en PC y celu, así que se descartó el caso de
-  cuentas distintas — pendiente confirmar si el banner nuevo revela la causa real la
-  próxima vez que pase.
+  cuentas distintas.
+- **2026-09-09**: causa raíz encontrada gracias al banner con detalle: la base de
+  Supabase real del usuario es más vieja que `supabase/schema.sql` — le faltaba la
+  columna `user_settings.weekly_weights` (y probablemente `calculator_profile`,
+  `days.peso_kg`, `days.entreno_minutos`, `days.entreno_intensidad`, agregadas al
+  esquema en commits posteriores a cuando corrió el script original). Se agregó
+  `supabase/migration_2026-09-09_add_missing_columns.sql` con `alter table ... add
+  column if not exists` para que el usuario la corra una vez en el SQL Editor.
+  Pendiente: confirmar que desaparece el banner de sync después de correrla.
 - **2026-09-09**: arreglada inconsistencia en `RankingCard`: el color rojo/verde de cada
   día salía por posición relativa (mejores 3 / peores 3), mientras que el detalle por
   comida usaba un umbral fijo (2.5g/100kcal = bueno). Un día con densidad 4.6 (bueno por
