@@ -84,10 +84,15 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
        ahora pide un dato a la vez (modo → peso → altura → edad → sexo → [meta →
        fecha] → resultado) con un cuadro "¿Para qué sirve?" en cada paso, en vez
        de mostrar todo el formulario junto. Los pasos de peso/pasos del wizard
-       también tienen su propio "¿Para qué sirve?". Falta extender esto (tooltips
-       o texto expandible) al resto de la app fuera del onboarding.
+       también tienen su propio "¿Para qué sirve?". Además se agregó
+       `AppTour.tsx`: tras terminar el onboarding (una sola vez, controlado por
+       `settings.tourDone`), un recorrido de 8 tarjetas sobre la app real (Hoy,
+       Semana, Ranking, Herramientas, Tabla, Pasos, Compras, Planner) explicando
+       para qué sirve cada sección. Sigue faltando info contextual permanente en
+       cada sección para cuando el usuario ya vio el tour y quiere repasar algo
+       (tooltips o texto expandible tipo "¿Qué es esto?" en cada tarjeta).
 
-Quedan 3 completo y 4 fuera del onboarding — a definir cuál sigue.
+Queda el ítem 3, y la info contextual permanente (parte del 4) fuera del tour de bienvenida.
 
 ## Registro de cambios
 
@@ -198,3 +203,10 @@ Quedan 3 completo y 4 fuera del onboarding — a definir cuál sigue.
   `esAgresivo` (déficit >30% del gasto o >1% del peso corporal por semana) pero
   ninguna de las dos UIs lo muestra — vale la pena agregar una advertencia visible
   cuando el objetivo sugerido sea demasiado agresivo.
+- **2026-09-09**: agregado `AppTour.tsx` — recorrido de 8 tarjetas que se muestra una
+  sola vez, justo después de terminar el onboarding, con overlay sobre la app real de
+  fondo (no una pantalla en blanco aparte). Controlado por `settings.tourDone`
+  (persistido, no vuelve a aparecer). Se puede saltear en cualquier momento.
+- **2026-09-09**: bajado el umbral del ranking de proteína de 1.6g/kg a 1.3g/kg a
+  pedido del usuario (lo encontró más alcanzable). Cambiado en `proteinTargetForWeight()`
+  y en los textos de `RankingCard.tsx` y `AppTour.tsx` que mencionaban el número viejo.

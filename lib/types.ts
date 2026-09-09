@@ -41,6 +41,7 @@ export interface Settings {
   tdeeFallback: number; // gasto de referencia cuando no hay pasos cargados
   weeklyWeights?: Record<string, number>; // peso registrado por semana, usando el lunes como clave
   calculatorProfile?: CalculatorProfile;
+  tourDone?: boolean; // si ya vio el tour guiado de la app (se muestra una sola vez, tras el onboarding)
 }
 
 export const MEAL_LABELS: Record<MealKey, string> = {

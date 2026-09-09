@@ -95,11 +95,11 @@ export function proteinQualityTier(density: number): ProteinQualityTier {
 
 /**
  * Proteína diaria (g) para mantener masa muscular sin pérdidas, según el peso.
- * 1.6 g/kg/día es el piso citado habitualmente en la literatura de nutrición
- * deportiva para preservar masa magra incluso en déficit calórico.
+ * 1.3 g/kg/día, a pedido del usuario (más alcanzable que el 1.6 g/kg citado en
+ * algunos estudios de nutrición deportiva como piso conservador en déficit).
  */
 export function proteinTargetForWeight(weightKg: number): number {
-  return Math.round(weightKg * 1.6);
+  return Math.round(weightKg * 1.3);
 }
 
 /**

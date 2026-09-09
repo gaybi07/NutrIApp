@@ -33,7 +33,7 @@ export function RankingCard({ days, weightKg }: { days: DayEntry[]; weightKg: nu
       ) : (
         <>
           <div className="mb-2 text-[11px] text-textMuted">
-            Objetivo diario: <span className="font-mono text-text">{target}g</span> de proteína (1.6g × {weightKg}kg,
+            Objetivo diario: <span className="font-mono text-text">{target}g</span> de proteína (1.3g × {weightKg}kg,
             piso para mantener masa muscular).
           </div>
           <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[9.5px] uppercase tracking-wide text-textMuted">

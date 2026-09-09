@@ -18,6 +18,7 @@ import { DataImport } from "@/components/DataImport";
 import { TodayCard } from "@/components/TodayCard";
 import { TrainingEntryForm } from "@/components/TrainingEntryForm";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
+import { AppTour } from "@/components/AppTour";
 import { Collapsible } from "@/components/Collapsible";
 import { isSupabaseConfigured } from "@/lib/supabase/browser";
 import { useInventory } from "@/lib/useInventory";
@@ -120,6 +121,10 @@ export default function Home() {
         <div className="mb-4 rounded-xl border border-rust/40 bg-rust/10 px-3 py-2 text-[11px] text-rust">
           ⚠ {syncError}
         </div>
+      )}
+
+      {!settings.tourDone && (
+        <AppTour onFinish={() => saveSettings({ ...settings, tourDone: true })} />
       )}
 
       <TodayCard
