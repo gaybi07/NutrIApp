@@ -13,6 +13,8 @@ import { RecipePlanner } from "@/components/RecipePlanner";
 import { ShoppingLog } from "@/components/ShoppingLog";
 import { WeeklyWeight } from "@/components/WeeklyWeight";
 import { AuthPanel } from "@/components/AuthPanel";
+import { DailySteps } from "@/components/DailySteps";
+import { DataImport } from "@/components/DataImport";
 import { isSupabaseConfigured } from "@/lib/supabase/browser";
 import { useInventory } from "@/lib/useInventory";
 import { DayEntry, emptyDay, MealKey } from "@/lib/types";
@@ -20,10 +22,10 @@ import { DayEntry, emptyDay, MealKey } from "@/lib/types";
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
 export default function Home() {
-  const { days, settings, loaded, upsertDay, saveSettings } = useLocalDays();
+  const { days, settings, loaded, upsertDay, saveDays, saveSettings } = useLocalDays();
   const { items: inventory, addText, consumeByText, consumeItem, consumeAmounts, persist: replaceInventory } = useInventory();
   const [weekOffset, setWeekOffset] = useState(0);
-  const [panel, setPanel] = useState<"calc" | "ai" | "ranking" | null>(null);
+  const [panel, setPanel] = useState<"calc" | "ai" | "ranking" | "datos" | null>(null);
   const [, setAuthenticated] = useState(true);
   const handleAuthChange = useCallback((value: boolean) => setAuthenticated(value), []);
 
@@ -45,6 +47,12 @@ export default function Home() {
   const summary = useMemo(() => summarizeWeek(presentDays, settings.tdeeFallback, settings.goal), [presentDays, settings]);
 
   const sunday = addDays(monday, 6);
+
+  const todayEntry = useMemo(() => {
+    const todayFecha = fmtDate(new Date());
+    return days.find((d) => d.fecha === todayFecha) || emptyDay(todayFecha);
+  }, [days]);
+  const todayKcal = todayEntry.desK + todayEntry.almK + todayEntry.merK + todayEntry.cenK;
 
   const saveWeeklyWeight = useCallback(
     (weekKey: string, weight: number) => {
@@ -116,10 +124,10 @@ export default function Home() {
           Objetivo
         </button>
         <button
-          onClick={() => setPanel((current) => (current === "calc" ? null : "calc"))}
+          onClick={() => setPanel((current) => (current === "datos" ? null : "datos"))}
           className="rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
         >
-          Consumo / objetivo
+          Datos
         </button>
         <button
           onClick={() => setPanel((current) => (current === "ai" ? null : "ai"))}
@@ -184,6 +192,26 @@ export default function Home() {
         </div>
       )}
 
+      {panel === "datos" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-lg rounded-2xl border border-border bg-surface p-3 shadow-2xl">
+            <button
+              onClick={() => setPanel(null)}
+              className="absolute right-3 top-3 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+            >
+              Cerrar
+            </button>
+            <DataImport
+              onImport={(importedDays, importedSettings) => {
+                saveDays(importedDays);
+                if (importedSettings) saveSettings(importedSettings);
+                setPanel(null);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       <WeeklyChart
         weekDates={weekDates}
         weekDays={weekDays}
@@ -192,8 +220,15 @@ export default function Home() {
         avgGasto={settings.tdeeFallback}
       />
       <Ledger weekDates={weekDates} weekDays={weekDays} goal={summary.avgGoal || settings.goal} tdeeFallback={settings.tdeeFallback} onUpsert={upsertDay} />
+      <DailySteps weekDates={weekDates} weekDays={weekDays} onUpsert={upsertDay} />
       <ShoppingLog items={inventory} addInventoryText={addText} replaceItems={replaceInventory} />
-      <RecipePlanner items={inventory} consumeAmounts={consumeAmounts} onUseRecipe={useRecipeAsMeal} />
+      <RecipePlanner
+        items={inventory}
+        consumeAmounts={consumeAmounts}
+        onUseRecipe={useRecipeAsMeal}
+        dailyGoal={settings.goal}
+        consumedKcal={todayKcal}
+      />
     </main>
   );
 }

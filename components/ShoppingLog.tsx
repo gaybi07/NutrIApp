@@ -2,9 +2,11 @@
 
 import { ChangeEvent, useMemo, useState } from "react";
 import { InventoryItem } from "@/lib/types";
+import { inventoryUnitLabel } from "@/lib/useInventory";
 
 export function ShoppingLog({ items, addInventoryText, replaceItems }: { items: InventoryItem[]; addInventoryText: (text: string) => void; replaceItems: (items: InventoryItem[]) => void }) {
   const [raw, setRaw] = useState("");
+  const [mode, setMode] = useState<"manual" | "foto">("manual");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -34,6 +36,12 @@ export function ShoppingLog({ items, addInventoryText, replaceItems }: { items: 
       return;
     }
     addItems(parsedItems);
+  };
+
+  const selectManual = () => {
+    setMode("manual");
+    setImagePreview(null);
+    setStatus("");
   };
 
   const readTicket = async () => {
@@ -81,6 +89,7 @@ export function ShoppingLog({ items, addInventoryText, replaceItems }: { items: 
     const reader = new FileReader();
     reader.onload = () => {
       setImagePreview(String(reader.result));
+      setMode("foto");
       setStatus("Foto cargada. Podés leerla con IA o cargar manualmente.");
     };
     reader.readAsDataURL(file);
@@ -108,16 +117,17 @@ export function ShoppingLog({ items, addInventoryText, replaceItems }: { items: 
       <div className="mb-3 rounded-xl border border-dashed border-border bg-bg/40 p-2">
         <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-textMuted mb-2">Opciones</div>
         <div className="grid grid-cols-2 gap-2">
-          <label className="flex cursor-pointer items-center justify-center rounded-xl border border-border bg-surfaceAlt px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-text">
+          <button
+            type="button"
+            onClick={selectManual}
+            className={`rounded-xl border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] ${mode === "manual" ? "border-gold bg-gold text-bg" : "border-border bg-surfaceAlt text-text"}`}
+          >
+            Escribir manualmente
+          </button>
+          <label className={`flex cursor-pointer items-center justify-center rounded-xl border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] ${mode === "foto" ? "border-gold bg-gold text-bg" : "border-border bg-surfaceAlt text-text"}`}>
             Subir foto
             <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
           </label>
-          <button
-            onClick={parseFromText}
-            className="rounded-xl border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg"
-          >
-            Manual
-          </button>
         </div>
       </div>
 
@@ -140,11 +150,11 @@ export function ShoppingLog({ items, addInventoryText, replaceItems }: { items: 
 
       <div className="flex gap-2">
         <button
-          onClick={readTicket}
+          onClick={mode === "manual" ? parseFromText : readTicket}
           disabled={loading}
           className="flex-1 rounded-xl border border-gold/60 bg-gold px-3 py-2 font-sans font-bold text-[12px] text-bg disabled:opacity-60"
         >
-          {loading ? "Leyendo..." : "Leer con IA"}
+          {loading ? "Leyendo..." : mode === "manual" ? "Cargar a la alacena" : "Leer con IA"}
         </button>
         <button
           onClick={clearItems}
@@ -179,7 +189,7 @@ export function ShoppingLog({ items, addInventoryText, replaceItems }: { items: 
             {items.map((item) => (
               <div key={item.id} className="flex items-center gap-2 rounded-lg border border-sage/50 bg-sage/10 px-2 py-1 font-mono text-[10px] text-text">
                 <span className="uppercase tracking-[0.12em]">{item.name}</span>
-                <span className="text-gold">{item.quantity} {item.unit}</span>
+                <span className="text-gold">{item.quantity} {inventoryUnitLabel(item.name, item.unit)}</span>
                 <button type="button" onClick={() => replaceItems(items.filter((current) => current.id !== item.id))} className="text-rust">×</button>
               </div>
             ))}
