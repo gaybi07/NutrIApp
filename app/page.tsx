@@ -17,6 +17,7 @@ import { DailySteps } from "@/components/DailySteps";
 import { DataImport } from "@/components/DataImport";
 import { TodayCard } from "@/components/TodayCard";
 import { TrainingEntryForm } from "@/components/TrainingEntryForm";
+import { Collapsible } from "@/components/Collapsible";
 import { isSupabaseConfigured } from "@/lib/supabase/browser";
 import { useInventory } from "@/lib/useInventory";
 import { DayEntry, emptyDay, MealKey } from "@/lib/types";
@@ -27,7 +28,7 @@ export default function Home() {
   const { days, settings, loaded, upsertDay, saveDays, saveSettings } = useLocalDays();
   const { items: inventory, addText, consumeByText, consumeItem, consumeAmounts, persist: replaceInventory } = useInventory();
   const [weekOffset, setWeekOffset] = useState(0);
-  const [panel, setPanel] = useState<"calc" | "ai" | "entreno" | "ranking" | "datos" | null>(null);
+  const [panel, setPanel] = useState<"calc" | "ai" | "entreno" | "datos" | null>(null);
   const [, setAuthenticated] = useState(true);
   const handleAuthChange = useCallback((value: boolean) => setAuthenticated(value), []);
 
@@ -123,36 +124,43 @@ export default function Home() {
         </div>
 
         <WeeklyWeight weekKey={fmtDate(monday)} weights={settings.weeklyWeights || {}} onSave={saveWeeklyWeight} />
+
+        <SummaryCards summary={summary} goal={summary.avgGoal || settings.goal} weight={settings.weeklyWeights?.[fmtDate(monday)]} />
+
+        <WeeklyChart
+          weekDates={weekDates}
+          weekDays={weekDays}
+          goal={settings.goal}
+          avgGoal={summary.avgGoal || settings.goal}
+          avgGasto={settings.tdeeFallback}
+        />
       </div>
 
-      <SummaryCards summary={summary} goal={summary.avgGoal || settings.goal} weight={settings.weeklyWeights?.[fmtDate(monday)]} />
+      <RankingCard days={days} />
 
-      <div className="mb-4 grid grid-cols-2 gap-2">
-        <button
-          onClick={() => setPanel((current) => (current === "calc" ? null : "calc"))}
-          className="rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
-        >
-          Objetivo
-        </button>
-        <button
-          onClick={() => setPanel((current) => (current === "datos" ? null : "datos"))}
-          className="rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
-        >
-          Datos
-        </button>
-        <button
-          onClick={() => setPanel((current) => (current === "ai" ? null : "ai"))}
-          className="rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
-        >
-          Cargar con IA
-        </button>
-        <button
-          onClick={() => setPanel((current) => (current === "ranking" ? null : "ranking"))}
-          className="rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
-        >
-          Ranking
-        </button>
-      </div>
+      <Collapsible eyebrow="Herramientas" title="Calculadora y carga con IA">
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => setPanel("calc")}
+            className="rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
+          >
+            Objetivo
+          </button>
+          <button
+            onClick={() => setPanel("ai")}
+            className="rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
+          >
+            Cargar con IA
+          </button>
+        </div>
+      </Collapsible>
+
+      <button
+        onClick={() => setPanel("datos")}
+        className="mb-4 w-full rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
+      >
+        Datos
+      </button>
 
       {panel === "calc" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm">
@@ -209,20 +217,6 @@ export default function Home() {
         </div>
       )}
 
-      {panel === "ranking" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg rounded-2xl border border-border bg-surface p-3 shadow-2xl">
-            <button
-              onClick={() => setPanel(null)}
-              className="absolute right-3 top-3 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
-            >
-              Cerrar
-            </button>
-            <RankingCard days={days} />
-          </div>
-        </div>
-      )}
-
       {panel === "datos" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm">
           <div className="relative w-full max-w-lg rounded-2xl border border-border bg-surface p-3 shadow-2xl">
@@ -243,13 +237,6 @@ export default function Home() {
         </div>
       )}
 
-      <WeeklyChart
-        weekDates={weekDates}
-        weekDays={weekDays}
-        goal={settings.goal}
-        avgGoal={summary.avgGoal || settings.goal}
-        avgGasto={settings.tdeeFallback}
-      />
       <Ledger weekDates={weekDates} weekDays={weekDays} goal={summary.avgGoal || settings.goal} tdeeFallback={settings.tdeeFallback} onUpsert={upsertDay} />
       <DailySteps weekDates={weekDates} weekDays={weekDays} onUpsert={upsertDay} />
       <ShoppingLog items={inventory} addInventoryText={addText} replaceItems={replaceInventory} />

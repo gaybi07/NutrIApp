@@ -113,3 +113,11 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
   color que usa `INTENSITY_STYLES`, en vez de un botón genérico sin estado. Se mejoró
   visualmente la barra de sesión activa en `AuthPanel.tsx` (avatar con inicial,
   indicador de "sesión activa", botón "Salir" con hover en rojo).
+- **2026-09-09**: reestructurada la sección semanal a pedido del usuario. "Indicadores"
+  (`SummaryCards`) y `WeeklyChart` ahora viven dentro de la tarjeta "Semana del ...";
+  el gráfico se ve siempre, "Indicadores" sigue colapsado. Se sacó el grid de 4 botones
+  (Objetivo/Datos/Cargar con IA/Ranking): ahora "Objetivo" y "Cargar con IA" comparten
+  una sección colapsable ("Calculadora y carga con IA"), "Datos" quedó como botón
+  suelto, y `RankingCard` (ya renombrado "Ranking de días", con su propio colapsable
+  interno) se renderiza directo en la página en vez de abrir como modal — separado de
+  la sección de calculadora/IA.
