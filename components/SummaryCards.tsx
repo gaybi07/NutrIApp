@@ -1,4 +1,5 @@
 import { WeekSummary } from "@/lib/calculations";
+import { Collapsible } from "@/components/Collapsible";
 
 export function SummaryCards({ summary, goal, weight }: { summary: WeekSummary; goal: number; weight?: number }) {
   const cards = [
@@ -83,11 +84,13 @@ export function SummaryCards({ summary, goal, weight }: { summary: WeekSummary; 
   );
 
   return (
-    <div className="grid grid-cols-2 gap-2.5 mb-5">
-      {cards.map((card) => renderCard(card))}
-      <div className="col-span-2 grid grid-cols-2 gap-2.5">
-        {deficitCards.map((card) => renderCard(card))}
+    <Collapsible eyebrow="Semana" title="Indicadores">
+      <div className="grid grid-cols-2 gap-2.5">
+        {cards.map((card) => renderCard(card))}
+        <div className="col-span-2 grid grid-cols-2 gap-2.5">
+          {deficitCards.map((card) => renderCard(card))}
+        </div>
       </div>
-    </div>
+    </Collapsible>
   );
 }

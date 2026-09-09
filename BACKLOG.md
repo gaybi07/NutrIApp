@@ -96,3 +96,14 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
   la semana) y `ShoppingLog.tsx` (Ticket / foto) — ambas secciones arrancan cerradas
   y se despliegan al tocar el header, a pedido del usuario (ya no son necesarias todo
   el tiempo ahora que existe `TodayCard`, pero se mantienen como respaldo).
+- **2026-09-09**: rediseñada `TodayCard.tsx` a pedido del usuario: ahora es una vista
+  de resumen de solo lectura (barra de kcal consumidas/objetivo ajustado + 3 datos:
+  restantes, proteína, pasos) en vez de tener los controles editables mezclados. El
+  "objetivo ajustado" usa `dayGoal()` de `lib/calculations.ts`, así que varía solo con
+  los pasos/entrenamiento cargados del día. La edición de pasos + intensidad de
+  entrenamiento se movió a un panel nuevo (`TrainingEntryForm.tsx`, botón
+  "+ Entrenamiento") con un botón "Guardar" explícito, siguiendo el mismo patrón que
+  "+ Cargar comida" (que sigue abriendo `AiEntryForm` sin cambios).
+- **2026-09-09**: "Indicadores" (`SummaryCards`) y "Tabla de la semana" (`Ledger`)
+  ahora también arrancan colapsados con `Collapsible.tsx`, para que lo primero que se
+  vea de la sección semanal sea el gráfico.

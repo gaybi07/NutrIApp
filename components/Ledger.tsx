@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { DayEntry, emptyDay, TrainingIntensity, INTENSITY_STYLES } from "@/lib/types";
 import { dayTotal, dayProt, dayDeficit, estimateTrainingCalories } from "@/lib/calculations";
+import { Collapsible } from "@/components/Collapsible";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
@@ -39,7 +40,8 @@ export function Ledger({
   };
 
   return (
-    <div className="bg-surface border border-border rounded-xl overflow-hidden mb-4">
+    <Collapsible eyebrow="Detalle diario" title="Tabla de la semana">
+    <div className="bg-surface border border-border rounded-xl overflow-hidden">
       <div className="grid grid-cols-[1.1fr_0.85fr_0.75fr_0.85fr_0.8fr_0.6fr] px-3 py-2 font-mono text-[8.5px] uppercase tracking-wide text-textMuted border-b border-border">
         <span>Día</span><span>Kcal</span><span>Prot.</span><span>Déficit</span><span>Pasos</span><span>Entr.</span>
       </div>
@@ -120,5 +122,6 @@ export function Ledger({
         </div>
       )}
     </div>
+    </Collapsible>
   );
 }

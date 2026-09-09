@@ -16,6 +16,7 @@ import { AuthPanel } from "@/components/AuthPanel";
 import { DailySteps } from "@/components/DailySteps";
 import { DataImport } from "@/components/DataImport";
 import { TodayCard } from "@/components/TodayCard";
+import { TrainingEntryForm } from "@/components/TrainingEntryForm";
 import { isSupabaseConfigured } from "@/lib/supabase/browser";
 import { useInventory } from "@/lib/useInventory";
 import { DayEntry, emptyDay, MealKey } from "@/lib/types";
@@ -26,7 +27,7 @@ export default function Home() {
   const { days, settings, loaded, upsertDay, saveDays, saveSettings } = useLocalDays();
   const { items: inventory, addText, consumeByText, consumeItem, consumeAmounts, persist: replaceInventory } = useInventory();
   const [weekOffset, setWeekOffset] = useState(0);
-  const [panel, setPanel] = useState<"calc" | "ai" | "ranking" | "datos" | null>(null);
+  const [panel, setPanel] = useState<"calc" | "ai" | "entreno" | "ranking" | "datos" | null>(null);
   const [, setAuthenticated] = useState(true);
   const handleAuthChange = useCallback((value: boolean) => setAuthenticated(value), []);
 
@@ -91,8 +92,9 @@ export default function Home() {
       <TodayCard
         entry={todayEntry}
         goal={settings.goal}
-        onUpsert={upsertDay}
+        tdeeFallback={settings.tdeeFallback}
         onLogMeal={() => setPanel("ai")}
+        onLogTraining={() => setPanel("entreno")}
       />
 
       <div className="mt-2 rounded-2xl border border-border/80 bg-surface/70 px-3 py-2.5 shadow-[0_0_0_1px_rgba(58,54,47,0.4)]">
@@ -182,6 +184,26 @@ export default function Home() {
               Cerrar
             </button>
             <AiEntryForm days={days} onUpsert={upsertDay} onConsumeInventory={consumeByText} />
+          </div>
+        </div>
+      )}
+
+      {panel === "entreno" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-lg rounded-2xl border border-border bg-surface p-3 shadow-2xl">
+            <button
+              onClick={() => setPanel(null)}
+              className="absolute right-3 top-3 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+            >
+              Cerrar
+            </button>
+            <TrainingEntryForm
+              entry={todayEntry}
+              onSave={(entry) => {
+                upsertDay(entry);
+                setPanel(null);
+              }}
+            />
           </div>
         </div>
       )}
