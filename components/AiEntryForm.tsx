@@ -1,21 +1,36 @@
 "use client";
 
-import { useState } from "react";
-import { DayEntry, MealKey, MEAL_LABELS, emptyDay } from "@/lib/types";
+import { useEffect, useState } from "react";
+import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, emptyDay } from "@/lib/types";
 
 export function AiEntryForm({
   days,
   onUpsert,
+  onConsumeInventory,
 }: {
   days: DayEntry[];
   onUpsert: (entry: DayEntry) => void;
+  onConsumeInventory?: (text: string) => void;
 }) {
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
   const [meal, setMeal] = useState<MealKey>("des");
   const [text, setText] = useState("");
+  const [inventoryText, setInventoryText] = useState("");
+  const [pasos, setPasos] = useState("");
+  const [pesoKg, setPesoKg] = useState("");
+  const [entrenoIntensidad, setEntrenoIntensidad] = useState<TrainingIntensity | "ninguno">("ninguno");
+  const [entrenoMinutos, setEntrenoMinutos] = useState("60");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
   const [preview, setPreview] = useState<{ kcal: number; protein: number; detalle: string } | null>(null);
+
+  useEffect(() => {
+    const existing = days.find((d) => d.fecha === fecha);
+    setPasos(existing?.pasos ? String(existing.pasos) : "");
+    setPesoKg(existing?.pesoKg ? String(existing.pesoKg) : "");
+    setEntrenoIntensidad(existing?.entreno ? existing.entrenoIntensidad || "moderado" : "ninguno");
+    setEntrenoMinutos(existing?.entrenoMinutos ? String(existing.entrenoMinutos) : "60");
+  }, [days, fecha]);
 
   const handleCalc = async () => {
     if (!text.trim()) {
@@ -51,11 +66,31 @@ export function AiEntryForm({
       ...existing,
       [kKey]: (existing[kKey] as number) + preview.kcal,
       [pKey]: (existing[pKey] as number) + preview.protein,
+      pasos: Number(pasos) || existing.pasos,
+      entreno: entrenoIntensidad !== "ninguno",
+      pesoKg: Number(pesoKg) > 0 ? Number(pesoKg) : existing.pesoKg,
+      entrenoMinutos: entrenoIntensidad !== "ninguno" ? Number(entrenoMinutos) || 60 : undefined,
+      entrenoIntensidad: entrenoIntensidad !== "ninguno" ? entrenoIntensidad : undefined,
     };
     onUpsert(updated);
+    onConsumeInventory?.(inventoryText || text);
     setText("");
     setPreview(null);
     setStatus(`Sumado a ${MEAL_LABELS[meal]} del ${fecha} ✓`);
+    setTimeout(() => setStatus(""), 3500);
+  };
+
+  const handleSaveActivity = () => {
+    const existing = days.find((d) => d.fecha === fecha) || emptyDay(fecha);
+    onUpsert({
+      ...existing,
+      pasos: Number(pasos) || existing.pasos,
+      entreno: entrenoIntensidad !== "ninguno",
+      pesoKg: Number(pesoKg) > 0 ? Number(pesoKg) : existing.pesoKg,
+      entrenoMinutos: entrenoIntensidad !== "ninguno" ? Number(entrenoMinutos) || 60 : undefined,
+      entrenoIntensidad: entrenoIntensidad !== "ninguno" ? entrenoIntensidad : undefined,
+    });
+    setStatus(`Actividad guardada para el ${fecha} ✓`);
     setTimeout(() => setStatus(""), 3500);
   };
 
@@ -87,6 +122,57 @@ export function AiEntryForm({
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
+      </div>
+      <div className="mt-2">
+        <label>Ingredientes usados del inventario (opcional)</label>
+        <input
+          type="text"
+          placeholder="Ej: 300 g pollo, 2 huevos, 150 g papa"
+          value={inventoryText}
+          onChange={(e) => setInventoryText(e.target.value)}
+        />
+        <div className="mt-1 text-[10px] text-textMuted">Al guardar la comida se descuentan esas cantidades.</div>
+      </div>
+      <div className="mt-3 rounded-lg border border-border bg-bg/40 p-3">
+        <div className="mb-2 font-mono text-[10px] uppercase tracking-wide text-textMuted">Actividad del día</div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label>Pasos</label>
+            <input type="number" min="0" step="100" value={pasos} onChange={(e) => setPasos(e.target.value)} placeholder="Ej: 8500" />
+          </div>
+          <div>
+            <label>Peso (kg)</label>
+            <input type="number" min="1" step="0.1" value={pesoKg} onChange={(e) => setPesoKg(e.target.value)} placeholder="Ej: 114.8" />
+          </div>
+          <div>
+            <label>Entrenamiento</label>
+            <select value={entrenoIntensidad} onChange={(e) => setEntrenoIntensidad(e.target.value as TrainingIntensity | "ninguno")}>
+              <option value="ninguno">No entrené</option>
+              <option value="leve">Leve</option>
+              <option value="moderado">Moderado</option>
+              <option value="exigente">Exigente</option>
+              <option value="fallo">Al fallo</option>
+            </select>
+          </div>
+        </div>
+        {entrenoIntensidad !== "ninguno" && (
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <div>
+              <label>Duración (min)</label>
+              <input type="number" min="1" step="5" value={entrenoMinutos} onChange={(e) => setEntrenoMinutos(e.target.value)} />
+            </div>
+            <div>
+              <label>Intensidad</label>
+              <div className="rounded-lg border border-border bg-bg px-3 py-2 text-[12px] text-textMuted">{entrenoIntensidad}</div>
+            </div>
+          </div>
+        )}
+        <button
+          onClick={handleSaveActivity}
+          className="mt-2 w-full rounded-lg border border-sage/50 bg-sage/10 p-2 font-sans text-[12px] font-bold text-sage"
+        >
+          Guardar actividad
+        </button>
       </div>
       <button
         onClick={handleCalc}

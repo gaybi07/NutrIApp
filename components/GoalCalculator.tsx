@@ -2,47 +2,85 @@
 
 import { useState } from "react";
 import { calcGoalDeficit } from "@/lib/calculations";
+import { CalculatorProfile, GoalMode } from "@/lib/types";
 
-export function GoalCalculator({ avgGasto, tdeeFallback }: { avgGasto: number; tdeeFallback: number }) {
-  const [actual, setActual] = useState("");
-  const [meta, setMeta] = useState("");
-  const [fecha, setFecha] = useState("");
+export function GoalCalculator({
+  tdeeFallback,
+  onApplyGoal,
+  initialProfile,
+}: {
+  tdeeFallback: number;
+  onApplyGoal?: (gasto: number, objetivo: number, profile: CalculatorProfile) => void;
+  initialProfile?: CalculatorProfile;
+}) {
+  const [actual, setActual] = useState(initialProfile?.actual || "");
+  const [meta, setMeta] = useState(initialProfile?.meta || "");
+  const [altura, setAltura] = useState(initialProfile?.altura || "");
+  const [edad, setEdad] = useState(initialProfile?.edad || "");
+  const [sexo, setSexo] = useState<"hombre" | "mujer">(initialProfile?.sexo || "hombre");
+  const [fecha, setFecha] = useState(initialProfile?.fecha || "");
+  const [modo, setModo] = useState<GoalMode>(initialProfile?.modo || "perder");
   const [result, setResult] = useState<React.ReactNode>(null);
 
   const handleCalc = () => {
     const a = Number(actual);
-    const m = Number(meta);
-    if (!a || !m || !fecha) {
-      setResult(<div className="text-textMuted text-[11px] italic">Completá los tres campos para calcular.</div>);
+    const h = Number(altura);
+    const e = Number(edad);
+    if (!a || !h || !e || a <= 0 || h <= 0 || e <= 0) {
+      setResult(<div className="text-textMuted text-[11px] italic">Completá peso, altura y edad para calcular.</div>);
       return;
     }
-    const gastoRef = avgGasto > 0 ? avgGasto : tdeeFallback;
-    const r = calcGoalDeficit(a, m, fecha, gastoRef);
 
-    if ("error" in r) {
-      setResult(<div className="text-rust text-[11px] italic">{r.error}</div>);
-      return;
+    const basal = sexo === "hombre" ? 10 * a + 6.25 * h - 5 * e + 5 : 10 * a + 6.25 * h - 5 * e - 161;
+    const gastoBase = Math.round(basal * 1.2);
+    let objetivo = gastoBase;
+    let detalle = "Consumo de mantenimiento para recomposición corporal.";
+    let deficitResult: ReturnType<typeof calcGoalDeficit> | null = null;
+
+    if (modo === "perder") {
+      const m = Number(meta);
+      if (!m || !fecha) {
+        setResult(<div className="text-textMuted text-[11px] italic">Completá peso objetivo y fecha para calcular la pérdida.</div>);
+        return;
+      }
+      deficitResult = calcGoalDeficit(a, m, fecha, gastoBase);
+      if ("error" in deficitResult) {
+        setResult(<div className="text-rust text-[11px] italic">{deficitResult.error}</div>);
+        return;
+      }
+      objetivo = deficitResult.kcalObjetivoSugerido;
+      detalle = `Déficit gradual para llegar a ${m.toLocaleString("es-AR")} kg.`;
+    } else if (modo === "aumentar") {
+      objetivo = gastoBase + 250;
+      detalle = "Superávit moderado para favorecer el aumento de masa.";
     }
 
     setResult(
       <>
         <div className="grid grid-cols-2 gap-2">
-          <Stat label="Días restantes" value={r.diasRestantes.toString()} />
-          <Stat label="Kg a bajar" value={r.kgABajar.toFixed(1)} />
+          <Stat label="Metabolismo basal" value={`${Math.round(basal).toLocaleString("es-AR")} kcal`} />
+          <Stat label="Gasto base" value={`${gastoBase.toLocaleString("es-AR")} kcal`} color="text-sage" />
         </div>
+        {deficitResult && "diasRestantes" in deficitResult && (
+          <div className="grid grid-cols-2 gap-2 mt-2.5">
+            <Stat label="Días restantes" value={deficitResult.diasRestantes.toString()} />
+            <Stat label="Déficit diario" value={`${deficitResult.deficitDiarioNecesario.toLocaleString("es-AR")} kcal`} color="text-sage" />
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-2 mt-2.5">
-          <Stat label="Déficit diario necesario" value={`${r.deficitDiarioNecesario.toLocaleString("es-AR")} kcal`} color="text-sage" />
-          <Stat label="Kcal objetivo sugerido" value={r.kcalObjetivoSugerido.toLocaleString("es-AR")} color="text-gold" />
+          <Stat label="Objetivo diario" value={`${objetivo.toLocaleString("es-AR")} kcal`} color="text-gold" />
+          <Stat label="Modo" value={modo === "perder" ? "Perder grasa" : modo === "recomponer" ? "Recomponer" : "Aumentar masa"} />
         </div>
         <div className="text-[11px] text-textMuted italic mt-2.5">
-          Basado en un gasto de referencia de ~{gastoRef.toLocaleString("es-AR")} kcal/día. Es una validación
-          orientativa — no reemplaza tu propio criterio ni el de un profesional.
+          {detalle} El gasto diario luego varía con tus pasos y entrenamiento. Es una estimación orientativa.
         </div>
-        {r.esAgresivo && (
-          <div className="text-rust text-[11px] mt-2">
-            ⚠ Este ritmo ({r.kgPorSemana.toFixed(2)} kg/semana, ~{r.pctDelGasto.toFixed(0)}% de tu gasto estimado) es
-            más agresivo de lo recomendable. Lo usual es no superar ~1% del peso corporal por semana.
-          </div>
+        {onApplyGoal && (
+          <button
+            onClick={() => onApplyGoal(gastoBase, objetivo, { actual, meta, altura, edad, sexo, fecha, modo })}
+            className="w-full rounded-lg border border-gold/60 bg-gold/15 p-2.5 font-sans text-sm font-bold text-gold mt-3"
+          >
+            Usar este objetivo ({objetivo.toLocaleString("es-AR")} kcal/día)
+          </button>
         )}
       </>
     );
@@ -53,21 +91,59 @@ export function GoalCalculator({ avgGasto, tdeeFallback }: { avgGasto: number; t
       className="rounded-xl p-4 mb-3 border"
       style={{ borderColor: "#8A9A7C", background: "linear-gradient(135deg, rgba(138,154,124,0.08), #242220)" }}
     >
-      <div className="font-display italic text-[15px] text-sage mb-2.5">⚖ Calculadora de objetivo → déficit necesario</div>
+      <div className="font-display italic text-[15px] text-sage mb-2.5">⚖ Calculadora de consumo y objetivo</div>
+      <div className="mb-2.5 text-[11px] text-textMuted">Calculá tu base personal y elegí qué querés lograr.</div>
+      <div className="mb-2.5 grid grid-cols-3 gap-1.5">
+        {[
+          ["perder", "Perder grasa"],
+          ["recomponer", "Recomponer"],
+          ["aumentar", "Aumentar masa"],
+        ].map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setModo(value as typeof modo)}
+            className={`rounded-lg border px-2 py-2 text-[10px] font-semibold ${modo === value ? "border-gold bg-gold/15 text-gold" : "border-border bg-bg text-textMuted"}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label>Peso actual (kg)</label>
           <input type="number" step="0.1" value={actual} onChange={(e) => setActual(e.target.value)} />
         </div>
         <div>
-          <label>Peso objetivo (kg)</label>
-          <input type="number" step="0.1" value={meta} onChange={(e) => setMeta(e.target.value)} />
+          <label>Altura (cm)</label>
+          <input type="number" value={altura} onChange={(e) => setAltura(e.target.value)} />
         </div>
       </div>
-      <div className="mt-2">
-        <label>Fecha objetivo</label>
-        <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <div>
+          <label>Edad</label>
+          <input type="number" value={edad} onChange={(e) => setEdad(e.target.value)} />
+        </div>
+        <div>
+          <label>Perfil metabólico</label>
+          <select value={sexo} onChange={(e) => setSexo(e.target.value as typeof sexo)}>
+            <option value="hombre">Hombre</option>
+            <option value="mujer">Mujer</option>
+          </select>
+        </div>
       </div>
+      {modo === "perder" && (
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <div>
+            <label>Peso objetivo (kg)</label>
+            <input type="number" step="0.1" value={meta} onChange={(e) => setMeta(e.target.value)} />
+          </div>
+          <div>
+            <label>Fecha objetivo</label>
+            <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+          </div>
+        </div>
+      )}
       <button
         onClick={handleCalc}
         className="w-full rounded-lg p-3 font-sans font-bold text-sm mt-2.5"

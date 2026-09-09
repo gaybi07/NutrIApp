@@ -1,7 +1,8 @@
 "use client";
 
-import { BarChart, Bar, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip } from "recharts";
+import { BarChart, Bar, Line, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip } from "recharts";
 import { DayEntry } from "@/lib/types";
+import { dayGoal, estimateGasto } from "@/lib/calculations";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 const COLORS = { des: "#8A9A7C", alm: "#C9A227", mer: "#7C93A3", cen: "#B5533C" };
@@ -10,18 +11,29 @@ export function WeeklyChart({
   weekDates,
   weekDays,
   goal,
+  avgGoal,
   avgGasto,
 }: {
   weekDates: string[];
   weekDays: (DayEntry | null)[];
   goal: number;
+  avgGoal: number;
   avgGasto: number;
 }) {
   const data = weekDates.map((fecha, i) => {
     const d = weekDays[i];
     const dow = DOW[new Date(`${fecha}T00:00:00`).getDay()];
-    if (!d) return { dow, des: 0, alm: 0, mer: 0, cen: 0, trained: false };
-    return { dow, des: d.desK, alm: d.almK, mer: d.merK, cen: d.cenK, trained: d.entreno };
+    if (!d) return { dow, des: 0, alm: 0, mer: 0, cen: 0, trained: false, goal: goal, gasto: avgGasto };
+    return {
+      dow,
+      des: d.desK,
+      alm: d.almK,
+      mer: d.merK,
+      cen: d.cenK,
+      trained: d.entreno,
+      goal: dayGoal(d, goal, avgGasto),
+      gasto: estimateGasto(d, avgGasto),
+    };
   });
 
   return (
@@ -29,7 +41,7 @@ export function WeeklyChart({
       <div className="flex justify-between font-mono text-[10px] uppercase tracking-wide text-textMuted mb-3">
         <span>Kcal por día</span>
         <span>
-          obj. {goal.toLocaleString("es-AR")} / gasto prom. {avgGasto.toLocaleString("es-AR")}
+          base {goal.toLocaleString("es-AR")} / objetivo prom. {avgGoal.toLocaleString("es-AR")}
         </span>
       </div>
       <ResponsiveContainer width="100%" height={180}>
@@ -49,12 +61,14 @@ export function WeeklyChart({
             contentStyle={{ background: "#242220", border: "1px solid #3A362F", borderRadius: 8, fontSize: 12 }}
             labelStyle={{ color: "#EDE7DA" }}
           />
-          <ReferenceLine y={goal} stroke="#C9A227" strokeDasharray="4 4" label={{ value: `${goal}`, fill: "#C9A227", fontSize: 9, position: "right" }} />
+          <ReferenceLine y={avgGoal} stroke="#C9A227" strokeDasharray="4 4" label={{ value: `obj. prom. ${avgGoal}`, fill: "#C9A227", fontSize: 9, position: "right" }} />
           <ReferenceLine y={avgGasto} stroke="#8A9A7C" strokeDasharray="4 4" label={{ value: `gasto ${avgGasto}`, fill: "#8A9A7C", fontSize: 9, position: "left" }} />
           <Bar dataKey="des" stackId="a" fill={COLORS.des} />
           <Bar dataKey="alm" stackId="a" fill={COLORS.alm} />
           <Bar dataKey="mer" stackId="a" fill={COLORS.mer} />
           <Bar dataKey="cen" stackId="a" fill={COLORS.cen} radius={[3, 3, 0, 0]} />
+          <Line type="monotone" dataKey="goal" name="Objetivo diario" stroke="#C9A227" strokeWidth={1} dot={{ r: 2 }} strokeDasharray="2 2" />
+          <Line type="monotone" dataKey="gasto" name="Gasto" stroke="#8A9A7C" strokeWidth={2} dot={{ r: 2 }} />
         </BarChart>
       </ResponsiveContainer>
       <div className="flex gap-3 flex-wrap mt-2 font-mono text-[9px] text-textMuted">

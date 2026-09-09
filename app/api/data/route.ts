@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { DayEntry, Settings } from "@/lib/types";
 
-const DEFAULT_SETTINGS: Settings = { goal: 2400, tdeeFallback: 3200 };
+const DEFAULT_SETTINGS: Settings = { goal: 2400, tdeeFallback: 3200, weeklyWeights: {} };
 
 function toDay(row: Record<string, unknown>): DayEntry {
   return {
@@ -17,6 +17,9 @@ function toDay(row: Record<string, unknown>): DayEntry {
     cenP: Number(row.cen_p),
     pasos: Number(row.pasos),
     entreno: Boolean(row.entreno),
+    pesoKg: row.peso_kg ? Number(row.peso_kg) : undefined,
+    entrenoMinutos: row.entreno_minutos ? Number(row.entreno_minutos) : undefined,
+    entrenoIntensidad: row.entreno_intensidad as DayEntry["entrenoIntensidad"],
   };
 }
 
@@ -34,6 +37,9 @@ function toDayRow(day: DayEntry, userId: string) {
     cen_p: day.cenP,
     pasos: day.pasos,
     entreno: day.entreno,
+    peso_kg: day.pesoKg || null,
+    entreno_minutos: day.entrenoMinutos || null,
+    entreno_intensidad: day.entrenoIntensidad || null,
   };
 }
 
@@ -44,7 +50,7 @@ export async function GET() {
 
   const [daysResult, settingsResult] = await Promise.all([
     supabase.from("days").select("*").order("fecha", { ascending: true }),
-    supabase.from("user_settings").select("goal, tdee_fallback").eq("user_id", user.id).maybeSingle(),
+    supabase.from("user_settings").select("goal, tdee_fallback, weekly_weights, calculator_profile").eq("user_id", user.id).maybeSingle(),
   ]);
 
   if (daysResult.error) return NextResponse.json({ error: daysResult.error.message }, { status: 500 });
@@ -53,7 +59,12 @@ export async function GET() {
   return NextResponse.json({
     days: (daysResult.data ?? []).map(toDay),
     settings: settingsResult.data
-      ? { goal: settingsResult.data.goal, tdeeFallback: settingsResult.data.tdee_fallback }
+      ? {
+          goal: settingsResult.data.goal,
+          tdeeFallback: settingsResult.data.tdee_fallback,
+          weeklyWeights: ((settingsResult.data as Record<string, unknown>).weekly_weights as Record<string, number>) || {},
+          calculatorProfile: (settingsResult.data as Record<string, unknown>).calculator_profile || undefined,
+        }
       : DEFAULT_SETTINGS,
   });
 }
@@ -82,6 +93,8 @@ export async function PUT(req: NextRequest) {
       user_id: user.id,
       goal: settings.goal,
       tdee_fallback: settings.tdeeFallback,
+      weekly_weights: settings.weeklyWeights || {},
+      calculator_profile: settings.calculatorProfile || null,
     });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }

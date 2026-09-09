@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import seedDays from "@/registro_export.json";
 import { DayEntry, Settings } from "./types";
 import { isSupabaseConfigured } from "./supabase/browser";
 
 const DAYS_KEY = "registro:days:v1";
 const SETTINGS_KEY = "registro:settings:v1";
 
-const DEFAULT_SETTINGS: Settings = { goal: 2400, tdeeFallback: 3200 };
+const DEFAULT_SETTINGS: Settings = { goal: 2400, tdeeFallback: 3200, weeklyWeights: {} };
 
 /**
  * Persistencia MVP con localStorage.
@@ -44,11 +45,27 @@ export function useLocalDays() {
   const loadLocalData = () => {
     try {
       const rawDays = localStorage.getItem(DAYS_KEY);
-      if (rawDays) setDays(JSON.parse(rawDays));
+      let nextDays: DayEntry[] = [];
+
+      if (rawDays) {
+        nextDays = JSON.parse(rawDays);
+      } else if (Array.isArray(seedDays) && seedDays.length > 0) {
+        nextDays = seedDays as DayEntry[];
+        localStorage.setItem(DAYS_KEY, JSON.stringify(nextDays));
+      }
+
+      setDays(nextDays);
+
       const rawSettings = localStorage.getItem(SETTINGS_KEY);
-      if (rawSettings) setSettings(JSON.parse(rawSettings));
+      const nextSettings = rawSettings ? JSON.parse(rawSettings) : DEFAULT_SETTINGS;
+      if (!rawSettings) {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(DEFAULT_SETTINGS));
+      }
+      setSettings(nextSettings);
     } catch (e) {
       console.error("Error cargando datos locales", e);
+      setDays([]);
+      setSettings(DEFAULT_SETTINGS);
     }
     setLoaded(true);
   };

@@ -11,7 +11,7 @@ const fmtDay = (fecha: string) => {
 };
 
 export function RankingCard({ days }: { days: DayEntry[] }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const ranked = rankDays(days);
 
   return (
@@ -63,16 +63,64 @@ function RankRow({ r, isBest }: { r: ReturnType<typeof rankDays>[number]; isBest
       ).toFixed(1)}g/100kcal)`
     : "";
 
+  const segments = [
+    { key: "des", label: "Desayuno", kcal: r.day.desK, protein: r.day.desP },
+    { key: "alm", label: "Almuerzo", kcal: r.day.almK, protein: r.day.almP },
+    { key: "mer", label: "Merienda", kcal: r.day.merK, protein: r.day.merP },
+    { key: "cen", label: "Cena", kcal: r.day.cenK, protein: r.day.cenP },
+  ];
+
+  const weakSegment = segments
+    .filter((s) => s.kcal > 0)
+    .sort((a, b) => (a.protein * 100) / Math.max(a.kcal, 1) - (b.protein * 100) / Math.max(b.kcal, 1))[0];
+
+  const improvementText = weakSegment
+    ? `Mejorá ${weakSegment.label.toLowerCase()} con más proteína y menos calorías vacías.`
+    : "Muy buen balance general. Mantené la consistencia en la estructura diaria.";
+
   return (
-    <div className="flex justify-between items-center py-2.5 border-b border-dashed border-border last:border-0 gap-2.5">
-      <div className="flex-1">
-        <div className="font-semibold text-[13px]">
-          {fmtDay(r.day.fecha)} · {r.total.toLocaleString("es-AR")} kcal · {r.protein.toLocaleString("es-AR")}g
+    <div className="group relative">
+      <div className="flex justify-between items-center py-2.5 border-b border-dashed border-border last:border-0 gap-2.5">
+        <div className="flex-1">
+          <div className="font-semibold text-[13px]">
+            {fmtDay(r.day.fecha)} · {r.total.toLocaleString("es-AR")} kcal · {r.protein.toLocaleString("es-AR")}g
+          </div>
+          <div className="text-[11px] text-textMuted mt-0.5">{reason}</div>
         </div>
-        <div className="text-[11px] text-textMuted mt-0.5">{reason}</div>
+        <div className={`font-mono text-sm font-semibold ${isBest ? "text-sage" : "text-rust"}`}>
+          {r.density.toFixed(1)}
+        </div>
       </div>
-      <div className={`font-mono text-sm font-semibold ${isBest ? "text-sage" : "text-rust"}`}>
-        {r.density.toFixed(1)}
+
+      <div className="pointer-events-none absolute left-0 top-full z-20 mt-1 w-[260px] max-w-[80vw] rounded-xl border border-border bg-surface p-2.5 text-left shadow-2xl opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+        <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-gold mb-2">Detalle del día</div>
+        <div className="space-y-1.5">
+          {segments.map((segment) => {
+            const density = segment.kcal > 0 ? (segment.protein * 100) / segment.kcal : 0;
+            const quality =
+              segment.kcal <= 0
+                ? { label: "sin datos", color: "text-textMuted", dot: "bg-textMuted", panel: "border-l-border" }
+                : density >= 2.5
+                ? { label: "bueno", color: "text-sage", dot: "bg-sage", panel: "border-l-sage/70" }
+                : density >= 1.5
+                ? { label: "medio", color: "text-gold", dot: "bg-gold", panel: "border-l-gold/70" }
+                : { label: "malo", color: "text-rust", dot: "bg-rust", panel: "border-l-rust/70" };
+            return (
+              <div key={segment.key} className={`flex items-center justify-between gap-2 border-l-2 pl-2 text-[11px] text-textMuted ${quality.panel}`}>
+                <span className={`flex items-center gap-1.5 font-semibold ${quality.color}`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${quality.dot}`} />
+                  {segment.label}
+                </span>
+                <span className="font-mono text-text">
+                  {segment.kcal} kcal · {segment.protein}g · {density.toFixed(1)}g/100kcal · {quality.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-2 border-t border-dashed border-border pt-2 text-[11px] text-textMuted">
+          <span className="text-text">Cómo mejorar:</span> {improvementText}
+        </div>
       </div>
     </div>
   );

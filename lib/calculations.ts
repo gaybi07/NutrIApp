@@ -1,4 +1,4 @@
-import { DayEntry, MealKey, MEAL_LABELS } from "./types";
+import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity } from "./types";
 
 /** Total kcal consumidas en el día (suma de las 4 comidas). */
 export function dayTotal(d: DayEntry): number {
@@ -20,13 +20,25 @@ export function dayProt(d: DayEntry): number {
  * de actividad), usando peso/altura/edad/sexo reales.
  */
 export function estimateGasto(d: DayEntry, tdeeFallback: number): number {
-  if (!d.pasos || d.pasos <= 0) return tdeeFallback;
-  if (!d.entreno) {
-    if (d.pasos < 6000) return 2800;
-    if (d.pasos < 12000) return 3100;
-    return 3300;
-  }
-  return d.pasos >= 12000 ? 3600 : 3400;
+  const pasos = Math.max(0, d.pasos || 0);
+  const ajustePasos = pasos > 0 ? Math.max(-150, Math.min(350, (pasos - 5000) * 0.04)) : 0;
+  const ajusteEntrenamiento = estimateTrainingCalories(d);
+  return Math.round(Math.max(0, tdeeFallback + ajustePasos + ajusteEntrenamiento));
+}
+
+/** Estima solo el gasto adicional de la sesión, sin contar el reposo. */
+export function estimateTrainingCalories(d: DayEntry): number {
+  if (!d.entreno || !d.entrenoIntensidad) return 0;
+  const intensityMet: Record<TrainingIntensity, number> = { leve: 3, moderado: 4, exigente: 5, fallo: 6 };
+  const minutos = d.entrenoMinutos || 60;
+  const peso = d.pesoKg || 75;
+  const met = intensityMet[d.entrenoIntensidad];
+  return Math.round(Math.max(0, (met - 1) * 3.5 * peso * minutos / 200));
+}
+
+/** Ajusta el objetivo base con la actividad registrada en ese día. */
+export function dayGoal(d: DayEntry, goal: number, tdeeFallback: number): number {
+  return Math.round(Math.max(0, goal + estimateGasto(d, tdeeFallback) - tdeeFallback));
 }
 
 /** Déficit (positivo) o superávit (negativo) de un día dado. */
@@ -39,12 +51,14 @@ export interface WeekSummary {
   avgProt: number;
   avgSteps: number;
   avgGasto: number;
+  avgGoal: number;
+  avgDeficit: number;
   trainedDays: number;
   totalDays: number;
   deficitAcumulado: number;
 }
 
-export function summarizeWeek(days: DayEntry[], tdeeFallback: number): WeekSummary {
+export function summarizeWeek(days: DayEntry[], tdeeFallback: number, goal: number): WeekSummary {
   const present = days.filter((d) => dayTotal(d) > 0);
   const n = present.length || 1;
   const avgKcal = Math.round(present.reduce((a, d) => a + dayTotal(d), 0) / n);
@@ -52,9 +66,11 @@ export function summarizeWeek(days: DayEntry[], tdeeFallback: number): WeekSumma
   const avgSteps = Math.round(present.reduce((a, d) => a + (d.pasos || 0), 0) / n);
   const gastos = present.map((d) => estimateGasto(d, tdeeFallback));
   const avgGasto = Math.round(gastos.reduce((a, b) => a + b, 0) / (gastos.length || 1));
+  const avgGoal = Math.round(present.reduce((a, d) => a + dayGoal(d, goal, tdeeFallback), 0) / n);
   const trainedDays = present.filter((d) => d.entreno).length;
   const deficitAcumulado = present.reduce((a, d) => a + dayDeficit(d, tdeeFallback), 0);
-  return { avgKcal, avgProt, avgSteps, avgGasto, trainedDays, totalDays: present.length, deficitAcumulado };
+  const avgDeficit = Math.round(deficitAcumulado / (present.length || 1));
+  return { avgKcal, avgProt, avgSteps, avgGasto, avgGoal, avgDeficit, trainedDays, totalDays: present.length, deficitAcumulado };
 }
 
 /** Gramos de proteína cada 100 kcal — métrica de "eficiencia" usada en el ranking. */

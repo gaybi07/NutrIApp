@@ -11,13 +11,18 @@ create table public.days (
   cen_p integer not null default 0,
   pasos integer not null default 0,
   entreno boolean not null default false,
+  peso_kg numeric,
+  entreno_minutos integer,
+  entreno_intensidad text,
   primary key (user_id, fecha)
 );
 
 create table public.user_settings (
   user_id uuid primary key references auth.users(id) on delete cascade,
   goal integer not null default 2400,
-  tdee_fallback integer not null default 3200
+  tdee_fallback integer not null default 3200,
+  weekly_weights jsonb not null default '{}'::jsonb,
+  calculator_profile jsonb
 );
 
 alter table public.days enable row level security;
