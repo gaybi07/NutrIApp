@@ -22,7 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es">
       <body className="bg-bg text-text font-sans min-h-screen">
-        <div className="max-w-[480px] mx-auto px-3 py-5 pb-16">{children}</div>
+        <div className="max-w-[480px] lg:max-w-6xl mx-auto px-3 lg:px-6 py-5 pb-16">{children}</div>
       </body>
     </html>
   );

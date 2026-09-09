@@ -88,7 +88,7 @@ export default function Home() {
 
   if (!loaded || !authenticated) {
     return (
-      <main className="pt-8">
+      <main className="mx-auto max-w-md pt-8">
         <AuthPanel onAuthChange={handleAuthChange} />
       </main>
     );
@@ -96,7 +96,7 @@ export default function Home() {
 
   if (!settings.calculatorProfile) {
     return (
-      <main className="pt-8">
+      <main className="mx-auto max-w-md pt-8">
         <AuthPanel onAuthChange={handleAuthChange} />
         <OnboardingWizard
           tdeeFallback={settings.tdeeFallback}
@@ -127,81 +127,98 @@ export default function Home() {
         <AppTour onFinish={() => saveSettings({ ...settings, tourDone: true })} />
       )}
 
-      <TodayCard
-        entry={todayEntry}
-        goal={settings.goal}
-        tdeeFallback={settings.tdeeFallback}
-        onLogMeal={() => setPanel("ai")}
-        onLogTraining={() => setPanel("entreno")}
-      />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.3fr_1fr] lg:items-start">
+        <div className="min-w-0">
+          <TodayCard
+            entry={todayEntry}
+            goal={settings.goal}
+            tdeeFallback={settings.tdeeFallback}
+            onLogMeal={() => setPanel("ai")}
+            onLogTraining={() => setPanel("entreno")}
+          />
 
-      <div className="mt-2 rounded-2xl border border-border/80 bg-surface/70 px-3 py-2.5 shadow-[0_0_0_1px_rgba(58,54,47,0.4)]">
-        <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-gold mb-1.5">Semana del</div>
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="font-display font-semibold text-3xl leading-none -tracking-[0.04em]">
-            {monday.getDate()} {MONTHS[monday.getMonth()]}
-          </h1>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setWeekOffset((w) => w - 1)}
-              className="bg-surfaceAlt border border-border rounded-xl w-9 h-9 text-lg text-text hover:border-gold/60 transition-colors"
-            >
-              ‹
-            </button>
-            <button
-              onClick={() => setWeekOffset((w) => w + 1)}
-              className="bg-surfaceAlt border border-border rounded-xl w-9 h-9 text-lg text-text hover:border-gold/60 transition-colors"
-            >
-              ›
-            </button>
+          <div className="mt-2 rounded-2xl border border-border/80 bg-surface/70 px-3 py-2.5 shadow-[0_0_0_1px_rgba(58,54,47,0.4)]">
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-gold mb-1.5">Semana del</div>
+            <div className="flex items-center justify-between gap-3">
+              <h1 className="font-display font-semibold text-3xl leading-none -tracking-[0.04em]">
+                {monday.getDate()} {MONTHS[monday.getMonth()]}
+              </h1>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setWeekOffset((w) => w - 1)}
+                  className="bg-surfaceAlt border border-border rounded-xl w-9 h-9 text-lg text-text hover:border-gold/60 transition-colors"
+                >
+                  ‹
+                </button>
+                <button
+                  onClick={() => setWeekOffset((w) => w + 1)}
+                  className="bg-surfaceAlt border border-border rounded-xl w-9 h-9 text-lg text-text hover:border-gold/60 transition-colors"
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+            <div className="mt-2 mb-3 font-mono text-[11px] tracking-[0.12em] uppercase text-textMuted">
+              {monday.getDate()} {MONTHS[monday.getMonth()]} — {sunday.getDate()} {MONTHS[sunday.getMonth()]}
+            </div>
+
+            <WeeklyWeight
+              weekKey={fmtDate(monday)}
+              weights={settings.weeklyWeights || {}}
+              goalMode={settings.calculatorProfile?.modo}
+              onSave={saveWeeklyWeight}
+            />
+
+            <SummaryCards summary={summary} goal={summary.avgGoal || settings.goal} weight={settings.weeklyWeights?.[fmtDate(monday)]} />
+
+            <WeeklyChart
+              weekDates={weekDates}
+              weekDays={weekDays}
+              goal={settings.goal}
+              avgGoal={summary.avgGoal || settings.goal}
+              avgGasto={settings.tdeeFallback}
+            />
           </div>
+
+          <RankingCard days={days} weightKg={currentWeightKg} />
         </div>
-        <div className="mt-2 mb-3 font-mono text-[11px] tracking-[0.12em] uppercase text-textMuted">
-          {monday.getDate()} {MONTHS[monday.getMonth()]} — {sunday.getDate()} {MONTHS[sunday.getMonth()]}
+
+        <div className="min-w-0">
+          <Collapsible eyebrow="Herramientas" title="Calculadora y carga con IA">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setPanel("calc")}
+                className="rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
+              >
+                Objetivo
+              </button>
+              <button
+                onClick={() => setPanel("ai")}
+                className="rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
+              >
+                Cargar con IA
+              </button>
+              <button
+                onClick={() => setPanel("datos")}
+                className="col-span-2 rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
+              >
+                Datos (importar / exportar respaldo)
+              </button>
+            </div>
+          </Collapsible>
+
+          <Ledger weekDates={weekDates} weekDays={weekDays} goal={summary.avgGoal || settings.goal} tdeeFallback={settings.tdeeFallback} onUpsert={upsertDay} />
+          <DailySteps weekDates={weekDates} weekDays={weekDays} onUpsert={upsertDay} />
+          <ShoppingLog items={inventory} addInventoryText={addText} replaceItems={replaceInventory} />
+          <RecipePlanner
+            items={inventory}
+            consumeAmounts={consumeAmounts}
+            onUseRecipe={useRecipeAsMeal}
+            dailyGoal={settings.goal}
+            consumedKcal={todayKcal}
+          />
         </div>
-
-        <WeeklyWeight
-          weekKey={fmtDate(monday)}
-          weights={settings.weeklyWeights || {}}
-          goalMode={settings.calculatorProfile?.modo}
-          onSave={saveWeeklyWeight}
-        />
-
-        <SummaryCards summary={summary} goal={summary.avgGoal || settings.goal} weight={settings.weeklyWeights?.[fmtDate(monday)]} />
-
-        <WeeklyChart
-          weekDates={weekDates}
-          weekDays={weekDays}
-          goal={settings.goal}
-          avgGoal={summary.avgGoal || settings.goal}
-          avgGasto={settings.tdeeFallback}
-        />
       </div>
-
-      <RankingCard days={days} weightKg={currentWeightKg} />
-
-      <Collapsible eyebrow="Herramientas" title="Calculadora y carga con IA">
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={() => setPanel("calc")}
-            className="rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
-          >
-            Objetivo
-          </button>
-          <button
-            onClick={() => setPanel("ai")}
-            className="rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
-          >
-            Cargar con IA
-          </button>
-          <button
-            onClick={() => setPanel("datos")}
-            className="col-span-2 rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
-          >
-            Datos (importar / exportar respaldo)
-          </button>
-        </div>
-      </Collapsible>
 
       {panel === "calc" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm">
@@ -277,17 +294,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
-      <Ledger weekDates={weekDates} weekDays={weekDays} goal={summary.avgGoal || settings.goal} tdeeFallback={settings.tdeeFallback} onUpsert={upsertDay} />
-      <DailySteps weekDates={weekDates} weekDays={weekDays} onUpsert={upsertDay} />
-      <ShoppingLog items={inventory} addInventoryText={addText} replaceItems={replaceInventory} />
-      <RecipePlanner
-        items={inventory}
-        consumeAmounts={consumeAmounts}
-        onUseRecipe={useRecipeAsMeal}
-        dailyGoal={settings.goal}
-        consumedKcal={todayKcal}
-      />
     </main>
   );
 }

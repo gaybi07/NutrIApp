@@ -78,7 +78,16 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
        `authenticated` (antes se guardaba pero nunca se usaba) para bloquear la app
        hasta el login, y `!settings.calculatorProfile` para mostrar el wizard en vez
        del viejo modal de calculadora que se autoabría sobre toda la app.
-3. [ ] Layout distinto para PC/escritorio (hoy todo es mobile-first a una columna).
+3. [x] Layout distinto para PC/escritorio. `app/layout.tsx` forzaba
+       `max-w-[480px]` para cualquier tamaño de pantalla — en PC se veía como un
+       celular angosto en el medio de un monitor ancho. Ahora es `max-w-[480px]
+       lg:max-w-6xl`, y en `app/page.tsx` el contenido principal (a partir de
+       `lg:`) pasa a un grid de 2 columnas: izquierda Hoy + Semana del... +
+       Ranking, derecha Herramientas + Tabla + Pasos + Compras + Planner. En
+       mobile el grid es de 1 columna y el orden queda idéntico a como estaba
+       (los dos `<div>` de columna se leen uno tras otro). Login y onboarding se
+       mantienen angostos y centrados (`max-w-md`) en cualquier tamaño de
+       pantalla, para no estirar esos formularios de un solo foco.
 4. [~] Más info contextual por sección — qué hace y para qué sirve cada ítem.
        Implementado dentro del paso 1 del onboarding (`GuidedGoalCalculator.tsx`):
        ahora pide un dato a la vez (modo → peso → altura → edad → sexo → [meta →
@@ -92,7 +101,9 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
        cada sección para cuando el usuario ya vio el tour y quiere repasar algo
        (tooltips o texto expandible tipo "¿Qué es esto?" en cada tarjeta).
 
-Queda el ítem 3, y la info contextual permanente (parte del 4) fuera del tour de bienvenida.
+Los 5 pedidos originales están resueltos. Queda pendiente la info contextual
+permanente (parte del ítem 4) para cuando alguien ya vio el tour y quiere repasar
+algo puntual.
 
 ## Registro de cambios
 
