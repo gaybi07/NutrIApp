@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useLocalDays } from "@/lib/useLocalDays";
 import { isoMonday, addDays, fmtDate, summarizeWeek } from "@/lib/calculations";
 import { SummaryCards } from "@/components/SummaryCards";
@@ -17,6 +17,7 @@ import { DailySteps } from "@/components/DailySteps";
 import { DataImport } from "@/components/DataImport";
 import { TodayCard } from "@/components/TodayCard";
 import { TrainingEntryForm } from "@/components/TrainingEntryForm";
+import { OnboardingWizard } from "@/components/OnboardingWizard";
 import { Collapsible } from "@/components/Collapsible";
 import { isSupabaseConfigured } from "@/lib/supabase/browser";
 import { useInventory } from "@/lib/useInventory";
@@ -29,12 +30,8 @@ export default function Home() {
   const { items: inventory, addText, consumeByText, consumeItem, consumeAmounts, persist: replaceInventory } = useInventory();
   const [weekOffset, setWeekOffset] = useState(0);
   const [panel, setPanel] = useState<"calc" | "ai" | "entreno" | "datos" | null>(null);
-  const [, setAuthenticated] = useState(true);
+  const [authenticated, setAuthenticated] = useState(!isSupabaseConfigured);
   const handleAuthChange = useCallback((value: boolean) => setAuthenticated(value), []);
-
-  useEffect(() => {
-    if (loaded && !settings.calculatorProfile) setPanel("calc");
-  }, [loaded, settings.calculatorProfile]);
 
   const monday = useMemo(() => {
     const base =
@@ -88,10 +85,29 @@ export default function Home() {
     upsertDay(next);
   }, [days, upsertDay]);
 
-  if (!loaded) {
+  if (!loaded || !authenticated) {
     return (
       <main className="pt-8">
         <AuthPanel onAuthChange={handleAuthChange} />
+      </main>
+    );
+  }
+
+  if (!settings.calculatorProfile) {
+    return (
+      <main className="pt-8">
+        <AuthPanel onAuthChange={handleAuthChange} />
+        <OnboardingWizard
+          tdeeFallback={settings.tdeeFallback}
+          onComplete={({ gasto, objetivo, calculatorProfile, pesoKg, pasos }) => {
+            saveSettings({ ...settings, tdeeFallback: gasto, goal: objetivo, calculatorProfile });
+            if (pesoKg || pasos) {
+              const fecha = fmtDate(new Date());
+              const existing = days.find((d) => d.fecha === fecha) || emptyDay(fecha);
+              upsertDay({ ...existing, pesoKg: pesoKg || existing.pesoKg, pasos: pasos || existing.pasos });
+            }
+          }}
+        />
       </main>
     );
   }

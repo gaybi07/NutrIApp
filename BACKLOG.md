@@ -72,18 +72,17 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
 
 1. [x] Sugerencia de peso objetivo por IMC + altura en `GoalCalculator` (rango
        saludable IMC 18.5–24.9, botón "usar sugerencia" que respeta máx. 1kg/semana).
-2. [ ] Onboarding guiado: registrarte → popup de calculadora → después recién el
-       resto de los datos/pantallas. Mismo pedido que el ítem 5 de abajo — se
-       resuelven juntos con un asistente de primeros pasos.
+2. [x] / 5. [x] Onboarding guiado (`OnboardingWizard.tsx`): login → calculadora de
+       objetivo (paso 1) → peso actual + pasos típicos (paso 2, opcionales) → recién
+       ahí se desbloquea el resto de la app. `page.tsx` ahora usa el estado
+       `authenticated` (antes se guardaba pero nunca se usaba) para bloquear la app
+       hasta el login, y `!settings.calculatorProfile` para mostrar el wizard en vez
+       del viejo modal de calculadora que se autoabría sobre toda la app.
 3. [ ] Layout distinto para PC/escritorio (hoy todo es mobile-first a una columna).
 4. [ ] Más info contextual por sección — qué hace y para qué sirve cada ítem
        (tooltips o texto expandible "¿Qué es esto?").
-5. [ ] Wizard de primera vez: paso a paso con ayuda para completar toda la
-       configuración inicial, y recién cuando está listo se habilita el resto de
-       la app (mismo pedido que el ítem 2).
 
-Antes de construir 2/3/4/5 conviene decidir el orden — quedó pendiente la
-confirmación del usuario sobre por cuál seguir primero.
+Quedan 3 y 4 — a definir cuál sigue.
 
 ## Registro de cambios
 
