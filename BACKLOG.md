@@ -16,9 +16,8 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
 - [x] 4. Quitar bloqueos de auth local para trabajar sin Google
       — funciona en modo local con `localStorage` si Supabase no está configurado
 - [x] 5. Probar flujo de login con email magic link
-- [~] 6. Hacer deploy en Vercel de la app web
-      — código en `main` (github.com/gaybi07/NutrIApp), falta conectar el repo en vercel.com
-      y cargar las env vars (paso manual, requiere login del usuario)
+- [x] 6. Hacer deploy en Vercel de la app web
+      — https://nutriapp-rose-six.vercel.app, deploy automático desde `main` funcionando
 - [x] 7. PWA / íconos / manifest
 - [~] 8. Revisar UX base de la app
       — quedan botones/paneles a revisar caso por caso; ver sección "UX pendiente" abajo
