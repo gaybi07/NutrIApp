@@ -1,4 +1,4 @@
-import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity } from "./types";
+import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, GoalMode } from "./types";
 
 /** Total kcal consumidas en el día (suma de las 4 comidas). */
 export function dayTotal(d: DayEntry): number {
@@ -194,6 +194,76 @@ export function calcGoalDeficit(
   const esAgresivo = pctDelGasto > 30 || pctPesoPorSemana > 1;
 
   return { diasRestantes, kgABajar, deficitDiarioNecesario, kcalObjetivoSugerido, pctDelGasto, kgPorSemana, esAgresivo };
+}
+
+export interface BmiInfo {
+  bmi: number;
+  categoria: "bajo peso" | "normal" | "sobrepeso" | "obesidad";
+  saludableMin: number;
+  saludableMax: number;
+}
+
+/** IMC actual + rango de peso saludable (IMC 18.5–24.9) para una altura dada. */
+export function bmiInfo(pesoKg: number, alturaCm: number): BmiInfo | null {
+  if (pesoKg <= 0 || alturaCm <= 0) return null;
+  const alturaM = alturaCm / 100;
+  const bmi = pesoKg / (alturaM * alturaM);
+  const categoria = bmi < 18.5 ? "bajo peso" : bmi < 25 ? "normal" : bmi < 30 ? "sobrepeso" : "obesidad";
+  return {
+    bmi,
+    categoria,
+    saludableMin: Math.round(18.5 * alturaM * alturaM * 10) / 10,
+    saludableMax: Math.round(24.9 * alturaM * alturaM * 10) / 10,
+  };
+}
+
+export interface GoalComputation {
+  basal: number;
+  gastoBase: number;
+  objetivo: number;
+  detalle: string;
+  deficit: GoalCalcResult | null;
+}
+
+/**
+ * Fórmula de Mifflin-St Jeor (metabolismo basal) + factor de actividad fijo,
+ * y objetivo diario según el modo elegido. Única fuente de verdad para este
+ * cálculo — la usan tanto la calculadora rápida como el wizard guiado, para
+ * que nunca puedan mostrar números distintos para los mismos datos.
+ */
+export function computeGoal(params: {
+  actual: number;
+  altura: number;
+  edad: number;
+  sexo: "hombre" | "mujer";
+  modo: GoalMode;
+  meta?: number;
+  fecha?: string;
+}): GoalComputation | { error: string } {
+  const { actual, altura, edad, sexo, modo, meta, fecha } = params;
+  if (!actual || !altura || !edad || actual <= 0 || altura <= 0 || edad <= 0) {
+    return { error: "Completá peso, altura y edad para calcular." };
+  }
+
+  const basal = sexo === "hombre" ? 10 * actual + 6.25 * altura - 5 * edad + 5 : 10 * actual + 6.25 * altura - 5 * edad - 161;
+  const gastoBase = Math.round(basal * 1.2);
+  let objetivo = gastoBase;
+  let detalle = "Consumo de mantenimiento para recomposición corporal.";
+  let deficit: GoalCalcResult | null = null;
+
+  if (modo === "perder") {
+    if (!meta || !fecha) return { error: "Completá peso objetivo y fecha para calcular la pérdida." };
+    const result = calcGoalDeficit(actual, meta, fecha, gastoBase);
+    if ("error" in result) return result;
+    deficit = result;
+    objetivo = result.kcalObjetivoSugerido;
+    detalle = `Déficit gradual para llegar a ${meta.toLocaleString("es-AR")} kg.`;
+  } else if (modo === "aumentar") {
+    objetivo = gastoBase + 250;
+    detalle = "Superávit moderado para favorecer el aumento de masa.";
+  }
+
+  return { basal, gastoBase, objetivo, detalle, deficit };
 }
 
 /** Devuelve el lunes (inicio de semana) de la fecha dada. */

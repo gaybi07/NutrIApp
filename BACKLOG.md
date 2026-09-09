@@ -79,10 +79,15 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
        hasta el login, y `!settings.calculatorProfile` para mostrar el wizard en vez
        del viejo modal de calculadora que se autoabría sobre toda la app.
 3. [ ] Layout distinto para PC/escritorio (hoy todo es mobile-first a una columna).
-4. [ ] Más info contextual por sección — qué hace y para qué sirve cada ítem
-       (tooltips o texto expandible "¿Qué es esto?").
+4. [~] Más info contextual por sección — qué hace y para qué sirve cada ítem.
+       Implementado dentro del paso 1 del onboarding (`GuidedGoalCalculator.tsx`):
+       ahora pide un dato a la vez (modo → peso → altura → edad → sexo → [meta →
+       fecha] → resultado) con un cuadro "¿Para qué sirve?" en cada paso, en vez
+       de mostrar todo el formulario junto. Los pasos de peso/pasos del wizard
+       también tienen su propio "¿Para qué sirve?". Falta extender esto (tooltips
+       o texto expandible) al resto de la app fuera del onboarding.
 
-Quedan 3 y 4 — a definir cuál sigue.
+Quedan 3 completo y 4 fuera del onboarding — a definir cuál sigue.
 
 ## Registro de cambios
 
@@ -174,3 +179,22 @@ Quedan 3 y 4 — a definir cuál sigue.
   > peso del perfil de la calculadora > 75kg de fallback). El detalle por comida sigue
   usando la densidad por caloría sin cambios, porque ahí compara comidas entre sí, no
   contra un objetivo diario.
+- **2026-09-09**: agregado `bmiInfo()` (sugerencia de peso objetivo por IMC) en
+  `GoalCalculator`. Bug reportado: al cerrar sesión y tocar "Continuar con Google" de
+  nuevo, Google reloguea directo con la última cuenta sin dejar elegir — no es un bug
+  nuestro, es que la cookie de sesión de Google en el navegador sigue viva aunque
+  cerremos la sesión de Supabase. Arreglado agregando `queryParams: { prompt:
+  "select_account" }` a `signInWithOAuth` en `AuthPanel.tsx`, que fuerza a Google a
+  mostrar siempre el selector de cuenta.
+- **2026-09-09**: reemplazado el paso 1 del onboarding (formulario completo de la
+  calculadora) por `GuidedGoalCalculator.tsx` — pregunta un dato a la vez (modo, peso,
+  altura, edad, sexo, y si el modo es "perder" también meta + fecha) con Atrás/
+  Siguiente y un cuadro "¿Para qué sirve?" en cada paso, y recién al final muestra el
+  resultado. Se extrajo `computeGoal()` y `bmiInfo()` a `lib/calculations.ts` para que
+  la calculadora rápida (edición posterior desde "Herramientas") y la guiada usen
+  exactamente la misma fórmula sin duplicar lógica. Los pasos de peso/pasos del wizard
+  (después de la calculadora) también se separaron en pantallas individuales con su
+  propia explicación. Nota para más adelante: `calcGoalDeficit` ya calcula un flag
+  `esAgresivo` (déficit >30% del gasto o >1% del peso corporal por semana) pero
+  ninguna de las dos UIs lo muestra — vale la pena agregar una advertencia visible
+  cuando el objetivo sugerido sea demasiado agresivo.

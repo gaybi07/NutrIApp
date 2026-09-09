@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { calcGoalDeficit, addDays, fmtDate } from "@/lib/calculations";
+import { computeGoal, bmiInfo, addDays, fmtDate } from "@/lib/calculations";
 import { CalculatorProfile, GoalMode } from "@/lib/types";
 
 export function GoalCalculator({
@@ -22,66 +22,34 @@ export function GoalCalculator({
   const [modo, setModo] = useState<GoalMode>(initialProfile?.modo || "perder");
   const [result, setResult] = useState<React.ReactNode>(null);
 
-  const alturaNum = Number(altura);
-  const actualNum = Number(actual);
-  const alturaValida = alturaNum > 0;
-  const pesoValido = actualNum > 0;
-  const alturaM = alturaNum / 100;
-  const bmiActual = alturaValida && pesoValido ? actualNum / (alturaM * alturaM) : null;
-  const bmiCategoria =
-    bmiActual == null
-      ? null
-      : bmiActual < 18.5
-      ? "bajo peso"
-      : bmiActual < 25
-      ? "normal"
-      : bmiActual < 30
-      ? "sobrepeso"
-      : "obesidad";
-  const pesoSaludableMin = alturaValida ? Math.round(18.5 * alturaM * alturaM * 10) / 10 : null;
-  const pesoSaludableMax = alturaValida ? Math.round(24.9 * alturaM * alturaM * 10) / 10 : null;
+  const bmi = bmiInfo(Number(actual), Number(altura));
 
   const applySuggestion = () => {
-    if (pesoSaludableMax == null || !pesoValido) return;
-    const objetivo = actualNum > pesoSaludableMax ? pesoSaludableMax : pesoSaludableMin ?? pesoSaludableMax;
-    const kgABajar = actualNum - objetivo;
-    const semanasNecesarias = Math.max(1, Math.ceil(kgABajar / 1));
+    if (!bmi) return;
+    const actualNum = Number(actual);
+    const objetivo = actualNum > bmi.saludableMax ? bmi.saludableMax : bmi.saludableMin;
+    const semanasNecesarias = Math.max(1, Math.ceil((actualNum - objetivo) / 1));
     setMeta(String(objetivo));
     setFecha(fmtDate(addDays(new Date(), semanasNecesarias * 7)));
   };
 
   const handleCalc = () => {
-    const a = Number(actual);
-    const h = Number(altura);
-    const e = Number(edad);
-    if (!a || !h || !e || a <= 0 || h <= 0 || e <= 0) {
-      setResult(<div className="text-textMuted text-[11px] italic">Completá peso, altura y edad para calcular.</div>);
+    const computation = computeGoal({
+      actual: Number(actual),
+      altura: Number(altura),
+      edad: Number(edad),
+      sexo,
+      modo,
+      meta: Number(meta) || undefined,
+      fecha: fecha || undefined,
+    });
+
+    if ("error" in computation) {
+      setResult(<div className="text-rust text-[11px] italic">{computation.error}</div>);
       return;
     }
 
-    const basal = sexo === "hombre" ? 10 * a + 6.25 * h - 5 * e + 5 : 10 * a + 6.25 * h - 5 * e - 161;
-    const gastoBase = Math.round(basal * 1.2);
-    let objetivo = gastoBase;
-    let detalle = "Consumo de mantenimiento para recomposición corporal.";
-    let deficitResult: ReturnType<typeof calcGoalDeficit> | null = null;
-
-    if (modo === "perder") {
-      const m = Number(meta);
-      if (!m || !fecha) {
-        setResult(<div className="text-textMuted text-[11px] italic">Completá peso objetivo y fecha para calcular la pérdida.</div>);
-        return;
-      }
-      deficitResult = calcGoalDeficit(a, m, fecha, gastoBase);
-      if ("error" in deficitResult) {
-        setResult(<div className="text-rust text-[11px] italic">{deficitResult.error}</div>);
-        return;
-      }
-      objetivo = deficitResult.kcalObjetivoSugerido;
-      detalle = `Déficit gradual para llegar a ${m.toLocaleString("es-AR")} kg.`;
-    } else if (modo === "aumentar") {
-      objetivo = gastoBase + 250;
-      detalle = "Superávit moderado para favorecer el aumento de masa.";
-    }
+    const { basal, gastoBase, objetivo, detalle, deficit } = computation;
 
     setResult(
       <>
@@ -89,10 +57,10 @@ export function GoalCalculator({
           <Stat label="Metabolismo basal" value={`${Math.round(basal).toLocaleString("es-AR")} kcal`} />
           <Stat label="Gasto base" value={`${gastoBase.toLocaleString("es-AR")} kcal`} color="text-sage" />
         </div>
-        {deficitResult && "diasRestantes" in deficitResult && (
+        {deficit && (
           <div className="grid grid-cols-2 gap-2 mt-2.5">
-            <Stat label="Días restantes" value={deficitResult.diasRestantes.toString()} />
-            <Stat label="Déficit diario" value={`${deficitResult.deficitDiarioNecesario.toLocaleString("es-AR")} kcal`} color="text-sage" />
+            <Stat label="Días restantes" value={deficit.diasRestantes.toString()} />
+            <Stat label="Déficit diario" value={`${deficit.deficitDiarioNecesario.toLocaleString("es-AR")} kcal`} color="text-sage" />
           </div>
         )}
         <div className="grid grid-cols-2 gap-2 mt-2.5">
@@ -162,13 +130,13 @@ export function GoalCalculator({
       </div>
       {modo === "perder" && (
         <>
-          {bmiActual != null && pesoSaludableMin != null && pesoSaludableMax != null && (
+          {bmi && (
             <div className="mt-2 rounded-lg border border-sage/30 bg-sage/10 p-2.5 text-[11px] text-textMuted">
               <div className="mb-1">
-                Tu IMC actual es <span className="font-mono text-text">{bmiActual.toFixed(1)}</span> ({bmiCategoria}).
+                Tu IMC actual es <span className="font-mono text-text">{bmi.bmi.toFixed(1)}</span> ({bmi.categoria}).
                 Para tu altura, un peso saludable (IMC 18.5–24.9) está entre{" "}
-                <span className="font-mono text-text">{pesoSaludableMin}kg</span> y{" "}
-                <span className="font-mono text-text">{pesoSaludableMax}kg</span>.
+                <span className="font-mono text-text">{bmi.saludableMin}kg</span> y{" "}
+                <span className="font-mono text-text">{bmi.saludableMax}kg</span>.
               </div>
               <button
                 type="button"
