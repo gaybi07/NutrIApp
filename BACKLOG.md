@@ -261,3 +261,11 @@ algo puntual.
      mejores", "los 3 del medio" y "los 3 peores" por posición, sin superponerse
      entre grupos (con pocos días, el grupo del medio puede quedar vacío o con
      menos de 3).
+- **2026-09-09**: bug real de mobile — `input, select, textarea` tenían
+  `font-size: 13px` en `globals.css`. Cualquier campo con letra menor a 16px
+  dispara el zoom automático de Safari/Chrome al tocarlo en el celular, lo que
+  el usuario vio como "hace zoom y queda por fuera de la pantalla" al abrir
+  modales. Subido a 16px en mobile (13px se mantiene desde `lg:` para no
+  cambiar el aspecto en desktop). También se agregó `overflow-x: hidden` +
+  `max-width: 100vw` en `html, body` como red de seguridad para que nada quede
+  más ancho que la pantalla, sin afectar el scroll vertical.
