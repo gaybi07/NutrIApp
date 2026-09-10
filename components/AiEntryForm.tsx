@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, emptyDay } from "@/lib/types";
-import { countDigits, MAX_DIGITS, MAX_MINUTES_DIGITS, MAX_TEXT_LENGTH } from "@/lib/inputLimits";
+import { DayEntry, MealKey, MEAL_LABELS, emptyDay } from "@/lib/types";
+import { countDigits, MAX_DIGITS, MAX_TEXT_LENGTH } from "@/lib/inputLimits";
 import { fmtDate } from "@/lib/calculations";
 import { FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
@@ -46,10 +46,6 @@ export function AiEntryForm({
   const [meal, setMeal] = useState<MealKey>("des");
   const [text, setText] = useState("");
   const [inventoryText, setInventoryText] = useState("");
-  const [pasos, setPasos] = useState("");
-  const [pesoKg, setPesoKg] = useState("");
-  const [entrenoIntensidad, setEntrenoIntensidad] = useState<TrainingIntensity | "ninguno">("ninguno");
-  const [entrenoMinutos, setEntrenoMinutos] = useState("60");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
   const [preview, setPreview] = useState<{ kcal: number; protein: number; detalle: string } | null>(null);
@@ -93,14 +89,6 @@ export function AiEntryForm({
     setRecording(true);
   };
 
-  useEffect(() => {
-    const existing = days.find((d) => d.fecha === fecha);
-    setPasos(existing?.pasos ? String(existing.pasos) : "");
-    setPesoKg(existing?.pesoKg ? String(existing.pesoKg) : "");
-    setEntrenoIntensidad(existing?.entreno ? existing.entrenoIntensidad || "moderado" : "ninguno");
-    setEntrenoMinutos(existing?.entrenoMinutos ? String(existing.entrenoMinutos) : "60");
-  }, [days, fecha]);
-
   const handleCalc = async () => {
     if (!text.trim()) {
       setStatus("Escribí o dictá qué comiste primero");
@@ -135,11 +123,6 @@ export function AiEntryForm({
       ...existing,
       [kKey]: (existing[kKey] as number) + preview.kcal,
       [pKey]: (existing[pKey] as number) + preview.protein,
-      pasos: Number(pasos) || existing.pasos,
-      entreno: entrenoIntensidad !== "ninguno",
-      pesoKg: Number(pesoKg) > 0 ? Number(pesoKg) : existing.pesoKg,
-      entrenoMinutos: entrenoIntensidad !== "ninguno" ? Number(entrenoMinutos) || 60 : undefined,
-      entrenoIntensidad: entrenoIntensidad !== "ninguno" ? entrenoIntensidad : undefined,
     };
     onUpsert(updated);
     onConsumeInventory?.(inventoryText || text);
@@ -160,25 +143,9 @@ export function AiEntryForm({
     return combined.slice(0, MAX_SUGGESTIONS);
   }, [mealHistory]);
 
-  const handleSaveActivity = () => {
-    const existing = days.find((d) => d.fecha === fecha) || emptyDay(fecha);
-    const minutos = Number(entrenoMinutos) || 60;
-    onUpsert({
-      ...existing,
-      pasos: Number(pasos) || existing.pasos,
-      entreno: entrenoIntensidad !== "ninguno",
-      pesoKg: Number(pesoKg) > 0 ? Number(pesoKg) : existing.pesoKg,
-      entrenoMinutos: entrenoIntensidad !== "ninguno" ? minutos : undefined,
-      entrenoIntensidad: entrenoIntensidad !== "ninguno" ? entrenoIntensidad : undefined,
-      entrenamientos: entrenoIntensidad !== "ninguno" ? [{ intensidad: entrenoIntensidad, minutos }] : [],
-    });
-    setStatus(`Actividad guardada para el ${fecha} ✓`);
-    setTimeout(() => setStatus(""), 3500);
-  };
-
   return (
     <div
-      className="rounded-xl p-4 mb-3 border"
+      className="rounded-xl p-4 border"
       style={{ borderColor: "#C9A227", background: "linear-gradient(135deg, rgba(201,162,39,0.08), #242220)" }}
     >
       <div className="font-display italic text-[15px] text-gold mb-2.5">✎ Registrar con IA</div>
@@ -197,20 +164,21 @@ export function AiEntryForm({
         </div>
       </div>
       <div className="mt-2">
-        <div className="mb-1 flex items-center justify-between gap-2">
-          <label className="mb-0 flex items-center">Contame qué comiste<InfoHint text={FIELD_HELP.comidaTexto} /></label>
-          {speechSupported && (
-            <button
-              type="button"
-              onClick={toggleRecording}
-              className={`shrink-0 rounded-full border px-2.5 py-1 font-mono text-[9px] uppercase tracking-wide ${
-                recording ? "border-rust bg-rust/15 text-rust" : "border-border bg-bg text-textMuted"
-              }`}
-            >
-              {recording ? "● Grabando… tocá para parar" : "🎙️ Grabar"}
-            </button>
-          )}
-        </div>
+        <label className="mb-1 flex items-center">Contame qué comiste<InfoHint text={FIELD_HELP.comidaTexto} /></label>
+        {speechSupported && (
+          <button
+            type="button"
+            onClick={toggleRecording}
+            className={`mb-2 flex w-full items-center justify-center gap-2 rounded-lg border-2 p-2.5 font-sans text-[13px] font-bold uppercase tracking-wide transition-colors ${
+              recording
+                ? "border-rust bg-rust/15 text-rust animate-pulse"
+                : "border-gold bg-gold/15 text-gold"
+            }`}
+          >
+            <span className="text-lg leading-none">🎙️</span>
+            {recording ? "Grabando… tocá para parar" : "Grabar audio"}
+          </button>
+        )}
         <textarea
           rows={3}
           maxLength={MAX_TEXT_LENGTH}
@@ -241,76 +209,6 @@ export function AiEntryForm({
           onChange={(e) => setInventoryText(e.target.value)}
         />
         <div className="mt-1 text-[10px] text-textMuted">Al guardar la comida se descuentan esas cantidades.</div>
-      </div>
-      <div className="mt-3 rounded-lg border border-border bg-bg/40 p-3">
-        <div className="mb-2 font-mono text-[10px] uppercase tracking-wide text-textMuted">Actividad del día</div>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="flex items-center">Pasos<InfoHint text={FIELD_HELP.pasosDiarios} /></label>
-            <input
-              type="number"
-              min="0"
-              max="999999"
-              step="100"
-              value={pasos}
-              onChange={(e) => {
-                if (countDigits(e.target.value) <= MAX_DIGITS) setPasos(e.target.value);
-              }}
-              placeholder="Ej: 8500"
-            />
-          </div>
-          <div>
-            <label>Peso (kg)</label>
-            <input
-              type="number"
-              min="1"
-              max="999999"
-              step="0.1"
-              value={pesoKg}
-              onChange={(e) => {
-                if (countDigits(e.target.value) <= MAX_DIGITS) setPesoKg(e.target.value);
-              }}
-              placeholder="Ej: 114.8"
-            />
-          </div>
-          <div>
-            <label>Entrenamiento</label>
-            <select value={entrenoIntensidad} onChange={(e) => setEntrenoIntensidad(e.target.value as TrainingIntensity | "ninguno")}>
-              <option value="ninguno">No entrené</option>
-              <option value="leve">Leve</option>
-              <option value="moderado">Moderado</option>
-              <option value="exigente">Exigente</option>
-              <option value="fallo">Al fallo</option>
-            </select>
-          </div>
-        </div>
-        {entrenoIntensidad !== "ninguno" && (
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <div>
-              <label className="flex items-center">Duración (min)<InfoHint text={FIELD_HELP.minutosEntrenamiento} /></label>
-              <input
-                type="number"
-                min="1"
-                max="9999"
-                step="5"
-                value={entrenoMinutos}
-                onChange={(e) => {
-                  if (countDigits(e.target.value) <= MAX_MINUTES_DIGITS) setEntrenoMinutos(e.target.value);
-                }}
-              />
-            </div>
-            <div>
-              <label>Intensidad</label>
-              <div className="rounded-lg border border-border bg-bg px-3 py-2 text-[12px] text-textMuted">{entrenoIntensidad}</div>
-            </div>
-          </div>
-        )}
-        <button
-          onClick={handleSaveActivity}
-          className="mt-2 w-full rounded-lg border border-sage/50 bg-sage/10 p-2 font-sans text-[12px] font-bold text-sage"
-        >
-          Guardar actividad
-        </button>
       </div>
       <button
         onClick={handleCalc}

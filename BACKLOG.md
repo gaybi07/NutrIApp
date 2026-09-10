@@ -365,3 +365,19 @@ algo puntual.
   veces, reemplaza a las sugerencias fijas de arranque (que van completando
   los lugares que sobran hasta llegar a 6). Es por dispositivo, no sincroniza
   entre cuentas — es un hábito personal, no un dato de la cuenta.
+- **2026-09-10**: separación definitiva de "cargar comida" y "cargar
+  entrenamiento". `components/AiEntryForm.tsx` tenía embebida una sección
+  entera de "Actividad del día" (pasos, peso, entrenamiento, duración,
+  "Guardar actividad") que duplicaba lo que ya hace `TrainingEntryForm.tsx`
+  vía el botón "+ Entrenamiento". Se la sacó por completo: `AiEntryForm`
+  ahora solo maneja alimentos (fecha, comida, texto/audio, sugerencias,
+  ingredientes de inventario, calcular/guardar). El botón "🎙️ Grabar" se
+  hizo más visible (antes era una píldora chica gris; ahora es un botón
+  ancho, dorado, con ícono grande, arriba del textarea). Además, el modal
+  "ai" en `app/page.tsx` ahora abre como hoja de pantalla completa en
+  mobile (`fixed inset-0` sin bordes redondeados ni backdrop, con header
+  fijo "Cargar comida" + botón Cerrar) y vuelve a ser la tarjeta centrada
+  de siempre a partir de `sm:`. Verificado con Playwright a 375×667: sin
+  la sección de entrenamiento el contenido ya entra sin necesitar scroll
+  (scrollHeight ≈ clientHeight), y el flujo de "+ Entrenamiento" sigue
+  funcionando sin cambios.

@@ -252,18 +252,26 @@ export default function Home() {
       )}
 
       {panel === "ai" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>
+        <div
+          className="fixed inset-0 z-50 bg-bg sm:flex sm:items-center sm:justify-center sm:bg-bg/80 sm:p-4 sm:backdrop-blur-sm"
+          onClick={() => setPanel(null)}
+        >
           <div
-            className="relative my-4 max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-3 shadow-2xl"
+            className="relative flex h-full w-full flex-col overflow-y-auto bg-surface sm:my-4 sm:h-auto sm:max-h-[calc(100vh-2rem)] sm:max-w-lg sm:rounded-2xl sm:border sm:border-border sm:shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <button
-              onClick={() => setPanel(null)}
-              className="absolute right-3 top-3 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
-            >
-              Cerrar
-            </button>
-            <AiEntryForm days={days} onUpsert={upsertDay} onConsumeInventory={consumeByText} />
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-3 py-2.5">
+              <span className="font-display text-base text-text">Cargar comida</span>
+              <button
+                onClick={() => setPanel(null)}
+                className="rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+              >
+                Cerrar
+              </button>
+            </div>
+            <div className="flex-1 p-3">
+              <AiEntryForm days={days} onUpsert={upsertDay} onConsumeInventory={consumeByText} />
+            </div>
           </div>
         </div>
       )}
