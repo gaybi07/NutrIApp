@@ -381,3 +381,28 @@ algo puntual.
   la sección de entrenamiento el contenido ya entra sin necesitar scroll
   (scrollHeight ≈ clientHeight), y el flujo de "+ Entrenamiento" sigue
   funcionando sin cambios.
+- **2026-09-10**: descuento automático de inventario + sugerencias
+  resumidas, ambos usando la misma llamada a la IA que ya calculaba
+  kcal/proteína (sin llamada extra). `app/api/parse-meal/route.ts` ahora le
+  pide también un `"resumen"` (título corto de la comida, ej. "Yogur con
+  mermelada de arándanos" en vez del párrafo completo con detalles de
+  "lo hice con leche proteica, etc.") y un `"ingredientes"` (listado
+  normalizado "cantidad unidad nombre" apto para descontar de la
+  alacena). Se sacó el campo manual "Ingredientes usados del inventario"
+  de `AiEntryForm.tsx` — al guardar la comida se descuenta solo, usando
+  ese listado. `lib/useInventory.ts` → `consumeByText` ahora devuelve
+  `{ consumed, missing }`; si algo del texto no está cargado en el
+  inventario, se lo avisa en el mensaje de guardado ("Che, esto no lo
+  tenías cargado en el inventario: banana. Cargalo en Compras y la
+  próxima te lo descontamos solo.") en vez de fallar en silencio. De
+  paso se corrigió un bug de regex en `parseInventoryText` que no
+  reconocía la unidad "u" sin punto (`u\.` → `u\.?`), lo que hacía que
+  el nombre del ingrediente saliera con un prefijo suelto ("u banana").
+  El historial de sugerencias (`useMealHistory`) ahora guarda el
+  `resumen` corto en vez del texto largo dictado, así las sugerencias
+  futuras no repiten párrafos enteros. Probado con Playwright
+  mockeando la respuesta de `/api/parse-meal`: con "huevo" cargado en
+  inventario y "banana" no, tras guardar "2 huevos y una banana" el
+  inventario de huevo bajó de 6 a 4, el mensaje avisó que "banana" no
+  estaba cargada, y el historial guardó "Huevos con banana" (el resumen)
+  en vez del texto tal cual se escribió.

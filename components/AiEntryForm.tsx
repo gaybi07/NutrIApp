@@ -40,15 +40,14 @@ export function AiEntryForm({
 }: {
   days: DayEntry[];
   onUpsert: (entry: DayEntry) => void;
-  onConsumeInventory?: (text: string) => void;
+  onConsumeInventory?: (text: string) => { consumed: string[]; missing: string[] } | void;
 }) {
   const [fecha, setFecha] = useState(fmtDate(new Date()));
   const [meal, setMeal] = useState<MealKey>("des");
   const [text, setText] = useState("");
-  const [inventoryText, setInventoryText] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
-  const [preview, setPreview] = useState<{ kcal: number; protein: number; detalle: string } | null>(null);
+  const [preview, setPreview] = useState<{ kcal: number; protein: number; detalle: string; resumen: string; ingredientes: string } | null>(null);
   const { history: mealHistory, record: recordMeal } = useMealHistory();
   const [recording, setRecording] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
@@ -105,7 +104,13 @@ export function AiEntryForm({
       });
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "No se pudo calcular la comida");
-      setPreview({ kcal: data.kcal, protein: data.protein, detalle: data.detalle || "" });
+      setPreview({
+        kcal: data.kcal,
+        protein: data.protein,
+        detalle: data.detalle || "",
+        resumen: data.resumen || text.trim(),
+        ingredientes: data.ingredientes || "",
+      });
       setStatus("Revisá el resultado y guardá si está bien ↓");
     } catch (e) {
       setStatus(e instanceof Error ? e.message : "No se pudo calcular. Probá de nuevo.");
@@ -125,12 +130,16 @@ export function AiEntryForm({
       [pKey]: (existing[pKey] as number) + preview.protein,
     };
     onUpsert(updated);
-    onConsumeInventory?.(inventoryText || text);
-    recordMeal(text);
+    const result = onConsumeInventory?.(preview.ingredientes || text);
+    recordMeal(preview.resumen || text);
     setText("");
     setPreview(null);
-    setStatus(`Sumado a ${MEAL_LABELS[meal]} del ${fecha} ✓`);
-    setTimeout(() => setStatus(""), 3500);
+    let message = `Sumado a ${MEAL_LABELS[meal]} del ${fecha} ✓`;
+    if (result?.missing.length) {
+      message += ` · Che, esto no lo tenías cargado en el inventario: ${result.missing.join(", ")}. Cargalo en Compras y la próxima te lo descontamos solo.`;
+    }
+    setStatus(message);
+    setTimeout(() => setStatus(""), result?.missing.length ? 7000 : 3500);
   };
 
   const mealSuggestions = useMemo(() => {
@@ -199,17 +208,6 @@ export function AiEntryForm({
           ))}
         </div>
       </div>
-      <div className="mt-2">
-        <label className="flex items-center">Ingredientes usados del inventario (opcional)<InfoHint text={FIELD_HELP.ingredientesInventario} /></label>
-        <input
-          type="text"
-          maxLength={MAX_TEXT_LENGTH}
-          placeholder="Ej: 300 g pollo, 2 huevos, 150 g papa"
-          value={inventoryText}
-          onChange={(e) => setInventoryText(e.target.value)}
-        />
-        <div className="mt-1 text-[10px] text-textMuted">Al guardar la comida se descuentan esas cantidades.</div>
-      </div>
       <button
         onClick={handleCalc}
         disabled={loading}
@@ -246,6 +244,11 @@ export function AiEntryForm({
             </div>
           </div>
           {preview.detalle && <div className="text-[11px] text-textMuted italic my-2">{preview.detalle}</div>}
+          {preview.ingredientes && (
+            <div className="mb-2 text-[10px] text-textMuted">
+              Se descuenta del inventario (si lo tenés cargado): {preview.ingredientes}
+            </div>
+          )}
           <button
             onClick={handleSave}
             className="w-full rounded-lg p-3 font-sans font-bold text-sm"
