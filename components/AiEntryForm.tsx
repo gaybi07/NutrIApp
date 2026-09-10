@@ -1,25 +1,24 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, emptyDay } from "@/lib/types";
 import { countDigits, MAX_DIGITS, MAX_MINUTES_DIGITS, MAX_TEXT_LENGTH } from "@/lib/inputLimits";
 import { fmtDate } from "@/lib/calculations";
 import { FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
+import { useMealHistory } from "@/lib/useMealHistory";
 
-const MEAL_SUGGESTIONS = [
+const MAX_SUGGESTIONS = 6;
+
+/** Punto de partida antes de tener historial propio — se van reemplazando
+ * por tus comidas reales a medida que las repetís (ver useMealHistory). */
+const DEFAULT_SUGGESTIONS = [
   "Milanesa con puré",
   "Asado con ensalada",
   "2 empanadas de carne",
-  "Tostadas con palta y huevo",
-  "Yogur con granola y banana",
-  "Pastel de papa",
   "Pollo al horno con batatas",
   "Fideos con salsa y queso",
-  "Sándwich de milanesa",
-  "Tarta de verdura",
-  "Mate con tostadas",
-  "Choripán",
+  "Yogur con granola y banana",
 ];
 
 // SpeechRecognition no está tipado en TS DOM lib estándar.
@@ -54,6 +53,7 @@ export function AiEntryForm({
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
   const [preview, setPreview] = useState<{ kcal: number; protein: number; detalle: string } | null>(null);
+  const { history: mealHistory, record: recordMeal } = useMealHistory();
   const [recording, setRecording] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
@@ -143,11 +143,22 @@ export function AiEntryForm({
     };
     onUpsert(updated);
     onConsumeInventory?.(inventoryText || text);
+    recordMeal(text);
     setText("");
     setPreview(null);
     setStatus(`Sumado a ${MEAL_LABELS[meal]} del ${fecha} ✓`);
     setTimeout(() => setStatus(""), 3500);
   };
+
+  const mealSuggestions = useMemo(() => {
+    const personal = mealHistory.filter((h) => h.count >= 2).map((h) => h.text);
+    const combined = [...personal];
+    for (const fallback of DEFAULT_SUGGESTIONS) {
+      if (combined.length >= MAX_SUGGESTIONS) break;
+      if (!combined.some((c) => c.toLowerCase() === fallback.toLowerCase())) combined.push(fallback);
+    }
+    return combined.slice(0, MAX_SUGGESTIONS);
+  }, [mealHistory]);
 
   const handleSaveActivity = () => {
     const existing = days.find((d) => d.fecha === fecha) || emptyDay(fecha);
@@ -208,7 +219,7 @@ export function AiEntryForm({
           onChange={(e) => setText(e.target.value)}
         />
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {MEAL_SUGGESTIONS.map((suggestion) => (
+          {mealSuggestions.map((suggestion) => (
             <button
               key={suggestion}
               type="button"

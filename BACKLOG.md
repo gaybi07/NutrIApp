@@ -350,3 +350,18 @@ algo puntual.
   propio. El usuario dijo que ya la había borrado a mano, pero el listado de
   solo lectura mostró que seguía existiendo — no se borró nada sin
   confirmación explícita, queda pendiente que el usuario decida cómo seguir.
+- **2026-09-10**: bug real — los modales "Cargar con IA", "Entrenamiento" y
+  "Datos" en `app/page.tsx` no tenían `max-h-[calc(100vh-2rem)] overflow-y-auto`
+  (solo lo tenía el de "Objetivo"), así que en pantallas chicas el contenido
+  se salía de la pantalla sin poder scrollear — no se veía el botón de abajo.
+  Se les agregó la misma clase que ya usaba el modal de Objetivo. Probado en
+  un viewport de 375×600: antes el botón "Calcular con IA" quedaba fuera de
+  vista (y=768 en una pantalla de 600px), después scrollea correctamente
+  adentro del modal.
+- **2026-09-10**: sugerencias de comida en `AiEntryForm` — bajadas de 12 a un
+  máximo de 6, y ahora se retroalimentan con lo que el usuario realmente
+  carga. Nuevo `lib/useMealHistory.ts` (localStorage) guarda cada texto de
+  comida guardado y cuántas veces se repitió; una vez que algo se repite 2+
+  veces, reemplaza a las sugerencias fijas de arranque (que van completando
+  los lugares que sobran hasta llegar a 6). Es por dispositivo, no sincroniza
+  entre cuentas — es un hábito personal, no un dato de la cuenta.
