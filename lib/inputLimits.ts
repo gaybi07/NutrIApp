@@ -22,3 +22,20 @@ export const MAX_DIGITS = 6;
 
 /** Máximo de dígitos permitidos para un campo de minutos. */
 export const MAX_MINUTES_DIGITS = 4;
+
+/**
+ * Corrige un bug de React con inputs numéricos controlados: si el valor
+ * tipeado (ej. "0220") parsea al mismo número que ya estaba en el state
+ * (220), React no vuelve a sincronizar el DOM porque el prop `value` no
+ * cambió — y el 0 de más queda pegado en pantalla aunque el state esté
+ * bien. Forzamos el string del input al valor canónico para que siempre
+ * coincida con lo que ve el usuario.
+ */
+export function normalizeNumberInput(input: HTMLInputElement): number {
+  const num = Number(input.value);
+  if (input.value !== "" && !Number.isNaN(num)) {
+    const normalized = String(num);
+    if (input.value !== normalized) input.value = normalized;
+  }
+  return num;
+}

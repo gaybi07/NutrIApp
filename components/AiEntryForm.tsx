@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DayEntry, MealKey, MEAL_LABELS, emptyDay } from "@/lib/types";
-import { countDigits, MAX_DIGITS, MAX_TEXT_LENGTH } from "@/lib/inputLimits";
+import { countDigits, MAX_DIGITS, MAX_TEXT_LENGTH, normalizeNumberInput } from "@/lib/inputLimits";
 import { fmtDate } from "@/lib/calculations";
 import { FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
@@ -227,7 +227,7 @@ export function AiEntryForm({
                 max="999999"
                 value={preview.kcal}
                 onChange={(e) => {
-                  if (countDigits(e.target.value) <= MAX_DIGITS) setPreview({ ...preview, kcal: Number(e.target.value) });
+                  if (countDigits(e.target.value) <= MAX_DIGITS) setPreview({ ...preview, kcal: normalizeNumberInput(e.target) });
                 }}
               />
             </div>
@@ -238,7 +238,7 @@ export function AiEntryForm({
                 max="999999"
                 value={preview.protein}
                 onChange={(e) => {
-                  if (countDigits(e.target.value) <= MAX_DIGITS) setPreview({ ...preview, protein: Number(e.target.value) });
+                  if (countDigits(e.target.value) <= MAX_DIGITS) setPreview({ ...preview, protein: normalizeNumberInput(e.target) });
                 }}
               />
             </div>

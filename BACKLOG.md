@@ -406,3 +406,17 @@ algo puntual.
   inventario de huevo bajó de 6 a 4, el mensaje avisó que "banana" no
   estaba cargada, y el historial guardó "Huevos con banana" (el resumen)
   en vez del texto tal cual se escribió.
+- **2026-09-10**: bug real reportado con captura — en los campos Kcal/
+  Proteína de `AiEntryForm.tsx` (los que aparecen tras "Calcular con
+  IA"), si tipeabas un 0 al principio (ej. completar "80" escribiendo
+  "0" antes para armar "0220"), el cero quedaba pegado en pantalla para
+  siempre aunque el valor numérico ya fuera correcto. Es un bug conocido
+  de React con inputs `type="number"` controlados: cuando el string
+  tipeado parsea al mismo número que ya estaba en el state, React no
+  vuelve a pisar el DOM (compara contra el último valor que él mismo
+  puso, no contra lo que el navegador ya mutó), y el 0 de más queda
+  ahí. Se agregó `normalizeNumberInput()` en `lib/inputLimits.ts`, que
+  fuerza el string del input al valor numérico canónico apenas difiere,
+  y se aplicó a los dos campos. Reproducido y confirmado arreglado con
+  Playwright: escribir un 0 al inicio de "80" ya no dejaba "080"
+  pegado, y se pudo seguir editando con normalidad.
