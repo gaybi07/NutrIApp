@@ -24,6 +24,8 @@ import { isSupabaseConfigured } from "@/lib/supabase/browser";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 import { useInventory } from "@/lib/useInventory";
 import { DayEntry, emptyDay, MealKey } from "@/lib/types";
+import { SECTION_HELP } from "@/lib/helpText";
+import { InfoHint } from "@/components/InfoHint";
 
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
@@ -140,7 +142,10 @@ export default function Home() {
           />
 
           <div className="mt-2 rounded-2xl border border-border/80 bg-surface/70 px-3 py-2.5 shadow-[0_0_0_1px_rgba(58,54,47,0.4)]">
-            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-gold mb-1.5">Semana del</div>
+            <div className="mb-1.5 flex items-center font-mono text-[10px] uppercase tracking-[0.22em] text-gold">
+              Semana del
+              <InfoHint text={SECTION_HELP.semana} label="Qué es la sección Semana" />
+            </div>
             <div className="flex items-center justify-between gap-3">
               <h1 className="font-display font-semibold text-3xl leading-none -tracking-[0.04em]">
                 {monday.getDate()} {MONTHS[monday.getMonth()]}
@@ -186,7 +191,7 @@ export default function Home() {
         <div className="min-w-0">
           <RankingCard days={days} weightKg={currentWeightKg} />
 
-          <Collapsible eyebrow="Herramientas" title="Calculadora y carga con IA">
+          <Collapsible eyebrow="Herramientas" title="Calculadora y carga con IA" info={SECTION_HELP.herramientas}>
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setPanel("calc")}

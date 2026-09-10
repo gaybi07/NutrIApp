@@ -2,48 +2,17 @@
 
 import { useState } from "react";
 import { useEscapeKey } from "@/lib/useEscapeKey";
+import { SECTION_HELP } from "@/lib/helpText";
 
 const STOPS = [
-  {
-    icon: "📅",
-    title: "Hoy",
-    text: "Lo primero que vas a ver cada vez que entrás: cuántas kcal llevás consumidas sobre tu objetivo del día (que se ajusta solo según los pasos y el entrenamiento que cargues), más tu proteína y pasos. Los botones \"+ Cargar comida\" y \"+ Entrenamiento\" son el atajo más rápido para registrar todo.",
-  },
-  {
-    icon: "🗓️",
-    title: "Semana del…",
-    text: "Navegá entre semanas con las flechas. Ahí adentro está el control de tu peso semanal (una vez cargado queda compacto, con la comparación contra la semana anterior y una racha 🔥 si venís cumpliendo seguido), los indicadores agregados de la semana (colapsados, tocá para abrir) y el gráfico de kcal por día, que siempre se ve.",
-  },
-  {
-    icon: "🏆",
-    title: "Ranking de días",
-    text: "Clasifica cada día según si llegaste a tu objetivo real de proteína diaria (1.3g por cada kilo de tu peso — el piso para no perder masa muscular). Tocá un día para ver el detalle por comida y un consejo concreto de qué mejorar.",
-  },
-  {
-    icon: "🧮",
-    title: "Calculadora y carga con IA",
-    text: "Volvé a abrir la calculadora si cambia tu peso o tu meta, o cargá una comida contándole a la IA qué comiste (podés dictarlo con el micrófono del teclado). Ahí también está \"Datos\", para importar o exportar un respaldo de toda tu información.",
-  },
-  {
-    icon: "📋",
-    title: "Tabla de la semana",
-    text: "El detalle día por día: kcal, proteína, déficit, pasos y entrenamiento. Tocá el círculo de color de un día para cambiar la intensidad de entrenamiento de ese día puntual.",
-  },
-  {
-    icon: "👣",
-    title: "Pasos de la semana",
-    text: "Si un día se te pasó cargar los pasos desde \"Hoy\", acá podés completarlos para cualquier día de la semana que estés mirando.",
-  },
-  {
-    icon: "🛒",
-    title: "Compras / Ticket",
-    text: "Registrá lo que compraste — a mano o sacándole una foto al ticket — para armar tu inventario de la despensa. El Planner de cocina de abajo usa ese inventario para sugerirte recetas.",
-  },
-  {
-    icon: "🍳",
-    title: "Planner de cocina",
-    text: "Recetas armadas con lo que tenés en el inventario. Al usar una, se descuentan los ingredientes automáticamente y podés sumarla directo a una comida de tu día.",
-  },
+  { icon: "📅", title: "Hoy", text: SECTION_HELP.hoy },
+  { icon: "🗓️", title: "Semana del…", text: SECTION_HELP.semana },
+  { icon: "🏆", title: "Ranking de días", text: SECTION_HELP.ranking },
+  { icon: "🧮", title: "Calculadora y carga con IA", text: SECTION_HELP.herramientas },
+  { icon: "📋", title: "Tabla de la semana", text: SECTION_HELP.tabla },
+  { icon: "👣", title: "Pasos de la semana", text: SECTION_HELP.pasos },
+  { icon: "🛒", title: "Compras / Ticket", text: SECTION_HELP.compras },
+  { icon: "🍳", title: "Planner de cocina", text: SECTION_HELP.recetas },
 ];
 
 export function AppTour({ onFinish }: { onFinish: () => void }) {

@@ -5,6 +5,8 @@ import { addDays, fmtDate } from "@/lib/calculations";
 import { GoalMode } from "@/lib/types";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 import { clampNumber } from "@/lib/inputLimits";
+import { FIELD_HELP } from "@/lib/helpText";
+import { InfoHint } from "@/components/InfoHint";
 
 function computeStreak(weights: Record<string, number>, weekKey: string): number {
   let streak = 0;
@@ -53,7 +55,10 @@ export function WeeklyWeight({
   const modal = open && (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setOpen(false)}>
       <div className="w-full max-w-sm rounded-2xl border border-border bg-surface p-4 shadow-2xl" onClick={(event) => event.stopPropagation()}>
-        <div className="font-display text-xl text-text">Peso de esta semana</div>
+        <div className="flex items-center font-display text-xl text-text">
+          Peso de esta semana
+          <InfoHint text={FIELD_HELP.pesoSemanal} />
+        </div>
         <div className="mt-1 text-[11px] text-textMuted">Registralo una vez por semana para seguir tu evolución.</div>
         <input
           className="mt-3 w-full"

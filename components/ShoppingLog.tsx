@@ -4,6 +4,8 @@ import { ChangeEvent, useMemo, useState } from "react";
 import { InventoryItem } from "@/lib/types";
 import { Collapsible } from "@/components/Collapsible";
 import { MAX_TEXT_LENGTH } from "@/lib/inputLimits";
+import { SECTION_HELP, FIELD_HELP } from "@/lib/helpText";
+import { InfoHint } from "@/components/InfoHint";
 
 export function ShoppingLog({ items, addInventoryText, replaceItems }: { items: InventoryItem[]; addInventoryText: (text: string) => void; replaceItems: (items: InventoryItem[]) => void }) {
   const [raw, setRaw] = useState("");
@@ -99,6 +101,7 @@ export function ShoppingLog({ items, addInventoryText, replaceItems }: { items: 
     <Collapsible
       eyebrow="Compras"
       title="Ticket / foto"
+      info={SECTION_HELP.compras}
       badge={
         <div className="rounded-full border border-border bg-bg/70 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
           {items.length} items
@@ -121,8 +124,9 @@ export function ShoppingLog({ items, addInventoryText, replaceItems }: { items: 
         </div>
       </div>
 
-      <label className="font-mono text-[10px] uppercase tracking-[0.15em] text-textMuted mb-2 block">
+      <label className="mb-2 flex items-center font-mono text-[10px] uppercase tracking-[0.15em] text-textMuted">
         Pegá el ticket o escribí lo que compraste
+        <InfoHint text={FIELD_HELP.ticketTexto} />
       </label>
       <textarea
         rows={4}

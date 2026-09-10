@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, emptyDay } from "@/lib/types";
 import { countDigits, MAX_DIGITS, MAX_MINUTES_DIGITS, MAX_TEXT_LENGTH } from "@/lib/inputLimits";
 import { fmtDate } from "@/lib/calculations";
+import { FIELD_HELP } from "@/lib/helpText";
+import { InfoHint } from "@/components/InfoHint";
 
 const MEAL_SUGGESTIONS = [
   "Milanesa con puré",
@@ -185,7 +187,7 @@ export function AiEntryForm({
       </div>
       <div className="mt-2">
         <div className="mb-1 flex items-center justify-between gap-2">
-          <label className="mb-0">Contame qué comiste</label>
+          <label className="mb-0 flex items-center">Contame qué comiste<InfoHint text={FIELD_HELP.comidaTexto} /></label>
           {speechSupported && (
             <button
               type="button"
@@ -219,7 +221,7 @@ export function AiEntryForm({
         </div>
       </div>
       <div className="mt-2">
-        <label>Ingredientes usados del inventario (opcional)</label>
+        <label className="flex items-center">Ingredientes usados del inventario (opcional)<InfoHint text={FIELD_HELP.ingredientesInventario} /></label>
         <input
           type="text"
           maxLength={MAX_TEXT_LENGTH}
@@ -233,7 +235,7 @@ export function AiEntryForm({
         <div className="mb-2 font-mono text-[10px] uppercase tracking-wide text-textMuted">Actividad del día</div>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label>Pasos</label>
+            <label className="flex items-center">Pasos<InfoHint text={FIELD_HELP.pasosDiarios} /></label>
             <input
               type="number"
               min="0"
@@ -274,7 +276,7 @@ export function AiEntryForm({
         {entrenoIntensidad !== "ninguno" && (
           <div className="mt-2 grid grid-cols-2 gap-2">
             <div>
-              <label>Duración (min)</label>
+              <label className="flex items-center">Duración (min)<InfoHint text={FIELD_HELP.minutosEntrenamiento} /></label>
               <input
                 type="number"
                 min="1"

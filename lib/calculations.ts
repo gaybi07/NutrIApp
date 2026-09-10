@@ -231,12 +231,23 @@ export function bmiInfo(pesoKg: number, alturaCm: number): BmiInfo | null {
   };
 }
 
+/**
+ * Piso de kcal/día por debajo del cual no se sugiere un objetivo, sin importar
+ * cuánto falte bajar — comer menos que esto de forma sostenida es un riesgo
+ * para la salud, no solo para la masa muscular.
+ */
+export const MIN_SAFE_KCAL: Record<"hombre" | "mujer", number> = { hombre: 1500, mujer: 1200 };
+
 export interface GoalComputation {
   basal: number;
   gastoBase: number;
   objetivo: number;
   detalle: string;
   deficit: GoalCalcResult | null;
+  /** true si el plan es demasiado agresivo o queda por debajo del piso
+   * saludable — la UI no debería dejar aplicar este objetivo tal cual. */
+  bloqueado: boolean;
+  motivoBloqueo?: string;
 }
 
 /**
@@ -277,7 +288,19 @@ export function computeGoal(params: {
     detalle = "Superávit moderado para favorecer el aumento de masa.";
   }
 
-  return { basal, gastoBase, objetivo, detalle, deficit };
+  let bloqueado = false;
+  let motivoBloqueo: string | undefined;
+  if (modo === "perder" && deficit) {
+    if (deficit.esAgresivo) {
+      bloqueado = true;
+      motivoBloqueo = `Ese ritmo (${deficit.kgPorSemana.toFixed(2)}kg por semana, ${Math.round(deficit.pctDelGasto)}% de tu gasto) es demasiado agresivo — con un déficit así arriesgás perder masa muscular además de grasa. Elegí una fecha más lejana o un peso objetivo menos exigente.`;
+    } else if (objetivo < MIN_SAFE_KCAL[sexo]) {
+      bloqueado = true;
+      motivoBloqueo = `Ese objetivo (${objetivo.toLocaleString("es-AR")} kcal/día) queda por debajo del mínimo saludable (${MIN_SAFE_KCAL[sexo].toLocaleString("es-AR")} kcal/día) — comer menos que eso de forma sostenida no es seguro. Elegí una fecha más lejana.`;
+    }
+  }
+
+  return { basal, gastoBase, objetivo, detalle, deficit, bloqueado, motivoBloqueo };
 }
 
 /** Devuelve el lunes (inicio de semana) de la fecha dada. */

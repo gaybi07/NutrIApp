@@ -4,6 +4,8 @@ import { useState } from "react";
 import { computeGoal, bmiInfo, addDays, fmtDate } from "@/lib/calculations";
 import { CalculatorProfile, GoalMode } from "@/lib/types";
 import { countDigits, MAX_DIGITS } from "@/lib/inputLimits";
+import { FIELD_HELP } from "@/lib/helpText";
+import { InfoHint } from "@/components/InfoHint";
 
 export function GoalCalculator({
   tdeeFallback,
@@ -54,7 +56,7 @@ export function GoalCalculator({
       return;
     }
 
-    const { basal, gastoBase, objetivo, detalle, deficit } = computation;
+    const { basal, gastoBase, objetivo, detalle, deficit, bloqueado, motivoBloqueo } = computation;
 
     setResult(
       <>
@@ -69,19 +71,25 @@ export function GoalCalculator({
           </div>
         )}
         <div className="grid grid-cols-2 gap-2 mt-2.5">
-          <Stat label="Objetivo diario" value={`${objetivo.toLocaleString("es-AR")} kcal`} color="text-gold" />
+          <Stat label="Objetivo diario" value={`${objetivo.toLocaleString("es-AR")} kcal`} color={bloqueado ? "text-rust" : "text-gold"} />
           <Stat label="Modo" value={modo === "perder" ? "Perder grasa" : modo === "recomponer" ? "Recomponer" : "Aumentar masa"} />
         </div>
         <div className="text-[11px] text-textMuted italic mt-2.5">
           {detalle} El gasto diario luego varía con tus pasos y entrenamiento. Es una estimación orientativa.
         </div>
-        {onApplyGoal && (
-          <button
-            onClick={() => onApplyGoal(gastoBase, objetivo, { actual, meta, altura, edad, sexo, fecha, modo })}
-            className="w-full rounded-lg border border-gold/60 bg-gold/15 p-2.5 font-sans text-sm font-bold text-gold mt-3"
-          >
-            Usar este objetivo ({objetivo.toLocaleString("es-AR")} kcal/día)
-          </button>
+        {bloqueado ? (
+          <div className="mt-3 rounded-lg border border-rust/50 bg-rust/10 p-2.5 text-[11px] text-rust">
+            ⚠ {motivoBloqueo}
+          </div>
+        ) : (
+          onApplyGoal && (
+            <button
+              onClick={() => onApplyGoal(gastoBase, objetivo, { actual, meta, altura, edad, sexo, fecha, modo })}
+              className="w-full rounded-lg border border-gold/60 bg-gold/15 p-2.5 font-sans text-sm font-bold text-gold mt-3"
+            >
+              Usar este objetivo ({objetivo.toLocaleString("es-AR")} kcal/día)
+            </button>
+          )
         )}
       </>
     );
@@ -112,21 +120,21 @@ export function GoalCalculator({
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label>Peso actual (kg)</label>
+          <label className="flex items-center">Peso actual (kg)<InfoHint text={FIELD_HELP.pesoActual} /></label>
           <input type="number" step="0.1" max="999999" value={actual} onChange={(e) => setNum(setActual)(e.target.value)} />
         </div>
         <div>
-          <label>Altura (cm)</label>
+          <label className="flex items-center">Altura (cm)<InfoHint text={FIELD_HELP.altura} /></label>
           <input type="number" max="999999" value={altura} onChange={(e) => setNum(setAltura)(e.target.value)} />
         </div>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2">
         <div>
-          <label>Edad</label>
+          <label className="flex items-center">Edad<InfoHint text={FIELD_HELP.edad} /></label>
           <input type="number" max="999999" value={edad} onChange={(e) => setNum(setEdad)(e.target.value)} />
         </div>
         <div>
-          <label>Perfil metabólico</label>
+          <label className="flex items-center">Perfil metabólico<InfoHint text={FIELD_HELP.sexo} /></label>
           <select value={sexo} onChange={(e) => setSexo(e.target.value as typeof sexo)}>
             <option value="hombre">Hombre</option>
             <option value="mujer">Mujer</option>
@@ -154,11 +162,11 @@ export function GoalCalculator({
           )}
           <div className="mt-2 grid grid-cols-2 gap-2">
             <div>
-              <label>Peso objetivo (kg)</label>
+              <label className="flex items-center">Peso objetivo (kg)<InfoHint text={FIELD_HELP.pesoObjetivo} /></label>
               <input type="number" step="0.1" max="999999" value={meta} onChange={(e) => setNum(setMeta)(e.target.value)} />
             </div>
             <div>
-              <label>Fecha objetivo</label>
+              <label className="flex items-center">Fecha objetivo<InfoHint text={FIELD_HELP.fechaObjetivo} /></label>
               <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
             </div>
           </div>

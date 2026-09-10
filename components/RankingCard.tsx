@@ -3,6 +3,7 @@
 import { DayEntry } from "@/lib/types";
 import { rankDays, proteinQualityTier, proteinTargetForWeight, proteinDailyTier, ProteinQualityTier } from "@/lib/calculations";
 import { Collapsible } from "@/components/Collapsible";
+import { SECTION_HELP } from "@/lib/helpText";
 
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const fmtDay = (fecha: string) => {
@@ -28,7 +29,7 @@ export function RankingCard({ days, weightKg }: { days: DayEntry[]; weightKg: nu
   const worst = ranked.slice(worstStart, n);
 
   return (
-    <Collapsible eyebrow="Semana" title="Ranking de días" scrollable={false}>
+    <Collapsible eyebrow="Semana" title="Ranking de días" info={SECTION_HELP.ranking} scrollable={false}>
       {ranked.length < 2 ? (
         <div className="text-center text-textMuted text-sm py-4">Cargá al menos 2 días para ver el ranking.</div>
       ) : (

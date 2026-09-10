@@ -4,6 +4,7 @@ import { useState } from "react";
 import { DayEntry, emptyDay } from "@/lib/types";
 import { Collapsible } from "@/components/Collapsible";
 import { clampNumber } from "@/lib/inputLimits";
+import { SECTION_HELP } from "@/lib/helpText";
 
 export function DailySteps({ weekDates, weekDays, onUpsert }: { weekDates: string[]; weekDays: (DayEntry | null)[]; onUpsert: (entry: DayEntry) => void }) {
   const [status, setStatus] = useState("");
@@ -20,6 +21,7 @@ export function DailySteps({ weekDates, weekDays, onUpsert }: { weekDates: strin
     <Collapsible
       eyebrow="Movimiento diario"
       title="Pasos de la semana"
+      info={SECTION_HELP.pasos}
       badge={status ? <div className="font-mono text-[9px] uppercase text-sage">{status}</div> : undefined}
     >
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">

@@ -2,6 +2,8 @@
 
 import { DayEntry, INTENSITY_STYLES } from "@/lib/types";
 import { dayTotal, dayProt, dayGoal, getTrainingSessions } from "@/lib/calculations";
+import { SECTION_HELP } from "@/lib/helpText";
+import { InfoHint } from "@/components/InfoHint";
 
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const DOW = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
@@ -34,7 +36,10 @@ export function TodayCard({
   return (
     <section className="mb-4 rounded-2xl border border-gold/40 bg-surface p-3">
       <div className="mb-3">
-        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Hoy</div>
+        <div className="flex items-center font-mono text-[10px] uppercase tracking-[0.18em] text-gold">
+          Hoy
+          <InfoHint text={SECTION_HELP.hoy} label="Qué es la sección Hoy" />
+        </div>
         <h2 className="font-display text-xl leading-none capitalize">
           {DOW[today.getDay()]} {today.getDate()} {MONTHS[today.getMonth()]}
         </h2>

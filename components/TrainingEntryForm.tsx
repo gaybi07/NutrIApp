@@ -4,6 +4,8 @@ import { useState } from "react";
 import { DayEntry, TrainingIntensity, TrainingSession, INTENSITY_STYLES } from "@/lib/types";
 import { estimateTrainingCalories, getTrainingSessions } from "@/lib/calculations";
 import { clampNumber, countDigits, MAX_MINUTES_DIGITS } from "@/lib/inputLimits";
+import { FIELD_HELP } from "@/lib/helpText";
+import { InfoHint } from "@/components/InfoHint";
 
 const INTENSITIES: TrainingIntensity[] = ["leve", "moderado", "exigente", "fallo"];
 
@@ -49,7 +51,9 @@ export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: 
       <h2 className="font-display text-xl leading-none mb-3">Pasos y entrenamiento</h2>
 
       <div className="mb-3">
-        <label className="mb-1 block font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">Pasos</label>
+        <label className="mb-1 flex items-center font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
+          Pasos<InfoHint text={FIELD_HELP.pasosDiarios} />
+        </label>
         <input
           type="number"
           min="0"
@@ -119,7 +123,10 @@ export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: 
               })}
           </div>
           <div className="mt-2 text-[11px] text-textMuted">{INTENSITY_STYLES[nuevaIntensidad].description}</div>
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-2 flex items-center gap-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">
+            Minutos<InfoHint text={FIELD_HELP.minutosEntrenamiento} />
+          </div>
+          <div className="mt-1 flex items-center gap-2">
             <input
               type="number"
               min="1"

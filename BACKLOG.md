@@ -307,3 +307,46 @@ algo puntual.
   `AiEntryForm.tsx` que no pasaba por `fmtDate()`. Probado simulando huso
   horario de Buenos Aires con la hora justo después de medianoche UTC — la
   fecha local se mantiene correcta.
+- **2026-09-10**: ayuda contextual permanente en toda la app (cierra el ítem 4
+  del pedido grande). Nuevo `lib/helpText.ts` centraliza los textos —
+  `AppTour.tsx` (el tour de una sola vez) y los íconos "?" permanentes usan
+  exactamente el mismo texto por sección, para que no se desincronicen. Nuevo
+  `components/InfoHint.tsx`: un ícono "?" que se abre/cierra con un tap (no
+  con hover, para que funcione igual en mobile y desktop), con Escape y click
+  afuera para cerrar. `Collapsible.tsx` ahora acepta un prop `info` opcional
+  que agrega el ícono junto al título — como todas las secciones colapsables
+  ya lo usan (Indicadores, Ranking, Herramientas, Tabla, Pasos, Compras), fue
+  un solo cambio central. Se agregó a mano en "Hoy", "Semana del" y "Planner
+  de cocina" (no son `Collapsible`). También se agregaron íconos de ayuda por
+  CAMPO (no solo por sección) en los formularios más usados: `GoalCalculator`,
+  `AiEntryForm`, `TrainingEntryForm`, `WeeklyWeight` — la calculadora guiada
+  del onboarding ya tenía su propia caja "¿Para qué sirve?" por paso, así que
+  no se duplicó ahí.
+- **2026-09-10**: objetivos poco saludables ahora se **bloquean**, no solo se
+  advierten (pedido explícito del usuario: "que no te deje plantearlo").
+  `computeGoal()` en `lib/calculations.ts` devuelve `bloqueado` +
+  `motivoBloqueo` cuando el plan es demasiado agresivo (`esAgresivo`, ya
+  existía) o cuando el objetivo calculado cae por debajo de un piso de
+  seguridad nuevo (`MIN_SAFE_KCAL`: 1500 hombre / 1200 mujer — comer menos que
+  eso de forma sostenida no es seguro, sin importar cuánto falte bajar). En
+  ese caso, tanto `GoalCalculator.tsx` (edición rápida) como
+  `GuidedGoalCalculator.tsx` (onboarding) muestran el motivo en rojo y **sacan
+  el botón "Usar este objetivo"** en vez de dejar aplicarlo. Un plan razonable
+  (ej. 5kg en 4 meses) sigue funcionando normal.
+- **2026-09-10**: se encontró y arregló un bug de deriva — `RecipePlanner.tsx`
+  en algún momento pasó a ser una versión más simple/curada (menos recetas,
+  sin `dailyGoal`/`consumedKcal`) sin que `app/page.tsx` se actualizara, lo
+  que rompía el build. Se le agregó la integración de `dailyGoal`/
+  `consumedKcal` a esta versión actual (no se revirtió a la versión vieja más
+  compleja, que parece haber sido reemplazada a propósito).
+- **2026-09-10**: usuario pidió borrar todas las cuentas de Supabase Auth
+  menos la suya (jgabrielrosa8@gmail.com), incluyendo el login, no solo los
+  datos. Se le agregó la `service_role` key a `.env.local` (nunca se comitea,
+  cubierto por `.gitignore`) para poder hacer esto con un script — pero antes
+  de borrar nada se hizo un `auth.admin.listUsers()` de solo lectura, que
+  mostró solo 2 cuentas totales: la del usuario y `flaviabravo61@gmail.com`
+  (creada 10/09). Se le preguntó al usuario si esa segunda cuenta es también
+  suya antes de borrar, dado que el nombre no parece un alias de prueba
+  propio. El usuario dijo que ya la había borrado a mano, pero el listado de
+  solo lectura mostró que seguía existiendo — no se borró nada sin
+  confirmación explícita, queda pendiente que el usuario decida cómo seguir.

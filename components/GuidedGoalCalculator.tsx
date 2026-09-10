@@ -287,23 +287,36 @@ export function GuidedGoalCalculator({
                 </div>
               )}
               <div className="mt-2.5">
-                <Stat label="Objetivo diario" value={`${computation.objetivo.toLocaleString("es-AR")} kcal`} color="text-gold" />
+                <Stat
+                  label="Objetivo diario"
+                  value={`${computation.objetivo.toLocaleString("es-AR")} kcal`}
+                  color={computation.bloqueado ? "text-rust" : "text-gold"}
+                />
               </div>
               <div className="mt-2.5 text-[11px] italic text-textMuted">
                 {computation.detalle} El gasto diario luego varía con tus pasos y entrenamiento.
               </div>
-              <button
-                type="button"
-                onClick={() =>
-                  sexo &&
-                  modo &&
-                  onApplyGoal(computation.gastoBase, computation.objetivo, { actual, meta, altura, edad, sexo, fecha, modo })
-                }
-                className="mt-3 w-full rounded-lg p-3 font-sans font-bold text-sm"
-                style={{ background: "#C9A227", color: "#1C1B18" }}
-              >
-                Usar este objetivo ({computation.objetivo.toLocaleString("es-AR")} kcal/día)
-              </button>
+              {computation.bloqueado ? (
+                <div className="mt-3 rounded-lg border border-rust/50 bg-rust/10 p-2.5 text-[11px] text-rust">
+                  ⚠ {computation.motivoBloqueo}
+                  <button type="button" onClick={goBack} className="mt-2 w-full rounded-lg border border-rust/50 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-rust">
+                    ‹ Volver a elegir fecha
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() =>
+                    sexo &&
+                    modo &&
+                    onApplyGoal(computation.gastoBase, computation.objetivo, { actual, meta, altura, edad, sexo, fecha, modo })
+                  }
+                  className="mt-3 w-full rounded-lg p-3 font-sans font-bold text-sm"
+                  style={{ background: "#C9A227", color: "#1C1B18" }}
+                >
+                  Usar este objetivo ({computation.objetivo.toLocaleString("es-AR")} kcal/día)
+                </button>
+              )}
             </>
           )}
         </div>
