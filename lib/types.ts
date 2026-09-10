@@ -19,6 +19,11 @@ export interface CalculatorProfile {
   modo: GoalMode;
 }
 
+export interface TrainingSession {
+  intensidad: TrainingIntensity;
+  minutos: number;
+}
+
 export interface DayEntry {
   fecha: string; // YYYY-MM-DD
   desK: number;
@@ -32,8 +37,9 @@ export interface DayEntry {
   pasos: number;
   entreno: boolean;
   pesoKg?: number;
-  entrenoMinutos?: number;
-  entrenoIntensidad?: TrainingIntensity;
+  entrenoMinutos?: number; // formato viejo: primer/único entrenamiento del día
+  entrenoIntensidad?: TrainingIntensity; // formato viejo
+  entrenamientos?: TrainingSession[]; // formato nuevo: soporta más de un entrenamiento por día
 }
 
 export interface Settings {

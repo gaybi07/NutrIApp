@@ -1,4 +1,16 @@
-import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, GoalMode } from "./types";
+import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, TrainingSession, GoalMode } from "./types";
+
+/**
+ * Sesiones de entrenamiento del día. Si ya tiene el formato nuevo
+ * (`entrenamientos`), lo usa; si no, arma una sesión única a partir de los
+ * campos viejos (`entreno`/`entrenoIntensidad`/`entrenoMinutos`) para que los
+ * días cargados antes de soportar múltiples entrenamientos sigan funcionando.
+ */
+export function getTrainingSessions(d: DayEntry): TrainingSession[] {
+  if (d.entrenamientos && d.entrenamientos.length > 0) return d.entrenamientos;
+  if (d.entreno && d.entrenoIntensidad) return [{ intensidad: d.entrenoIntensidad, minutos: d.entrenoMinutos || 60 }];
+  return [];
+}
 
 /** Total kcal consumidas en el día (suma de las 4 comidas). */
 export function dayTotal(d: DayEntry): number {
@@ -26,14 +38,16 @@ export function estimateGasto(d: DayEntry, tdeeFallback: number): number {
   return Math.round(Math.max(0, tdeeFallback + ajustePasos + ajusteEntrenamiento));
 }
 
-/** Estima solo el gasto adicional de la sesión, sin contar el reposo. */
+/** Estima el gasto adicional de todas las sesiones del día, sin contar el reposo. */
 export function estimateTrainingCalories(d: DayEntry): number {
-  if (!d.entreno || !d.entrenoIntensidad) return 0;
+  const sessions = getTrainingSessions(d);
+  if (sessions.length === 0) return 0;
   const intensityMet: Record<TrainingIntensity, number> = { leve: 3, moderado: 4, exigente: 5, fallo: 6 };
-  const minutos = d.entrenoMinutos || 60;
   const peso = d.pesoKg || 75;
-  const met = intensityMet[d.entrenoIntensidad];
-  return Math.round(Math.max(0, (met - 1) * 3.5 * peso * minutos / 200));
+  return sessions.reduce((total, session) => {
+    const met = intensityMet[session.intensidad];
+    return total + Math.round(Math.max(0, (met - 1) * 3.5 * peso * session.minutos / 200));
+  }, 0);
 }
 
 /** Ajusta el objetivo base con la actividad registrada en ese día. */

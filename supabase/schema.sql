@@ -14,6 +14,7 @@ create table public.days (
   peso_kg numeric,
   entreno_minutos integer,
   entreno_intensidad text,
+  entrenamientos jsonb not null default '[]'::jsonb,
   primary key (user_id, fecha)
 );
 

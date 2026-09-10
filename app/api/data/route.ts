@@ -20,6 +20,7 @@ function toDay(row: Record<string, unknown>): DayEntry {
     pesoKg: row.peso_kg ? Number(row.peso_kg) : undefined,
     entrenoMinutos: row.entreno_minutos ? Number(row.entreno_minutos) : undefined,
     entrenoIntensidad: row.entreno_intensidad as DayEntry["entrenoIntensidad"],
+    entrenamientos: (row.entrenamientos as DayEntry["entrenamientos"]) || undefined,
   };
 }
 
@@ -40,6 +41,7 @@ function toDayRow(day: DayEntry, userId: string) {
     peso_kg: day.pesoKg || null,
     entreno_minutos: day.entrenoMinutos || null,
     entreno_intensidad: day.entrenoIntensidad || null,
+    entrenamientos: day.entrenamientos || [],
   };
 }
 

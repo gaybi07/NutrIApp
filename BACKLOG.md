@@ -269,3 +269,18 @@ algo puntual.
   cambiar el aspecto en desktop). También se agregó `overflow-x: hidden` +
   `max-width: 100vw` en `html, body` como red de seguridad para que nada quede
   más ancho que la pantalla, sin afectar el scroll vertical.
+- **2026-09-10**: soporte para más de un entrenamiento por día (pedido: cinta +
+  gimnasio el mismo día). `DayEntry.entrenamientos?: TrainingSession[]` es el
+  formato nuevo; se mantienen `entreno`/`entrenoIntensidad`/`entrenoMinutos`
+  como formato viejo para compatibilidad. `getTrainingSessions()` en
+  `lib/calculations.ts` es la única fuente de verdad para leer las sesiones de
+  un día (usa `entrenamientos` si existe, si no arma una sesión desde los
+  campos viejos) — `estimateTrainingCalories` ahora suma el gasto de todas las
+  sesiones. `TrainingEntryForm` (botón "+ Entrenamiento" en Hoy) es la pantalla
+  para armar la lista: agregar intensidad+minutos, ver cada sesión con su
+  gasto, y sacarlas. `TodayCard` muestra "N entrenamientos" cuando hay más de
+  uno. `Ledger` (tabla semanal) y `AiEntryForm` siguen siendo editores rápidos
+  de una sola sesión por día — al usarlos reemplazan la lista completa de ese
+  día por esa única sesión (no la combinan), para que sigan siendo simples.
+  Agregada columna `entrenamientos jsonb` a Supabase (schema.sql + migración
+  `migration_2026-09-09c_add_entrenamientos.sql`, pendiente de correr).

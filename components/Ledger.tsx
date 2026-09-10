@@ -32,11 +32,13 @@ export function Ledger({
   const saveIntensity = (intensidad: TrainingIntensity | "ninguno") => {
     if (!activeDate) return;
     const existing = activeDay || emptyDay(activeDate);
+    const minutos = existing.entrenoMinutos || 60;
     onUpsert({
       ...existing,
       entreno: intensidad !== "ninguno",
       entrenoIntensidad: intensidad !== "ninguno" ? intensidad : undefined,
-      entrenoMinutos: intensidad !== "ninguno" ? existing.entrenoMinutos || 60 : undefined,
+      entrenoMinutos: intensidad !== "ninguno" ? minutos : undefined,
+      entrenamientos: intensidad !== "ninguno" ? [{ intensidad, minutos }] : [],
     });
     setActiveDate(null);
   };

@@ -1,7 +1,7 @@
 "use client";
 
 import { DayEntry, INTENSITY_STYLES } from "@/lib/types";
-import { dayTotal, dayProt, dayGoal } from "@/lib/calculations";
+import { dayTotal, dayProt, dayGoal, getTrainingSessions } from "@/lib/calculations";
 
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const DOW = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
@@ -26,8 +26,10 @@ export function TodayCard({
   const protein = dayProt(entry);
   const over = consumed > adjustedGoal;
   const pct = adjustedGoal > 0 ? Math.min(100, Math.round((consumed / adjustedGoal) * 100)) : 0;
-  const intensidad = entry.entreno ? entry.entrenoIntensidad || "moderado" : "ninguno";
+  const sessions = getTrainingSessions(entry);
+  const intensidad = sessions.length === 1 ? sessions[0].intensidad : entry.entreno ? "moderado" : "ninguno";
   const trainingStyle = INTENSITY_STYLES[intensidad];
+  const trainingLabel = sessions.length > 1 ? `${sessions.length} entrenamientos` : trainingStyle.label;
 
   return (
     <section className="mb-4 rounded-2xl border border-gold/40 bg-surface p-3">
@@ -79,13 +81,13 @@ export function TodayCard({
           onClick={onLogTraining}
           className="flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em]"
           style={
-            entry.entreno
+            sessions.length > 0
               ? { background: trainingStyle.background, color: trainingStyle.color, borderColor: trainingStyle.background }
               : { background: "#8A9A7C", color: "#1C1B18", borderColor: "rgba(138,154,124,0.6)" }
           }
         >
-          {entry.entreno && <span className="h-2 w-2 rounded-full bg-current opacity-70" />}
-          {entry.entreno ? trainingStyle.label : "+ Entrenamiento"}
+          {sessions.length > 0 && <span className="h-2 w-2 rounded-full bg-current opacity-70" />}
+          {sessions.length > 0 ? trainingLabel : "+ Entrenamiento"}
         </button>
       </div>
     </section>

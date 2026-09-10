@@ -148,13 +148,15 @@ export function AiEntryForm({
 
   const handleSaveActivity = () => {
     const existing = days.find((d) => d.fecha === fecha) || emptyDay(fecha);
+    const minutos = Number(entrenoMinutos) || 60;
     onUpsert({
       ...existing,
       pasos: Number(pasos) || existing.pasos,
       entreno: entrenoIntensidad !== "ninguno",
       pesoKg: Number(pesoKg) > 0 ? Number(pesoKg) : existing.pesoKg,
-      entrenoMinutos: entrenoIntensidad !== "ninguno" ? Number(entrenoMinutos) || 60 : undefined,
+      entrenoMinutos: entrenoIntensidad !== "ninguno" ? minutos : undefined,
       entrenoIntensidad: entrenoIntensidad !== "ninguno" ? entrenoIntensidad : undefined,
+      entrenamientos: entrenoIntensidad !== "ninguno" ? [{ intensidad: entrenoIntensidad, minutos }] : [],
     });
     setStatus(`Actividad guardada para el ${fecha} ✓`);
     setTimeout(() => setStatus(""), 3500);
