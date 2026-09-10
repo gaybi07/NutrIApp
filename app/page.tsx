@@ -181,11 +181,11 @@ export default function Home() {
               avgGasto={settings.tdeeFallback}
             />
           </div>
-
-          <RankingCard days={days} weightKg={currentWeightKg} />
         </div>
 
         <div className="min-w-0">
+          <RankingCard days={days} weightKg={currentWeightKg} />
+
           <Collapsible eyebrow="Herramientas" title="Calculadora y carga con IA">
             <div className="grid grid-cols-2 gap-2">
               <button

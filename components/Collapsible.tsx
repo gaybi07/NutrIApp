@@ -7,12 +7,17 @@ export function Collapsible({
   title,
   badge,
   defaultOpen = false,
+  scrollable = true,
   children,
 }: {
   eyebrow: string;
   title: string;
   badge?: ReactNode;
   defaultOpen?: boolean;
+  /** Si es true (default), el contenido abierto se limita en altura y scrollea
+   * adentro en vez de empujar el resto de la página. Poné false para
+   * contenido con elementos que no deben recortarse (ej. tooltips absolutos). */
+  scrollable?: boolean;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -38,7 +43,9 @@ export function Collapsible({
           </span>
         </div>
       </button>
-      {open && <div className="px-3 pb-3">{children}</div>}
+      {open && (
+        <div className={`px-3 pb-3 ${scrollable ? "max-h-[60vh] overflow-y-auto" : ""}`}>{children}</div>
+      )}
     </section>
   );
 }

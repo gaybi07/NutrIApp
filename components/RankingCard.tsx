@@ -28,7 +28,7 @@ export function RankingCard({ days, weightKg }: { days: DayEntry[]; weightKg: nu
   const worst = ranked.slice(worstStart, n);
 
   return (
-    <Collapsible eyebrow="Semana" title="Ranking de días">
+    <Collapsible eyebrow="Semana" title="Ranking de días" scrollable={false}>
       {ranked.length < 2 ? (
         <div className="text-center text-textMuted text-sm py-4">Cargá al menos 2 días para ver el ranking.</div>
       ) : (

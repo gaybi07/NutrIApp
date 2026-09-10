@@ -289,8 +289,18 @@ export function isoMonday(dateStr: string): Date {
   return d;
 }
 
+/**
+ * Formatea una fecha como YYYY-MM-DD usando el huso horario LOCAL del
+ * dispositivo, no UTC. `toISOString()` siempre da la fecha en UTC — en un
+ * huso horario detrás de UTC (ej. Argentina, UTC-3), pasada cierta hora de
+ * la noche ya es "mañana" en UTC aunque localmente siga siendo hoy, lo que
+ * hacía que la app mostrara el día equivocado según dónde/cuándo se abriera.
+ */
 export function fmtDate(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export function addDays(d: Date, n: number): Date {

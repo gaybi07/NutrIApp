@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, emptyDay } from "@/lib/types";
 import { countDigits, MAX_DIGITS, MAX_MINUTES_DIGITS, MAX_TEXT_LENGTH } from "@/lib/inputLimits";
+import { fmtDate } from "@/lib/calculations";
 
 const MEAL_SUGGESTIONS = [
   "Milanesa con puré",
@@ -40,7 +41,7 @@ export function AiEntryForm({
   onUpsert: (entry: DayEntry) => void;
   onConsumeInventory?: (text: string) => void;
 }) {
-  const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
+  const [fecha, setFecha] = useState(fmtDate(new Date()));
   const [meal, setMeal] = useState<MealKey>("des");
   const [text, setText] = useState("");
   const [inventoryText, setInventoryText] = useState("");

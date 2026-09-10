@@ -283,4 +283,27 @@ algo puntual.
   de una sola sesión por día — al usarlos reemplazan la lista completa de ese
   día por esa única sesión (no la combinan), para que sigan siendo simples.
   Agregada columna `entrenamientos jsonb` a Supabase (schema.sql + migración
-  `migration_2026-09-09c_add_entrenamientos.sql`, pendiente de correr).
+  `migration_2026-09-09c_add_entrenamientos.sql`). Usuario corrió las 3
+  migraciones pendientes (columnas faltantes, tour_done, entrenamientos) —
+  confirmado "Success" en las 3.
+- **2026-09-10**: `RankingCard` movido de la primera a la segunda columna en
+  escritorio, a pedido del usuario (para equilibrar mejor las dos columnas).
+- **2026-09-10**: `Collapsible.tsx` ahora limita la altura del contenido
+  abierto a `60vh` con scroll interno (prop `scrollable`, default `true`), así
+  desplegar una sección larga (tabla, lista de compras, recetas) no empuja
+  demasiado el resto de la página — el scroll queda contenido adentro de esa
+  sección. `RankingCard` usa `scrollable={false}` porque su tooltip al pasar
+  el mouse es un elemento posicionado `absolute` que quedaría cortado por el
+  contenedor con `overflow: auto`; de todos modos está naturalmente acotado
+  (máximo 9 días).
+- **2026-09-10**: **bug real de huso horario** — `fmtDate()` usaba
+  `date.toISOString()`, que siempre da la fecha en UTC. En un huso horario
+  detrás de UTC (Argentina, UTC-3), pasada cierta hora de la noche ya es
+  "mañana" en UTC aunque localmente siga siendo hoy — por eso la app mostraba
+  el día siguiente en el celular. Cambiado a construir la fecha con
+  `getFullYear()/getMonth()/getDate()` (huso horario local del dispositivo).
+  Se usa en toda la app a través de esta única función, así que se arregló en
+  un solo lugar; también se corrigió un uso suelto de `toISOString()` en
+  `AiEntryForm.tsx` que no pasaba por `fmtDate()`. Probado simulando huso
+  horario de Buenos Aires con la hora justo después de medianoche UTC — la
+  fecha local se mantiene correcta.
