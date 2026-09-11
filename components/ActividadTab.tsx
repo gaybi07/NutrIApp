@@ -1,15 +1,18 @@
 "use client";
 
 import { BarChart, Bar, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip } from "recharts";
-import { DayEntry, INTENSITY_STYLES } from "@/lib/types";
-import { estimateTrainingCalories, getTrainingSessions } from "@/lib/calculations";
+import { DayEntry, INTENSITY_STYLES, Routine, TrainingSchedule } from "@/lib/types";
+import { estimateTrainingCalories, getTrainingSessions, totalVolume } from "@/lib/calculations";
 import { SECTION_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
+import { ExerciseLogCard } from "@/components/ExerciseLogCard";
+import { RoutineManager } from "@/components/RoutineManager";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 const STEPS_COLOR = "#8A9A7C";
 const TRAINING_COLOR = "#C9A227";
 const SLEEP_COLOR = "#7C93A3";
+const VOLUME_COLOR = "#B5533C";
 const SLEEP_TARGET_HOURS = 8;
 
 function weekRow(fecha: string, d: DayEntry | null, valueFn: (d: DayEntry) => number) {
@@ -64,11 +67,21 @@ export function ActividadTab({
   weekDates,
   weekDays,
   onLogTraining,
+  onUpsert,
+  routines,
+  schedule,
+  onSaveRoutines,
+  onSaveSchedule,
 }: {
   entry: DayEntry;
   weekDates: string[];
   weekDays: (DayEntry | null)[];
   onLogTraining: () => void;
+  onUpsert: (entry: DayEntry) => void;
+  routines: Routine[];
+  schedule: TrainingSchedule;
+  onSaveRoutines: (routines: Routine[]) => void;
+  onSaveSchedule: (schedule: TrainingSchedule) => void;
 }) {
   const sessions = getTrainingSessions(entry);
   const trainingKcal = estimateTrainingCalories(entry);
@@ -79,6 +92,7 @@ export function ActividadTab({
   const stepsData = weekDates.map((fecha, i) => weekRow(fecha, weekDays[i], (d) => d.pasos || 0));
   const trainingData = weekDates.map((fecha, i) => weekRow(fecha, weekDays[i], (d) => estimateTrainingCalories(d)));
   const sleepData = weekDates.map((fecha, i) => weekRow(fecha, weekDays[i], (d) => d.suenoHoras || 0));
+  const volumeData = weekDates.map((fecha, i) => weekRow(fecha, weekDays[i], (d) => totalVolume(d.ejercicios)));
 
   return (
     <div>
@@ -116,6 +130,8 @@ export function ActividadTab({
         </button>
       </section>
 
+      <ExerciseLogCard entry={entry} routines={routines} schedule={schedule} onSave={onUpsert} />
+
       <WeekBarChart title="Pasos de la semana" data={stepsData} color={STEPS_COLOR} unit="pasos" />
       <WeekBarChart title="Calorías quemadas entrenando" data={trainingData} color={TRAINING_COLOR} unit="kcal" />
       <WeekBarChart
@@ -126,6 +142,9 @@ export function ActividadTab({
         referenceValue={SLEEP_TARGET_HOURS}
         referenceLabel={`recomendado ${SLEEP_TARGET_HOURS}h`}
       />
+      <WeekBarChart title="Volumen entrenado (series × reps × peso)" data={volumeData} color={VOLUME_COLOR} unit="kg" />
+
+      <RoutineManager routines={routines} schedule={schedule} onSaveRoutines={onSaveRoutines} onSaveSchedule={onSaveSchedule} />
     </div>
   );
 }

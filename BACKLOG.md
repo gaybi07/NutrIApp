@@ -619,11 +619,49 @@ algo puntual.
   umbrales. Probado con tres comidas de densidad claramente distinta
   (alta/media/baja proteína por caloría): cada una salió con el color
   esperado.
-
-## Pendiente (pedido, no implementado todavía)
-
-- Sección de Entrenamientos con desglose de series/ejercicios y
-  planificación de rutina, para hacer seguimiento del ejercicio de
-  forma similar a como el Planificador de la semana hace con las
-  comidas. Pedido el 2026-09-11, explícitamente "para después" — no
-  arrancar sin que el usuario lo pida de nuevo.
+- **2026-09-11**: implementado el pedido de entrenamientos "súper
+  completo" (rutinas + desglose de series + planificación), que había
+  quedado anotado como pendiente el mismo día. Decisiones acordadas
+  con el usuario antes de construir: series uniformes por ejercicio
+  (no serie por serie distinta) y rutinas reusables asignadas a días
+  fijos de la semana (no elegir ejercicios sueltos cada semana, como
+  hace el Planificador de comidas).
+  - Modelo de datos nuevo en `lib/types.ts`: `ExerciseEntry` (nombre +
+    series + repeticiones + peso opcional), `Routine` (plantilla
+    reusable con id/nombre/ejercicios), `TrainingSchedule` (día de la
+    semana → id de rutina, se repite todas las semanas hasta que se
+    cambie), `Weekday`/`WEEKDAYS`/`WEEKDAY_LABELS`. `DayEntry` suma
+    `ejercicios?: ExerciseEntry[]` (lo que REALMENTE se entrenó ese
+    día — separado de `entrenamientos`, que sigue siendo solo
+    intensidad+minutos para el cálculo de calorías, sin tocar). Nuevo
+    `totalVolume()` y `weekdayOf()` en `lib/calculations.ts`.
+  - `components/RoutineManager.tsx` (nuevo, dentro de la pestaña
+    Actividad): "Tu rutina semanal" (7 días, tocás uno y elegís qué
+    rutina le toca o "Descanso") + "Tus rutinas" (crear/editar/
+    eliminar rutinas, cada una con una lista dinámica de ejercicios
+    con series/repeticiones/peso).
+  - `components/ExerciseLogCard.tsx` (nuevo): "Ejercicios de hoy" — si
+    hay una rutina asignada al día de la semana de hoy y todavía no
+    guardaste nada, se precarga sola (avisando de dónde salió),
+    editable antes de guardar, con el volumen total (series×reps×peso)
+    a la vista. **Bug real encontrado en mi propia prueba**: al crear
+    y asignar una rutina en la misma visita, la precarga no aparecía
+    porque el estado inicial del componente se calculaba una sola vez
+    al montar (`useState(() => ...)`), antes de que existiera la
+    rutina. Se agregó un `useEffect` que reacciona cuando cambia la
+    rutina programada Y todavía no hay nada guardado para hoy — así
+    no compite con ediciones en curso del usuario, pero sí reacciona
+    a asignar la rutina recién en el momento.
+  - `ActividadTab.tsx` suma un cuarto gráfico semanal ("Volumen
+    entrenado") además de pasos/calorías/sueño.
+  - Supabase: `days.ejercicios jsonb`, `user_settings.routines jsonb`,
+    `user_settings.training_schedule jsonb` — schema.sql actualizado +
+    migración `migration_2026-09-11c_add_routines.sql` (falta que el
+    usuario la corra). `app/api/data/route.ts` actualizado en ambas
+    direcciones.
+  - Probado de punta a punta con Playwright: crear la rutina "Día A:
+    Piernas" (Sentadilla 4x8x80kg), asignarla a hoy, confirmar que se
+    precargó sola en "Ejercicios de hoy" con el aviso correspondiente,
+    guardar, y verificar que el volumen (2560kg) apareció en el
+    gráfico semanal del día correcto — y que routines/trainingSchedule/
+    ejercicios quedaron bien guardados en `localStorage`.

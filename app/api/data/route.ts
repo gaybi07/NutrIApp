@@ -30,6 +30,7 @@ function toDay(row: Record<string, unknown>): DayEntry {
     entrenoMinutos: row.entreno_minutos ? Number(row.entreno_minutos) : undefined,
     entrenoIntensidad: row.entreno_intensidad as DayEntry["entrenoIntensidad"],
     entrenamientos: (row.entrenamientos as DayEntry["entrenamientos"]) || undefined,
+    ejercicios: (row.ejercicios as DayEntry["ejercicios"]) || undefined,
   };
 }
 
@@ -60,6 +61,7 @@ function toDayRow(day: DayEntry, userId: string) {
     entreno_minutos: day.entrenoMinutos || null,
     entreno_intensidad: day.entrenoIntensidad || null,
     entrenamientos: day.entrenamientos || [],
+    ejercicios: day.ejercicios || [],
   };
 }
 
@@ -70,7 +72,7 @@ export async function GET() {
 
   const [daysResult, settingsResult] = await Promise.all([
     supabase.from("days").select("*").order("fecha", { ascending: true }),
-    supabase.from("user_settings").select("goal, tdee_fallback, weekly_weights, calculator_profile, tour_done, week_plan").eq("user_id", user.id).maybeSingle(),
+    supabase.from("user_settings").select("goal, tdee_fallback, weekly_weights, calculator_profile, tour_done, week_plan, routines, training_schedule").eq("user_id", user.id).maybeSingle(),
   ]);
 
   if (daysResult.error) return NextResponse.json({ error: daysResult.error.message }, { status: 500 });
@@ -86,6 +88,8 @@ export async function GET() {
           calculatorProfile: (settingsResult.data as Record<string, unknown>).calculator_profile || undefined,
           tourDone: Boolean((settingsResult.data as Record<string, unknown>).tour_done),
           weekPlan: ((settingsResult.data as Record<string, unknown>).week_plan as Settings["weekPlan"]) || {},
+          routines: ((settingsResult.data as Record<string, unknown>).routines as Settings["routines"]) || [],
+          trainingSchedule: ((settingsResult.data as Record<string, unknown>).training_schedule as Settings["trainingSchedule"]) || {},
         }
       : DEFAULT_SETTINGS,
   });
@@ -119,6 +123,8 @@ export async function PUT(req: NextRequest) {
       calculator_profile: settings.calculatorProfile || null,
       tour_done: settings.tourDone || false,
       week_plan: settings.weekPlan || {},
+      routines: settings.routines || [],
+      training_schedule: settings.trainingSchedule || {},
     });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }

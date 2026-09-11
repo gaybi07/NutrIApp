@@ -1,4 +1,4 @@
-import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, TrainingSession, GoalMode } from "./types";
+import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, TrainingSession, GoalMode, ExerciseEntry, Weekday, WEEKDAYS } from "./types";
 
 /**
  * Sesiones de entrenamiento del día. Si ya tiene el formato nuevo
@@ -89,6 +89,17 @@ export function estimateTrainingCalories(d: DayEntry): number {
     const met = intensityMet[session.intensidad];
     return total + Math.round(Math.max(0, (met - 1) * 3.5 * peso * session.minutos / 200));
   }, 0);
+}
+
+/** Volumen total entrenado (series × repeticiones × peso, sumado entre ejercicios). Ejercicios sin peso (corporal) suman igual con peso 1, para que sigan contando en la tendencia. */
+export function totalVolume(ejercicios: ExerciseEntry[] | undefined): number {
+  if (!ejercicios || ejercicios.length === 0) return 0;
+  return ejercicios.reduce((total, e) => total + e.series * e.repeticiones * (e.peso || 1), 0);
+}
+
+/** Día de la semana (`Weekday`) de una fecha YYYY-MM-DD, en huso horario local. */
+export function weekdayOf(fecha: string): Weekday {
+  return WEEKDAYS[new Date(`${fecha}T00:00:00`).getDay()];
 }
 
 /** Ajusta el objetivo base con la actividad registrada en ese día. */

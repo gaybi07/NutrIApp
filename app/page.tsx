@@ -157,6 +157,11 @@ export default function Home() {
           weekDates={weekDates}
           weekDays={weekDays}
           onLogTraining={() => setPanel("entreno")}
+          onUpsert={upsertDay}
+          routines={settings.routines || []}
+          schedule={settings.trainingSchedule || {}}
+          onSaveRoutines={(routines) => saveSettings({ ...settings, routines })}
+          onSaveSchedule={(trainingSchedule) => saveSettings({ ...settings, trainingSchedule })}
         />
       )}
 

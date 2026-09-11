@@ -24,6 +24,40 @@ export interface TrainingSession {
   minutos: number;
 }
 
+/** Lun-Dom, en ese orden — usado por la rutina semanal (`TrainingSchedule`). */
+export type Weekday = "lunes" | "martes" | "miercoles" | "jueves" | "viernes" | "sabado" | "domingo";
+
+/** El índice coincide con `Date.getDay()` (0 = domingo). */
+export const WEEKDAYS: Weekday[] = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
+
+export const WEEKDAY_LABELS: Record<Weekday, string> = {
+  lunes: "Lunes",
+  martes: "Martes",
+  miercoles: "Miércoles",
+  jueves: "Jueves",
+  viernes: "Viernes",
+  sabado: "Sábado",
+  domingo: "Domingo",
+};
+
+/** Una serie de un ejercicio: series uniformes (mismo peso/reps para todas). */
+export interface ExerciseEntry {
+  nombre: string;
+  series: number;
+  repeticiones: number;
+  peso?: number; // kg, opcional (ej. ejercicios con peso corporal)
+}
+
+/** Rutina reusable (ej. "Día A: Pecho/Tríceps") — plantilla de ejercicios, no un registro de un día puntual. */
+export interface Routine {
+  id: string;
+  nombre: string;
+  ejercicios: ExerciseEntry[];
+}
+
+/** Qué rutina corresponde a cada día de la semana — se repite todas las semanas hasta que se cambie. */
+export type TrainingSchedule = Partial<Record<Weekday, string>>; // weekday -> Routine.id
+
 export interface DayEntry {
   fecha: string; // YYYY-MM-DD
   desK: number;
@@ -49,6 +83,7 @@ export interface DayEntry {
   entrenoMinutos?: number; // formato viejo: primer/único entrenamiento del día
   entrenoIntensidad?: TrainingIntensity; // formato viejo
   entrenamientos?: TrainingSession[]; // formato nuevo: soporta más de un entrenamiento por día
+  ejercicios?: ExerciseEntry[]; // desglose real de lo entrenado ese día (series/reps/peso por ejercicio)
 }
 
 export type WeekPlan = Record<string, Partial<Record<MealKey, string>>>; // fecha -> comida -> título de receta
@@ -60,6 +95,8 @@ export interface Settings {
   calculatorProfile?: CalculatorProfile;
   tourDone?: boolean; // si ya vio el tour guiado de la app (se muestra una sola vez, tras el onboarding)
   weekPlan?: WeekPlan; // planificador de comidas por día, se sincroniza entre dispositivos
+  routines?: Routine[]; // rutinas de entrenamiento reusables
+  trainingSchedule?: TrainingSchedule; // qué rutina toca cada día de la semana
 }
 
 export const MEAL_LABELS: Record<MealKey, string> = {

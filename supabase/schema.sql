@@ -24,6 +24,7 @@ create table public.days (
   entreno_minutos integer,
   entreno_intensidad text,
   entrenamientos jsonb not null default '[]'::jsonb,
+  ejercicios jsonb not null default '[]'::jsonb,
   primary key (user_id, fecha)
 );
 
@@ -34,7 +35,9 @@ create table public.user_settings (
   weekly_weights jsonb not null default '{}'::jsonb,
   calculator_profile jsonb,
   tour_done boolean not null default false,
-  week_plan jsonb not null default '{}'::jsonb
+  week_plan jsonb not null default '{}'::jsonb,
+  routines jsonb not null default '[]'::jsonb,
+  training_schedule jsonb not null default '{}'::jsonb
 );
 
 alter table public.days enable row level security;

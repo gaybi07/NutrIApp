@@ -16,6 +16,9 @@ export const SECTION_HELP = {
   planificador: "Elegí una receta del catálogo para cada comida de la semana que viene. Con lo que vayas eligiendo se arma sola la lista de lo que te falta comprar, comparando contra tu inventario actual.",
   comidasComunes: "Las comidas que más repetís, agrupadas por desayuno/almuerzo/merienda/cena, con un punto de color según su densidad de proteína (mismo criterio que usa el Ranking para clasificar comidas) — para que notes de un vistazo si lo que repetís tiende a ser bueno o mejorable.",
   actividad: "Pasos, entrenamientos y sueño con más detalle: cuánto te moviste, cuánto quemaste entrenando y cuánto dormiste, día por día de la semana.",
+  rutinaSemanal: "Qué rutina te toca cada día de la semana (o descanso). Se repite todas las semanas hasta que la cambies — no hace falta armarla de nuevo cada vez.",
+  rutinas: "Plantillas reusables de ejercicios (ej. \"Día A: Pecho/Tríceps\") con series, repeticiones y peso. Se arman una vez y se asignan a los días de la semana.",
+  ejerciciosHoy: "Lo que realmente entrenaste hoy. Si tenés una rutina asignada para hoy, se precarga sola — ajustá los números si hiciste algo distinto a lo planeado.",
 } as const;
 
 export const FIELD_HELP = {
