@@ -406,10 +406,11 @@ export default function Home() {
               Cerrar
             </button>
             <DataImport
+              days={days}
+              settings={settings}
               onImport={(importedDays, importedSettings) => {
                 saveDays(importedDays);
                 if (importedSettings) saveSettings(importedSettings);
-                setPanel(null);
               }}
             />
             <MealMemoryImport />

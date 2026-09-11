@@ -722,3 +722,20 @@ algo puntual.
   popup (ni en un ícono arriba de todo ni en uno dentro de una sección
   colapsable más abajo), y `body.scrollWidth` sigue igual al ancho del
   viewport (sin overflow horizontal).
+- **2026-09-11**: dos bugs reales en `DataImport.tsx` (panel "Datos").
+  1. El modal se cerraba solo (`setPanel(null)`) apenas terminaba de
+     importar un respaldo, así que el cartel de confirmación
+     ("N días importados ✓") nunca llegaba a verse — se cerraba en el
+     mismo render en el que aparecía. Se sacó ese auto-cierre; ahora el
+     usuario ve la confirmación y cierra el panel él mismo cuando
+     quiere.
+  2. El botón "Datos (importar / exportar respaldo)" prometía exportar
+     pero no existía ningún botón de exportar — solo estaba el de
+     importar. Se agregó "Exportar respaldo", que descarga un
+     `registro_respaldo_<fecha>.json` con el mismo formato
+     `{ days, settings }` que ya acepta el import (compatible con
+     importar ese mismo archivo después, o pasárselo a otra cuenta/
+     dispositivo). Probado con Playwright: tras importar un backup de
+     prueba el panel queda abierto con "1 días importados ✓" visible;
+     el botón de exportar dispara una descarga real cuyo contenido
+     (parseado de vuelta) tiene los mismos días y el settings completo.
