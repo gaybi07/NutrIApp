@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { InventoryItem, MealKey, MEAL_LABELS } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
-import { InfoHint } from "@/components/InfoHint";
+import { Collapsible } from "@/components/Collapsible";
 
 type RecipeIngredient = { name: string; quantity: number; unit: InventoryItem["unit"] };
 
@@ -166,20 +166,16 @@ export function RecipePlanner({
   };
 
   return (
-    <div className="mb-5 rounded-2xl border border-border bg-surface/70 p-3 shadow-[0_0_0_1px_rgba(58,54,47,0.4)]">
-      <div className="flex items-center justify-between gap-2 mb-3">
-        <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Recetas</div>
-          <div className="flex items-center font-display text-xl leading-none -tracking-[0.04em]">
-            Planner de cocina
-            <InfoHint text={SECTION_HELP.recetas} label="Qué es el Planner de cocina" />
-          </div>
-        </div>
+    <Collapsible
+      eyebrow="Recetas"
+      title="Planner de cocina"
+      info={SECTION_HELP.recetas}
+      badge={
         <div className="rounded-full border border-border bg-bg/70 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
           {suggestions.length} sugerencias
         </div>
-      </div>
-
+      }
+    >
       <div className="mb-3 font-mono text-[11px] text-textMuted">
         Hoy llevás {consumedKcal.toLocaleString("es-AR")} de {dailyGoal.toLocaleString("es-AR")} kcal · te quedan{" "}
         <span className="text-sage">{remainingKcal.toLocaleString("es-AR")}</span> kcal
@@ -306,6 +302,6 @@ export function RecipePlanner({
           </div>
         </div>
       )}
-    </div>
+    </Collapsible>
   );
 }

@@ -447,3 +447,11 @@ algo puntual.
   guardada) reconoció la comida y devolvió el valor guardado sin
   ninguna llamada a la IA; "Recalcular con IA" sí la forzó cuando se
   probó explícitamente.
+- **2026-09-11**: bug real — `RecipePlanner.tsx` ("Planner de cocina") no
+  usaba `Collapsible.tsx` como el resto de las secciones (Indicadores,
+  Ranking, Herramientas, Tabla, Pasos, Compras), así que siempre
+  arrancaba desplegado con todo el contenido a la vista (tipos de
+  cocina, selector de comida, heladera, sugerencias) apenas se cargaba
+  la página. Envuelto en `Collapsible` igual que las demás — arranca
+  cerrado (`defaultOpen` es `false` por default) y muestra la misma
+  cabecera con flecha y badge de "N sugerencias".
