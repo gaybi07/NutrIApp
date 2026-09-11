@@ -5,7 +5,7 @@ import { InventoryItem, MealKey, MEAL_LABELS, WeekPlan } from "@/lib/types";
 import { isoMonday, addDays, fmtDate } from "@/lib/calculations";
 import { Recipe, RECIPES } from "@/lib/recipes";
 import { SECTION_HELP } from "@/lib/helpText";
-import { Collapsible } from "@/components/Collapsible";
+import { InfoHint } from "@/components/InfoHint";
 
 const DOW_FULL = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
@@ -13,6 +13,25 @@ const MEAL_KEYS: MealKey[] = ["des", "alm", "mer", "cen"];
 
 function shortTitle(title: string) {
   return title.length > 24 ? `${title.slice(0, 22)}…` : title;
+}
+
+/** Los 7 días de la semana calendario siguiente a la actual (lunes a domingo). */
+export function getNextWeekDates(): string[] {
+  const thisMonday = isoMonday(fmtDate(new Date()));
+  const nextMonday = addDays(thisMonday, 7);
+  return [...Array(7)].map((_, i) => fmtDate(addDays(nextMonday, i)));
+}
+
+/** Cuántas comidas ya están elegidas para la semana que viene — para mostrar en el botón de entrada. */
+export function countPlannedMeals(weekPlan: WeekPlan): number {
+  const dates = getNextWeekDates();
+  let count = 0;
+  for (const fecha of dates) {
+    const dayPlan = weekPlan[fecha];
+    if (!dayPlan) continue;
+    count += MEAL_KEYS.filter((meal) => dayPlan[meal]).length;
+  }
+  return count;
 }
 
 export function WeekPlanner({
@@ -26,11 +45,7 @@ export function WeekPlanner({
 }) {
   const [pickerFor, setPickerFor] = useState<{ fecha: string; meal: MealKey } | null>(null);
 
-  const nextWeekDates = useMemo(() => {
-    const thisMonday = isoMonday(fmtDate(new Date()));
-    const nextMonday = addDays(thisMonday, 7);
-    return [...Array(7)].map((_, i) => fmtDate(addDays(nextMonday, i)));
-  }, []);
+  const nextWeekDates = useMemo(() => getNextWeekDates(), []);
 
   const assign = (fecha: string, meal: MealKey, recipeTitle: string | null) => {
     const next: WeekPlan = { ...weekPlan };
@@ -80,16 +95,17 @@ export function WeekPlanner({
   const plannedCount = selectedRecipes.length;
 
   return (
-    <Collapsible
-      eyebrow="Planificador"
-      title="Semana que viene"
-      info={SECTION_HELP.planificador}
-      badge={
+    <div>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex items-center font-display text-xl leading-none -tracking-[0.04em]">
+          Semana que viene
+          <InfoHint text={SECTION_HELP.planificador} label="Qué es el Planificador" />
+        </div>
         <div className="rounded-full border border-border bg-bg/70 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
           {plannedCount} {plannedCount === 1 ? "comida" : "comidas"}
         </div>
-      }
-    >
+      </div>
+
       <div className="space-y-2">
         {nextWeekDates.map((fecha) => {
           const date = new Date(`${fecha}T00:00:00`);
@@ -146,7 +162,7 @@ export function WeekPlanner({
       </div>
 
       {pickerFor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPickerFor(null)}>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPickerFor(null)}>
           <div
             className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-surface p-4 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
@@ -191,6 +207,6 @@ export function WeekPlanner({
           </div>
         </div>
       )}
-    </Collapsible>
+    </div>
   );
 }

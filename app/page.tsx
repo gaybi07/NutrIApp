@@ -13,7 +13,7 @@ import { RankingCard } from "@/components/RankingCard";
 import { GoalCalculator } from "@/components/GoalCalculator";
 import { AiEntryForm } from "@/components/AiEntryForm";
 import { RecipePlanner } from "@/components/RecipePlanner";
-import { WeekPlanner } from "@/components/WeekPlanner";
+import { WeekPlanner, countPlannedMeals } from "@/components/WeekPlanner";
 import { ShoppingLog } from "@/components/ShoppingLog";
 import { WeeklyWeight } from "@/components/WeeklyWeight";
 import { AuthPanel } from "@/components/AuthPanel";
@@ -39,7 +39,7 @@ export default function Home() {
   const { items: inventory, addText, consumeByText, consumeItem, consumeAmounts, persist: replaceInventory } = useInventory();
   const [weekOffset, setWeekOffset] = useState(0);
   const [activeTab, setActiveTab] = useState<MainTab>("inicio");
-  const [panel, setPanel] = useState<"calc" | "ai" | "entreno" | "datos" | null>(null);
+  const [panel, setPanel] = useState<"calc" | "ai" | "entreno" | "datos" | "planificador" | null>(null);
   const [authenticated, setAuthenticated] = useState(!isSupabaseConfigured);
   const handleAuthChange = useCallback((value: boolean) => setAuthenticated(value), []);
   useEscapeKey(() => setPanel(null), panel !== null);
@@ -253,11 +253,19 @@ export default function Home() {
             dailyGoal={settings.goal}
             consumedKcal={todayKcal}
           />
-          <WeekPlanner
-            items={inventory}
-            weekPlan={settings.weekPlan || {}}
-            onSave={(weekPlan) => saveSettings({ ...settings, weekPlan })}
-          />
+          <button
+            type="button"
+            onClick={() => setPanel("planificador")}
+            className="flex w-full items-center justify-between gap-2 rounded-2xl border border-border bg-surface/70 p-3 text-left shadow-[0_0_0_1px_rgba(58,54,47,0.4)]"
+          >
+            <div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Planificador</div>
+              <div className="font-display text-xl leading-none -tracking-[0.04em]">Semana que viene</div>
+            </div>
+            <div className="rounded-full border border-border bg-bg/70 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
+              {countPlannedMeals(settings.weekPlan || {})} comidas
+            </div>
+          </button>
         </div>
       </div>
       )}
@@ -330,6 +338,35 @@ export default function Home() {
                 setPanel(null);
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {panel === "planificador" && (
+        <div
+          className="fixed inset-0 z-50 bg-bg sm:flex sm:items-center sm:justify-center sm:bg-bg/80 sm:p-4 sm:backdrop-blur-sm"
+          onClick={() => setPanel(null)}
+        >
+          <div
+            className="relative flex h-full w-full flex-col overflow-y-auto bg-surface sm:my-4 sm:h-auto sm:max-h-[calc(100vh-2rem)] sm:max-w-lg sm:rounded-2xl sm:border sm:border-border sm:shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-3 py-2.5">
+              <span className="font-display text-base text-text">Planificador de la semana</span>
+              <button
+                onClick={() => setPanel(null)}
+                className="rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+              >
+                Cerrar
+              </button>
+            </div>
+            <div className="flex-1 p-3">
+              <WeekPlanner
+                items={inventory}
+                weekPlan={settings.weekPlan || {}}
+                onSave={(weekPlan) => saveSettings({ ...settings, weekPlan })}
+              />
+            </div>
           </div>
         </div>
       )}

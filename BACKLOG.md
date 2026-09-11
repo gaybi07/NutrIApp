@@ -539,3 +539,20 @@ algo puntual.
   los tagueará bien). Probado con Playwright: con una entrada de
   memoria tageada "des" y otra "cen", seleccionando Desayuno solo
   aparece la de desayuno (y viceversa al cambiar a Cena).
+- **2026-09-11**: el Planificador de la semana pasó de ser una sección
+  `Collapsible` que se desplegaba inline en medio de toda la página, a
+  un modal dedicado (mismo patrón que "Cargar comida"/"+ Entrenamiento":
+  hoja de pantalla completa en mobile, tarjeta centrada en desktop) —
+  pedido explícito para que la carga de los 28 casilleros sea más
+  cómoda, sin competir por espacio con el resto de las secciones de
+  Inicio. `components/WeekPlanner.tsx` ya no importa `Collapsible`;
+  ahora exporta también `getNextWeekDates()` y `countPlannedMeals()`
+  como funciones sueltas para que `page.tsx` pueda mostrar el badge de
+  "N comidas" en la tarjeta de entrada sin duplicar la lógica de qué
+  cuenta como "la semana que viene". El selector de receta (modal
+  anidado adentro del modal del planificador) subió a `z-[60]` para
+  quedar siempre por encima. Probado con Playwright: la grilla ya no
+  aparece en la página hasta tocar la tarjeta "Semana que viene", el
+  modal se abre con sus 28 casilleros, el selector de receta anidado se
+  ve correctamente por encima, y el contador de comidas elegidas se
+  actualiza tanto en el modal como en la tarjeta de entrada al cerrar.
