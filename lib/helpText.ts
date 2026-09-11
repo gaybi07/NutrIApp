@@ -13,6 +13,7 @@ export const SECTION_HELP = {
   compras: "Registrá lo que compraste — a mano o sacándole una foto al ticket — para armar tu inventario de la despensa. El Planner de cocina usa este inventario para sugerirte recetas.",
   recetas: "Recetas armadas con lo que tenés en el inventario. Al usar una, se descuentan los ingredientes automáticamente y se suma directo a una comida de tu día.",
   macros: "Cómo se reparten tus kcal entre proteína, carbohidratos y grasas, hoy y durante la semana. El objetivo de proteína es por tu peso; lo que sobra del objetivo de kcal se reparte 50/50 entre carbohidratos y grasas.",
+  planificador: "Elegí una receta del catálogo para cada comida de la semana que viene. Con lo que vayas eligiendo se arma sola la lista de lo que te falta comprar, comparando contra tu inventario actual.",
   actividad: "Pasos, entrenamientos y sueño con más detalle: cuánto te moviste, cuánto quemaste entrenando y cuánto dormiste, día por día de la semana.",
 } as const;
 

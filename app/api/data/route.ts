@@ -70,7 +70,7 @@ export async function GET() {
 
   const [daysResult, settingsResult] = await Promise.all([
     supabase.from("days").select("*").order("fecha", { ascending: true }),
-    supabase.from("user_settings").select("goal, tdee_fallback, weekly_weights, calculator_profile, tour_done").eq("user_id", user.id).maybeSingle(),
+    supabase.from("user_settings").select("goal, tdee_fallback, weekly_weights, calculator_profile, tour_done, week_plan").eq("user_id", user.id).maybeSingle(),
   ]);
 
   if (daysResult.error) return NextResponse.json({ error: daysResult.error.message }, { status: 500 });
@@ -85,6 +85,7 @@ export async function GET() {
           weeklyWeights: ((settingsResult.data as Record<string, unknown>).weekly_weights as Record<string, number>) || {},
           calculatorProfile: (settingsResult.data as Record<string, unknown>).calculator_profile || undefined,
           tourDone: Boolean((settingsResult.data as Record<string, unknown>).tour_done),
+          weekPlan: ((settingsResult.data as Record<string, unknown>).week_plan as Settings["weekPlan"]) || {},
         }
       : DEFAULT_SETTINGS,
   });
@@ -117,6 +118,7 @@ export async function PUT(req: NextRequest) {
       weekly_weights: settings.weeklyWeights || {},
       calculator_profile: settings.calculatorProfile || null,
       tour_done: settings.tourDone || false,
+      week_plan: settings.weekPlan || {},
     });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }

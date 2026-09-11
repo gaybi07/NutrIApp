@@ -13,6 +13,7 @@ import { RankingCard } from "@/components/RankingCard";
 import { GoalCalculator } from "@/components/GoalCalculator";
 import { AiEntryForm } from "@/components/AiEntryForm";
 import { RecipePlanner } from "@/components/RecipePlanner";
+import { WeekPlanner } from "@/components/WeekPlanner";
 import { ShoppingLog } from "@/components/ShoppingLog";
 import { WeeklyWeight } from "@/components/WeeklyWeight";
 import { AuthPanel } from "@/components/AuthPanel";
@@ -251,6 +252,11 @@ export default function Home() {
             onUseRecipe={useRecipeAsMeal}
             dailyGoal={settings.goal}
             consumedKcal={todayKcal}
+          />
+          <WeekPlanner
+            items={inventory}
+            weekPlan={settings.weekPlan || {}}
+            onSave={(weekPlan) => saveSettings({ ...settings, weekPlan })}
           />
         </div>
       </div>

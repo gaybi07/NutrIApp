@@ -33,7 +33,8 @@ create table public.user_settings (
   tdee_fallback integer not null default 3200,
   weekly_weights jsonb not null default '{}'::jsonb,
   calculator_profile jsonb,
-  tour_done boolean not null default false
+  tour_done boolean not null default false,
+  week_plan jsonb not null default '{}'::jsonb
 );
 
 alter table public.days enable row level security;

@@ -497,3 +497,25 @@ algo puntual.
     visuales. Un bug encontrado en el camino: el donut de Recharts se
     veía como una astilla fina en la captura porque quedó a mitad de
     su animación de entrada — se le puso `isAnimationActive={false}`.
+- **2026-09-11**: planificador de la semana que viene
+  (`components/WeekPlanner.tsx`, sección "Planificador · Semana que
+  viene" en Inicio, debajo del Planner de cocina). Grilla de los 7 días
+  siguientes × 4 comidas (28 casilleros) donde se elige una receta del
+  mismo catálogo que ya usaba `RecipePlanner` — se sacó ese catálogo a
+  `lib/recipes.ts` (antes vivía adentro de `RecipePlanner.tsx`) para
+  que ambos componentes usen exactamente las mismas recetas/
+  ingredientes sin duplicar nada. Con lo que se va eligiendo, se arma
+  sola una "Lista de compras de la semana": suma los ingredientes de
+  todas las recetas elegidas, resta lo que ya hay en el inventario
+  (mismo matching por nombre/unidad que usa `useInventory`), y solo
+  muestra lo que falta comprar (si el inventario ya cubre un
+  ingrediente, no aparece en la lista). El plan se guarda en
+  `Settings.weekPlan` (nuevo campo, sincroniza por Supabase como
+  `weeklyWeights` — columna `week_plan jsonb` +
+  `migration_2026-09-11b_add_week_plan.sql`), auto-guardado en cada
+  elección (sin botón "Guardar" aparte, como `WeeklyWeight`). Probado
+  con Playwright: con "pollo" parcial (100g de 300g que pide la receta)
+  y "arroz" totalmente cubierto (200g de 80g) en el inventario, al
+  elegir "Bowl de pollo con arroz y verduras" para un desayuno, la
+  lista de compras mostró correctamente "200g pollo, 150g brocoli, 80g
+  cebolla, 15ml salsa de soja" y NO mostró arroz (ya cubierto).

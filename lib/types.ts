@@ -51,12 +51,15 @@ export interface DayEntry {
   entrenamientos?: TrainingSession[]; // formato nuevo: soporta más de un entrenamiento por día
 }
 
+export type WeekPlan = Record<string, Partial<Record<MealKey, string>>>; // fecha -> comida -> título de receta
+
 export interface Settings {
   goal: number; // kcal objetivo diario de consumo
   tdeeFallback: number; // gasto de referencia cuando no hay pasos cargados
   weeklyWeights?: Record<string, number>; // peso registrado por semana, usando el lunes como clave
   calculatorProfile?: CalculatorProfile;
   tourDone?: boolean; // si ya vio el tour guiado de la app (se muestra una sola vez, tras el onboarding)
+  weekPlan?: WeekPlan; // planificador de comidas por día, se sincroniza entre dispositivos
 }
 
 export const MEAL_LABELS: Record<MealKey, string> = {
