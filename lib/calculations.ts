@@ -22,6 +22,47 @@ export function dayProt(d: DayEntry): number {
   return (d.desP || 0) + (d.almP || 0) + (d.merP || 0) + (d.cenP || 0);
 }
 
+/** Total de carbohidratos (g) consumidos en el día. */
+export function dayCarbs(d: DayEntry): number {
+  return (d.desC || 0) + (d.almC || 0) + (d.merC || 0) + (d.cenC || 0);
+}
+
+/** Total de grasas (g) consumidas en el día. */
+export function dayFat(d: DayEntry): number {
+  return (d.desG || 0) + (d.almG || 0) + (d.merG || 0) + (d.cenG || 0);
+}
+
+export interface MacroTargets {
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+  proteinKcal: number;
+  carbsKcal: number;
+  fatKcal: number;
+}
+
+/**
+ * Reparto de macros objetivo a partir del objetivo diario de kcal y la
+ * proteína objetivo (por peso corporal, ver `proteinTargetForWeight`). Las
+ * kcal que sobran después de la proteína se dividen 50/50 entre
+ * carbohidratos y grasas — un reparto flexible estándar, no una dieta
+ * estricta con proporciones fijas.
+ */
+export function macroTargets(goalKcal: number, proteinTargetG: number): MacroTargets {
+  const proteinKcal = proteinTargetG * 4;
+  const remaining = Math.max(0, goalKcal - proteinKcal);
+  const carbsKcal = remaining * 0.5;
+  const fatKcal = remaining * 0.5;
+  return {
+    proteinG: proteinTargetG,
+    carbsG: Math.round(carbsKcal / 4),
+    fatG: Math.round(fatKcal / 9),
+    proteinKcal: Math.round(proteinKcal),
+    carbsKcal: Math.round(carbsKcal),
+    fatKcal: Math.round(fatKcal),
+  };
+}
+
 /**
  * Estima el gasto calórico diario (TDEE) en base a pasos + si hubo entrenamiento.
  * Si el día no tiene pasos cargados, cae al valor de referencia de settings.

@@ -16,6 +16,8 @@ export interface MealMemoryEntry {
   text: string;
   kcal: number;
   protein: number;
+  carbs: number;
+  fat: number;
   count: number;
   updatedAt: number;
 }
@@ -118,6 +120,8 @@ export function useMealMemory() {
           text: h.text,
           kcal: 0,
           protein: 0,
+          carbs: 0,
+          fat: 0,
           count: h.count,
           updatedAt: Date.now(),
         }));
@@ -142,7 +146,7 @@ export function useMealMemory() {
   }, []);
 
   const remember = useCallback(
-    (text: string, kcal: number, protein: number) => {
+    (text: string, kcal: number, protein: number, carbs = 0, fat = 0) => {
       const trimmedText = text.trim();
       if (!trimmedText) return;
       setMemory((prev) => {
@@ -151,9 +155,11 @@ export function useMealMemory() {
         const next =
           existingIndex >= 0
             ? prev.map((e, i) =>
-                i === existingIndex ? { text: trimmedText, kcal, protein, count: e.count + 1, updatedAt: Date.now() } : e
+                i === existingIndex
+                  ? { text: trimmedText, kcal, protein, carbs, fat, count: e.count + 1, updatedAt: Date.now() }
+                  : e
               )
-            : [...prev, { text: trimmedText, kcal, protein, count: 1, updatedAt: Date.now() }];
+            : [...prev, { text: trimmedText, kcal, protein, carbs, fat, count: 1, updatedAt: Date.now() }];
         return persist(next);
       });
     },
@@ -186,6 +192,8 @@ export function useMealMemory() {
       const descIdx = header.indexOf("descripcion");
       const kcalIdx = header.indexOf("kcal");
       const protIdx = header.findIndex((h) => h.startsWith("proteina"));
+      const carbIdx = header.findIndex((h) => h.startsWith("carb"));
+      const fatIdx = header.findIndex((h) => h.startsWith("grasa") || h.startsWith("fat"));
       if (descIdx < 0 || kcalIdx < 0 || protIdx < 0) {
         throw new Error('El CSV necesita columnas: "descripcion", "kcal", "proteina_g"');
       }
@@ -195,11 +203,13 @@ export function useMealMemory() {
         const descripcion = (row[descIdx] || "").trim();
         const kcal = Number(row[kcalIdx]);
         const protein = Number(row[protIdx]) || 0;
+        const carbs = carbIdx >= 0 ? Number(row[carbIdx]) || 0 : 0;
+        const fat = fatIdx >= 0 ? Number(row[fatIdx]) || 0 : 0;
         if (!descripcion || /sin registro/i.test(descripcion) || !kcal) {
           skipped++;
           continue;
         }
-        remember(descripcion, kcal, protein);
+        remember(descripcion, kcal, protein, carbs, fat);
         imported++;
       }
       return { imported, skipped };

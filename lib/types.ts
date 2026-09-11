@@ -28,15 +28,24 @@ export interface DayEntry {
   fecha: string; // YYYY-MM-DD
   desK: number;
   desP: number;
+  desC?: number; // carbohidratos (g) — opcional para no romper registros viejos sin este dato
+  desG?: number; // grasas (g)
   almK: number;
   almP: number;
+  almC?: number;
+  almG?: number;
   merK: number;
   merP: number;
+  merC?: number;
+  merG?: number;
   cenK: number;
   cenP: number;
+  cenC?: number;
+  cenG?: number;
   pasos: number;
   entreno: boolean;
   pesoKg?: number;
+  suenoHoras?: number;
   entrenoMinutos?: number; // formato viejo: primer/único entrenamiento del día
   entrenoIntensidad?: TrainingIntensity; // formato viejo
   entrenamientos?: TrainingSession[]; // formato nuevo: soporta más de un entrenamiento por día
@@ -70,10 +79,10 @@ export const INTENSITY_STYLES: Record<
 
 export const emptyDay = (fecha: string): DayEntry => ({
   fecha,
-  desK: 0, desP: 0,
-  almK: 0, almP: 0,
-  merK: 0, merP: 0,
-  cenK: 0, cenP: 0,
+  desK: 0, desP: 0, desC: 0, desG: 0,
+  almK: 0, almP: 0, almC: 0, almG: 0,
+  merK: 0, merP: 0, merC: 0, merG: 0,
+  cenK: 0, cenP: 0, cenC: 0, cenG: 0,
   pasos: 0,
   entreno: false,
 });

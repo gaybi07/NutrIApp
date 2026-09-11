@@ -2,7 +2,10 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useLocalDays } from "@/lib/useLocalDays";
-import { isoMonday, addDays, fmtDate, summarizeWeek } from "@/lib/calculations";
+import { isoMonday, addDays, fmtDate, summarizeWeek, proteinTargetForWeight } from "@/lib/calculations";
+import { TabBar, MainTab } from "@/components/TabBar";
+import { MacrosTab } from "@/components/MacrosTab";
+import { ActividadTab } from "@/components/ActividadTab";
 import { SummaryCards } from "@/components/SummaryCards";
 import { WeeklyChart } from "@/components/WeeklyChart";
 import { Ledger } from "@/components/Ledger";
@@ -34,6 +37,7 @@ export default function Home() {
   const { days, settings, loaded, syncError, upsertDay, saveDays, saveSettings } = useLocalDays();
   const { items: inventory, addText, consumeByText, consumeItem, consumeAmounts, persist: replaceInventory } = useInventory();
   const [weekOffset, setWeekOffset] = useState(0);
+  const [activeTab, setActiveTab] = useState<MainTab>("inicio");
   const [panel, setPanel] = useState<"calc" | "ai" | "entreno" | "datos" | null>(null);
   const [authenticated, setAuthenticated] = useState(!isSupabaseConfigured);
   const handleAuthChange = useCallback((value: boolean) => setAuthenticated(value), []);
@@ -132,6 +136,29 @@ export default function Home() {
         <AppTour onFinish={() => saveSettings({ ...settings, tourDone: true })} />
       )}
 
+      <TabBar active={activeTab} onChange={setActiveTab} />
+
+      {activeTab === "macros" && (
+        <MacrosTab
+          entry={todayEntry}
+          goal={settings.goal}
+          proteinTarget={proteinTargetForWeight(currentWeightKg)}
+          weekDates={weekDates}
+          weekDays={weekDays}
+          onLogMeal={() => setPanel("ai")}
+        />
+      )}
+
+      {activeTab === "actividad" && (
+        <ActividadTab
+          entry={todayEntry}
+          weekDates={weekDates}
+          weekDays={weekDays}
+          onLogTraining={() => setPanel("entreno")}
+        />
+      )}
+
+      {activeTab === "inicio" && (
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.3fr_1fr] lg:items-start">
         <div className="min-w-0">
           <TodayCard
@@ -227,6 +254,7 @@ export default function Home() {
           />
         </div>
       </div>
+      )}
 
       {panel === "calc" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>

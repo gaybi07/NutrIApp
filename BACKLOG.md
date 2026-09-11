@@ -455,3 +455,45 @@ algo puntual.
   la página. Envuelto en `Collapsible` igual que las demás — arranca
   cerrado (`defaultOpen` es `false` por default) y muestra la misma
   cabecera con flecha y badge de "N sugerencias".
+- **2026-09-11**: pedido grande — barra de pestañas arriba de todo
+  (`components/TabBar.tsx`: Inicio / Macros / Actividad, estado
+  `activeTab` en `page.tsx`). "Inicio" es exactamente la app de siempre,
+  sin tocar nada. Las otras dos son paneles nuevos con su propia
+  tarjeta "Hoy" + gráficos (Recharts, mismo estilo que `WeeklyChart`):
+  - **Macros** (`components/MacrosTab.tsx`): esto requería agregar
+    carbohidratos y grasas al modelo de datos, que antes solo tenía
+    kcal/proteína por comida (`DayEntry.desC/desG/almC/almG/...`,
+    opcionales para no romper registros viejos sin este dato — se leen
+    con `|| 0`). `app/api/parse-meal/route.ts` ahora le pide a la IA
+    también "carbs" y "fat" (debe ser consistente con las kcal:
+    kcal ≈ prot×4 + carb×4 + grasa×9), y `AiEntryForm` tiene los inputs
+    correspondientes. Nuevo `macroTargets()` en `lib/calculations.ts`:
+    la proteína objetivo sigue siendo por peso corporal
+    (`proteinTargetForWeight`), y lo que sobra del objetivo de kcal se
+    reparte 50/50 entre carbohidratos y grasas (reparto flexible por
+    default, no una dieta estricta). La pestaña muestra hoy vs objetivo
+    por macro (barras de progreso), un donut del reparto de hoy, un
+    stacked bar semanal de kcal por macro, y proteína diaria vs
+    objetivo. `useMealMemory.ts` también guarda carbs/fat por comida
+    ahora, así el match por memoria trae el macro completo, no solo
+    kcal/proteína.
+  - **Actividad** (`components/ActividadTab.tsx`): pasos, calorías
+    quemadas entrenando y sueño, cada uno con su gráfico semanal (el de
+    sueño con línea de referencia en 8hs). El sueño es un dato nuevo
+    que no existía en la app (`DayEntry.suenoHoras`, opcional) — se
+    carga a mano en `TrainingEntryForm.tsx` (ahora "Pasos, sueño y
+    entrenamiento", mismo botón "+ Entrenamiento" de siempre, sin
+    agregar un botón nuevo).
+  - Supabase: nuevas columnas `des_c/des_g/alm_c/alm_g/mer_c/mer_g/
+    cen_c/cen_g` (carbs/grasas por comida) y `sueno_horas` en `days` —
+    `supabase/schema.sql` actualizado + migración
+    `migration_2026-09-11_add_macros_sueno.sql` (falta que el usuario
+    la corra en el SQL Editor). `app/api/data/route.ts` actualizado en
+    ambas direcciones (`toDay`/`toDayRow`).
+  - Probado con Playwright: cambio entre las 3 pestañas, carga de una
+    comida con carbs/fat mockeados reflejada en la pestaña Macros
+    (stat cards, donut, gráficos semanales), carga de horas de sueño
+    reflejada en la pestaña Actividad, e Inicio confirmado sin cambios
+    visuales. Un bug encontrado en el camino: el donut de Recharts se
+    veía como una astilla fina en la captura porque quedó a mitad de
+    su animación de entrada — se le puso `isAnimationActive={false}`.

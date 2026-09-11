@@ -47,7 +47,15 @@ export function AiEntryForm({
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
-  const [preview, setPreview] = useState<{ kcal: number; protein: number; detalle: string; resumen: string; ingredientes: string } | null>(null);
+  const [preview, setPreview] = useState<{
+    kcal: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    detalle: string;
+    resumen: string;
+    ingredientes: string;
+  } | null>(null);
   const { memory: mealMemory, remember, findMatch } = useMealMemory();
   const [recording, setRecording] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
@@ -99,7 +107,15 @@ export function AiEntryForm({
     if (!forceAi) {
       const match = findMatch(text);
       if (match) {
-        setPreview({ kcal: match.kcal, protein: match.protein, detalle: "", resumen: match.text, ingredientes: "" });
+        setPreview({
+          kcal: match.kcal,
+          protein: match.protein,
+          carbs: match.carbs,
+          fat: match.fat,
+          detalle: "",
+          resumen: match.text,
+          ingredientes: "",
+        });
         setStatus(`Encontrado en tu memoria: "${match.text}" — revisá y guardá, o recalculá con IA si cambió algo ↓`);
         return;
       }
@@ -117,6 +133,8 @@ export function AiEntryForm({
       setPreview({
         kcal: data.kcal,
         protein: data.protein,
+        carbs: data.carbs || 0,
+        fat: data.fat || 0,
         detalle: data.detalle || "",
         resumen: data.resumen || text.trim(),
         ingredientes: data.ingredientes || "",
@@ -134,14 +152,18 @@ export function AiEntryForm({
     const existing = days.find((d) => d.fecha === fecha) || emptyDay(fecha);
     const kKey = `${meal}K` as keyof DayEntry;
     const pKey = `${meal}P` as keyof DayEntry;
+    const cKey = `${meal}C` as keyof DayEntry;
+    const gKey = `${meal}G` as keyof DayEntry;
     const updated: DayEntry = {
       ...existing,
       [kKey]: (existing[kKey] as number) + preview.kcal,
       [pKey]: (existing[pKey] as number) + preview.protein,
+      [cKey]: ((existing[cKey] as number) || 0) + preview.carbs,
+      [gKey]: ((existing[gKey] as number) || 0) + preview.fat,
     };
     onUpsert(updated);
     const result = onConsumeInventory?.(preview.ingredientes || text);
-    remember(preview.resumen || text, preview.kcal, preview.protein);
+    remember(preview.resumen || text, preview.kcal, preview.protein, preview.carbs, preview.fat);
     setText("");
     setPreview(null);
     let message = `Sumado a ${MEAL_LABELS[meal]} del ${fecha} ✓`;
@@ -249,6 +271,28 @@ export function AiEntryForm({
                 value={preview.protein}
                 onChange={(e) => {
                   if (countDigits(e.target.value) <= MAX_DIGITS) setPreview({ ...preview, protein: normalizeNumberInput(e.target) });
+                }}
+              />
+            </div>
+            <div>
+              <label>Carbohidratos (g)</label>
+              <input
+                type="number"
+                max="999999"
+                value={preview.carbs}
+                onChange={(e) => {
+                  if (countDigits(e.target.value) <= MAX_DIGITS) setPreview({ ...preview, carbs: normalizeNumberInput(e.target) });
+                }}
+              />
+            </div>
+            <div>
+              <label>Grasas (g)</label>
+              <input
+                type="number"
+                max="999999"
+                value={preview.fat}
+                onChange={(e) => {
+                  if (countDigits(e.target.value) <= MAX_DIGITS) setPreview({ ...preview, fat: normalizeNumberInput(e.target) });
                 }}
               />
             </div>

@@ -12,6 +12,8 @@ export const SECTION_HELP = {
   pasos: "Si un día se te pasó cargar los pasos desde \"Hoy\", acá podés completarlos para cualquier día de la semana que estés mirando.",
   compras: "Registrá lo que compraste — a mano o sacándole una foto al ticket — para armar tu inventario de la despensa. El Planner de cocina usa este inventario para sugerirte recetas.",
   recetas: "Recetas armadas con lo que tenés en el inventario. Al usar una, se descuentan los ingredientes automáticamente y se suma directo a una comida de tu día.",
+  macros: "Cómo se reparten tus kcal entre proteína, carbohidratos y grasas, hoy y durante la semana. El objetivo de proteína es por tu peso; lo que sobra del objetivo de kcal se reparte 50/50 entre carbohidratos y grasas.",
+  actividad: "Pasos, entrenamientos y sueño con más detalle: cuánto te moviste, cuánto quemaste entrenando y cuánto dormiste, día por día de la semana.",
 } as const;
 
 export const FIELD_HELP = {
@@ -27,4 +29,5 @@ export const FIELD_HELP = {
   ingredientesInventario: "Si nombrás acá los ingredientes que usaste, se descuentan solos de tu inventario de compras al guardar.",
   minutosEntrenamiento: "Cuánto duró la sesión. Junto con la intensidad y tu peso, se usa para estimar las calorías extra que quemaste.",
   ticketTexto: "Pegá el texto del ticket o escribí lo que compraste, un producto por línea o separado por comas.",
+  horasSueno: "Cuántas horas dormiste anoche. Es un dato manual, no viene de ningún sensor — cargalo a ojo si no lo medís con algo.",
 } as const;
