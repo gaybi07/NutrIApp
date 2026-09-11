@@ -26,18 +26,20 @@ export function InfoHint({ text, label = "Más información" }: { text: string; 
         ?
       </button>
       {open && (
-        <>
+        <span
+          className="fixed inset-0 z-40 flex items-end justify-center bg-bg/60 p-4 pb-8 backdrop-blur-sm sm:items-center"
+          onClick={(event) => {
+            event.stopPropagation();
+            setOpen(false);
+          }}
+        >
           <span
-            className="fixed inset-0 z-40"
-            onClick={(event) => {
-              event.stopPropagation();
-              setOpen(false);
-            }}
-          />
-          <span className="absolute left-0 top-full z-50 mt-1 w-60 max-w-[70vw] rounded-lg border border-gold/30 bg-surface p-2.5 text-left text-[11px] font-normal normal-case leading-relaxed tracking-normal text-textMuted shadow-2xl">
+            className="block w-full max-w-sm rounded-xl border border-gold/30 bg-surface p-3 text-left text-[11px] font-normal normal-case leading-relaxed tracking-normal text-textMuted shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
             {text}
           </span>
-        </>
+        </span>
       )}
     </span>
   );

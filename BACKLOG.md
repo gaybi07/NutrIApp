@@ -707,3 +707,18 @@ algo puntual.
   bajo "Verduras"), y el tip de "Cumpliste tu objetivo de proteína"
   apareció con datos reales, se pudo cerrar, y no volvió a aparecer en
   un reload inmediato (throttle funcionando).
+- **2026-09-11**: bug real de mobile — al tocar cualquier ícono "?"
+  (`InfoHint.tsx`), el popup se posicionaba `absolute` anclado al
+  propio ícono (`left:0; top:100%`), un elemento inline chiquito que
+  puede vivir en cualquier posición horizontal de la pantalla (al lado
+  de un título, adentro de una tarjeta angosta, cerca del borde
+  derecho). En mobile esto podía desbordar el viewport y generaba el
+  salto/movimiento de pantalla que reportó el usuario. Se cambió a un
+  popup `fixed` respecto a toda la pantalla (como una hoja que aparece
+  abajo, centrada en desktop a partir de `sm:`), totalmente
+  desacoplado de dónde esté el ícono — ya no puede desbordar ni
+  empujar nada del layout, sin importar en qué parte de la página se
+  use. Probado con Playwright: `window.scrollY` no cambia al abrir el
+  popup (ni en un ícono arriba de todo ni en uno dentro de una sección
+  colapsable más abajo), y `body.scrollWidth` sigue igual al ancho del
+  viewport (sin overflow horizontal).
