@@ -595,3 +595,14 @@ algo puntual.
   almuerzo/cena mezcladas; al completar las 4 comidas del lunes la fila
   se colapsó a "✓" y el contador general pasó a "4 comidas" en ambos
   lugares.
+- **2026-09-11**: agregada sección "Tus comidas más comunes" dentro del
+  Planificador de la semana, entre la grilla de 7 días y la lista de
+  compras — pedido del usuario ("las comidas típicas que tengo
+  guardado", aclarado después como "por segmento del día"). Muestra
+  hasta 5 comidas de `useMealMemory` por cada Desayuno/Almuerzo/
+  Merienda/Cena (las más repetidas primero, mismo orden que ya trae la
+  memoria), solo de lectura por ahora — sirve como referencia rápida
+  mientras se completa cada día, sin tener que abrir el selector de
+  cada casillero para ver qué sueles comer. Si todavía no hay nada
+  guardado para un segmento, muestra un aviso en vez de dejarlo vacío
+  sin explicación.
