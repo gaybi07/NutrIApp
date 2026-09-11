@@ -11,15 +11,43 @@ import { useMealMemory } from "@/lib/useMealMemory";
 const MAX_SUGGESTIONS = 6;
 
 /** Punto de partida antes de tener memoria propia — se van reemplazando
- * por tus comidas reales a medida que las repetís (ver useMealMemory). */
-const DEFAULT_SUGGESTIONS = [
-  "Milanesa con puré",
-  "Asado con ensalada",
-  "2 empanadas de carne",
-  "Pollo al horno con batatas",
-  "Fideos con salsa y queso",
-  "Yogur con granola y banana",
-];
+ * por tus comidas reales a medida que las repetís (ver useMealMemory).
+ * Separado por comida para no sugerir, por ejemplo, un asado a la hora
+ * del desayuno. */
+const DEFAULT_SUGGESTIONS: Record<MealKey, string[]> = {
+  des: [
+    "Tostadas con huevo",
+    "Yogur con granola y banana",
+    "Mate con tostadas",
+    "Avena con fruta",
+    "Huevos revueltos con pan",
+    "Licuado de banana y avena",
+  ],
+  alm: [
+    "Milanesa con puré",
+    "Pollo con arroz",
+    "Ensalada con pollo",
+    "Pasta con salsa",
+    "Carne con ensalada",
+    "Arroz con verduras y pollo",
+  ],
+  mer: [
+    "Yogur con granola y banana",
+    "Tostadas con queso crema y mermelada",
+    "Fruta con yogur",
+    "Café con tostadas",
+    "Barrita de cereal y fruta",
+    "Licuado de frutas",
+  ],
+  cen: [
+    "Asado con ensalada",
+    "Pollo al horno con batatas",
+    "Milanesa con ensalada",
+    "Tarta con ensalada",
+    "Pescado con vegetales",
+    "2 empanadas de carne",
+  ],
+};
 
 // SpeechRecognition no está tipado en TS DOM lib estándar.
 type SpeechRecognitionInstance = {
@@ -163,7 +191,7 @@ export function AiEntryForm({
     };
     onUpsert(updated);
     const result = onConsumeInventory?.(preview.ingredientes || text);
-    remember(preview.resumen || text, preview.kcal, preview.protein, preview.carbs, preview.fat);
+    remember(preview.resumen || text, preview.kcal, preview.protein, preview.carbs, preview.fat, meal);
     setText("");
     setPreview(null);
     let message = `Sumado a ${MEAL_LABELS[meal]} del ${fecha} ✓`;
@@ -175,14 +203,14 @@ export function AiEntryForm({
   };
 
   const mealSuggestions = useMemo(() => {
-    const personal = mealMemory.filter((h) => h.count >= 2).map((h) => h.text);
+    const personal = mealMemory.filter((h) => h.count >= 2 && h.meal === meal).map((h) => h.text);
     const combined = [...personal];
-    for (const fallback of DEFAULT_SUGGESTIONS) {
+    for (const fallback of DEFAULT_SUGGESTIONS[meal]) {
       if (combined.length >= MAX_SUGGESTIONS) break;
       if (!combined.some((c) => c.toLowerCase() === fallback.toLowerCase())) combined.push(fallback);
     }
     return combined.slice(0, MAX_SUGGESTIONS);
-  }, [mealMemory]);
+  }, [mealMemory, meal]);
 
   return (
     <div

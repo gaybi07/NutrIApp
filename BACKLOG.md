@@ -519,3 +519,23 @@ algo puntual.
   elegir "Bowl de pollo con arroz y verduras" para un desayuno, la
   lista de compras mostró correctamente "200g pollo, 150g brocoli, 80g
   cebolla, 15ml salsa de soja" y NO mostró arroz (ya cubierto).
+- **2026-09-11**: bug real reportado — las sugerencias de comida en
+  `AiEntryForm` no correspondían a la comida seleccionada (aparecían
+  cosas de cena bajo "Desayuno" y viceversa). Causa: `MealMemoryEntry`
+  nunca guardaba a qué comida correspondía cada plato — sugería toda la
+  memoria mezclada sin importar el segmento del día. Se agregó el
+  campo `meal` (última comida en la que se registró ese plato) a
+  `lib/useMealMemory.ts`, `AiEntryForm.tsx` ahora lo pasa al guardar
+  (`remember(..., meal)`) y `mealSuggestions` filtra por
+  `h.meal === meal` antes de completar con las sugerencias fijas de
+  arranque — que también se separaron por comida (antes eran una sola
+  lista genérica con cosas como "Asado con ensalada" que podían salir
+  como sugerencia de desayuno). De paso, `importCsv` ahora también lee
+  la columna "comida" del CSV (Desayuno/Almuerzo/Merienda/Cena) para
+  taguear el segmento correcto al importar en bloque — los 66 registros
+  ya importados antes de este fix no tienen esa columna leída, así que
+  quedaron sin `meal` y no van a aparecer como sugerencia personalizada
+  hasta reimportar el mismo CSV o volver a cargarlos a mano (lo cual ya
+  los tagueará bien). Probado con Playwright: con una entrada de
+  memoria tageada "des" y otra "cen", seleccionando Desayuno solo
+  aparece la de desayuno (y viceversa al cambiar a Cena).

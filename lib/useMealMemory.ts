@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { MealKey } from "@/lib/types";
 
 const KEY = "registro:mealMemory:v1";
 const LEGACY_KEY = "registro:mealHistory:v1"; // versión vieja: solo texto + count, sin kcal/proteína
@@ -12,6 +13,13 @@ const STOPWORDS = new Set([
   "y", "con", "sin", "a", "al", "en", "por", "para", "que", "se", "lo",
 ]);
 
+const MEAL_NAME_TO_KEY: Record<string, MealKey> = {
+  desayuno: "des",
+  almuerzo: "alm",
+  merienda: "mer",
+  cena: "cen",
+};
+
 export interface MealMemoryEntry {
   text: string;
   kcal: number;
@@ -20,6 +28,7 @@ export interface MealMemoryEntry {
   fat: number;
   count: number;
   updatedAt: number;
+  meal?: MealKey; // última comida (desayuno/almuerzo/...) en la que se registró — para no sugerir cosas de otro momento del día
 }
 
 function normalize(text: string): string {
@@ -146,7 +155,7 @@ export function useMealMemory() {
   }, []);
 
   const remember = useCallback(
-    (text: string, kcal: number, protein: number, carbs = 0, fat = 0) => {
+    (text: string, kcal: number, protein: number, carbs = 0, fat = 0, meal?: MealKey) => {
       const trimmedText = text.trim();
       if (!trimmedText) return;
       setMemory((prev) => {
@@ -156,10 +165,10 @@ export function useMealMemory() {
           existingIndex >= 0
             ? prev.map((e, i) =>
                 i === existingIndex
-                  ? { text: trimmedText, kcal, protein, carbs, fat, count: e.count + 1, updatedAt: Date.now() }
+                  ? { text: trimmedText, kcal, protein, carbs, fat, meal: meal ?? e.meal, count: e.count + 1, updatedAt: Date.now() }
                   : e
               )
-            : [...prev, { text: trimmedText, kcal, protein, carbs, fat, count: 1, updatedAt: Date.now() }];
+            : [...prev, { text: trimmedText, kcal, protein, carbs, fat, meal, count: 1, updatedAt: Date.now() }];
         return persist(next);
       });
     },
@@ -194,6 +203,7 @@ export function useMealMemory() {
       const protIdx = header.findIndex((h) => h.startsWith("proteina"));
       const carbIdx = header.findIndex((h) => h.startsWith("carb"));
       const fatIdx = header.findIndex((h) => h.startsWith("grasa") || h.startsWith("fat"));
+      const mealIdx = header.indexOf("comida");
       if (descIdx < 0 || kcalIdx < 0 || protIdx < 0) {
         throw new Error('El CSV necesita columnas: "descripcion", "kcal", "proteina_g"');
       }
@@ -205,11 +215,12 @@ export function useMealMemory() {
         const protein = Number(row[protIdx]) || 0;
         const carbs = carbIdx >= 0 ? Number(row[carbIdx]) || 0 : 0;
         const fat = fatIdx >= 0 ? Number(row[fatIdx]) || 0 : 0;
+        const meal = mealIdx >= 0 ? MEAL_NAME_TO_KEY[(row[mealIdx] || "").trim().toLowerCase()] : undefined;
         if (!descripcion || /sin registro/i.test(descripcion) || !kcal) {
           skipped++;
           continue;
         }
-        remember(descripcion, kcal, protein, carbs, fat);
+        remember(descripcion, kcal, protein, carbs, fat, meal);
         imported++;
       }
       return { imported, skipped };
