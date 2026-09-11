@@ -420,3 +420,30 @@ algo puntual.
   y se aplicó a los dos campos. Reproducido y confirmado arreglado con
   Playwright: escribir un 0 al inicio de "80" ya no dejaba "080"
   pegado, y se pudo seguir editando con normalidad.
+- **2026-09-11**: nueva "memoria de comidas" (reemplaza a `useMealHistory`),
+  a pedido del usuario tras preguntar por qué la IA le calculaba 80 kcal
+  para un yogur casero que él sabe que tiene 110. `lib/useMealMemory.ts`
+  guarda descripción + kcal/proteína EXACTOS (no solo el texto), y al
+  escribir una comida nueva primero busca una coincidencia flexible por
+  palabras compartidas (`similarity()`, umbral 0.6) antes de llamarla IA
+  — si tenés 2+ palabras significativas en común con algo que ya
+  guardaste, usa ese valor directo, sin gastar una llamada a la IA. Si
+  el texto es muy corto (1 palabra significativa) exige coincidencia
+  exacta para evitar falsos positivos. `AiEntryForm.tsx`: `handleCalc`
+  ahora chequea la memoria primero (salvo que se fuerce recálculo), y
+  hay un link "¿Cambió algo? Recalcular con IA" para pasar por alto la
+  memoria cuando corresponda. Al guardar, `remember()` graba (o
+  actualiza) el valor con el kcal/proteína que quedó en pantalla —
+  si lo corregiste a mano, esa corrección pasa a ser el valor fijo de
+  ahí en adelante. Nuevo `components/MealMemoryImport.tsx` (dentro del
+  panel "Datos") permite importar un CSV con columnas descripcion/kcal/
+  proteina_g para poblar la memoria en bloque — NO carga esos días como
+  historial real de la app (eso se descartó a pedido explícito), solo
+  alimenta la memoria de comidas. Cuando una descripción se repite en
+  el CSV, se queda con el valor de la ocurrencia más reciente (no
+  promedia). Probado con el CSV real del usuario (72 filas, 3 sin
+  registro): importó 69, colapsó a 66 entradas únicas, y escribir "hoy
+  comi tostadas con huevos y queso crema de nuevo" (frase distinta a la
+  guardada) reconoció la comida y devolvió el valor guardado sin
+  ninguna llamada a la IA; "Recalcular con IA" sí la forzó cuando se
+  probó explícitamente.

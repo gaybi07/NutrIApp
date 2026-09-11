@@ -6,12 +6,12 @@ import { countDigits, MAX_DIGITS, MAX_TEXT_LENGTH, normalizeNumberInput } from "
 import { fmtDate } from "@/lib/calculations";
 import { FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
-import { useMealHistory } from "@/lib/useMealHistory";
+import { useMealMemory } from "@/lib/useMealMemory";
 
 const MAX_SUGGESTIONS = 6;
 
-/** Punto de partida antes de tener historial propio — se van reemplazando
- * por tus comidas reales a medida que las repetís (ver useMealHistory). */
+/** Punto de partida antes de tener memoria propia — se van reemplazando
+ * por tus comidas reales a medida que las repetís (ver useMealMemory). */
 const DEFAULT_SUGGESTIONS = [
   "Milanesa con puré",
   "Asado con ensalada",
@@ -48,7 +48,7 @@ export function AiEntryForm({
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
   const [preview, setPreview] = useState<{ kcal: number; protein: number; detalle: string; resumen: string; ingredientes: string } | null>(null);
-  const { history: mealHistory, record: recordMeal } = useMealHistory();
+  const { memory: mealMemory, remember, findMatch } = useMealMemory();
   const [recording, setRecording] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
@@ -88,14 +88,24 @@ export function AiEntryForm({
     setRecording(true);
   };
 
-  const handleCalc = async () => {
+  const handleCalc = async (forceAi = false) => {
     if (!text.trim()) {
       setStatus("Escribí o dictá qué comiste primero");
       return;
     }
-    setLoading(true);
     setStatus("");
     setPreview(null);
+
+    if (!forceAi) {
+      const match = findMatch(text);
+      if (match) {
+        setPreview({ kcal: match.kcal, protein: match.protein, detalle: "", resumen: match.text, ingredientes: "" });
+        setStatus(`Encontrado en tu memoria: "${match.text}" — revisá y guardá, o recalculá con IA si cambió algo ↓`);
+        return;
+      }
+    }
+
+    setLoading(true);
     try {
       const res = await fetch("/api/parse-meal", {
         method: "POST",
@@ -131,7 +141,7 @@ export function AiEntryForm({
     };
     onUpsert(updated);
     const result = onConsumeInventory?.(preview.ingredientes || text);
-    recordMeal(preview.resumen || text);
+    remember(preview.resumen || text, preview.kcal, preview.protein);
     setText("");
     setPreview(null);
     let message = `Sumado a ${MEAL_LABELS[meal]} del ${fecha} ✓`;
@@ -143,14 +153,14 @@ export function AiEntryForm({
   };
 
   const mealSuggestions = useMemo(() => {
-    const personal = mealHistory.filter((h) => h.count >= 2).map((h) => h.text);
+    const personal = mealMemory.filter((h) => h.count >= 2).map((h) => h.text);
     const combined = [...personal];
     for (const fallback of DEFAULT_SUGGESTIONS) {
       if (combined.length >= MAX_SUGGESTIONS) break;
       if (!combined.some((c) => c.toLowerCase() === fallback.toLowerCase())) combined.push(fallback);
     }
     return combined.slice(0, MAX_SUGGESTIONS);
-  }, [mealHistory]);
+  }, [mealMemory]);
 
   return (
     <div
@@ -209,7 +219,7 @@ export function AiEntryForm({
         </div>
       </div>
       <button
-        onClick={handleCalc}
+        onClick={() => handleCalc()}
         disabled={loading}
         className="w-full rounded-lg p-3 font-sans font-bold text-sm mt-2.5 disabled:opacity-60"
         style={{ background: "#C9A227", color: "#1C1B18" }}
@@ -244,6 +254,14 @@ export function AiEntryForm({
             </div>
           </div>
           {preview.detalle && <div className="text-[11px] text-textMuted italic my-2">{preview.detalle}</div>}
+          <button
+            type="button"
+            onClick={() => handleCalc(true)}
+            disabled={loading}
+            className="mb-2 font-mono text-[9.5px] uppercase tracking-wide text-textMuted underline disabled:opacity-60"
+          >
+            ¿Cambió algo? Recalcular con IA
+          </button>
           {preview.ingredientes && (
             <div className="mb-2 text-[10px] text-textMuted">
               Se descuenta del inventario (si lo tenés cargado): {preview.ingredientes}

@@ -15,6 +15,7 @@ import { WeeklyWeight } from "@/components/WeeklyWeight";
 import { AuthPanel } from "@/components/AuthPanel";
 import { DailySteps } from "@/components/DailySteps";
 import { DataImport } from "@/components/DataImport";
+import { MealMemoryImport } from "@/components/MealMemoryImport";
 import { TodayCard } from "@/components/TodayCard";
 import { TrainingEntryForm } from "@/components/TrainingEntryForm";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
@@ -318,6 +319,7 @@ export default function Home() {
                 setPanel(null);
               }}
             />
+            <MealMemoryImport />
           </div>
         </div>
       )}
