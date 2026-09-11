@@ -64,18 +64,22 @@ export interface DayEntry {
   desP: number;
   desC?: number; // carbohidratos (g) — opcional para no romper registros viejos sin este dato
   desG?: number; // grasas (g)
+  desF?: number; // fibra (g)
   almK: number;
   almP: number;
   almC?: number;
   almG?: number;
+  almF?: number;
   merK: number;
   merP: number;
   merC?: number;
   merG?: number;
+  merF?: number;
   cenK: number;
   cenP: number;
   cenC?: number;
   cenG?: number;
+  cenF?: number;
   pasos: number;
   entreno: boolean;
   pesoKg?: number;
@@ -84,6 +88,7 @@ export interface DayEntry {
   entrenoIntensidad?: TrainingIntensity; // formato viejo
   entrenamientos?: TrainingSession[]; // formato nuevo: soporta más de un entrenamiento por día
   ejercicios?: ExerciseEntry[]; // desglose real de lo entrenado ese día (series/reps/peso por ejercicio)
+  alimentos?: string[]; // nombres de ingredientes comidos ese día (para diversidad de grupos alimenticios en Macros)
 }
 
 export type WeekPlan = Record<string, Partial<Record<MealKey, string>>>; // fecha -> comida -> título de receta
@@ -119,10 +124,10 @@ export const INTENSITY_STYLES: Record<
 
 export const emptyDay = (fecha: string): DayEntry => ({
   fecha,
-  desK: 0, desP: 0, desC: 0, desG: 0,
-  almK: 0, almP: 0, almC: 0, almG: 0,
-  merK: 0, merP: 0, merC: 0, merG: 0,
-  cenK: 0, cenP: 0, cenC: 0, cenG: 0,
+  desK: 0, desP: 0, desC: 0, desG: 0, desF: 0,
+  almK: 0, almP: 0, almC: 0, almG: 0, almF: 0,
+  merK: 0, merP: 0, merC: 0, merG: 0, merF: 0,
+  cenK: 0, cenP: 0, cenC: 0, cenG: 0, cenF: 0,
   pasos: 0,
   entreno: false,
 });

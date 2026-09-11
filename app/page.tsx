@@ -12,9 +12,8 @@ import { Ledger } from "@/components/Ledger";
 import { RankingCard } from "@/components/RankingCard";
 import { GoalCalculator } from "@/components/GoalCalculator";
 import { AiEntryForm } from "@/components/AiEntryForm";
-import { RecipePlanner } from "@/components/RecipePlanner";
-import { WeekPlanner, countPlannedMeals } from "@/components/WeekPlanner";
-import { CommonMealsCard } from "@/components/CommonMealsCard";
+import { WeekPlanner } from "@/components/WeekPlanner";
+import { ComidasTab } from "@/components/ComidasTab";
 import { ShoppingLog } from "@/components/ShoppingLog";
 import { WeeklyWeight } from "@/components/WeeklyWeight";
 import { AuthPanel } from "@/components/AuthPanel";
@@ -25,6 +24,7 @@ import { TodayCard } from "@/components/TodayCard";
 import { TrainingEntryForm } from "@/components/TrainingEntryForm";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
 import { AppTour } from "@/components/AppTour";
+import { TipPopup } from "@/components/TipPopup";
 import { Collapsible } from "@/components/Collapsible";
 import { isSupabaseConfigured } from "@/lib/supabase/browser";
 import { useEscapeKey } from "@/lib/useEscapeKey";
@@ -75,6 +75,19 @@ export default function Home() {
     const profileWeight = settings.calculatorProfile?.actual ? Number(settings.calculatorProfile.actual) : undefined;
     return profileWeight || 75;
   }, [days, settings]);
+
+  const weightTrend = useMemo(() => {
+    const currentWeight = settings.weeklyWeights?.[fmtDate(monday)];
+    const previousWeight = settings.weeklyWeights?.[fmtDate(addDays(monday, -7))];
+    if (currentWeight == null || previousWeight == null) return null;
+    return currentWeight - previousWeight;
+  }, [settings.weeklyWeights, monday]);
+
+  const sleepAvg = useMemo(() => {
+    const withSleep = presentDays.filter((d) => d.suenoHoras != null);
+    if (withSleep.length === 0) return null;
+    return withSleep.reduce((sum, d) => sum + (d.suenoHoras || 0), 0) / withSleep.length;
+  }, [presentDays]);
 
   const saveWeeklyWeight = useCallback(
     (weekKey: string, weight: number) => {
@@ -136,6 +149,17 @@ export default function Home() {
 
       {!settings.tourDone && (
         <AppTour onFinish={() => saveSettings({ ...settings, tourDone: true })} />
+      )}
+
+      {settings.tourDone && (
+        <TipPopup
+          presentDays={presentDays}
+          summary={summary}
+          proteinTarget={proteinTargetForWeight(currentWeightKg)}
+          goalMode={settings.calculatorProfile?.modo}
+          weightTrend={weightTrend}
+          sleepAvg={sleepAvg}
+        />
       )}
 
       <TabBar active={activeTab} onChange={setActiveTab} />
@@ -252,29 +276,20 @@ export default function Home() {
           <Ledger weekDates={weekDates} weekDays={weekDays} goal={summary.avgGoal || settings.goal} tdeeFallback={settings.tdeeFallback} onUpsert={upsertDay} />
           <DailySteps weekDates={weekDates} weekDays={weekDays} onUpsert={upsertDay} />
           <ShoppingLog items={inventory} addInventoryText={addText} replaceItems={replaceInventory} />
-          <RecipePlanner
-            items={inventory}
-            consumeAmounts={consumeAmounts}
-            onUseRecipe={useRecipeAsMeal}
-            dailyGoal={settings.goal}
-            consumedKcal={todayKcal}
-          />
-          <CommonMealsCard />
-          <button
-            type="button"
-            onClick={() => setPanel("planificador")}
-            className="mb-4 flex w-full items-center justify-between gap-2 rounded-2xl border border-border bg-surface/70 p-3 text-left shadow-[0_0_0_1px_rgba(58,54,47,0.4)]"
-          >
-            <div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Planificador</div>
-              <div className="font-display text-xl leading-none -tracking-[0.04em]">Semana que viene</div>
-            </div>
-            <div className="rounded-full border border-border bg-bg/70 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
-              {countPlannedMeals(settings.weekPlan || {})} comidas
-            </div>
-          </button>
         </div>
       </div>
+      )}
+
+      {activeTab === "comidas" && (
+        <ComidasTab
+          items={inventory}
+          consumeAmounts={consumeAmounts}
+          onUseRecipe={useRecipeAsMeal}
+          dailyGoal={settings.goal}
+          consumedKcal={todayKcal}
+          weekPlan={settings.weekPlan || {}}
+          onOpenPlanificador={() => setPanel("planificador")}
+        />
       )}
 
       {panel === "calc" && (

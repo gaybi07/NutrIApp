@@ -26,6 +26,7 @@ export interface MealMemoryEntry {
   protein: number;
   carbs: number;
   fat: number;
+  fiber: number;
   count: number;
   updatedAt: number;
   meal?: MealKey; // última comida (desayuno/almuerzo/...) en la que se registró — para no sugerir cosas de otro momento del día
@@ -131,6 +132,7 @@ export function useMealMemory() {
           protein: 0,
           carbs: 0,
           fat: 0,
+          fiber: 0,
           count: h.count,
           updatedAt: Date.now(),
         }));
@@ -155,7 +157,7 @@ export function useMealMemory() {
   }, []);
 
   const remember = useCallback(
-    (text: string, kcal: number, protein: number, carbs = 0, fat = 0, meal?: MealKey) => {
+    (text: string, kcal: number, protein: number, carbs = 0, fat = 0, meal?: MealKey, fiber = 0) => {
       const trimmedText = text.trim();
       if (!trimmedText) return;
       setMemory((prev) => {
@@ -165,10 +167,10 @@ export function useMealMemory() {
           existingIndex >= 0
             ? prev.map((e, i) =>
                 i === existingIndex
-                  ? { text: trimmedText, kcal, protein, carbs, fat, meal: meal ?? e.meal, count: e.count + 1, updatedAt: Date.now() }
+                  ? { text: trimmedText, kcal, protein, carbs, fat, fiber, meal: meal ?? e.meal, count: e.count + 1, updatedAt: Date.now() }
                   : e
               )
-            : [...prev, { text: trimmedText, kcal, protein, carbs, fat, meal, count: 1, updatedAt: Date.now() }];
+            : [...prev, { text: trimmedText, kcal, protein, carbs, fat, fiber, meal, count: 1, updatedAt: Date.now() }];
         return persist(next);
       });
     },
@@ -203,6 +205,7 @@ export function useMealMemory() {
       const protIdx = header.findIndex((h) => h.startsWith("proteina"));
       const carbIdx = header.findIndex((h) => h.startsWith("carb"));
       const fatIdx = header.findIndex((h) => h.startsWith("grasa") || h.startsWith("fat"));
+      const fiberIdx = header.findIndex((h) => h.startsWith("fibra") || h.startsWith("fiber"));
       const mealIdx = header.indexOf("comida");
       if (descIdx < 0 || kcalIdx < 0 || protIdx < 0) {
         throw new Error('El CSV necesita columnas: "descripcion", "kcal", "proteina_g"');
@@ -215,12 +218,13 @@ export function useMealMemory() {
         const protein = Number(row[protIdx]) || 0;
         const carbs = carbIdx >= 0 ? Number(row[carbIdx]) || 0 : 0;
         const fat = fatIdx >= 0 ? Number(row[fatIdx]) || 0 : 0;
+        const fiber = fiberIdx >= 0 ? Number(row[fiberIdx]) || 0 : 0;
         const meal = mealIdx >= 0 ? MEAL_NAME_TO_KEY[(row[mealIdx] || "").trim().toLowerCase()] : undefined;
         if (!descripcion || /sin registro/i.test(descripcion) || !kcal) {
           skipped++;
           continue;
         }
-        remember(descripcion, kcal, protein, carbs, fat, meal);
+        remember(descripcion, kcal, protein, carbs, fat, meal, fiber);
         imported++;
       }
       return { imported, skipped };

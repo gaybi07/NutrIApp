@@ -665,3 +665,45 @@ algo puntual.
     guardar, y verificar que el volumen (2560kg) apareció en el
     gráfico semanal del día correcto — y que routines/trainingSchedule/
     ejercicios quedaron bien guardados en `localStorage`.
+- **2026-09-11**: reorganización grande pedida por el usuario ("cómo
+  dividir mejor la app"), en tres partes que se hicieron todas juntas:
+  1. **Pestaña "Comidas" nueva** (`components/ComidasTab.tsx`,
+     `TabBar.tsx` pasa de 3 a 4 pestañas: Inicio/Comidas/Macros/
+     Actividad). Agrupa el Planner de cocina, Comidas más comunes y el
+     botón del Planificador de la semana — antes vivían mezclados en
+     la segunda columna de Inicio. Inicio queda solo con estadísticas
+     (Hoy, Semana, Ranking, Herramientas, Tabla, Pasos, Compras), tal
+     como pidió el usuario ("esa pantalla está bien, no la toquemos").
+  2. **Macros más completo**: se agregó fibra como cuarto macro
+     (`DayEntry.desF/almF/merF/cenF`, la IA de `/api/parse-meal` ahora
+     también estima "fiber", objetivo genérico de ~14g cada 1000kcal
+     de `macroTargets()` — no depende del peso como la proteína) y
+     "diversidad de grupos alimenticios": nuevo `lib/foodGroups.ts`
+     clasifica ingredientes por palabras clave (proteína animal/
+     vegetal, lácteo, verdura, fruta, cereal, grasa) SIN llamar de
+     nuevo a la IA — reutiliza el mismo `ingredientes` que ya devuelve
+     `/api/parse-meal` para el inventario, parseado con
+     `parseInventoryText` (ya existía en `useInventory.ts`) y guardado
+     como `DayEntry.alimentos: string[]` al guardar una comida en
+     `AiEntryForm`. `MacrosTab` suma un 4to stat (Fibra), un gráfico
+     semanal de fibra, y una sección "Diversidad de esta semana" que
+     lista cuántos alimentos distintos de cada grupo se comieron.
+  3. **Tips motivacionales** (`lib/tips.ts` + `components/TipPopup.tsx`):
+     un cartel descartable arriba de todo, que aparece como máximo una
+     vez cada 2 días (throttle por `localStorage`, no por cuenta) al
+     entrar a la app — pedido explícito: "que no sean tediosas". Reglas
+     simples sobre los datos reales de la semana (proteína vs
+     objetivo, tendencia de peso según el modo de objetivo, promedio
+     de sueño, consistencia de entrenamiento, diversidad de verduras),
+     sin IA en vivo. Prioriza felicitaciones sobre sugerencias cuando
+     hay algo para festejar, con tono motivacional ("Cumpliste tu
+     objetivo de proteína 💪", "Seguís bajando de peso 🙌") — y una
+     sugerencia suave (no un reto) cuando algo se puede mejorar.
+  Probado de punta a punta con Playwright: las 4 pestañas están, los
+  3 componentes movidos ya no aparecen en Inicio y sí en Comidas, una
+  comida cargada con fibra=8 y ingredientes "pollo, tomate, brocoli,
+  cebolla" (mockeados) apareció correctamente en el stat de Fibra y en
+  Diversidad (pollo bajo "Proteínas animales", tomate/brócoli/cebolla
+  bajo "Verduras"), y el tip de "Cumpliste tu objetivo de proteína"
+  apareció con datos reales, se pudo cerrar, y no volvió a aparecer en
+  un reload inmediato (throttle funcionando).

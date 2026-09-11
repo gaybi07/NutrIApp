@@ -1,9 +1,10 @@
 "use client";
 
-export type MainTab = "inicio" | "macros" | "actividad";
+export type MainTab = "inicio" | "comidas" | "macros" | "actividad";
 
 const TABS: { id: MainTab; label: string }[] = [
   { id: "inicio", label: "Inicio" },
+  { id: "comidas", label: "Comidas" },
   { id: "macros", label: "Macros" },
   { id: "actividad", label: "Actividad" },
 ];

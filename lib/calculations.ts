@@ -32,10 +32,16 @@ export function dayFat(d: DayEntry): number {
   return (d.desG || 0) + (d.almG || 0) + (d.merG || 0) + (d.cenG || 0);
 }
 
+/** Total de fibra (g) consumida en el día. */
+export function dayFiber(d: DayEntry): number {
+  return (d.desF || 0) + (d.almF || 0) + (d.merF || 0) + (d.cenF || 0);
+}
+
 export interface MacroTargets {
   proteinG: number;
   carbsG: number;
   fatG: number;
+  fiberG: number;
   proteinKcal: number;
   carbsKcal: number;
   fatKcal: number;
@@ -46,7 +52,9 @@ export interface MacroTargets {
  * proteína objetivo (por peso corporal, ver `proteinTargetForWeight`). Las
  * kcal que sobran después de la proteína se dividen 50/50 entre
  * carbohidratos y grasas — un reparto flexible estándar, no una dieta
- * estricta con proporciones fijas.
+ * estricta con proporciones fijas. La fibra no resta kcal (ya está incluida
+ * en los carbohidratos) — el objetivo es la recomendación genérica de
+ * ~14g cada 1000 kcal (guía USDA), no depende del peso.
  */
 export function macroTargets(goalKcal: number, proteinTargetG: number): MacroTargets {
   const proteinKcal = proteinTargetG * 4;
@@ -57,6 +65,7 @@ export function macroTargets(goalKcal: number, proteinTargetG: number): MacroTar
     proteinG: proteinTargetG,
     carbsG: Math.round(carbsKcal / 4),
     fatG: Math.round(fatKcal / 9),
+    fiberG: Math.round((goalKcal / 1000) * 14),
     proteinKcal: Math.round(proteinKcal),
     carbsKcal: Math.round(carbsKcal),
     fatKcal: Math.round(fatKcal),

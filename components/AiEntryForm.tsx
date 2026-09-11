@@ -7,6 +7,7 @@ import { fmtDate } from "@/lib/calculations";
 import { FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 import { useMealMemory } from "@/lib/useMealMemory";
+import { parseInventoryText } from "@/lib/useInventory";
 
 const MAX_SUGGESTIONS = 6;
 
@@ -80,6 +81,7 @@ export function AiEntryForm({
     protein: number;
     carbs: number;
     fat: number;
+    fiber: number;
     detalle: string;
     resumen: string;
     ingredientes: string;
@@ -140,6 +142,7 @@ export function AiEntryForm({
           protein: match.protein,
           carbs: match.carbs,
           fat: match.fat,
+          fiber: match.fiber,
           detalle: "",
           resumen: match.text,
           ingredientes: "",
@@ -163,6 +166,7 @@ export function AiEntryForm({
         protein: data.protein,
         carbs: data.carbs || 0,
         fat: data.fat || 0,
+        fiber: data.fiber || 0,
         detalle: data.detalle || "",
         resumen: data.resumen || text.trim(),
         ingredientes: data.ingredientes || "",
@@ -182,16 +186,21 @@ export function AiEntryForm({
     const pKey = `${meal}P` as keyof DayEntry;
     const cKey = `${meal}C` as keyof DayEntry;
     const gKey = `${meal}G` as keyof DayEntry;
+    const fKey = `${meal}F` as keyof DayEntry;
+    const nuevosAlimentos = preview.ingredientes ? parseInventoryText(preview.ingredientes).map((i) => i.name) : [];
+    const alimentosDelDia = Array.from(new Set([...(existing.alimentos || []), ...nuevosAlimentos]));
     const updated: DayEntry = {
       ...existing,
       [kKey]: (existing[kKey] as number) + preview.kcal,
       [pKey]: (existing[pKey] as number) + preview.protein,
       [cKey]: ((existing[cKey] as number) || 0) + preview.carbs,
       [gKey]: ((existing[gKey] as number) || 0) + preview.fat,
+      [fKey]: ((existing[fKey] as number) || 0) + preview.fiber,
+      alimentos: alimentosDelDia,
     };
     onUpsert(updated);
     const result = onConsumeInventory?.(preview.ingredientes || text);
-    remember(preview.resumen || text, preview.kcal, preview.protein, preview.carbs, preview.fat, meal);
+    remember(preview.resumen || text, preview.kcal, preview.protein, preview.carbs, preview.fat, meal, preview.fiber);
     setText("");
     setPreview(null);
     let message = `Sumado a ${MEAL_LABELS[meal]} del ${fecha} ✓`;
@@ -321,6 +330,17 @@ export function AiEntryForm({
                 value={preview.fat}
                 onChange={(e) => {
                   if (countDigits(e.target.value) <= MAX_DIGITS) setPreview({ ...preview, fat: normalizeNumberInput(e.target) });
+                }}
+              />
+            </div>
+            <div>
+              <label>Fibra (g)</label>
+              <input
+                type="number"
+                max="999999"
+                value={preview.fiber}
+                onChange={(e) => {
+                  if (countDigits(e.target.value) <= MAX_DIGITS) setPreview({ ...preview, fiber: normalizeNumberInput(e.target) });
                 }}
               />
             </div>
