@@ -1,4 +1,4 @@
-import { InventoryItem } from "@/lib/types";
+import { InventoryItem, MealKey } from "@/lib/types";
 
 export type RecipeIngredient = { name: string; quantity: number; unit: InventoryItem["unit"] };
 
@@ -19,6 +19,8 @@ export interface Recipe {
   summary: string;
   kcal: number;
   protein: number;
+  /** Para qué comida(s) del día tiene sentido — evita sugerir un asado como desayuno. */
+  meals: MealKey[];
 }
 
 export const CUISINE_FILTERS: { id: Cuisine; label: string }[] = [
@@ -40,6 +42,7 @@ export const RECIPES: Recipe[] = [
     summary: "Equilibrado, alto en proteína y muy práctico para el trabajo.",
     kcal: 620,
     protein: 48,
+    meals: ["alm", "cen"],
   },
   {
     title: "Salteado de tofu y vegetales",
@@ -50,6 +53,7 @@ export const RECIPES: Recipe[] = [
     summary: "Muy bueno si querés algo ligero y rico en vegetales.",
     kcal: 420,
     protein: 28,
+    meals: ["alm", "cen"],
   },
   {
     title: "Pollo al horno con papas y tomate",
@@ -60,6 +64,7 @@ export const RECIPES: Recipe[] = [
     summary: "Simple, contundente y fácil de repetir varias noches.",
     kcal: 680,
     protein: 52,
+    meals: ["alm", "cen"],
   },
   {
     title: "Tacos de pollo con ensalada",
@@ -70,6 +75,7 @@ export const RECIPES: Recipe[] = [
     summary: "Ideal para usar lo que tenés a mano y no complicarte.",
     kcal: 540,
     protein: 42,
+    meals: ["alm", "cen"],
   },
   {
     title: "Salmon con quinoa y espinaca",
@@ -80,6 +86,7 @@ export const RECIPES: Recipe[] = [
     summary: "Opción más elegante y muy buena para una comida más completa.",
     kcal: 610,
     protein: 40,
+    meals: ["alm", "cen"],
   },
   {
     title: "Pasta con queso, tomate y espinaca",
@@ -90,6 +97,7 @@ export const RECIPES: Recipe[] = [
     summary: "Sencillo, reconfortante y muy fácil de ajustar al gusto.",
     kcal: 570,
     protein: 24,
+    meals: ["alm", "cen"],
   },
   {
     title: "Wrap rápido con huevo y vegetales",
@@ -100,6 +108,7 @@ export const RECIPES: Recipe[] = [
     summary: "Perfecto para una comida rápida y con bastante volumen.",
     kcal: 360,
     protein: 22,
+    meals: ["alm", "cen"],
   },
   {
     title: "Lentejas con verduras y huevo",
@@ -110,5 +119,50 @@ export const RECIPES: Recipe[] = [
     summary: "Muy rico, muy saciante y con buen aporte de proteína.",
     kcal: 520,
     protein: 30,
+    meals: ["alm", "cen"],
+  },
+  {
+    title: "Tostadas con huevo y palta",
+    cuisine: "saludable",
+    tags: ["saludable", "rapida"],
+    ingredients: [{ name: "pan", quantity: 2, unit: "u." }, { name: "huevo", quantity: 2, unit: "u." }, { name: "palta", quantity: 1, unit: "u." }],
+    time: "8 min",
+    summary: "Desayuno completo, rápido y con buena proteína y grasas saludables.",
+    kcal: 380,
+    protein: 18,
+    meals: ["des"],
+  },
+  {
+    title: "Avena con banana y miel",
+    cuisine: "saludable",
+    tags: ["saludable", "rapida"],
+    ingredients: [{ name: "avena", quantity: 50, unit: "g" }, { name: "banana", quantity: 1, unit: "u." }, { name: "leche", quantity: 200, unit: "ml" }, { name: "miel", quantity: 15, unit: "g" }],
+    time: "5 min",
+    summary: "Fácil de preparar la noche anterior, buena carga de carbohidratos para arrancar el día.",
+    kcal: 380,
+    protein: 12,
+    meals: ["des", "mer"],
+  },
+  {
+    title: "Yogur con granola y frutos rojos",
+    cuisine: "saludable",
+    tags: ["saludable", "rapida"],
+    ingredients: [{ name: "yogur", quantity: 1, unit: "u." }, { name: "granola", quantity: 40, unit: "g" }, { name: "frutos rojos", quantity: 80, unit: "g" }],
+    time: "3 min",
+    summary: "Sin cocción, ideal para un desayuno o merienda apurada.",
+    kcal: 320,
+    protein: 14,
+    meals: ["des", "mer"],
+  },
+  {
+    title: "Panqueques de avena y banana",
+    cuisine: "saludable",
+    tags: ["saludable"],
+    ingredients: [{ name: "avena", quantity: 60, unit: "g" }, { name: "banana", quantity: 1, unit: "u." }, { name: "huevo", quantity: 2, unit: "u." }],
+    time: "12 min",
+    summary: "Sin harina ni azúcar agregada, rinden 3-4 panqueques chicos.",
+    kcal: 420,
+    protein: 18,
+    meals: ["des"],
   },
 ];

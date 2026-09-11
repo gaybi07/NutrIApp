@@ -32,6 +32,7 @@ export function RecipePlanner({
     const available = items.map((item) => item.name.toLowerCase());
 
     return RECIPES.filter((recipe) => {
+      if (selectedMeal && !recipe.meals.includes(selectedMeal)) return false;
       if (selectedFilters.length > 0 && !selectedFilters.some((filter) => recipe.tags.includes(filter))) {
         return false;
       }
@@ -39,7 +40,7 @@ export function RecipePlanner({
       const missing = recipe.ingredients.filter((ingredient) => !available.some((item) => item.includes(ingredient.name) || ingredient.name.includes(item)));
       return missing.length <= 2;
     }).slice(0, 3);
-  }, [items, selectedFilters]);
+  }, [items, selectedFilters, selectedMeal]);
 
   const getRecipeLines = (recipe: (typeof RECIPES)[number]) => recipe.ingredients.map((ingredient) => {
     const item = items.find((candidate) => candidate.unit === ingredient.unit && (candidate.name.includes(ingredient.name) || ingredient.name.includes(candidate.name)));

@@ -556,3 +556,42 @@ algo puntual.
   modal se abre con sus 28 casilleros, el selector de receta anidado se
   ve correctamente por encima, y el contador de comidas elegidas se
   actualiza tanto en el modal como en la tarjeta de entrada al cerrar.
+- **2026-09-11**: tres pedidos sobre el Planificador de la semana con
+  la captura de "Desayuno · Lunes" mostrando recetas de almuerzo/cena.
+  1. **Bug real**: `Recipe` no tenía ningún dato de para qué comida
+     serv­ía, así que el selector mostraba el catálogo completo sin
+     importar si elegías Desayuno o Cena. Se agregó `meals: MealKey[]`
+     a cada receta en `lib/recipes.ts` (las 8 recetas viejas quedaron
+     como `["alm","cen"]`, ninguna era apta para desayuno) y se sumaron
+     4 recetas nuevas de desayuno/merienda con ingredientes reales
+     ("Tostadas con huevo y palta", "Avena con banana y miel", "Yogur
+     con granola y frutos rojos", "Panqueques de avena y banana"). El
+     mismo filtro se aplicó también en `RecipePlanner.tsx` (tenía el
+     mismo bug de fondo, aunque no se había reportado ahí todavía).
+  2. El selector ahora también muestra "tu memoria" — las comidas
+     personales guardadas (`useMealMemory`, ya tagueadas por comida
+     desde el fix anterior) para ese segmento del día, no solo el
+     catálogo fijo. Como esas no tienen ingredientes estructurados, se
+     aclara que no suman a la lista de compras (y el mensaje de la
+     lista de compras distingue ese caso de "ya tenés todo cubierto").
+  3. Tope de 6 sugerencias en el selector (hasta 4 de memoria personal
+     + catálogo hasta completar 6), mismo criterio que ya usa
+     `AiEntryForm`.
+  4. Cada día de la grilla ahora se auto-colapsa a un resumen de una
+     línea ("Lunes 14 Sep · ✓") apenas se completan las 4 comidas, para
+     poder seguir cargando los días siguientes sin scrollear entre
+     casilleros ya llenos. Sigue siendo clickeable para volver a
+     abrirlo y revisar/cambiar una elección.
+  De paso se corrigió una inconsistencia que salió al probar esto: el
+  contador "N comidas" del encabezado solo contaba las comidas con
+  receta de catálogo (`selectedRecipes.length`), mientras que la
+  tarjeta de entrada de `page.tsx` contaba TODOS los casilleros
+  llenos (`countPlannedMeals`) — mostraban números distintos para el
+  mismo plan. Ahora ambos usan `countPlannedMeals`, y el contador
+  "solo catálogo" quedó reservado para decidir qué mensaje mostrar en
+  la lista de compras. Probado con Playwright: desayuno con 5 comidas
+  de memoria + 2 recetas de catálogo mostró exactamente 4 de memoria +
+  2 de catálogo (6 total), sin nada de cena ni recetas de
+  almuerzo/cena mezcladas; al completar las 4 comidas del lunes la fila
+  se colapsó a "✓" y el contador general pasó a "4 comidas" en ambos
+  lugares.
