@@ -14,6 +14,7 @@ import { GoalCalculator } from "@/components/GoalCalculator";
 import { AiEntryForm } from "@/components/AiEntryForm";
 import { RecipePlanner } from "@/components/RecipePlanner";
 import { WeekPlanner, countPlannedMeals } from "@/components/WeekPlanner";
+import { CommonMealsCard } from "@/components/CommonMealsCard";
 import { ShoppingLog } from "@/components/ShoppingLog";
 import { WeeklyWeight } from "@/components/WeeklyWeight";
 import { AuthPanel } from "@/components/AuthPanel";
@@ -253,10 +254,11 @@ export default function Home() {
             dailyGoal={settings.goal}
             consumedKcal={todayKcal}
           />
+          <CommonMealsCard />
           <button
             type="button"
             onClick={() => setPanel("planificador")}
-            className="flex w-full items-center justify-between gap-2 rounded-2xl border border-border bg-surface/70 p-3 text-left shadow-[0_0_0_1px_rgba(58,54,47,0.4)]"
+            className="mb-4 flex w-full items-center justify-between gap-2 rounded-2xl border border-border bg-surface/70 p-3 text-left shadow-[0_0_0_1px_rgba(58,54,47,0.4)]"
           >
             <div>
               <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Planificador</div>

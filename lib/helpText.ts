@@ -14,6 +14,7 @@ export const SECTION_HELP = {
   recetas: "Recetas armadas con lo que tenés en el inventario. Al usar una, se descuentan los ingredientes automáticamente y se suma directo a una comida de tu día.",
   macros: "Cómo se reparten tus kcal entre proteína, carbohidratos y grasas, hoy y durante la semana. El objetivo de proteína es por tu peso; lo que sobra del objetivo de kcal se reparte 50/50 entre carbohidratos y grasas.",
   planificador: "Elegí una receta del catálogo para cada comida de la semana que viene. Con lo que vayas eligiendo se arma sola la lista de lo que te falta comprar, comparando contra tu inventario actual.",
+  comidasComunes: "Las comidas que más repetís, agrupadas por desayuno/almuerzo/merienda/cena, con un punto de color según su densidad de proteína (mismo criterio que usa el Ranking para clasificar comidas) — para que notes de un vistazo si lo que repetís tiende a ser bueno o mejorable.",
   actividad: "Pasos, entrenamientos y sueño con más detalle: cuánto te moviste, cuánto quemaste entrenando y cuánto dormiste, día por día de la semana.",
 } as const;
 

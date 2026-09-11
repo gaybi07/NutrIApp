@@ -606,3 +606,24 @@ algo puntual.
   cada casillero para ver qué sueles comer. Si todavía no hay nada
   guardado para un segmento, muestra un aviso en vez de dejarlo vacío
   sin explicación.
+- **2026-09-11**: "Comidas más comunes" pasó a ser su propia sección
+  (`components/CommonMealsCard.tsx`, Collapsible nuevo entre "Planner
+  de cocina" y el botón del Planificador) en vez de vivir adentro del
+  modal del Planificador — pedido del usuario para verla separada. De
+  paso se le agregó lo que pidió después: cada comida ahora muestra un
+  punto de color según su densidad de proteína (`proteinDensity` +
+  `proteinQualityTier` de `lib/calculations.ts`, el MISMO criterio y
+  paleta que ya usa `RankingCard` para clasificar comidas — sage/bueno,
+  gold/medio, rust/a mejorar — así no hay dos escalas de color distintas
+  en la app para lo mismo), con una leyenda arriba explicando los
+  umbrales. Probado con tres comidas de densidad claramente distinta
+  (alta/media/baja proteína por caloría): cada una salió con el color
+  esperado.
+
+## Pendiente (pedido, no implementado todavía)
+
+- Sección de Entrenamientos con desglose de series/ejercicios y
+  planificación de rutina, para hacer seguimiento del ejercicio de
+  forma similar a como el Planificador de la semana hace con las
+  comidas. Pedido el 2026-09-11, explícitamente "para después" — no
+  arrancar sin que el usuario lo pida de nuevo.

@@ -196,34 +196,6 @@ export function WeekPlanner({
         ))}
       </div>
 
-      <div className="mt-3 rounded-xl border border-border bg-surface p-3">
-        <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.15em] text-gold">Tus comidas más comunes</div>
-        <div className="space-y-3">
-          {MEAL_KEYS.map((meal) => {
-            const entries = mealMemory.filter((h) => h.meal === meal && h.kcal > 0).slice(0, 5);
-            return (
-              <div key={meal}>
-                <div className="mb-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">{MEAL_LABELS[meal]}</div>
-                {entries.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    {entries.map((entry) => (
-                      <span
-                        key={entry.text}
-                        className="rounded-full border border-border bg-bg/60 px-2.5 py-1 font-mono text-[10px] text-text"
-                      >
-                        {entry.text} <span className="text-textMuted">· {entry.kcal} kcal</span>
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-[11px] text-textMuted">Todavía no tenés comidas guardadas para {MEAL_LABELS[meal].toLowerCase()}.</div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
       <div className="mt-3 rounded-xl border border-gold/30 bg-gold/10 p-3">
         <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.15em] text-gold">Lista de compras de la semana</div>
         {totalPlannedCount === 0 ? (
