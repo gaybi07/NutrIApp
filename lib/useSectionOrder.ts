@@ -12,9 +12,11 @@ import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
  */
 export function useSectionOrder<T extends string>(order: T[], onReorder: (next: T[]) => void) {
   const sensors = useSensors(
-    // El delay hace que haga falta mantener apretado un rato (no un toque
-    // normal, ni el scroll de la página) antes de que arranque el arrastre.
-    useSensor(PointerSensor, { activationConstraint: { delay: 300, tolerance: 8 } }),
+    // El arrastre solo se agarra desde la "manito" de SortableSection, así
+    // que no hace falta un delay largo para distinguirlo de un toque normal
+    // en el resto del bloque — un delay corto alcanza para que no se dispare
+    // por vibración/temblor de la mano al apoyar el dedo.
+    useSensor(PointerSensor, { activationConstraint: { delay: 150, tolerance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 

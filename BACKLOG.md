@@ -1391,3 +1391,38 @@ algo puntual.
   antes de personalizar nada): las 4 solapas se ven completas de
   nuevo, sin errores de consola. `npx tsc --noEmit` y `npm run build`
   limpios.
+- **2026-09-12**: se volvió a pedir un cambio en cómo se arrastra —
+  mantener apretado en cualquier parte del bloque resultaba confuso
+  ("no me deja / si me deja moverlo"), y directamente se pidió una
+  "manito" chica: tocarla la pone gris y ahí sí se puede arrastrar,
+  igual con clic en la compu.
+  - `components/SortableSection.tsx`: vuelve un botón dedicado (✋) en
+    la esquina superior derecha de cada bloque — ahora `{...attributes}
+    {...listeners}` de dnd-kit se aplican solo a ese botón, no a todo
+    el bloque. Se pone gris al toque/clic (`active:bg-border/80`, la
+    clase `active:` de Tailwind cubre mouse y touch) y queda marcada
+    con un borde de color mientras se arrastra de verdad
+    (`isDragging`). El botón tiene `touch-none` (`touch-action: none`)
+    para que arrastrarlo no dispare el scroll de la página — algo que
+    sí importaba evitar en el diseño anterior (todo el bloque
+    arrastrable) pero que en un botón chico y aislado no tiene ese
+    riesgo.
+  - `lib/useSectionOrder.ts`: como ahora el arrastre solo se agarra
+    desde la manito (no hay ambigüedad con tocar botones/inputs de
+    adentro), se acortó el `activationConstraint` de `{delay: 300,
+    tolerance: 8}` a `{delay: 150, tolerance: 6}` para que se sienta
+    más responsive.
+  También se reportó que con el cambio anterior no se veía nada en
+  los temas Claro y Neón (solo funcionaba en Oscuro) — no se pudo
+  reproducir ese síntoma en ninguna de las 4 solapas probando con
+  datos representativos en los 3 temas (capturas idénticas en
+  estructura, con los colores correctos de cada tema); es probable
+  que haya sido el deploy anterior todavía propagándose en el momento
+  de la prueba. Si vuelve a pasar, hace falta un screenshot del
+  momento exacto para poder reproducirlo.
+  Probado con Playwright: la manito aparece en los 3 temas, un toque
+  normal en "+ Cargar comida" sigue abriendo el formulario sin
+  arrastrar nada, el scroll normal sigue funcionando, y arrastrar
+  desde la manito de "Hoy" hasta el fondo de Inicio reordena
+  correctamente a `["comidas","semana","hoy"]` — sin errores de
+  consola. `npx tsc --noEmit` y `npm run build` limpios.
