@@ -248,13 +248,16 @@ html[data-font-size="grande"] .text-\[15px\] { font-size: 19px; }
   border-color: rgb(var(--color-border)) !important;
 }
 
-/* Gráfico semanal (Indicadores): las barras por comida y la línea de
-   Gasto también prenden en neón — el resto (Objetivo diario, déficit)
-   ya sigue el texto/acento del tema. Los mismos colores se aplican
-   tanto al `fill`/`stroke` del gráfico (atributo SVG, le gana cualquier
-   regla de CSS) como al `background-color` de los puntitos de la
-   leyenda de abajo (ahí sí hace falta !important porque es inline). */
-[data-theme="neon"] .chart-des { fill: #4fd8ff !important; background-color: #4fd8ff !important; }
-[data-theme="neon"] .chart-mer { fill: #ffe000 !important; background-color: #ffe000 !important; }
-[data-theme="neon"] .chart-cen { fill: #ff6b35 !important; background-color: #ff6b35 !important; }
-[data-theme="neon"] .chart-gasto { stroke: #4fd8ff !important; background-color: #4fd8ff !important; }
+/* Paleta de 4 colores neón reusada en TODOS los gráficos categóricos de
+   la app (Indicadores, Macros, Actividad) — antes cada solapa mantenía
+   sus colores apagados de siempre y solo Indicadores se veía neón; ahora
+   las 4 categorías que se repiten con el mismo color base en distintas
+   solapas (des/proteína/pasos = "a", merienda/entreno kcal = "b",
+   grasas/sueño = "c", cena/fibra/volumen = "d") prenden igual en
+   cualquier lado. Cubre `fill`/`stroke` (atributos SVG, ganan a
+   cualquier CSS sin necesitar !important) y `background-color` (para
+   los puntitos de leyenda, esos sí inline, por eso el !important). */
+[data-theme="neon"] .chart-neon-a { fill: #4fd8ff !important; stroke: #4fd8ff !important; background-color: #4fd8ff !important; }
+[data-theme="neon"] .chart-neon-b { fill: #ffe000 !important; stroke: #ffe000 !important; background-color: #ffe000 !important; }
+[data-theme="neon"] .chart-neon-c { fill: #c77dff !important; stroke: #c77dff !important; background-color: #c77dff !important; }
+[data-theme="neon"] .chart-neon-d { fill: #ff6b35 !important; stroke: #ff6b35 !important; background-color: #ff6b35 !important; }

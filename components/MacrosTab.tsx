@@ -13,7 +13,7 @@ const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 const COLORS = { protein: "#8A9A7C", carbs: "rgb(var(--color-accent))", fat: "#7C93A3", fiber: "#B5533C" };
 const FOOD_GROUPS_ORDER: FoodGroup[] = ["proteina_animal", "proteina_vegetal", "verdura", "fruta", "lacteo", "cereal", "grasa"];
 
-function MacroStat({ label, value, target, color }: { label: string; value: number; target: number; color: string }) {
+function MacroStat({ label, value, target, color, neonClass }: { label: string; value: number; target: number; color: string; neonClass?: string }) {
   const pct = target > 0 ? Math.min(100, Math.round((value / target) * 100)) : 0;
   return (
     <div>
@@ -22,7 +22,7 @@ function MacroStat({ label, value, target, color }: { label: string; value: numb
         {value}g <span className="font-mono text-[10px] text-textMuted">/ {target}g</span>
       </div>
       <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full border border-border bg-bg/60">
-        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
+        <div className={`h-full rounded-full transition-all ${neonClass || ""}`} style={{ width: `${pct}%`, background: color }} />
       </div>
     </div>
   );
@@ -59,9 +59,9 @@ export function MacrosTab({
   const fiber = dayFiber(entry);
 
   const pieData = [
-    { name: "Proteína", value: protein * 4, color: COLORS.protein },
-    { name: "Carbohidratos", value: carbs * 4, color: COLORS.carbs },
-    { name: "Grasas", value: fat * 9, color: COLORS.fat },
+    { name: "Proteína", value: protein * 4, color: COLORS.protein, neonClass: "chart-neon-a" },
+    { name: "Carbohidratos", value: carbs * 4, color: COLORS.carbs, neonClass: "" },
+    { name: "Grasas", value: fat * 9, color: COLORS.fat, neonClass: "chart-neon-c" },
   ].filter((slice) => slice.value > 0);
 
   const weekMacroData = weekDates.map((fecha, i) => {
@@ -104,10 +104,10 @@ export function MacrosTab({
           <InfoHint text={SECTION_HELP.macros} label="Qué es la sección Macros" />
         </div>
         <div className="mb-3 grid grid-cols-2 gap-3">
-          <MacroStat label="Proteína" value={protein} target={targets.proteinG} color={COLORS.protein} />
+          <MacroStat label="Proteína" value={protein} target={targets.proteinG} color={COLORS.protein} neonClass="chart-neon-a" />
           <MacroStat label="Carbohidratos" value={carbs} target={targets.carbsG} color={COLORS.carbs} />
-          <MacroStat label="Grasas" value={fat} target={targets.fatG} color={COLORS.fat} />
-          <MacroStat label="Fibra" value={fiber} target={targets.fiberG} color={COLORS.fiber} />
+          <MacroStat label="Grasas" value={fat} target={targets.fatG} color={COLORS.fat} neonClass="chart-neon-c" />
+          <MacroStat label="Fibra" value={fiber} target={targets.fiberG} color={COLORS.fiber} neonClass="chart-neon-d" />
         </div>
         <div className="mb-3 font-mono text-[11px] text-textMuted">
           {consumedKcal.toLocaleString("es-AR")} de {goal.toLocaleString("es-AR")} kcal hoy
@@ -130,7 +130,7 @@ export function MacrosTab({
             <PieChart>
               <Pie data={pieData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={70} paddingAngle={2} isAnimationActive={false}>
                 {pieData.map((slice) => (
-                  <Cell key={slice.name} fill={slice.color} stroke="none" />
+                  <Cell key={slice.name} fill={slice.color} stroke="none" className={slice.neonClass} />
                 ))}
               </Pie>
               <Tooltip
@@ -146,9 +146,9 @@ export function MacrosTab({
           </div>
         )}
         <div className="mt-2 flex flex-wrap justify-center gap-3 font-mono text-[9px] text-textMuted">
-          <span className="flex items-center gap-1"><i className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.protein }} />Proteína</span>
+          <span className="flex items-center gap-1"><i className="chart-neon-a inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.protein }} />Proteína</span>
           <span className="flex items-center gap-1"><i className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.carbs }} />Carbohidratos</span>
-          <span className="flex items-center gap-1"><i className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.fat }} />Grasas</span>
+          <span className="flex items-center gap-1"><i className="chart-neon-c inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.fat }} />Grasas</span>
         </div>
       </div>
 
@@ -163,15 +163,15 @@ export function MacrosTab({
             <YAxis tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} />
             <Tooltip contentStyle={{ background: "rgb(var(--color-surface))", border: "1px solid rgb(var(--color-border))", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "rgb(var(--color-text))" }} cursor={{ fill: "rgb(var(--color-accent) / 0.10)" }} />
             <ReferenceLine y={goal} stroke="rgb(var(--color-accent))" strokeDasharray="4 4" label={{ value: `objetivo ${goal}`, fill: "rgb(var(--color-accent))", fontSize: 9, position: "right" }} />
-            <Bar dataKey="protein" stackId="a" fill={COLORS.protein} />
+            <Bar dataKey="protein" stackId="a" fill={COLORS.protein} className="chart-neon-a" />
             <Bar dataKey="carbs" stackId="a" fill={COLORS.carbs} />
-            <Bar dataKey="fat" stackId="a" fill={COLORS.fat} radius={[3, 3, 0, 0]} />
+            <Bar dataKey="fat" stackId="a" fill={COLORS.fat} radius={[3, 3, 0, 0]} className="chart-neon-c" />
           </BarChart>
         </ResponsiveContainer>
         <div className="mt-2 flex flex-wrap gap-3 font-mono text-[9px] text-textMuted">
-          <span className="flex items-center gap-1"><i className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.protein }} />Proteína</span>
+          <span className="flex items-center gap-1"><i className="chart-neon-a inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.protein }} />Proteína</span>
           <span className="flex items-center gap-1"><i className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.carbs }} />Carbohidratos</span>
-          <span className="flex items-center gap-1"><i className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.fat }} />Grasas</span>
+          <span className="flex items-center gap-1"><i className="chart-neon-c inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.fat }} />Grasas</span>
         </div>
       </div>
 
@@ -182,8 +182,8 @@ export function MacrosTab({
             <XAxis dataKey="dow" tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "rgb(var(--color-border))" }} tickLine={false} />
             <YAxis tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} />
             <Tooltip contentStyle={{ background: "rgb(var(--color-surface))", border: "1px solid rgb(var(--color-border))", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "rgb(var(--color-text))" }} cursor={{ fill: "rgb(var(--color-accent) / 0.10)" }} />
-            <ReferenceLine y={proteinTarget} stroke="#8A9A7C" strokeDasharray="4 4" label={{ value: `obj. ${proteinTarget}g`, fill: "#8A9A7C", fontSize: 9, position: "right" }} />
-            <Bar dataKey="protein" fill={COLORS.protein} radius={[3, 3, 0, 0]} />
+            <ReferenceLine y={proteinTarget} stroke="#8A9A7C" strokeDasharray="4 4" label={{ value: `obj. ${proteinTarget}g`, fill: "#8A9A7C", fontSize: 9, position: "right" }} className="chart-neon-a" />
+            <Bar dataKey="protein" fill={COLORS.protein} radius={[3, 3, 0, 0]} className="chart-neon-a" />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -195,8 +195,8 @@ export function MacrosTab({
             <XAxis dataKey="dow" tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "rgb(var(--color-border))" }} tickLine={false} />
             <YAxis tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} />
             <Tooltip contentStyle={{ background: "rgb(var(--color-surface))", border: "1px solid rgb(var(--color-border))", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "rgb(var(--color-text))" }} cursor={{ fill: "rgb(var(--color-accent) / 0.10)" }} />
-            <ReferenceLine y={targets.fiberG} stroke={COLORS.fiber} strokeDasharray="4 4" label={{ value: `obj. ${targets.fiberG}g`, fill: COLORS.fiber, fontSize: 9, position: "right" }} />
-            <Bar dataKey="fiber" fill={COLORS.fiber} radius={[3, 3, 0, 0]} />
+            <ReferenceLine y={targets.fiberG} stroke={COLORS.fiber} strokeDasharray="4 4" label={{ value: `obj. ${targets.fiberG}g`, fill: COLORS.fiber, fontSize: 9, position: "right" }} className="chart-neon-d" />
+            <Bar dataKey="fiber" fill={COLORS.fiber} radius={[3, 3, 0, 0]} className="chart-neon-d" />
           </BarChart>
         </ResponsiveContainer>
       </div>

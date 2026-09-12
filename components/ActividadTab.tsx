@@ -28,6 +28,7 @@ function WeekBarChart({
   unit,
   referenceValue,
   referenceLabel,
+  neonClass,
 }: {
   title: string;
   data: { dow: string; value: number }[];
@@ -35,6 +36,7 @@ function WeekBarChart({
   unit: string;
   referenceValue?: number;
   referenceLabel?: string;
+  neonClass?: string;
 }) {
   return (
     <div className="mb-4 rounded-xl border border-border bg-surface p-4">
@@ -55,9 +57,10 @@ function WeekBarChart({
               stroke={color}
               strokeDasharray="4 4"
               label={{ value: referenceLabel, fill: color, fontSize: 9, position: "right" }}
+              className={neonClass}
             />
           )}
-          <Bar dataKey="value" fill={color} radius={[3, 3, 0, 0]} />
+          <Bar dataKey="value" fill={color} radius={[3, 3, 0, 0]} className={neonClass} />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -147,8 +150,8 @@ export function ActividadTab({
 
       <DailySteps weekDates={weekDates} weekDays={weekDays} onUpsert={onUpsert} />
 
-      <WeekBarChart title="Pasos de la semana" data={stepsData} color={STEPS_COLOR} unit="pasos" />
-      <WeekBarChart title="Calorías quemadas entrenando" data={trainingData} color={TRAINING_COLOR} unit="kcal" />
+      <WeekBarChart title="Pasos de la semana" data={stepsData} color={STEPS_COLOR} unit="pasos" neonClass="chart-neon-a" />
+      <WeekBarChart title="Calorías quemadas entrenando" data={trainingData} color={TRAINING_COLOR} unit="kcal" neonClass="chart-neon-b" />
       <WeekBarChart
         title="Sueño de la semana"
         data={sleepData}
@@ -156,8 +159,9 @@ export function ActividadTab({
         unit="hs"
         referenceValue={SLEEP_TARGET_HOURS}
         referenceLabel={`recomendado ${SLEEP_TARGET_HOURS}h`}
+        neonClass="chart-neon-c"
       />
-      <WeekBarChart title="Volumen entrenado (series × reps × peso)" data={volumeData} color={VOLUME_COLOR} unit="kg" />
+      <WeekBarChart title="Volumen entrenado (series × reps × peso)" data={volumeData} color={VOLUME_COLOR} unit="kg" neonClass="chart-neon-d" />
 
       <RoutineManager routines={routines} schedule={schedule} onSaveRoutines={onSaveRoutines} onSaveSchedule={onSaveSchedule} />
     </div>

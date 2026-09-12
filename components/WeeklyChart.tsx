@@ -113,21 +113,21 @@ export function WeeklyChart({
             domain={yDomain}
           />
           <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgb(var(--color-accent) / 0.10)" }} />
-          <Bar dataKey="des" name="Desayuno" stackId="a" fill={COLORS.des} className="chart-des" />
+          <Bar dataKey="des" name="Desayuno" stackId="a" fill={COLORS.des} className="chart-neon-a" />
           <Bar dataKey="alm" name="Almuerzo" stackId="a" fill={COLORS.alm} />
-          <Bar dataKey="mer" name="Merienda" stackId="a" fill={COLORS.mer} className="chart-mer" />
-          <Bar dataKey="cen" name="Cena" stackId="a" fill={COLORS.cen} radius={[3, 3, 0, 0]} className="chart-cen" />
+          <Bar dataKey="mer" name="Merienda" stackId="a" fill={COLORS.mer} className="chart-neon-b" />
+          <Bar dataKey="cen" name="Cena" stackId="a" fill={COLORS.cen} radius={[3, 3, 0, 0]} className="chart-neon-d" />
           <Line type="monotone" dataKey="goal" name="Objetivo diario" stroke="rgb(var(--color-text))" strokeWidth={2} dot={{ r: 2.5, fill: "rgb(var(--color-text))" }} strokeDasharray="4 3" />
-          <Line type="monotone" dataKey="gasto" name="Gasto" stroke="#5FA8D3" strokeWidth={2} dot={{ r: 2.5, fill: "#5FA8D3" }} className="chart-gasto" />
+          <Line type="monotone" dataKey="gasto" name="Gasto" stroke="#5FA8D3" strokeWidth={2} dot={{ r: 2.5, fill: "#5FA8D3" }} className="chart-neon-c" />
         </ComposedChart>
       </ResponsiveContainer>
       <div className="flex gap-3 flex-wrap mt-2 font-mono text-[9px] text-textMuted">
-        <span className="flex items-center gap-1"><i className="chart-des w-[7px] h-[7px] rounded-full inline-block" style={{ background: COLORS.des }} />Desayuno</span>
+        <span className="flex items-center gap-1"><i className="chart-neon-a w-[7px] h-[7px] rounded-full inline-block" style={{ background: COLORS.des }} />Desayuno</span>
         <span className="flex items-center gap-1"><i className="w-[7px] h-[7px] rounded-full inline-block" style={{ background: COLORS.alm }} />Almuerzo</span>
-        <span className="flex items-center gap-1"><i className="chart-mer w-[7px] h-[7px] rounded-full inline-block" style={{ background: COLORS.mer }} />Merienda</span>
-        <span className="flex items-center gap-1"><i className="chart-cen w-[7px] h-[7px] rounded-full inline-block" style={{ background: COLORS.cen }} />Cena</span>
+        <span className="flex items-center gap-1"><i className="chart-neon-b w-[7px] h-[7px] rounded-full inline-block" style={{ background: COLORS.mer }} />Merienda</span>
+        <span className="flex items-center gap-1"><i className="chart-neon-d w-[7px] h-[7px] rounded-full inline-block" style={{ background: COLORS.cen }} />Cena</span>
         <span className="flex items-center gap-1"><i className="w-[10px] h-[2px] inline-block" style={{ background: "rgb(var(--color-text))" }} />Objetivo diario</span>
-        <span className="flex items-center gap-1"><i className="chart-gasto w-[10px] h-[2px] inline-block" style={{ background: "#5FA8D3" }} />Gasto</span>
+        <span className="flex items-center gap-1"><i className="chart-neon-c w-[10px] h-[2px] inline-block" style={{ background: "#5FA8D3" }} />Gasto</span>
       </div>
     </div>
   );

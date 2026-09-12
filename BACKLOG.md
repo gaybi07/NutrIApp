@@ -1196,3 +1196,39 @@ algo puntual.
   824, proteína a 76g, grasa a 56g (exactamente el doble), y la
   tarjeta "Hoy" se actualiza sola mostrando esos mismos valores, sin
   errores de consola. `npm run build` limpio.
+- **2026-09-12**: dos pedidos más del usuario, con capturas de la app
+  real en el celular.
+  1. **Colores neón distintos entre solapas**: el usuario notó que
+     Indicadores (gráfico semanal) ya se veía bien neón, pero Macros y
+     Entrenamientos seguían con los colores apagados de siempre —
+     pidió que sean los mismos colores en todas las solapas. Causa:
+     solo se había agregado el override neón a `WeeklyChart.tsx`, no a
+     `MacrosTab.tsx` ni `ActividadTab.tsx`. Se generalizaron las 3
+     clases sueltas (`chart-des/chart-mer/chart-cen`) a una paleta de 4
+     clases reusables en `globals.css` (`chart-neon-a` celeste,
+     `chart-neon-b` amarillo, `chart-neon-c` violeta, `chart-neon-d`
+     naranja, cada una cubriendo `fill`/`stroke`/`background-color` a
+     la vez) y se aplicaron en los 3 lugares que ya compartían el
+     mismo color base de siempre (des/proteína/pasos = mismo verde
+     apagado → ahora los 3 celeste; merienda/kcal quemadas = mismo
+     dorado → ahora los 2 amarillo; grasas/sueño = mismo gris-azulado →
+     ahora los 2 violeta; cena/fibra/volumen = mismo terracota → ahora
+     los 3 naranja). `WeekBarChart` (el componente compartido de
+     Actividad) suma un prop `neonClass` para esto.
+  2. **El campo de gramos aparecía vacío en comidas ya cargadas**: el
+     usuario mandó una captura mostrando "—" en el campo de gramos de
+     comidas que había cargado antes de que existiera ese campo (o que
+     la IA no llegó a estimar). Pidió que se rellene solo, "que se
+     actualice lo anterior" o "que lo calcule con las kcal". Se agregó
+     un efecto en `TodayMealsBreakdown.tsx` que, al detectar un item
+     sin `gramos` pero con `kcal > 0`, lo completa automáticamente con
+     una estimación (`kcal ÷ 4`, un promedio razonable de kcal por
+     gramo para una comida mixta) y lo guarda — a partir de ahí ya
+     queda como un valor real, editable y con el recálculo proporcional
+     de siempre.
+  Probado con Playwright: en Neón, Macros muestra Proteína/Carbohidratos/
+  Grasas/Fibra en celeste/verde/violeta/naranja (antes apagados) y
+  Entrenamientos muestra Pasos/Kcal quemadas/Sueño/Volumen con la misma
+  paleta — coherente con Indicadores. Un item cargado sin `gramos`
+  (400 kcal) aparece solo con "100" en el campo de gramos apenas se
+  abre la app, sin errores de consola. `npm run build` limpio.
