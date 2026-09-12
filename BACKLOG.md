@@ -1254,3 +1254,25 @@ algo puntual.
   orden pedido, y cada uno abre el panel correcto (Tema, Tamaño de
   letra, Solapas, Herramientas), sin errores de consola. `npm run
   build` limpio.
+- **2026-09-12**: el usuario notó que la Tabla de la semana ya no
+  estaba en Inicio (la había movido él mismo a Macros en la
+  reorganización de hace unas semanas) y pidió tenerla en los dos
+  lados, pero con contenido distinto en cada uno: en Inicio/Semana que
+  muestre kcal, pasos, entrenamiento y su duración (sin proteína), y
+  en Macros que sea solo información nutricional (kcal, proteína,
+  déficit — sin pasos ni entrenamiento).
+  - `Ledger.tsx` suma un prop `variant: "nutricion" | "actividad"` que
+    cambia las columnas: `"nutricion"` (usado en `MacrosTab.tsx`) → Día/
+    Kcal/Prot./Déficit; `"actividad"` (default, usado en `page.tsx`,
+    Inicio) → Día/Kcal/Pasos/Entr.(círculo, tocar para editar)/Min.
+    (duración, antes solo visible al abrir el modal — ahora se ve
+    directo en la tabla). El modal de elegir intensidad+duración solo
+    existe en la variante "actividad".
+  - Los títulos también cambian: "Tabla de la semana" en Inicio,
+    "Tabla nutricional de la semana" en Macros — con su propio texto
+    de ayuda (`SECTION_HELP.tablaNutricion`, nuevo).
+  Probado con Playwright: la tabla en Inicio muestra Día/Kcal/Pasos/
+  Entr./Min. (con "45'" para el entrenamiento moderado cargado), sin
+  Prot. ni Déficit; la de Macros ("Tabla nutricional de la semana")
+  muestra Día/Kcal/Prot./Déficit, sin Entr. ni Pasos — sin errores de
+  consola. `npm run build` limpio.

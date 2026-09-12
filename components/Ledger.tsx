@@ -12,18 +12,25 @@ import { clampNumber, countDigits, MAX_MINUTES_DIGITS } from "@/lib/inputLimits"
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
+/** "nutricion" (Macros): kcal/proteína/déficit, sin nada de entreno.
+ * "actividad" (Inicio/Semana): kcal, pasos, entrenamiento y su duración,
+ * sin proteína — cada vista muestra solo lo que le corresponde. */
+type LedgerVariant = "nutricion" | "actividad";
+
 export function Ledger({
   weekDates,
   weekDays,
   goal,
   tdeeFallback,
   onUpsert,
+  variant = "actividad",
 }: {
   weekDates: string[];
   weekDays: (DayEntry | null)[];
   goal: number;
   tdeeFallback: number;
   onUpsert: (entry: DayEntry) => void;
+  variant?: LedgerVariant;
 }) {
   const anyData = weekDays.some((d) => d);
   const [activeDate, setActiveDate] = useState<string | null>(null);
@@ -52,11 +59,24 @@ export function Ledger({
     setActiveDate(null);
   };
 
+  const isNutricion = variant === "nutricion";
+  const gridCols = isNutricion ? "grid-cols-[1.2fr_0.9fr_0.8fr_0.9fr]" : "grid-cols-[1.1fr_0.8fr_0.75fr_0.7fr_0.65fr]";
+  const title = isNutricion ? "Tabla nutricional de la semana" : "Tabla de la semana";
+  const info = isNutricion ? SECTION_HELP.tablaNutricion : SECTION_HELP.tabla;
+
   return (
-    <Collapsible eyebrow="Detalle diario" title="Tabla de la semana" info={SECTION_HELP.tabla}>
+    <Collapsible eyebrow="Detalle diario" title={title} info={info}>
     <div className="bg-surface border border-border rounded-xl overflow-hidden">
-      <div className="grid grid-cols-[1.1fr_0.85fr_0.75fr_0.85fr_0.8fr_0.6fr] px-3 py-2 font-mono text-[8.5px] uppercase tracking-wide text-textMuted border-b border-border">
-        <span>Día</span><span>Kcal</span><span>Prot.</span><span>Déficit</span><span>Pasos</span><span>Entr.</span>
+      <div className={`grid ${gridCols} px-3 py-2 font-mono text-[8.5px] uppercase tracking-wide text-textMuted border-b border-border`}>
+        {isNutricion ? (
+          <>
+            <span>Día</span><span>Kcal</span><span>Prot.</span><span>Déficit</span>
+          </>
+        ) : (
+          <>
+            <span>Día</span><span>Kcal</span><span>Pasos</span><span>Entr.</span><span>Min.</span>
+          </>
+        )}
       </div>
       {!anyData && <div className="p-6 text-center text-textMuted text-sm">Sin datos esta semana.</div>}
       {anyData &&
@@ -74,27 +94,35 @@ export function Ledger({
           return (
             <div
               key={fecha}
-              className={`grid grid-cols-[1.1fr_0.85fr_0.75fr_0.85fr_0.8fr_0.6fr] px-3 py-3 items-center border-b border-dashed border-border last:border-0 font-mono text-[11.5px] ${d?.entreno ? "bg-gold/[0.07]" : ""}`}
+              className={`grid ${gridCols} px-3 py-3 items-center border-b border-dashed border-border last:border-0 font-mono text-[11.5px] ${d?.entreno ? "bg-gold/[0.07]" : ""}`}
             >
               <span className="font-sans font-medium text-[12px]">
                 {dateObj.getDate()} {MONTHS[dateObj.getMonth()]}
                 <span className="block font-mono text-[9px] text-textMuted uppercase">{DOW[dateObj.getDay()]}</span>
               </span>
               <span className={overClass}>{total !== null ? total.toLocaleString("es-AR") : "—"}</span>
-              <span>{prot !== null ? `${prot.toLocaleString("es-AR")}g` : "—"}</span>
-              <span className={deficitClass}>{deficit !== null ? `${deficit >= 0 ? "+" : ""}${deficit.toLocaleString("es-AR")}` : "—"}</span>
-              <span>{d?.pasos ? d.pasos.toLocaleString("es-AR") : "—"}</span>
-              <button
-                type="button"
-                aria-label={`Elegir intensidad del ${fecha}`}
-                onClick={() => openDay(fecha, d)}
-                className="flex min-w-0 items-center gap-1 text-left"
-              >
-                <span
-                  className="h-5 w-5 shrink-0 rounded-full border border-border/80 shadow-inner"
-                  style={{ backgroundColor: trainingStyle.background }}
-                />
-              </button>
+              {isNutricion ? (
+                <>
+                  <span>{prot !== null ? `${prot.toLocaleString("es-AR")}g` : "—"}</span>
+                  <span className={deficitClass}>{deficit !== null ? `${deficit >= 0 ? "+" : ""}${deficit.toLocaleString("es-AR")}` : "—"}</span>
+                </>
+              ) : (
+                <>
+                  <span>{d?.pasos ? d.pasos.toLocaleString("es-AR") : "—"}</span>
+                  <button
+                    type="button"
+                    aria-label={`Elegir intensidad del ${fecha}`}
+                    onClick={() => openDay(fecha, d)}
+                    className="flex min-w-0 items-center gap-1 text-left"
+                  >
+                    <span
+                      className="h-5 w-5 shrink-0 rounded-full border border-border/80 shadow-inner"
+                      style={{ backgroundColor: trainingStyle.background }}
+                    />
+                  </button>
+                  <span className="text-textMuted">{d?.entreno && d?.entrenoMinutos ? `${d.entrenoMinutos}′` : "—"}</span>
+                </>
+              )}
             </div>
           );
         })}

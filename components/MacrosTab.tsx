@@ -230,7 +230,7 @@ export function MacrosTab({
         </div>
       </div>
 
-      <Ledger weekDates={weekDates} weekDays={weekDays} goal={goal} tdeeFallback={tdeeFallback} onUpsert={onUpsert} />
+      <Ledger weekDates={weekDates} weekDays={weekDays} goal={goal} tdeeFallback={tdeeFallback} onUpsert={onUpsert} variant="nutricion" />
     </div>
   );
 }

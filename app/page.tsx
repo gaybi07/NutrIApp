@@ -8,6 +8,7 @@ import { MacrosTab } from "@/components/MacrosTab";
 import { ActividadTab } from "@/components/ActividadTab";
 import { SummaryCards } from "@/components/SummaryCards";
 import { WeeklyChart } from "@/components/WeeklyChart";
+import { Ledger } from "@/components/Ledger";
 import { GoalCalculator } from "@/components/GoalCalculator";
 import { AiEntryForm } from "@/components/AiEntryForm";
 import { WeekPlanner } from "@/components/WeekPlanner";
@@ -273,6 +274,15 @@ export default function Home() {
               goal={settings.goal}
               avgGoal={summary.avgGoal || settings.goal}
               avgGasto={settings.tdeeFallback}
+            />
+
+            <Ledger
+              weekDates={weekDates}
+              weekDays={weekDays}
+              goal={summary.avgGoal || settings.goal}
+              tdeeFallback={settings.tdeeFallback}
+              onUpsert={upsertDay}
+              variant="actividad"
             />
           </div>
         </div>
