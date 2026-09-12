@@ -1167,3 +1167,32 @@ algo puntual.
   + acumulación por `resultIndex`) es el fix estándar y documentado
   para este comportamiento de la Web Speech API. `npm run build`
   limpio.
+- **2026-09-12**: tres pedidos más del usuario.
+  1. **Color de Merienda en el gráfico semanal**: no le gustaba el
+     celeste/gris-azulado (`#7C93A3`, compartido con "Grasas" en
+     Macros y con el color de Sueño — esos otros dos usos no se
+     tocaron). Cambiado a amarillo/dorado (`#C9A227`) en
+     `WeeklyChart.tsx`, y a un amarillo neón (`#FFE000`, antes era
+     violeta) en el override del tema Neón.
+  2. **`MealItem` suma un campo `gramos`** (`lib/types.ts`) — el peso
+     aproximado de la porción de ese alimento. `/api/parse-meal` ahora
+     lo devuelve en cada item (antes solo lo mencionaba metido adentro
+     del nombre, ej. "Pollo (250 g)" — se revirtió eso, ahora el
+     nombre queda limpio y la cantidad vive en su propio campo
+     estructurado). `AiEntryForm.tsx` lo muestra en el preview
+     ("Pollo (250 g) · 412 kcal · 38g prot").
+  3. **Editar los gramos en "Editar comidas de hoy" recalcula todo
+     solo**: `TodayMealsBreakdown.tsx` ahora tiene un input de gramos
+     por alimento (junto al nombre, arriba de kcal/proteína). Al
+     cambiarlo, reescala kcal/proteína/carbohidratos/grasas/fibra en
+     la misma proporción (`nuevoValor = valorViejo × gramosNuevos /
+     gramosViejos`) en vez de dejar los números viejos desactualizados
+     — si todavía no había gramos cargados, la primera vez solo se
+     guarda el valor, sin reescalar (no hay desde qué proporción
+     partir).
+  Probado con Playwright: se carga "pollo" (250 g, 412 kcal, 38g
+  proteína, 28g grasa) y se guarda; después se edita el campo de
+  gramos de 250 a 500 directo en "Editar comidas de hoy" — kcal pasa a
+  824, proteína a 76g, grasa a 56g (exactamente el doble), y la
+  tarjeta "Hoy" se actualiza sola mostrando esos mismos valores, sin
+  errores de consola. `npm run build` limpio.

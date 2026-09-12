@@ -163,7 +163,7 @@ export function AiEntryForm({
           detalle: "",
           resumen: match.text,
           ingredientes: "",
-          items: [{ nombre: match.text, kcal: match.kcal, protein: match.protein, carbs: match.carbs, fat: match.fat, fiber: match.fiber }],
+          items: [{ nombre: match.text, kcal: match.kcal, protein: match.protein, carbs: match.carbs, fat: match.fat, fiber: match.fiber, gramos: undefined }],
         });
         setStatus(`Encontrado en tu memoria: "${match.text}" — revisá y guardá, o recalculá con IA si cambió algo ↓`);
         return;
@@ -188,8 +188,9 @@ export function AiEntryForm({
               carbs: i.carbs || 0,
               fat: i.fat || 0,
               fiber: i.fiber || 0,
+              gramos: i.gramos || undefined,
             }))
-          : [{ nombre: data.resumen || text.trim(), kcal: data.kcal, protein: data.protein, carbs: data.carbs || 0, fat: data.fat || 0, fiber: data.fiber || 0 }];
+          : [{ nombre: data.resumen || text.trim(), kcal: data.kcal, protein: data.protein, carbs: data.carbs || 0, fat: data.fat || 0, fiber: data.fiber || 0, gramos: undefined }];
       setPreview({
         kcal: data.kcal,
         protein: data.protein,
@@ -378,7 +379,10 @@ export function AiEntryForm({
                   key={i}
                   className="flex items-center justify-between gap-2 rounded-lg border border-border bg-bg/40 px-2.5 py-1.5 text-[11px]"
                 >
-                  <span className="text-text">{item.nombre}</span>
+                  <span className="text-text">
+                    {item.nombre}
+                    {item.gramos ? ` (${item.gramos} g)` : ""}
+                  </span>
                   <span className="shrink-0 text-textMuted">
                     {item.kcal} kcal · {item.protein}g prot
                   </span>

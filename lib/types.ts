@@ -67,6 +67,7 @@ export interface MealItem {
   carbs?: number;
   fat?: number;
   fiber?: number;
+  gramos?: number; // peso aproximado de la porción — al cambiarlo, se reescalan kcal/proteína/etc. en proporción
 }
 
 export interface DayEntry {

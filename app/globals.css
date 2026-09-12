@@ -255,6 +255,6 @@ html[data-font-size="grande"] .text-\[15px\] { font-size: 19px; }
    regla de CSS) como al `background-color` de los puntitos de la
    leyenda de abajo (ahí sí hace falta !important porque es inline). */
 [data-theme="neon"] .chart-des { fill: #4fd8ff !important; background-color: #4fd8ff !important; }
-[data-theme="neon"] .chart-mer { fill: #c77dff !important; background-color: #c77dff !important; }
+[data-theme="neon"] .chart-mer { fill: #ffe000 !important; background-color: #ffe000 !important; }
 [data-theme="neon"] .chart-cen { fill: #ff6b35 !important; background-color: #ff6b35 !important; }
 [data-theme="neon"] .chart-gasto { stroke: #4fd8ff !important; background-color: #4fd8ff !important; }

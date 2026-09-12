@@ -5,7 +5,7 @@ import { DayEntry, TrainingSession, INTENSITY_STYLES } from "@/lib/types";
 import { dayGoal, estimateGasto, dayDeficit, getTrainingSessions } from "@/lib/calculations";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
-const COLORS = { des: "#8A9A7C", alm: "rgb(var(--color-accent))", mer: "#7C93A3", cen: "#B5533C" };
+const COLORS = { des: "#8A9A7C", alm: "rgb(var(--color-accent))", mer: "#C9A227", cen: "#B5533C" };
 
 type ChartRow = {
   dow: string;
