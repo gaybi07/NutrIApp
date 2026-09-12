@@ -1479,3 +1479,40 @@ algo puntual.
   reordenamiento sigue funcionando y el scroll normal después de
   soltar sigue andando — sin errores de consola. `npx tsc --noEmit` y
   `npm run build` limpios.
+- **2026-09-12**: se pidió poder sacar "Indicadores" de adentro del
+  bloque "Semana del" en Inicio y ponerlo suelto donde uno quiera —
+  hasta ahora "Semana del" agrupaba el peso semanal, los indicadores
+  y la tabla nutricional como UN solo bloque arrastrable, sin forma
+  de moverlos por separado.
+  - `lib/types.ts`: `InicioBlockId` pasó de `"hoy" | "comidas" |
+    "semana"` a `"hoy" | "comidas" | "semanaNav" | "pesoSemana" |
+    "indicadores" | "tablaSemana"` — cada pieza que antes vivía junta
+    ahora es su propio bloque con su propia manito, arrastrable a
+    cualquier posición de Inicio (`semanaNav` es el encabezado con la
+    fecha y las flechas ‹ ›).
+  - `app/page.tsx`: separado el JSX de ese bloque único en 4 casos
+    del `.map()` sobre `inicioOrder`. Como `WeeklyWeight`,
+    `SummaryCards`/`Collapsible` (Indicadores) y `Ledger` ya traían
+    su propia tarjeta con borde, no hizo falta envolverlos de nuevo —
+    solo `semanaNav` (el encabezado suelto, sin tarjeta propia)
+    conservó el contenedor con borde que antes envolvía todo el
+    grupo.
+  - **Migración de datos ya guardados**: si alguien ya había
+    arrastrado algo con el "semana" viejo, su `inicioOrder` guardado
+    todavía dice `"semana"`, un id que ya no existe — con la lógica
+    vieja, eso hacía que los bloques nuevos (`pesoSemana`,
+    `indicadores`, `tablaSemana`) directamente no aparecieran nunca,
+    ni con el orden por default. Se reescribió `resolveOrder()` en
+    `lib/types.ts` para reconciliar en vez de solo elegir entre "el
+    guardado" o "el default": descarta ids que ya no existen y agrega
+    al final los ids nuevos que el usuario todavía no personalizó —
+    esto también deja el terreno preparado para el próximo cambio de
+    bloques sin repetir este mismo problema.
+  Probado con Playwright: aparecen las 6 manitos en Inicio con el
+  orden de siempre: Hoy, Editar comidas, Semana del, Peso de esta
+  semana, Indicadores, Tabla de la semana. Simulando un `inicioOrder`
+  guardado con el "semana" viejo (`["comidas","semana","hoy"]`), los
+  6 bloques igual aparecen completos (reconciliados). Arrastrando la
+  manito de "Indicadores" hasta arriba de todo, queda primero en la
+  pantalla y el orden nuevo persiste — sin errores de consola. `npx
+  tsc --noEmit` y `npm run build` limpios.

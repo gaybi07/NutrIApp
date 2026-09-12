@@ -246,7 +246,7 @@ export default function Home() {
                     />
                   )}
                   {blockId === "comidas" && <TodayMealsBreakdown entry={todayEntry} onUpsert={upsertDay} />}
-                  {blockId === "semana" && (
+                  {blockId === "semanaNav" && (
                     <div className="mb-4 rounded-2xl border border-border/80 bg-surface/70 px-3 py-2.5 shadow-[0_0_0_1px_rgba(58,54,47,0.4)]">
                       <div className="mb-1.5 flex items-center font-mono text-[10px] uppercase tracking-[0.22em] text-gold">
                         Semana del
@@ -274,14 +274,18 @@ export default function Home() {
                       <div className="mt-2 mb-3 font-mono text-[11px] tracking-[0.12em] uppercase text-textMuted">
                         {monday.getDate()} {MONTHS[monday.getMonth()]} — {sunday.getDate()} {MONTHS[sunday.getMonth()]}
                       </div>
-
-                      <WeeklyWeight
-                        weekKey={fmtDate(monday)}
-                        weights={settings.weeklyWeights || {}}
-                        goalMode={settings.calculatorProfile?.modo}
-                        onSave={saveWeeklyWeight}
-                      />
-
+                    </div>
+                  )}
+                  {blockId === "pesoSemana" && (
+                    <WeeklyWeight
+                      weekKey={fmtDate(monday)}
+                      weights={settings.weeklyWeights || {}}
+                      goalMode={settings.calculatorProfile?.modo}
+                      onSave={saveWeeklyWeight}
+                    />
+                  )}
+                  {blockId === "indicadores" && (
+                    <>
                       <SummaryCards summary={summary} goal={summary.avgGoal || settings.goal} weight={settings.weeklyWeights?.[fmtDate(monday)]} />
 
                       <WeeklyChart
@@ -291,16 +295,17 @@ export default function Home() {
                         avgGoal={summary.avgGoal || settings.goal}
                         avgGasto={settings.tdeeFallback}
                       />
-
-                      <Ledger
-                        weekDates={weekDates}
-                        weekDays={weekDays}
-                        goal={summary.avgGoal || settings.goal}
-                        tdeeFallback={settings.tdeeFallback}
-                        onUpsert={upsertDay}
-                        variant="actividad"
-                      />
-                    </div>
+                    </>
+                  )}
+                  {blockId === "tablaSemana" && (
+                    <Ledger
+                      weekDates={weekDates}
+                      weekDays={weekDays}
+                      goal={summary.avgGoal || settings.goal}
+                      tdeeFallback={settings.tdeeFallback}
+                      onUpsert={upsertDay}
+                      variant="actividad"
+                    />
                   )}
                 </SortableSection>
               ))}

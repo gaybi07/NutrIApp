@@ -129,8 +129,10 @@ export const FONT_SIZE_OPTIONS: { value: FontSize; label: string; description: s
  * arrastrándolos (mantener apretado en cualquier parte del bloque, como
  * mover íconos en la pantalla de inicio del celular) — si no personalizó
  * nada todavía, se usa el orden por default de cada solapa. */
-export type InicioBlockId = "hoy" | "comidas" | "semana";
-export const DEFAULT_INICIO_ORDER: InicioBlockId[] = ["hoy", "comidas", "semana"];
+export type InicioBlockId = "hoy" | "comidas" | "semanaNav" | "pesoSemana" | "indicadores" | "tablaSemana";
+export const DEFAULT_INICIO_ORDER: InicioBlockId[] = [
+  "hoy", "comidas", "semanaNav", "pesoSemana", "indicadores", "tablaSemana",
+];
 
 export type ComidasBlockId = "recetas" | "comunes" | "planificador" | "compras";
 export const DEFAULT_COMIDAS_ORDER: ComidasBlockId[] = ["recetas", "comunes", "planificador", "compras"];
@@ -148,9 +150,18 @@ export const DEFAULT_ACTIVIDAD_ORDER: ActividadBlockId[] = [
 
 /** Supabase guarda el orden custom como jsonb con default '[]', así que un
  * array vacío (todavía no personalizado) no debe pisar el orden por
- * default — un `order || fallback` común falla porque `[]` es truthy. */
+ * default — un `order || fallback` común falla porque `[]` es truthy.
+ * Además reconcilia contra el default actual: si algún bloque ya
+ * guardado dejó de existir (ej. se dividió en varios, como pasó con
+ * "semana"), se descarta, y si el default tiene bloques nuevos que el
+ * usuario todavía no personalizó, se agregan al final — así nunca
+ * desaparece un bloque nuevo solo porque el usuario ya había
+ * arrastrado algo antes. */
 export function resolveOrder<T>(order: T[] | undefined, fallback: T[]): T[] {
-  return order && order.length > 0 ? order : fallback;
+  if (!order || order.length === 0) return fallback;
+  const known = order.filter((id) => fallback.includes(id));
+  const missing = fallback.filter((id) => !known.includes(id));
+  return [...known, ...missing];
 }
 
 export interface Settings {
