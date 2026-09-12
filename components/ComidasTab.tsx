@@ -4,6 +4,7 @@ import { InventoryItem, MealKey, WeekPlan } from "@/lib/types";
 import { RecipePlanner } from "@/components/RecipePlanner";
 import { CommonMealsCard } from "@/components/CommonMealsCard";
 import { countPlannedMeals } from "@/components/WeekPlanner";
+import { ShoppingLog } from "@/components/ShoppingLog";
 
 export function ComidasTab({
   items,
@@ -13,6 +14,8 @@ export function ComidasTab({
   consumedKcal,
   weekPlan,
   onOpenPlanificador,
+  addInventoryText,
+  replaceItems,
 }: {
   items: InventoryItem[];
   consumeAmounts: (amounts: Array<{ id: string; quantity: number }>) => void;
@@ -21,6 +24,8 @@ export function ComidasTab({
   consumedKcal: number;
   weekPlan: WeekPlan;
   onOpenPlanificador: () => void;
+  addInventoryText: (text: string) => void;
+  replaceItems: (items: InventoryItem[]) => void;
 }) {
   return (
     <div>
@@ -45,6 +50,7 @@ export function ComidasTab({
           {countPlannedMeals(weekPlan)} comidas
         </div>
       </button>
+      <ShoppingLog items={items} addInventoryText={addInventoryText} replaceItems={replaceItems} />
     </div>
   );
 }

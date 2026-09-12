@@ -85,7 +85,7 @@ export function SummaryCards({ summary, goal, weight }: { summary: WeekSummary; 
   );
 
   return (
-    <Collapsible eyebrow="Semana" title="Indicadores" info={SECTION_HELP.semana}>
+    <Collapsible eyebrow="Semana" title="Indicadores" info={SECTION_HELP.semana} scrollable={false}>
       <div className="grid grid-cols-2 gap-2.5">
         {cards.map((card) => renderCard(card))}
         <div className="col-span-2 grid grid-cols-2 gap-2.5">

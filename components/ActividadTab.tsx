@@ -7,6 +7,7 @@ import { SECTION_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 import { ExerciseLogCard } from "@/components/ExerciseLogCard";
 import { RoutineManager } from "@/components/RoutineManager";
+import { DailySteps } from "@/components/DailySteps";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 const STEPS_COLOR = "#8A9A7C";
@@ -40,13 +41,13 @@ function WeekBarChart({
       <div className="mb-3 font-mono text-[10px] uppercase tracking-wide text-textMuted">{title}</div>
       <ResponsiveContainer width="100%" height={160}>
         <BarChart data={data} margin={{ left: -20, right: 0, top: 5, bottom: 0 }}>
-          <XAxis dataKey="dow" tick={{ fill: "#9C958A", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "#3A362F" }} tickLine={false} />
-          <YAxis tick={{ fill: "#9C958A", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} />
+          <XAxis dataKey="dow" tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "rgb(var(--color-border))" }} tickLine={false} />
+          <YAxis tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} />
           <Tooltip
-            contentStyle={{ background: "#242220", border: "1px solid #3A362F", borderRadius: 8, fontSize: 12 }}
-            labelStyle={{ color: "#EDE7DA" }}
+            contentStyle={{ background: "rgb(var(--color-surface))", border: "1px solid rgb(var(--color-border))", borderRadius: 8, fontSize: 12 }}
+            labelStyle={{ color: "rgb(var(--color-text))" }}
             formatter={(value: number) => `${value.toLocaleString("es-AR")} ${unit}`}
-            cursor={{ fill: "rgba(201,162,39,0.10)" }}
+            cursor={{ fill: "rgb(var(--color-accent) / 0.10)" }}
           />
           {referenceValue != null && (
             <ReferenceLine
@@ -68,6 +69,7 @@ export function ActividadTab({
   weekDates,
   weekDays,
   onLogTraining,
+  onLogSleep,
   onUpsert,
   routines,
   schedule,
@@ -78,6 +80,7 @@ export function ActividadTab({
   weekDates: string[];
   weekDays: (DayEntry | null)[];
   onLogTraining: () => void;
+  onLogSleep: () => void;
   onUpsert: (entry: DayEntry) => void;
   routines: Routine[];
   schedule: TrainingSchedule;
@@ -116,22 +119,33 @@ export function ActividadTab({
             <div className="font-display text-base leading-tight text-text">{entry.suenoHoras ? `${entry.suenoHoras}h` : "—"}</div>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onLogTraining}
-          className="flex w-full items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em]"
-          style={
-            sessions.length > 0
-              ? { background: trainingStyle.background, color: trainingStyle.color, borderColor: trainingStyle.background }
-              : { background: "#8A9A7C", color: "#1C1B18", borderColor: "rgba(138,154,124,0.6)" }
-          }
-        >
-          {sessions.length > 0 && <span className="h-2 w-2 rounded-full bg-current opacity-70" />}
-          {sessions.length > 0 ? trainingLabel : "+ Pasos, sueño y entrenamiento"}
-        </button>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={onLogTraining}
+            className={`flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] ${
+              sessions.length > 0 ? "" : "bg-sage text-bg border-sage/60"
+            }`}
+            style={sessions.length > 0 ? { background: trainingStyle.background, color: trainingStyle.color, borderColor: trainingStyle.background } : undefined}
+          >
+            {sessions.length > 0 && <span className="h-2 w-2 rounded-full bg-current opacity-70" />}
+            {sessions.length > 0 ? trainingLabel : "+ Pasos y entrenamiento"}
+          </button>
+          <button
+            type="button"
+            onClick={onLogSleep}
+            className={`flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] ${
+              entry.suenoHoras ? "bg-[#7C93A3] text-bg border-[#7C93A3]/60" : "bg-transparent text-textMuted border-border"
+            }`}
+          >
+            {entry.suenoHoras ? `${entry.suenoHoras}h dormidas` : "+ Sueño"}
+          </button>
+        </div>
       </section>
 
       <ExerciseLogCard entry={entry} routines={routines} schedule={schedule} onSave={onUpsert} />
+
+      <DailySteps weekDates={weekDates} weekDays={weekDays} onUpsert={onUpsert} />
 
       <WeekBarChart title="Pasos de la semana" data={stepsData} color={STEPS_COLOR} unit="pasos" />
       <WeekBarChart title="Calorías quemadas entrenando" data={trainingData} color={TRAINING_COLOR} unit="kcal" />

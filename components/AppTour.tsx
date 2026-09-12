@@ -52,8 +52,7 @@ export function AppTour({ onFinish }: { onFinish: () => void }) {
           <button
             type="button"
             onClick={() => (isLast ? onFinish() : setIndex((i) => i + 1))}
-            className="flex-1 rounded-lg p-2.5 font-sans font-bold text-sm"
-            style={{ background: "#C9A227", color: "#1C1B18" }}
+            className="flex-1 rounded-lg p-2.5 font-sans font-bold text-sm bg-gold text-bg"
           >
             {isLast ? "Empezar a usar la app" : "Siguiente"}
           </button>
@@ -63,8 +62,7 @@ export function AppTour({ onFinish }: { onFinish: () => void }) {
           {STOPS.map((_, i) => (
             <span
               key={i}
-              className="h-1.5 w-1.5 rounded-full"
-              style={{ background: i === index ? "#C9A227" : "rgba(255,255,255,0.15)" }}
+              className={`h-1.5 w-1.5 rounded-full ${i === index ? "bg-gold" : "bg-border"}`}
             />
           ))}
         </div>

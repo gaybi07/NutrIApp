@@ -1,11 +1,62 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,600&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Paleta oscura (default) — también sirve de red de seguridad antes de que
+   se aplique el atributo data-theme, y cuando Settings.theme todavía no
+   está cargado. */
+:root {
+  --color-bg: 26 29 25;
+  --color-surface: 34 38 32;
+  --color-surface-alt: 43 47 40;
+  --color-text: 232 236 226;
+  --color-text-muted: 150 158 142;
+  --color-accent: 111 191 140;
+  --color-rust: 197 96 72;
+  --color-sage: 138 166 148;
+  --color-border: 56 61 52;
+}
+
+[data-theme="oscuro"] {
+  --color-bg: 26 29 25;
+  --color-surface: 34 38 32;
+  --color-surface-alt: 43 47 40;
+  --color-text: 232 236 226;
+  --color-text-muted: 150 158 142;
+  --color-accent: 111 191 140;
+  --color-rust: 197 96 72;
+  --color-sage: 138 166 148;
+  --color-border: 56 61 52;
+}
+
+[data-theme="claro"] {
+  --color-bg: 247 250 245;
+  --color-surface: 255 255 255;
+  --color-surface-alt: 235 243 235;
+  --color-text: 26 34 28;
+  --color-text-muted: 96 108 98;
+  --color-accent: 39 138 84;
+  --color-rust: 178 61 45;
+  --color-sage: 76 122 90;
+  --color-border: 217 230 217;
+}
+
+[data-theme="alto-contraste"] {
+  --color-bg: 255 255 255;
+  --color-surface: 255 255 255;
+  --color-surface-alt: 244 244 244;
+  --color-text: 0 0 0;
+  --color-text-muted: 33 33 33;
+  --color-accent: 0 92 48;
+  --color-rust: 153 0 0;
+  --color-sage: 0 90 77;
+  --color-border: 0 0 0;
+}
+
 html, body {
-  background: #1C1B18;
-  color: #EDE7DA;
+  background: rgb(var(--color-bg));
+  color: rgb(var(--color-text));
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
   max-width: 100vw;
@@ -14,12 +65,12 @@ html, body {
 * { box-sizing: border-box; }
 
 input, select, textarea {
-  background: #1C1B18;
-  border: 1px solid #3A362F;
+  background: rgb(var(--color-bg));
+  border: 1px solid rgb(var(--color-border));
   border-radius: 8px;
   padding: 8px 10px;
-  color: #EDE7DA;
-  font-family: "JetBrains Mono", monospace;
+  color: rgb(var(--color-text));
+  font-family: "Nunito", sans-serif;
   /* 16px en mobile evita que Safari/Chrome hagan zoom automático al enfocar
      un campo con letra chica (cualquier valor menor dispara el zoom). */
   font-size: 16px;
@@ -33,15 +84,22 @@ input, select, textarea {
   }
 }
 input:focus, select:focus, textarea:focus {
-  outline: 2px solid #C9A227;
+  outline: 2px solid rgb(var(--color-accent));
   outline-offset: 1px;
 }
 label {
-  font-family: "JetBrains Mono", monospace;
+  font-family: "Nunito", sans-serif;
+  font-weight: 700;
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #9C958A;
+  color: rgb(var(--color-text-muted));
   display: block;
   margin-bottom: 4px;
+}
+
+[data-theme="alto-contraste"] input,
+[data-theme="alto-contraste"] select,
+[data-theme="alto-contraste"] textarea {
+  border-width: 2px;
 }

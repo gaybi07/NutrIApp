@@ -108,6 +108,14 @@ export interface DayEntry {
 
 export type WeekPlan = Record<string, Partial<Record<MealKey, string>>>; // fecha -> comida -> título de receta
 
+/** Las 3 solapas de arriba que se pueden prender/apagar desde Preferencias — "inicio" no está acá porque siempre está fija. */
+export type MainTab = "inicio" | "comidas" | "macros" | "actividad";
+
+export const OPTIONAL_TABS: MainTab[] = ["macros", "comidas", "actividad"];
+export const DEFAULT_ENABLED_TABS: MainTab[] = ["inicio", "comidas", "macros", "actividad"];
+
+export type ThemeMode = "claro" | "oscuro" | "alto-contraste";
+
 export interface Settings {
   goal: number; // kcal objetivo diario de consumo
   tdeeFallback: number; // gasto de referencia cuando no hay pasos cargados
@@ -117,6 +125,8 @@ export interface Settings {
   weekPlan?: WeekPlan; // planificador de comidas por día, se sincroniza entre dispositivos
   routines?: Routine[]; // rutinas de entrenamiento reusables
   trainingSchedule?: TrainingSchedule; // qué rutina toca cada día de la semana
+  theme?: ThemeMode; // claro / oscuro / alto contraste, elegido desde Preferencias
+  enabledTabs?: MainTab[]; // qué solapas de arriba se muestran además de Inicio (que siempre está)
 }
 
 export const MEAL_LABELS: Record<MealKey, string> = {

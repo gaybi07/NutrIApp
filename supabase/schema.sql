@@ -46,7 +46,9 @@ create table public.user_settings (
   tour_done boolean not null default false,
   week_plan jsonb not null default '{}'::jsonb,
   routines jsonb not null default '[]'::jsonb,
-  training_schedule jsonb not null default '{}'::jsonb
+  training_schedule jsonb not null default '{}'::jsonb,
+  theme text,
+  enabled_tabs jsonb not null default '[]'::jsonb
 );
 
 alter table public.days enable row level security;

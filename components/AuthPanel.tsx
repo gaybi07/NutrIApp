@@ -3,10 +3,17 @@
 import { FormEvent, useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase/browser";
 
-export function AuthPanel({ onAuthChange }: { onAuthChange?: (authenticated: boolean) => void }) {
+export function AuthPanel({
+  onAuthChange,
+  onOpenPreferences,
+}: {
+  onAuthChange?: (authenticated: boolean) => void;
+  onOpenPreferences?: () => void;
+}) {
   const [email, setEmail] = useState("");
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [status, setStatus] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!supabase) {
@@ -67,25 +74,46 @@ export function AuthPanel({ onAuthChange }: { onAuthChange?: (authenticated: boo
   if (userEmail) {
     const initial = userEmail.trim().charAt(0).toUpperCase();
     return (
-      <div className="mb-4 flex items-center justify-between gap-2 rounded-xl border border-border bg-[linear-gradient(135deg,rgba(201,162,39,0.08),rgba(36,34,32,0.9))] px-3 py-2 shadow-[0_0_0_1px_rgba(58,54,47,0.4)]">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gold/50 bg-gold/15 font-display text-sm text-gold">
-            {initial}
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1 font-mono text-[8.5px] uppercase tracking-[0.16em] text-sage">
-              <span className="h-1.5 w-1.5 rounded-full bg-sage" />
-              Sesión activa
-            </div>
-            <div className="truncate text-[11px] text-textMuted">{userEmail}</div>
-          </div>
+      <div className="relative mb-3 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sage" />
+          <span className="truncate font-mono text-[11px] text-textMuted">{userEmail}</span>
         </div>
         <button
-          onClick={signOut}
-          className="shrink-0 rounded-lg border border-border bg-bg/60 px-2.5 py-1.5 font-mono text-[9px] uppercase tracking-[0.12em] text-textMuted transition-colors hover:border-rust/60 hover:text-rust"
+          type="button"
+          onClick={() => setMenuOpen((open) => !open)}
+          aria-label="Cuenta"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gold/50 bg-gold/15 font-display text-sm text-gold"
         >
-          Salir
+          {initial}
         </button>
+        {menuOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+            <div className="absolute right-0 top-10 z-50 w-48 overflow-hidden rounded-xl border border-border bg-surface shadow-2xl">
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onOpenPreferences?.();
+                }}
+                className="block w-full px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
+              >
+                Preferencias
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  signOut();
+                }}
+                className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-rust transition-colors hover:bg-surfaceAlt"
+              >
+                Cerrar sesión
+              </button>
+            </div>
+          </>
+        )}
       </div>
     );
   }
@@ -113,7 +141,7 @@ export function AuthPanel({ onAuthChange }: { onAuthChange?: (authenticated: boo
           onChange={(event) => setEmail(event.target.value)}
           className="min-w-0 flex-1"
         />
-        <button type="submit" className="rounded-lg px-3 text-xs font-bold" style={{ background: "#C9A227", color: "#1C1B18" }}>
+        <button type="submit" className="rounded-lg px-3 text-xs font-bold bg-gold text-bg">
           Enviar enlace
         </button>
       </div>

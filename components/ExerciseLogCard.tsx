@@ -139,8 +139,7 @@ export function ExerciseLogCard({
       <button
         type="button"
         onClick={handleSave}
-        className="mt-2 w-full rounded-lg p-2.5 font-sans text-sm font-bold"
-        style={{ background: "#C9A227", color: "#1C1B18" }}
+        className="mt-2 w-full rounded-lg p-2.5 font-sans text-sm font-bold bg-gold text-bg"
       >
         Guardar
       </button>

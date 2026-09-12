@@ -234,8 +234,8 @@ export function AiEntryForm({
 
   return (
     <div
-      className="rounded-xl p-4 border"
-      style={{ borderColor: "#C9A227", background: "linear-gradient(135deg, rgba(201,162,39,0.08), #242220)" }}
+      className="rounded-xl p-4 border border-gold"
+      style={{ background: "linear-gradient(135deg, rgb(var(--color-accent) / 0.08), rgb(var(--color-surface)))" }}
     >
       <div className="font-display italic text-[15px] text-gold mb-2.5">✎ Registrar con IA</div>
       <div className="grid grid-cols-2 gap-2">
@@ -291,8 +291,7 @@ export function AiEntryForm({
       <button
         onClick={() => handleCalc()}
         disabled={loading}
-        className="w-full rounded-lg p-3 font-sans font-bold text-sm mt-2.5 disabled:opacity-60"
-        style={{ background: "#C9A227", color: "#1C1B18" }}
+        className="w-full rounded-lg p-3 font-sans font-bold text-sm mt-2.5 disabled:opacity-60 bg-gold text-bg"
       >
         {loading ? "Calculando..." : "Calcular con IA"}
       </button>
@@ -372,8 +371,7 @@ export function AiEntryForm({
           )}
           <button
             onClick={handleSave}
-            className="w-full rounded-lg p-3 font-sans font-bold text-sm"
-            style={{ background: "#C9A227", color: "#1C1B18" }}
+            className="w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-bg"
           >
             Sumar a {MEAL_LABELS[meal]}
           </button>

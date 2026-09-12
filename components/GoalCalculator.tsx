@@ -97,8 +97,8 @@ export function GoalCalculator({
 
   return (
     <div
-      className="rounded-xl p-4 mb-3 border"
-      style={{ borderColor: "#8A9A7C", background: "linear-gradient(135deg, rgba(138,154,124,0.08), #242220)" }}
+      className="rounded-xl p-4 mb-3 border border-sage"
+      style={{ background: "linear-gradient(135deg, rgb(var(--color-sage) / 0.08), rgb(var(--color-surface)))" }}
     >
       <div className="font-display italic text-[15px] text-sage mb-2.5">⚖ Calculadora de consumo y objetivo</div>
       <div className="mb-2.5 text-[11px] text-textMuted">Calculá tu base personal y elegí qué querés lograr.</div>
@@ -174,8 +174,7 @@ export function GoalCalculator({
       )}
       <button
         onClick={handleCalc}
-        className="w-full rounded-lg p-3 font-sans font-bold text-sm mt-2.5"
-        style={{ background: "#8A9A7C", color: "#1C1B18" }}
+        className="w-full rounded-lg p-3 font-sans font-bold text-sm mt-2.5 bg-sage text-bg"
       >
         Calcular
       </button>

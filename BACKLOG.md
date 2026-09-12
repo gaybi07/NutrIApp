@@ -848,3 +848,76 @@ algo puntual.
   el mouse sobre una barra se ve "Pasos: 3.000", "Moderado · 45 min" y
   "Déficit: 1.397 kcal" con los colores correctos, sin errores de
   consola.
+- **2026-09-12**: rediseño grande a pedido del usuario — look "más
+  saludable" (verde y blancos), tipografía más redonda, 3 temas, menos
+  texto suelto, reorganización de Inicio/solapas, y sueño separado del
+  entrenamiento. Se hizo en varias piezas:
+  1. **Sistema de temas (claro / oscuro / alto contraste)**: todos los
+     colores estructurales (`bg/surface/surfaceAlt/text/textMuted/
+     border` + `gold` como acento, ahora verde en vez de dorado, y
+     `rust`/`sage`) pasaron de hex fijos en `tailwind.config.ts` a
+     variables CSS (`rgb(var(--color-x) / <alpha-value>)`), definidas
+     por tema en `app/globals.css` bajo `[data-theme="oscuro|claro|
+     alto-contraste"]`. Un `useEffect` en `page.tsx` aplica
+     `document.documentElement.dataset.theme = settings.theme` en cada
+     carga. Los colores "semánticos" fijos que el usuario pidió NO
+     tocar (rojo/verde/amarillo/azul de intensidad de entreno en
+     `INTENSITY_STYLES`, y los colores categóricos de los gráficos de
+     macros/comidas/sueño) se dejaron como estaban — solo se
+     reemplazaron los usos sueltos del dorado viejo (`#C9A227`) que
+     quedaban huérfanos tras el cambio de acento.
+  2. **Tipografía redonda**: `Fraunces` (serif) → `Quicksand` para
+     títulos, `Inter`/`JetBrains Mono` → `Nunito` para texto y
+     labels — se ve menos "de computadora", más orgánico.
+  3. **Botones con estilos hardcodeados → clases de Tailwind**: ~15
+     botones/tarjetas usaban `style={{background:"#C9A227",
+     color:"#1C1B18"}}` inline (no reaccionaban al tema). Se
+     convirtieron a `className="bg-gold text-bg"` (y el equivalente con
+     `sage`) — el truco es que `text-bg` da automáticamente el
+     contraste correcto en los 3 temas porque `bg` es oscuro en oscuro
+     y claro en claro/alto-contraste.
+  4. **Navbar/menú de cuenta**: `AuthPanel.tsx` logueado pasó de ser una
+     tarjeta grande a una barra angosta (email + avatar) con un menú
+     desplegable (Preferencias / Cerrar sesión) — pensado como el lugar
+     donde se van a ir agregando más opciones de cuenta a futuro
+     (contraseña, etc., todavía no implementado).
+  5. **Preferencias** (`components/Preferences.tsx`, nuevo): elegir
+     tema, y prender/apagar qué solapas de arriba se muestran además de
+     Inicio (que siempre está fija) — `Settings.theme` y
+     `Settings.enabledTabs`, sincronizados a Supabase
+     (`migration_2026-09-12b_add_theme_tabs.sql`, **falta correrla**).
+     `TabBar.tsx` ahora filtra por `enabledTabs`, y si la solapa activa
+     se deshabilita, `page.tsx` vuelve sola a Inicio. Se renombró la
+     solapa "Actividad" a "Entrenamientos" (el id interno sigue siendo
+     `actividad` para no tocar el resto del código).
+  6. **Inicio más liviano**: a pedido del usuario, Inicio ahora tiene
+     solo Hoy (sin cambios), Editar comidas de hoy, Semana (peso +
+     Indicadores + gráfico) y Herramientas. Se sacaron de ahí: Ranking
+     de días y Tabla de la semana (→ ahora dentro de Macros), Pasos de
+     la semana editable (→ ahora dentro de Entrenamientos) y Compras/
+     Ticket (→ ahora dentro de Comidas).
+  7. **Sueño separado del entrenamiento**: el usuario reportó que cargar
+     un entrenamiento le preguntaba también por el sueño, y quería que
+     fueran cosas separadas. Se sacó `suenoHoras` de
+     `TrainingEntryForm.tsx` y se creó `SleepEntryForm.tsx` con su
+     propio botón "+ Sueño" en Entrenamientos (panel nuevo `"sueno"` en
+     `page.tsx`).
+  8. **Scroll interno de "Indicadores"**: `SummaryCards` ya tenía el
+     mismo bug que `RankingCard` había resuelto antes — el
+     `Collapsible` recortaba el contenido a `max-h-[60vh]
+     overflow-y-auto` en vez de dejar que la página scrollee entera. Se
+     agregó `scrollable={false}`, igual que `RankingCard`.
+  9. Un pase liviano de "menos texto": el botón "Datos (importar /
+     exportar respaldo)" pasó a decir solo "Datos" (la explicación ya
+     está en el ícono de ayuda de "Herramientas"). Un pase más
+     exhaustivo de mover texto suelto a los íconos "?" queda pendiente
+     si el usuario lo pide específicamente.
+  Verificado con Playwright, capturando pantallas en los 3 temas
+  (oscuro/claro/alto-contraste) y en las 4 solapas: sin errores de
+  consola, "Ranking"/"Tabla de la semana" aparecen en Macros, "Pasos de
+  la semana" y "+ Sueño" en Entrenamientos, "Ticket / foto" en Comidas,
+  el toggle de solapas en Preferencias oculta/muestra Macros y
+  Entrenamientos correctamente, y los 3 temas se ven coherentes (probado
+  cambiando `settings.theme` directamente ya que el menú de cuenta
+  necesita sesión real de Supabase, no disponible en el entorno de
+  testeo local). `npm run build` limpio antes y después de los cambios.

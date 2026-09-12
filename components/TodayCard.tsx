@@ -52,7 +52,7 @@ export function TodayCard({
       <div className="mb-3 h-2.5 w-full overflow-hidden rounded-full border border-border bg-bg/60">
         <div
           className="h-full rounded-full transition-all"
-          style={{ width: `${pct}%`, background: over ? "#B5533C" : "#C9A227" }}
+          style={{ width: `${pct}%`, background: over ? "rgb(var(--color-rust))" : "rgb(var(--color-accent))" }}
         />
       </div>
 
@@ -84,12 +84,10 @@ export function TodayCard({
         <button
           type="button"
           onClick={onLogTraining}
-          className="flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em]"
-          style={
-            sessions.length > 0
-              ? { background: trainingStyle.background, color: trainingStyle.color, borderColor: trainingStyle.background }
-              : { background: "#8A9A7C", color: "#1C1B18", borderColor: "rgba(138,154,124,0.6)" }
-          }
+          className={`flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] ${
+            sessions.length > 0 ? "" : "bg-sage text-bg border-sage/60"
+          }`}
+          style={sessions.length > 0 ? { background: trainingStyle.background, color: trainingStyle.color, borderColor: trainingStyle.background } : undefined}
         >
           {sessions.length > 0 && <span className="h-2 w-2 rounded-full bg-current opacity-70" />}
           {sessions.length > 0 ? trainingLabel : "+ Entrenamiento"}

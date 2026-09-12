@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocalDays } from "@/lib/useLocalDays";
 import { isoMonday, addDays, fmtDate, summarizeWeek, proteinTargetForWeight, getMealItems, applyMealItems } from "@/lib/calculations";
 import { TabBar, MainTab } from "@/components/TabBar";
@@ -8,21 +8,19 @@ import { MacrosTab } from "@/components/MacrosTab";
 import { ActividadTab } from "@/components/ActividadTab";
 import { SummaryCards } from "@/components/SummaryCards";
 import { WeeklyChart } from "@/components/WeeklyChart";
-import { Ledger } from "@/components/Ledger";
-import { RankingCard } from "@/components/RankingCard";
 import { GoalCalculator } from "@/components/GoalCalculator";
 import { AiEntryForm } from "@/components/AiEntryForm";
 import { WeekPlanner } from "@/components/WeekPlanner";
 import { ComidasTab } from "@/components/ComidasTab";
-import { ShoppingLog } from "@/components/ShoppingLog";
 import { WeeklyWeight } from "@/components/WeeklyWeight";
 import { AuthPanel } from "@/components/AuthPanel";
-import { DailySteps } from "@/components/DailySteps";
 import { DataImport } from "@/components/DataImport";
 import { MealMemoryImport } from "@/components/MealMemoryImport";
 import { TodayCard } from "@/components/TodayCard";
 import { TodayMealsBreakdown } from "@/components/TodayMealsBreakdown";
 import { TrainingEntryForm } from "@/components/TrainingEntryForm";
+import { SleepEntryForm } from "@/components/SleepEntryForm";
+import { Preferences } from "@/components/Preferences";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
 import { AppTour } from "@/components/AppTour";
 import { TipPopup } from "@/components/TipPopup";
@@ -30,7 +28,7 @@ import { Collapsible } from "@/components/Collapsible";
 import { isSupabaseConfigured } from "@/lib/supabase/browser";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 import { useInventory } from "@/lib/useInventory";
-import { emptyDay, MealKey } from "@/lib/types";
+import { emptyDay, MealKey, DEFAULT_ENABLED_TABS } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 
@@ -41,10 +39,19 @@ export default function Home() {
   const { items: inventory, addText, consumeByText, consumeItem, consumeAmounts, persist: replaceInventory } = useInventory();
   const [weekOffset, setWeekOffset] = useState(0);
   const [activeTab, setActiveTab] = useState<MainTab>("inicio");
-  const [panel, setPanel] = useState<"calc" | "ai" | "entreno" | "datos" | "planificador" | null>(null);
+  const [panel, setPanel] = useState<"calc" | "ai" | "entreno" | "sueno" | "datos" | "planificador" | "preferencias" | null>(null);
   const [authenticated, setAuthenticated] = useState(!isSupabaseConfigured);
   const handleAuthChange = useCallback((value: boolean) => setAuthenticated(value), []);
   useEscapeKey(() => setPanel(null), panel !== null);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", settings.theme || "oscuro");
+  }, [settings.theme]);
+
+  const enabledTabs = settings.enabledTabs || DEFAULT_ENABLED_TABS;
+  useEffect(() => {
+    if (activeTab !== "inicio" && !enabledTabs.includes(activeTab)) setActiveTab("inicio");
+  }, [activeTab, enabledTabs]);
 
   const monday = useMemo(() => {
     const base =
@@ -142,7 +149,7 @@ export default function Home() {
 
   return (
     <main>
-      <AuthPanel onAuthChange={handleAuthChange} />
+      <AuthPanel onAuthChange={handleAuthChange} onOpenPreferences={() => setPanel("preferencias")} />
 
       {syncError && (
         <div className="mb-4 rounded-xl border border-rust/40 bg-rust/10 px-3 py-2 text-[11px] text-rust">
@@ -165,7 +172,7 @@ export default function Home() {
         />
       )}
 
-      <TabBar active={activeTab} onChange={setActiveTab} />
+      <TabBar active={activeTab} onChange={setActiveTab} enabledTabs={enabledTabs} />
 
       {activeTab === "macros" && (
         <MacrosTab
@@ -175,6 +182,10 @@ export default function Home() {
           weekDates={weekDates}
           weekDays={weekDays}
           onLogMeal={() => setPanel("ai")}
+          days={days}
+          weightKg={currentWeightKg}
+          tdeeFallback={settings.tdeeFallback}
+          onUpsert={upsertDay}
         />
       )}
 
@@ -184,6 +195,7 @@ export default function Home() {
           weekDates={weekDates}
           weekDays={weekDays}
           onLogTraining={() => setPanel("entreno")}
+          onLogSleep={() => setPanel("sueno")}
           onUpsert={upsertDay}
           routines={settings.routines || []}
           schedule={settings.trainingSchedule || {}}
@@ -253,8 +265,6 @@ export default function Home() {
         </div>
 
         <div className="min-w-0">
-          <RankingCard days={days} weightKg={currentWeightKg} />
-
           <Collapsible eyebrow="Herramientas" title="Calculadora y carga con IA" info={SECTION_HELP.herramientas}>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -273,14 +283,10 @@ export default function Home() {
                 onClick={() => setPanel("datos")}
                 className="col-span-2 rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
               >
-                Datos (importar / exportar respaldo)
+                Datos
               </button>
             </div>
           </Collapsible>
-
-          <Ledger weekDates={weekDates} weekDays={weekDays} goal={summary.avgGoal || settings.goal} tdeeFallback={settings.tdeeFallback} onUpsert={upsertDay} />
-          <DailySteps weekDates={weekDates} weekDays={weekDays} onUpsert={upsertDay} />
-          <ShoppingLog items={inventory} addInventoryText={addText} replaceItems={replaceInventory} />
         </div>
       </div>
       )}
@@ -294,6 +300,8 @@ export default function Home() {
           consumedKcal={todayKcal}
           weekPlan={settings.weekPlan || {}}
           onOpenPlanificador={() => setPanel("planificador")}
+          addInventoryText={addText}
+          replaceItems={replaceInventory}
         />
       )}
 
@@ -369,6 +377,29 @@ export default function Home() {
         </div>
       )}
 
+      {panel === "sueno" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>
+          <div
+            className="relative my-4 max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-3 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              onClick={() => setPanel(null)}
+              className="absolute right-3 top-3 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+            >
+              Cerrar
+            </button>
+            <SleepEntryForm
+              entry={todayEntry}
+              onSave={(entry) => {
+                upsertDay(entry);
+                setPanel(null);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       {panel === "planificador" && (
         <div
           className="fixed inset-0 z-50 bg-bg sm:flex sm:items-center sm:justify-center sm:bg-bg/80 sm:p-4 sm:backdrop-blur-sm"
@@ -419,6 +450,23 @@ export default function Home() {
               }}
             />
             <MealMemoryImport />
+          </div>
+        </div>
+      )}
+
+      {panel === "preferencias" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>
+          <div
+            className="relative my-4 max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-3 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              onClick={() => setPanel(null)}
+              className="absolute right-3 top-3 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+            >
+              Cerrar
+            </button>
+            <Preferences settings={settings} onSave={saveSettings} />
           </div>
         </div>
       )}

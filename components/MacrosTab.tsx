@@ -6,9 +6,11 @@ import { dayTotal, dayProt, dayCarbs, dayFat, dayFiber, macroTargets } from "@/l
 import { classifyIngredient, FOOD_GROUP_LABELS, FoodGroup } from "@/lib/foodGroups";
 import { SECTION_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
+import { RankingCard } from "@/components/RankingCard";
+import { Ledger } from "@/components/Ledger";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
-const COLORS = { protein: "#8A9A7C", carbs: "#C9A227", fat: "#7C93A3", fiber: "#B5533C" };
+const COLORS = { protein: "#8A9A7C", carbs: "rgb(var(--color-accent))", fat: "#7C93A3", fiber: "#B5533C" };
 const FOOD_GROUPS_ORDER: FoodGroup[] = ["proteina_animal", "proteina_vegetal", "verdura", "fruta", "lacteo", "cereal", "grasa"];
 
 function MacroStat({ label, value, target, color }: { label: string; value: number; target: number; color: string }) {
@@ -33,6 +35,10 @@ export function MacrosTab({
   weekDates,
   weekDays,
   onLogMeal,
+  days,
+  weightKg,
+  tdeeFallback,
+  onUpsert,
 }: {
   entry: DayEntry;
   goal: number;
@@ -40,6 +46,10 @@ export function MacrosTab({
   weekDates: string[];
   weekDays: (DayEntry | null)[];
   onLogMeal: () => void;
+  days: DayEntry[];
+  weightKg: number;
+  tdeeFallback: number;
+  onUpsert: (entry: DayEntry) => void;
 }) {
   const targets = macroTargets(goal, proteinTarget);
   const consumedKcal = dayTotal(entry);
@@ -111,6 +121,8 @@ export function MacrosTab({
         </button>
       </section>
 
+      <RankingCard days={days} weightKg={weightKg} />
+
       <div className="mb-4 rounded-xl border border-border bg-surface p-4">
         <div className="mb-3 font-mono text-[10px] uppercase tracking-wide text-textMuted">Reparto de macros de hoy</div>
         {pieData.length > 0 ? (
@@ -122,8 +134,8 @@ export function MacrosTab({
                 ))}
               </Pie>
               <Tooltip
-                contentStyle={{ background: "#242220", border: "1px solid #3A362F", borderRadius: 8, fontSize: 12 }}
-                labelStyle={{ color: "#EDE7DA" }}
+                contentStyle={{ background: "rgb(var(--color-surface))", border: "1px solid rgb(var(--color-border))", borderRadius: 8, fontSize: 12 }}
+                labelStyle={{ color: "rgb(var(--color-text))" }}
                 formatter={(value: number) => `${Math.round(value)} kcal`}
               />
             </PieChart>
@@ -147,10 +159,10 @@ export function MacrosTab({
         </div>
         <ResponsiveContainer width="100%" height={180}>
           <BarChart data={weekMacroData} margin={{ left: -20, right: 0, top: 5, bottom: 0 }}>
-            <XAxis dataKey="dow" tick={{ fill: "#9C958A", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "#3A362F" }} tickLine={false} />
-            <YAxis tick={{ fill: "#9C958A", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: "#242220", border: "1px solid #3A362F", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "#EDE7DA" }} cursor={{ fill: "rgba(201,162,39,0.10)" }} />
-            <ReferenceLine y={goal} stroke="#C9A227" strokeDasharray="4 4" label={{ value: `objetivo ${goal}`, fill: "#C9A227", fontSize: 9, position: "right" }} />
+            <XAxis dataKey="dow" tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "rgb(var(--color-border))" }} tickLine={false} />
+            <YAxis tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} />
+            <Tooltip contentStyle={{ background: "rgb(var(--color-surface))", border: "1px solid rgb(var(--color-border))", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "rgb(var(--color-text))" }} cursor={{ fill: "rgb(var(--color-accent) / 0.10)" }} />
+            <ReferenceLine y={goal} stroke="rgb(var(--color-accent))" strokeDasharray="4 4" label={{ value: `objetivo ${goal}`, fill: "rgb(var(--color-accent))", fontSize: 9, position: "right" }} />
             <Bar dataKey="protein" stackId="a" fill={COLORS.protein} />
             <Bar dataKey="carbs" stackId="a" fill={COLORS.carbs} />
             <Bar dataKey="fat" stackId="a" fill={COLORS.fat} radius={[3, 3, 0, 0]} />
@@ -167,9 +179,9 @@ export function MacrosTab({
         <div className="mb-3 font-mono text-[10px] uppercase tracking-wide text-textMuted">Proteína vs objetivo</div>
         <ResponsiveContainer width="100%" height={160}>
           <BarChart data={proteinWeekData} margin={{ left: -20, right: 0, top: 5, bottom: 0 }}>
-            <XAxis dataKey="dow" tick={{ fill: "#9C958A", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "#3A362F" }} tickLine={false} />
-            <YAxis tick={{ fill: "#9C958A", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: "#242220", border: "1px solid #3A362F", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "#EDE7DA" }} cursor={{ fill: "rgba(201,162,39,0.10)" }} />
+            <XAxis dataKey="dow" tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "rgb(var(--color-border))" }} tickLine={false} />
+            <YAxis tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} />
+            <Tooltip contentStyle={{ background: "rgb(var(--color-surface))", border: "1px solid rgb(var(--color-border))", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "rgb(var(--color-text))" }} cursor={{ fill: "rgb(var(--color-accent) / 0.10)" }} />
             <ReferenceLine y={proteinTarget} stroke="#8A9A7C" strokeDasharray="4 4" label={{ value: `obj. ${proteinTarget}g`, fill: "#8A9A7C", fontSize: 9, position: "right" }} />
             <Bar dataKey="protein" fill={COLORS.protein} radius={[3, 3, 0, 0]} />
           </BarChart>
@@ -180,9 +192,9 @@ export function MacrosTab({
         <div className="mb-3 font-mono text-[10px] uppercase tracking-wide text-textMuted">Fibra de la semana</div>
         <ResponsiveContainer width="100%" height={160}>
           <BarChart data={fiberWeekData} margin={{ left: -20, right: 0, top: 5, bottom: 0 }}>
-            <XAxis dataKey="dow" tick={{ fill: "#9C958A", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "#3A362F" }} tickLine={false} />
-            <YAxis tick={{ fill: "#9C958A", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: "#242220", border: "1px solid #3A362F", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "#EDE7DA" }} cursor={{ fill: "rgba(201,162,39,0.10)" }} />
+            <XAxis dataKey="dow" tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "rgb(var(--color-border))" }} tickLine={false} />
+            <YAxis tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} />
+            <Tooltip contentStyle={{ background: "rgb(var(--color-surface))", border: "1px solid rgb(var(--color-border))", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "rgb(var(--color-text))" }} cursor={{ fill: "rgb(var(--color-accent) / 0.10)" }} />
             <ReferenceLine y={targets.fiberG} stroke={COLORS.fiber} strokeDasharray="4 4" label={{ value: `obj. ${targets.fiberG}g`, fill: COLORS.fiber, fontSize: 9, position: "right" }} />
             <Bar dataKey="fiber" fill={COLORS.fiber} radius={[3, 3, 0, 0]} />
           </BarChart>
@@ -217,6 +229,8 @@ export function MacrosTab({
           })}
         </div>
       </div>
+
+      <Ledger weekDates={weekDates} weekDays={weekDays} goal={goal} tdeeFallback={tdeeFallback} onUpsert={onUpsert} />
     </div>
   );
 }

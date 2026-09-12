@@ -22,7 +22,6 @@ function sessionCalories(intensidad: TrainingIntensity, minutos: number, pesoKg?
 
 export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: (entry: DayEntry) => void }) {
   const [pasos, setPasos] = useState(entry.pasos ? String(entry.pasos) : "");
-  const [suenoHoras, setSuenoHoras] = useState(entry.suenoHoras ? String(entry.suenoHoras) : "");
   const [sessions, setSessions] = useState<TrainingSession[]>(getTrainingSessions(entry));
   const [nuevaIntensidad, setNuevaIntensidad] = useState<TrainingIntensity>("moderado");
   const [nuevosMinutos, setNuevosMinutos] = useState("60");
@@ -39,7 +38,6 @@ export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: 
     onSave({
       ...entry,
       pasos: clampNumber(Number(pasos) || 0),
-      suenoHoras: Number(suenoHoras) > 0 ? clampNumber(Number(suenoHoras), 24) : undefined,
       entreno: sessions.length > 0,
       entrenoIntensidad: sessions[0]?.intensidad,
       entrenoMinutos: sessions[0]?.minutos,
@@ -50,41 +48,23 @@ export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: 
   return (
     <div>
       <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold mb-1">Hoy</div>
-      <h2 className="font-display text-xl leading-none mb-3">Pasos, sueño y entrenamiento</h2>
+      <h2 className="font-display text-xl leading-none mb-3">Pasos y entrenamiento</h2>
 
-      <div className="mb-3 grid grid-cols-2 gap-2">
-        <div>
-          <label className="mb-1 flex items-center font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
-            Pasos<InfoHint text={FIELD_HELP.pasosDiarios} />
-          </label>
-          <input
-            type="number"
-            min="0"
-            max="999999"
-            step="100"
-            inputMode="numeric"
-            value={pasos}
-            onChange={(event) => setPasos(event.target.value)}
-            placeholder="0"
-            className="w-full"
-          />
-        </div>
-        <div>
-          <label className="mb-1 flex items-center font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
-            Sueño (hs)<InfoHint text={FIELD_HELP.horasSueno} />
-          </label>
-          <input
-            type="number"
-            min="0"
-            max="24"
-            step="0.5"
-            inputMode="decimal"
-            value={suenoHoras}
-            onChange={(event) => setSuenoHoras(event.target.value)}
-            placeholder="Ej: 7.5"
-            className="w-full"
-          />
-        </div>
+      <div className="mb-3">
+        <label className="mb-1 flex items-center font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
+          Pasos<InfoHint text={FIELD_HELP.pasosDiarios} />
+        </label>
+        <input
+          type="number"
+          min="0"
+          max="999999"
+          step="100"
+          inputMode="numeric"
+          value={pasos}
+          onChange={(event) => setPasos(event.target.value)}
+          placeholder="0"
+          className="w-full"
+        />
       </div>
 
       <div className="mb-3">
@@ -174,8 +154,7 @@ export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: 
       <button
         type="button"
         onClick={handleSave}
-        className="w-full rounded-lg p-3 font-sans font-bold text-sm"
-        style={{ background: "#C9A227", color: "#1C1B18" }}
+        className="w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-bg"
       >
         Guardar
       </button>
