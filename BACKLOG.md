@@ -1076,3 +1076,25 @@ algo puntual.
   Safari/Chrome mobile), así que se optó por revertir ambos cambios en
   vez de intentar aislar cuál era el culpable — recuperar el scroll es
   más importante que bloquear el pinch-zoom. `npm run build` limpio.
+- **2026-09-12**: el usuario reportó que en el tema Neón no todo el
+  texto brillaba — el texto muted/gris (labels, valores secundarios)
+  quedaba plano, y pidió que directamente nunca sea gris, aunque sea
+  blanco o celeste. Dos cambios en `globals.css`:
+  1. `--color-text-muted` del tema neón pasó de un gris neutro
+     (150 150 155) a un celeste-blanco (175 230 240) — deja de ser
+     gris aunque sea el tono "apagado" del tema.
+  2. Se agregó `[data-theme="neon"] body { text-shadow: ... }` con un
+     resplandor blanco/celeste suave heredado por defecto por TODO el
+     texto (el `text-shadow` es una propiedad que se hereda en CSS),
+     en vez de depender de que cada texto tuviera puntualmente una
+     clase `text-gold`/`text-sage`/`text-rust` para brillar. Los
+     textos que sí tienen esas clases de color siguen con su propio
+     resplandor más fuerte (esa declaración explícita gana sobre la
+     heredada), así que los botones y valores destacados se ven igual
+     que antes — lo que cambia es que ahora TODO lo demás (labels,
+     números secundarios, texto de ayuda) también brilla en vez de
+     quedar plano.
+  Verificado con Playwright: captura de Inicio en Neón muestra
+  "RESTANTES"/"PROTEÍNA"/"PASOS"/"DESAYUNO"/"KCAL" y los valores
+  numéricos con un brillo blanco-celeste visible, sin ningún texto
+  gris plano, sin errores de consola. `npm run build` limpio.

@@ -49,8 +49,8 @@
   --color-bg: 8 8 9;
   --color-surface: 16 16 18;
   --color-surface-alt: 24 24 27;
-  --color-text: 235 235 235;
-  --color-text-muted: 150 150 155;
+  --color-text: 235 245 255;
+  --color-text-muted: 175 230 240;
   --color-accent: 57 255 90;
   --color-rust: 255 224 0;
   --color-sage: 255 45 149;
@@ -165,8 +165,14 @@ html[data-font-size="grande"] .text-\[15px\] { font-size: 19px; }
   border-width: 2px;
 }
 
-/* Efecto de luz de neón: el texto de color (títulos, botones, valores) tira
-   un resplandor del mismo color en vez de quedar plano. */
+/* Efecto de luz de neón: TODO el texto tira resplandor, no solo el que
+   tiene una clase de color — por default un brillo blanco/celeste suave
+   (nunca gris plano), y las clases de color de abajo lo reemplazan por
+   su propio resplandor más fuerte donde corresponda. */
+[data-theme="neon"] body {
+  text-shadow: 0 0 3px rgb(var(--color-text) / 0.45), 0 0 9px rgb(var(--color-text-muted) / 0.35);
+}
+
 [data-theme="neon"] .text-gold {
   text-shadow: 0 0 6px rgb(var(--color-accent) / 0.85), 0 0 16px rgb(var(--color-accent) / 0.45);
 }
