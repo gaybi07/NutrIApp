@@ -1276,3 +1276,50 @@ algo puntual.
   Prot. ni Déficit; la de Macros ("Tabla nutricional de la semana")
   muestra Día/Kcal/Prot./Déficit, sin Entr. ni Pasos — sin errores de
   consola. `npm run build` limpio.
+- **2026-09-12**: dos pedidos sobre "Editar comidas de hoy" y una
+  funcionalidad nueva grande — reordenar los bloques de Inicio
+  arrastrándolos, como los íconos de la pantalla de inicio del
+  celular.
+  1. **"Editar comidas de hoy" arranca colapsada**: se sacó el
+     `defaultOpen` de su `Collapsible` en `TodayMealsBreakdown.tsx`
+     (antes se abría sola apenas había algo cargado).
+  2. **Reordenar los 3 bloques de Inicio** (Hoy / Editar comidas de
+     hoy / Semana) manteniendo apretado un agarre y soltando donde se
+     quiera, igual que mover apps en la pantalla de inicio del
+     celular:
+     - Nueva dependencia `@dnd-kit/core` + `@dnd-kit/sortable` +
+       `@dnd-kit/utilities` (liviana, pensada específicamente para
+       listas reordenables con soporte táctil real — mouse y touch
+       unificados vía Pointer Events).
+     - Nuevo componente `components/SortableSection.tsx`: envuelve
+       cada bloque y agrega un botón "agarre" (⠿) chico en la esquina
+       superior derecha — separado del contenido a propósito, para no
+       pisarse con los botones/inputs de adentro (tocar el resto del
+       bloque sigue funcionando normal).
+     - El agarre usa `activationConstraint: { delay: 300, tolerance:
+       8 }`: hace falta mantenerlo apretado ~300ms sin moverse más de
+       8px para que arranque el arrastre — así un toque normal (o el
+       scroll de la página) nunca se confunde con "quiero mover esto".
+     - `Settings.inicioOrder` (nuevo, `lib/types.ts`) guarda el orden
+       elegido — persiste entre sesiones y sincroniza con Supabase
+       (`migration_2026-09-12d_add_inicio_order.sql`, **falta
+       correrla**). Si no se personalizó nada, se usa el orden de
+       siempre (Hoy, Editar comidas, Semana).
+     - `app/page.tsx`: el orden fijo de Inicio se reemplazó por un
+       `.map()` sobre `inicioOrder` dentro de `<DndContext>` +
+       `<SortableContext>`. Detalle no trivial: hubo que agregar
+       `collisionDetection={closestCenter}` explícito al
+       `DndContext` — sin eso (usando la detección de colisión por
+       default de dnd-kit) el arrastre se activaba bien pero el
+       reordenamiento final nunca se aplicaba; `closestCenter` es la
+       estrategia que dnd-kit recomienda específicamente para listas
+       verticales reordenables.
+  Probado con Playwright, simulando una pulsación larga real (mouse
+  down + pequeños "jitters" dentro de la tolerancia + espera > 300ms +
+  arrastre en pasos hasta el fondo de la pantalla): se confirmó que el
+  drag se activa (opacity 0.5 en el bloque), que "Hoy" se puede llevar
+  al final quedando `["comidas","semana","hoy"]`, que ese orden
+  persiste después de recargar la página, que un toque normal y
+  rápido en "+ Cargar comida" sigue abriendo el formulario sin
+  activar un arrastre, y que el scroll normal de la página sigue
+  funcionando — sin errores de consola. `npm run build` limpio.

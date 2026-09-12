@@ -49,7 +49,8 @@ create table public.user_settings (
   training_schedule jsonb not null default '{}'::jsonb,
   theme text,
   enabled_tabs jsonb not null default '[]'::jsonb,
-  font_size text
+  font_size text,
+  inicio_order jsonb not null default '[]'::jsonb
 );
 
 alter table public.days enable row level security;

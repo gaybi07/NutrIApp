@@ -125,6 +125,12 @@ export const FONT_SIZE_OPTIONS: { value: FontSize; label: string; description: s
   { value: "grande", label: "Grande", description: "Letra bien grande, ideal si cuesta leer en el celular.", previewPx: 21 },
 ];
 
+/** Los 3 bloques grandes de Inicio, en el orden que el usuario eligió
+ * arrastrándolos (mantener apretado el "agarre" de cada uno) — si no
+ * personalizó nada todavía, se usa este orden por default. */
+export type InicioBlockId = "hoy" | "comidas" | "semana";
+export const DEFAULT_INICIO_ORDER: InicioBlockId[] = ["hoy", "comidas", "semana"];
+
 export interface Settings {
   goal: number; // kcal objetivo diario de consumo
   tdeeFallback: number; // gasto de referencia cuando no hay pasos cargados
@@ -137,6 +143,7 @@ export interface Settings {
   theme?: ThemeMode; // claro / oscuro / neon, elegido desde Preferencias
   enabledTabs?: MainTab[]; // qué solapas de arriba se muestran además de Inicio (que siempre está)
   fontSize?: FontSize; // chico / mediano / grande, elegido en el onboarding o desde Preferencias
+  inicioOrder?: InicioBlockId[]; // orden de los bloques de Inicio, elegido arrastrándolos
 }
 
 export const MEAL_LABELS: Record<MealKey, string> = {

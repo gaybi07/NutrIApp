@@ -1,6 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { closestCenter, DndContext, DragEndEvent, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { SortableSection } from "@/components/SortableSection";
 import { useLocalDays } from "@/lib/useLocalDays";
 import { isoMonday, addDays, fmtDate, summarizeWeek, proteinTargetForWeight, getMealItems, applyMealItems } from "@/lib/calculations";
 import { TabBar, MainTab } from "@/components/TabBar";
@@ -28,7 +31,7 @@ import { TipPopup } from "@/components/TipPopup";
 import { isSupabaseConfigured } from "@/lib/supabase/browser";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 import { useInventory } from "@/lib/useInventory";
-import { emptyDay, MealKey, DEFAULT_ENABLED_TABS } from "@/lib/types";
+import { emptyDay, MealKey, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 
@@ -53,6 +56,26 @@ export default function Home() {
   useEffect(() => {
     document.documentElement.setAttribute("data-font-size", settings.fontSize || "chico");
   }, [settings.fontSize]);
+
+  const inicioOrder = settings.inicioOrder || DEFAULT_INICIO_ORDER;
+  const inicioSensors = useSensors(
+    // El delay hace que haga falta mantener apretado un rato (no un toque
+    // normal) antes de que arranque el arrastre — así no se pisa con
+    // tocar botones/inputs de adentro ni con el scroll normal de la página.
+    useSensor(PointerSensor, { activationConstraint: { delay: 300, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+  const handleInicioDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const oldIndex = inicioOrder.indexOf(active.id as (typeof inicioOrder)[number]);
+      const newIndex = inicioOrder.indexOf(over.id as (typeof inicioOrder)[number]);
+      if (oldIndex === -1 || newIndex === -1) return;
+      saveSettings({ ...settings, inicioOrder: arrayMove(inicioOrder, oldIndex, newIndex) });
+    },
+    [inicioOrder, settings, saveSettings]
+  );
 
   const enabledTabs = settings.enabledTabs || DEFAULT_ENABLED_TABS;
   useEffect(() => {
@@ -221,70 +244,80 @@ export default function Home() {
       {activeTab === "inicio" && (
       <div className="mx-auto max-w-lg">
         <div className="min-w-0">
-          <TodayCard
-            entry={todayEntry}
-            goal={settings.goal}
-            tdeeFallback={settings.tdeeFallback}
-            onLogMeal={() => setPanel("ai")}
-            onLogTraining={() => setPanel("entreno")}
-          />
+          <DndContext sensors={inicioSensors} collisionDetection={closestCenter} onDragEnd={handleInicioDragEnd}>
+            <SortableContext items={inicioOrder} strategy={verticalListSortingStrategy}>
+              {inicioOrder.map((blockId) => (
+                <SortableSection key={blockId} id={blockId}>
+                  {blockId === "hoy" && (
+                    <TodayCard
+                      entry={todayEntry}
+                      goal={settings.goal}
+                      tdeeFallback={settings.tdeeFallback}
+                      onLogMeal={() => setPanel("ai")}
+                      onLogTraining={() => setPanel("entreno")}
+                    />
+                  )}
+                  {blockId === "comidas" && <TodayMealsBreakdown entry={todayEntry} onUpsert={upsertDay} />}
+                  {blockId === "semana" && (
+                    <div className="mb-4 rounded-2xl border border-border/80 bg-surface/70 px-3 py-2.5 shadow-[0_0_0_1px_rgba(58,54,47,0.4)]">
+                      <div className="mb-1.5 flex items-center font-mono text-[10px] uppercase tracking-[0.22em] text-gold">
+                        Semana del
+                        <InfoHint text={SECTION_HELP.semana} label="Qué es la sección Semana" />
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <h1 className="font-display font-semibold text-3xl leading-none -tracking-[0.04em]">
+                          {monday.getDate()} {MONTHS[monday.getMonth()]}
+                        </h1>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setWeekOffset((w) => w - 1)}
+                            className="bg-surfaceAlt border border-border rounded-xl w-9 h-9 text-lg text-text hover:border-gold/60 transition-colors"
+                          >
+                            ‹
+                          </button>
+                          <button
+                            onClick={() => setWeekOffset((w) => w + 1)}
+                            className="bg-surfaceAlt border border-border rounded-xl w-9 h-9 text-lg text-text hover:border-gold/60 transition-colors"
+                          >
+                            ›
+                          </button>
+                        </div>
+                      </div>
+                      <div className="mt-2 mb-3 font-mono text-[11px] tracking-[0.12em] uppercase text-textMuted">
+                        {monday.getDate()} {MONTHS[monday.getMonth()]} — {sunday.getDate()} {MONTHS[sunday.getMonth()]}
+                      </div>
 
-          <TodayMealsBreakdown entry={todayEntry} onUpsert={upsertDay} />
+                      <WeeklyWeight
+                        weekKey={fmtDate(monday)}
+                        weights={settings.weeklyWeights || {}}
+                        goalMode={settings.calculatorProfile?.modo}
+                        onSave={saveWeeklyWeight}
+                      />
 
-          <div className="mt-2 rounded-2xl border border-border/80 bg-surface/70 px-3 py-2.5 shadow-[0_0_0_1px_rgba(58,54,47,0.4)]">
-            <div className="mb-1.5 flex items-center font-mono text-[10px] uppercase tracking-[0.22em] text-gold">
-              Semana del
-              <InfoHint text={SECTION_HELP.semana} label="Qué es la sección Semana" />
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <h1 className="font-display font-semibold text-3xl leading-none -tracking-[0.04em]">
-                {monday.getDate()} {MONTHS[monday.getMonth()]}
-              </h1>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setWeekOffset((w) => w - 1)}
-                  className="bg-surfaceAlt border border-border rounded-xl w-9 h-9 text-lg text-text hover:border-gold/60 transition-colors"
-                >
-                  ‹
-                </button>
-                <button
-                  onClick={() => setWeekOffset((w) => w + 1)}
-                  className="bg-surfaceAlt border border-border rounded-xl w-9 h-9 text-lg text-text hover:border-gold/60 transition-colors"
-                >
-                  ›
-                </button>
-              </div>
-            </div>
-            <div className="mt-2 mb-3 font-mono text-[11px] tracking-[0.12em] uppercase text-textMuted">
-              {monday.getDate()} {MONTHS[monday.getMonth()]} — {sunday.getDate()} {MONTHS[sunday.getMonth()]}
-            </div>
+                      <SummaryCards summary={summary} goal={summary.avgGoal || settings.goal} weight={settings.weeklyWeights?.[fmtDate(monday)]} />
 
-            <WeeklyWeight
-              weekKey={fmtDate(monday)}
-              weights={settings.weeklyWeights || {}}
-              goalMode={settings.calculatorProfile?.modo}
-              onSave={saveWeeklyWeight}
-            />
+                      <WeeklyChart
+                        weekDates={weekDates}
+                        weekDays={weekDays}
+                        goal={settings.goal}
+                        avgGoal={summary.avgGoal || settings.goal}
+                        avgGasto={settings.tdeeFallback}
+                      />
 
-            <SummaryCards summary={summary} goal={summary.avgGoal || settings.goal} weight={settings.weeklyWeights?.[fmtDate(monday)]} />
-
-            <WeeklyChart
-              weekDates={weekDates}
-              weekDays={weekDays}
-              goal={settings.goal}
-              avgGoal={summary.avgGoal || settings.goal}
-              avgGasto={settings.tdeeFallback}
-            />
-
-            <Ledger
-              weekDates={weekDates}
-              weekDays={weekDays}
-              goal={summary.avgGoal || settings.goal}
-              tdeeFallback={settings.tdeeFallback}
-              onUpsert={upsertDay}
-              variant="actividad"
-            />
-          </div>
+                      <Ledger
+                        weekDates={weekDates}
+                        weekDays={weekDays}
+                        goal={summary.avgGoal || settings.goal}
+                        tdeeFallback={settings.tdeeFallback}
+                        onUpsert={upsertDay}
+                        variant="actividad"
+                      />
+                    </div>
+                  )}
+                </SortableSection>
+              ))}
+            </SortableContext>
+          </DndContext>
         </div>
       </div>
       )}

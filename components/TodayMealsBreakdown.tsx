@@ -83,7 +83,7 @@ export function TodayMealsBreakdown({
   };
 
   return (
-    <Collapsible eyebrow="Hoy" title="Editar comidas de hoy" info={SECTION_HELP.detalleComidas} defaultOpen>
+    <Collapsible eyebrow="Hoy" title="Editar comidas de hoy" info={SECTION_HELP.detalleComidas}>
       <div className="flex flex-col gap-3">
         {mealsWithItems.map(({ meal, items }) => (
           <div key={meal}>
