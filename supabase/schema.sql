@@ -48,7 +48,8 @@ create table public.user_settings (
   routines jsonb not null default '[]'::jsonb,
   training_schedule jsonb not null default '{}'::jsonb,
   theme text,
-  enabled_tabs jsonb not null default '[]'::jsonb
+  enabled_tabs jsonb not null default '[]'::jsonb,
+  font_size text
 );
 
 alter table public.days enable row level security;

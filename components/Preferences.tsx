@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings, ThemeMode, MainTab, OPTIONAL_TABS, DEFAULT_ENABLED_TABS } from "@/lib/types";
+import { Settings, ThemeMode, MainTab, OPTIONAL_TABS, DEFAULT_ENABLED_TABS, FontSize, FONT_SIZE_OPTIONS } from "@/lib/types";
 
 const THEME_OPTIONS: { value: ThemeMode; label: string; description: string }[] = [
   { value: "oscuro", label: "Oscuro", description: "Fondo oscuro, como está ahora." },
@@ -30,8 +30,10 @@ export function Preferences({
 }) {
   const theme = settings.theme || "oscuro";
   const enabledTabs = settings.enabledTabs || DEFAULT_ENABLED_TABS;
+  const fontSize = settings.fontSize || "chico";
 
   const setTheme = (value: ThemeMode) => onSave({ ...settings, theme: value });
+  const setFontSize = (value: FontSize) => onSave({ ...settings, fontSize: value });
 
   const toggleTab = (tab: MainTab) => {
     const has = enabledTabs.includes(tab);
@@ -57,6 +59,30 @@ export function Preferences({
               }`}
             >
               <div className={`font-sans text-sm font-bold ${theme === opt.value ? "text-gold" : "text-text"}`}>{opt.label}</div>
+              <div className="text-[11px] text-textMuted mt-0.5">{opt.description}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-5">
+        <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">Tamaño de letra</div>
+        <div className="flex flex-col gap-2">
+          {FONT_SIZE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setFontSize(opt.value)}
+              className={`rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                fontSize === opt.value ? "border-gold bg-gold/10" : "border-border"
+              }`}
+            >
+              <div
+                className={`font-sans font-bold ${fontSize === opt.value ? "text-gold" : "text-text"}`}
+                style={{ fontSize: opt.previewPx }}
+              >
+                {opt.label}
+              </div>
               <div className="text-[11px] text-textMuted mt-0.5">{opt.description}</div>
             </button>
           ))}

@@ -116,6 +116,14 @@ export const DEFAULT_ENABLED_TABS: MainTab[] = ["inicio", "comidas", "macros", "
 
 export type ThemeMode = "claro" | "oscuro" | "neon";
 
+export type FontSize = "chico" | "mediano" | "grande";
+
+export const FONT_SIZE_OPTIONS: { value: FontSize; label: string; description: string; previewPx: number }[] = [
+  { value: "chico", label: "Chico", description: "El tamaño de siempre, el más compacto.", previewPx: 14 },
+  { value: "mediano", label: "Mediano", description: "Un poco más grande, más fácil de leer.", previewPx: 17 },
+  { value: "grande", label: "Grande", description: "Letra bien grande, ideal si cuesta leer en el celular.", previewPx: 21 },
+];
+
 export interface Settings {
   goal: number; // kcal objetivo diario de consumo
   tdeeFallback: number; // gasto de referencia cuando no hay pasos cargados
@@ -127,6 +135,7 @@ export interface Settings {
   trainingSchedule?: TrainingSchedule; // qué rutina toca cada día de la semana
   theme?: ThemeMode; // claro / oscuro / neon, elegido desde Preferencias
   enabledTabs?: MainTab[]; // qué solapas de arriba se muestran además de Inicio (que siempre está)
+  fontSize?: FontSize; // chico / mediano / grande, elegido en el onboarding o desde Preferencias
 }
 
 export const MEAL_LABELS: Record<MealKey, string> = {

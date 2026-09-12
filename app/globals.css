@@ -63,7 +63,15 @@ html, body {
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
   max-width: 100vw;
+  overscroll-behavior: none;
 }
+
+/* Tamaño de letra (Preferencias / onboarding): "chico" es la base de
+   siempre, sin overrides. Los tamaños en rem (text-xs/sm/base/lg/xl/2xl/3xl)
+   ya escalan solos con esto. Los tamaños en px puntuales (ver overrides más
+   abajo) necesitan su propia tabla porque no reaccionan al font-size del html. */
+html[data-font-size="mediano"] { font-size: 112%; }
+html[data-font-size="grande"] { font-size: 128%; }
 
 * { box-sizing: border-box; }
 
@@ -100,6 +108,57 @@ label {
   display: block;
   margin-bottom: 4px;
 }
+
+/* La mayoría de los textos chicos de la app usan tamaños fijos en px
+   (text-[10px], text-[11px], etc.) en vez de la escala en rem de Tailwind,
+   así que no escalan solos con el font-size del html — necesitan su propio
+   override explícito por cada tamaño de letra elegido en Preferencias. */
+html[data-font-size="mediano"] label { font-size: 10.5px; }
+html[data-font-size="grande"] label { font-size: 12.5px; }
+
+html[data-font-size="mediano"] input,
+html[data-font-size="mediano"] select,
+html[data-font-size="mediano"] textarea { font-size: 17px; }
+html[data-font-size="grande"] input,
+html[data-font-size="grande"] select,
+html[data-font-size="grande"] textarea { font-size: 19px; }
+
+@media (min-width: 1024px) {
+  html[data-font-size="mediano"] input,
+  html[data-font-size="mediano"] select,
+  html[data-font-size="mediano"] textarea { font-size: 14.5px; }
+  html[data-font-size="grande"] input,
+  html[data-font-size="grande"] select,
+  html[data-font-size="grande"] textarea { font-size: 16px; }
+}
+
+/* Las 4 solapas de arriba comparten un espacio angosto y fijo — si su letra
+   escalara igual que el resto del contenido, "Entrenamientos"/"Comidas" se
+   recortarían con "…" justo en el tamaño "grande", que es el que más
+   necesita leerse bien. Por eso tienen su propia escala, más chica. */
+.tabbar-label { font-size: 10px; }
+html[data-font-size="mediano"] .tabbar-label { font-size: 10.5px; }
+html[data-font-size="grande"] .tabbar-label { font-size: 11.5px; }
+
+html[data-font-size="mediano"] .text-\[8\.5px\] { font-size: 10px; }
+html[data-font-size="mediano"] .text-\[9px\] { font-size: 10.5px; }
+html[data-font-size="mediano"] .text-\[9\.5px\] { font-size: 11px; }
+html[data-font-size="mediano"] .text-\[10px\] { font-size: 11.5px; }
+html[data-font-size="mediano"] .text-\[11px\] { font-size: 12.5px; }
+html[data-font-size="mediano"] .text-\[11\.5px\] { font-size: 13px; }
+html[data-font-size="mediano"] .text-\[12px\] { font-size: 13.5px; }
+html[data-font-size="mediano"] .text-\[13px\] { font-size: 14.5px; }
+html[data-font-size="mediano"] .text-\[15px\] { font-size: 17px; }
+
+html[data-font-size="grande"] .text-\[8\.5px\] { font-size: 12px; }
+html[data-font-size="grande"] .text-\[9px\] { font-size: 12.5px; }
+html[data-font-size="grande"] .text-\[9\.5px\] { font-size: 13px; }
+html[data-font-size="grande"] .text-\[10px\] { font-size: 13.5px; }
+html[data-font-size="grande"] .text-\[11px\] { font-size: 15px; }
+html[data-font-size="grande"] .text-\[11\.5px\] { font-size: 15.5px; }
+html[data-font-size="grande"] .text-\[12px\] { font-size: 16px; }
+html[data-font-size="grande"] .text-\[13px\] { font-size: 17px; }
+html[data-font-size="grande"] .text-\[15px\] { font-size: 19px; }
 
 [data-theme="neon"] input,
 [data-theme="neon"] select,

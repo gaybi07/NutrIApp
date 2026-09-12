@@ -21,7 +21,7 @@ export function InfoHint({ text, label = "Más información" }: { text: string; 
           setOpen((current) => !current);
         }}
         aria-label={label}
-        className="ml-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-border font-mono text-[9px] text-textMuted hover:border-gold/60 hover:text-gold"
+        className="ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border font-mono text-[11px] text-textMuted hover:border-gold/60 hover:text-gold"
       >
         ?
       </button>
@@ -34,7 +34,7 @@ export function InfoHint({ text, label = "Más información" }: { text: string; 
           }}
         >
           <span
-            className="block w-full max-w-sm rounded-xl border border-gold/30 bg-surface p-3 text-left text-[11px] font-normal normal-case leading-relaxed tracking-normal text-textMuted shadow-2xl"
+            className="block w-full max-w-sm rounded-xl border border-gold/30 bg-surface p-3 text-left text-[13px] font-normal normal-case leading-relaxed tracking-normal text-textMuted shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             {text}

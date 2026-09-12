@@ -1002,3 +1002,64 @@ algo puntual.
   "Cargar peso semanal" con fondo oscuro y borde+letra brillando en
   verde/rosa, número "1.300" (restantes) y "Pendiente" con resplandor
   rosa/amarillo, sin errores de consola. `npm run build` limpio.
+- **2026-09-12**: tamaño de letra configurable + arreglo de accesibilidad,
+  a pedido del usuario tras contar que a su suegra no le entraba a
+  leer la app.
+  - **Nuevo:** `Settings.fontSize` (`"chico" | "mediano" | "grande"`,
+    en `lib/types.ts`, con `FONT_SIZE_OPTIONS` compartido). Se aplica
+    con `document.documentElement.setAttribute("data-font-size", ...)`
+    en `page.tsx`, igual que el tema.
+  - Como casi todos los tamaños de letra de la app son px fijos
+    (`text-[10px]`, `text-[11px]`, etc., no la escala en rem de
+    Tailwind), no alcanzaba con escalar el `font-size` del `html` —
+    se armó una tabla de overrides en `globals.css` por cada valor de
+    px puntual usado en el código (`html[data-font-size="mediano"]
+    .text-\[Npx\] { font-size: ...}`, ídem para "grande"), más el
+    `font-size` del html para que las clases que sí son rem
+    (text-sm/lg/xl/etc.) escalen solas.
+  - **Selector nuevo en Preferencias**: sección "Tamaño de letra" con
+    Chico/Mediano/Grande, cada opción mostrando su propio label en ese
+    tamaño como vista previa.
+  - **Selector también en el onboarding**: se agregó un paso nuevo,
+    el primero de todos ("Paso 1 de 3"), antes de "Definí tu
+    objetivo" — para que alguien que recién entra (como la suegra del
+    usuario) pueda agrandar la letra ANTES de tener que leer el resto
+    del alta. Se aplica en vivo (no hay que terminar el onboarding
+    para que tome efecto).
+  - `InfoHint.tsx`: el ícono "?" pasó de 9px a 11px (con el botón un
+    poco más grande, de 4x4 a 5x5) y el texto del popup de ayuda de
+    11px a 13px — el usuario señaló específicamente que "los botones
+    de ayuda" tenían la letra muy chica.
+  - **Dureza de PWA**: agregado `maximumScale: 1, userScalable: false`
+    al `viewport` de `app/layout.tsx` (bloquea el pinch-zoom) y
+    `overscroll-behavior: none` en `html, body` (bloquea el rebote
+    elástico al hacer scroll de más) — a pedido explícito de que "no
+    se pueda scrollear, hacer zoom y esas cosas".
+  - **Bug real encontrado en la revisión que pidió el usuario**: al
+    correr el barrido completo (3 temas × 3 tamaños de letra, sin
+    overflow horizontal como criterio automático) apareció overflow
+    horizontal en TODAS las combinaciones. La causa no tenía nada que
+    ver con el tamaño de letra: la solapa "Entrenamientos" (renombrada
+    de "Actividad" en un cambio anterior de esta sesión) es una sola
+    palabra que no puede partirse en dos líneas, y a 390px de ancho no
+    entraba en su cuarto del `TabBar` — un bug que ya existía desde
+    ese cambio anterior y que ningún chequeo visual había detectado
+    hasta este barrido automático. Arreglado en `TabBar.tsx`: label
+    acortado a "Entreno", agregado `min-w-0 truncate` como red de
+    seguridad, y la solapa de arriba pasó a tener su propia escala de
+    tamaño de letra más conservadora (clase `.tabbar-label` en
+    `globals.css`, tope de 11.5px en "grande" en vez de seguir la
+    escala general de 15px) — de otro modo, justo en el tamaño
+    "grande" (el que más le importa a alguien con dificultad para
+    leer), las 4 solapas se recortaban con "…".
+  - Nueva migración `migration_2026-09-12c_add_font_size.sql`
+    (columna `font_size` en `user_settings`, **falta correrla**) +
+    mapeo en `app/api/data/route.ts`.
+  Verificado con Playwright: barrido de 3 temas × 3 tamaños de letra
+  (24 chequeos) — sin overflow horizontal, sin errores de consola, el
+  `font-size` calculado escala correctamente en cada paso (9px → 10.5px
+  → 12.5px en un elemento de muestra), el meta viewport bloquea el
+  zoom, el onboarding muestra el paso de tamaño de letra primero y lo
+  aplica en vivo, y el popup de ayuda (InfoHint) abre con el tamaño
+  nuevo y cierra al tocar afuera sin mover el scroll de la página.
+  `npm run build` limpio.

@@ -8,7 +8,7 @@ const TABS: { id: MainTab; label: string }[] = [
   { id: "inicio", label: "Inicio" },
   { id: "comidas", label: "Comidas" },
   { id: "macros", label: "Macros" },
-  { id: "actividad", label: "Entrenamientos" },
+  { id: "actividad", label: "Entreno" },
 ];
 
 export function TabBar({
@@ -30,7 +30,7 @@ export function TabBar({
           key={tab.id}
           type="button"
           onClick={() => onChange(tab.id)}
-          className={`flex-1 rounded-lg px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors ${
+          className={`tabbar-label min-w-0 flex-1 truncate rounded-lg px-1.5 py-2 text-center font-mono uppercase tracking-normal transition-colors ${
             active === tab.id ? "bg-gold text-bg" : "text-textMuted"
           }`}
         >

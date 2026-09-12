@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { GuidedGoalCalculator } from "@/components/GuidedGoalCalculator";
-import { CalculatorProfile } from "@/lib/types";
+import { CalculatorProfile, FontSize, FONT_SIZE_OPTIONS } from "@/lib/types";
 
 type GoalResult = { gasto: number; objetivo: number; calculatorProfile: CalculatorProfile };
-type Step = "calc" | "actividad";
+type Step = "tamano" | "calc" | "actividad";
 type ActivityLevel = "leve" | "moderado" | "alto" | "exigente";
 
 const ACTIVITY_LEVELS: Record<ActivityLevel, { label: string; pasos: number; description: string }> = {
@@ -32,21 +32,26 @@ const ACTIVITY_LEVELS: Record<ActivityLevel, { label: string; pasos: number; des
 };
 
 const STEP_LABELS: Record<Step, string> = {
+  tamano: "Tamaño de letra",
   calc: "Definí tu objetivo",
   actividad: "Tu nivel de actividad",
 };
 
 export function OnboardingWizard({
   tdeeFallback,
+  fontSize,
+  onSelectFontSize,
   onComplete,
 }: {
   tdeeFallback: number;
+  fontSize?: FontSize;
+  onSelectFontSize: (fontSize: FontSize) => void;
   onComplete: (data: { gasto: number; objetivo: number; calculatorProfile: CalculatorProfile; pesoKg?: number; pasos?: number }) => void;
 }) {
-  const [step, setStep] = useState<Step>("calc");
+  const [step, setStep] = useState<Step>("tamano");
   const [goalResult, setGoalResult] = useState<GoalResult | null>(null);
 
-  const stepOrder: Step[] = ["calc", "actividad"];
+  const stepOrder: Step[] = ["tamano", "calc", "actividad"];
   const stepIndex = stepOrder.indexOf(step);
 
   const finish = (activity?: ActivityLevel) => {
@@ -65,6 +70,35 @@ export function OnboardingWizard({
         <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-gold">Paso {stepIndex + 1} de {stepOrder.length}</div>
         <h1 className="mt-1 font-display text-2xl leading-tight text-text">{STEP_LABELS[step]}</h1>
       </div>
+
+      {step === "tamano" && (
+        <div className="rounded-xl border border-sage/40 bg-surface p-4">
+          <h3 className="mb-2 font-display text-lg text-text">¿Qué tamaño de letra preferís?</h3>
+          <div className="mb-3 text-[11px] text-textMuted">
+            Podés cambiarlo cuando quieras desde Preferencias, tocando el engranaje arriba.
+          </div>
+          <div className="grid grid-cols-1 gap-2">
+            {FONT_SIZE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  onSelectFontSize(opt.value);
+                  setStep("calc");
+                }}
+                className={`rounded-lg border px-3 py-3 text-left transition-colors ${
+                  (fontSize || "chico") === opt.value ? "border-gold bg-gold/10" : "border-border bg-bg hover:border-gold/60"
+                }`}
+              >
+                <div className="font-sans font-bold text-text" style={{ fontSize: opt.previewPx }}>
+                  {opt.label}
+                </div>
+                <div className="mt-0.5 text-[11px] text-textMuted">{opt.description}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {step === "calc" && (
         <GuidedGoalCalculator

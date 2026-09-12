@@ -47,6 +47,10 @@ export default function Home() {
     document.documentElement.setAttribute("data-theme", settings.theme || "oscuro");
   }, [settings.theme]);
 
+  useEffect(() => {
+    document.documentElement.setAttribute("data-font-size", settings.fontSize || "chico");
+  }, [settings.fontSize]);
+
   const enabledTabs = settings.enabledTabs || DEFAULT_ENABLED_TABS;
   useEffect(() => {
     if (activeTab !== "inicio" && !enabledTabs.includes(activeTab)) setActiveTab("inicio");
@@ -133,6 +137,8 @@ export default function Home() {
         <AuthPanel onAuthChange={handleAuthChange} />
         <OnboardingWizard
           tdeeFallback={settings.tdeeFallback}
+          fontSize={settings.fontSize}
+          onSelectFontSize={(fontSize) => saveSettings({ ...settings, fontSize })}
           onComplete={({ gasto, objetivo, calculatorProfile, pesoKg, pasos }) => {
             saveSettings({ ...settings, tdeeFallback: gasto, goal: objetivo, calculatorProfile });
             if (pesoKg || pasos) {

@@ -90,7 +90,7 @@ export async function GET() {
 
   const [daysResult, settingsResult] = await Promise.all([
     supabase.from("days").select("*").order("fecha", { ascending: true }),
-    supabase.from("user_settings").select("goal, tdee_fallback, weekly_weights, calculator_profile, tour_done, week_plan, routines, training_schedule, theme, enabled_tabs").eq("user_id", user.id).maybeSingle(),
+    supabase.from("user_settings").select("goal, tdee_fallback, weekly_weights, calculator_profile, tour_done, week_plan, routines, training_schedule, theme, enabled_tabs, font_size").eq("user_id", user.id).maybeSingle(),
   ]);
 
   if (daysResult.error) return NextResponse.json({ error: daysResult.error.message }, { status: 500 });
@@ -110,6 +110,7 @@ export async function GET() {
           trainingSchedule: ((settingsResult.data as Record<string, unknown>).training_schedule as Settings["trainingSchedule"]) || {},
           theme: ((settingsResult.data as Record<string, unknown>).theme as Settings["theme"]) || undefined,
           enabledTabs: ((settingsResult.data as Record<string, unknown>).enabled_tabs as Settings["enabledTabs"]) || undefined,
+          fontSize: ((settingsResult.data as Record<string, unknown>).font_size as Settings["fontSize"]) || undefined,
         }
       : DEFAULT_SETTINGS,
   });
@@ -147,6 +148,7 @@ export async function PUT(req: NextRequest) {
       training_schedule: settings.trainingSchedule || {},
       theme: settings.theme || null,
       enabled_tabs: settings.enabledTabs || [],
+      font_size: settings.fontSize || null,
     });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }
