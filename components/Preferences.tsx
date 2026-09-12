@@ -15,7 +15,19 @@ const TAB_LABELS: Record<MainTab, string> = {
   actividad: "Entrenamientos",
 };
 
-export function Preferences({ settings, onSave }: { settings: Settings; onSave: (settings: Settings) => void }) {
+export function Preferences({
+  settings,
+  onSave,
+  onOpenCalc,
+  onOpenAI,
+  onOpenDatos,
+}: {
+  settings: Settings;
+  onSave: (settings: Settings) => void;
+  onOpenCalc: () => void;
+  onOpenAI: () => void;
+  onOpenDatos: () => void;
+}) {
   const theme = settings.theme || "oscuro";
   const enabledTabs = settings.enabledTabs || DEFAULT_ENABLED_TABS;
 
@@ -79,6 +91,33 @@ export function Preferences({ settings, onSave }: { settings: Settings; onSave: 
         </div>
         <div className="mt-2 text-[11px] text-textMuted">
           Elegí qué solapas ver arriba de todo, además de Inicio. Podés cambiarlo cuando quieras.
+        </div>
+      </div>
+
+      <div className="mt-5">
+        <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">Herramientas</div>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={onOpenCalc}
+            className="rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
+          >
+            Objetivo
+          </button>
+          <button
+            type="button"
+            onClick={onOpenAI}
+            className="rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
+          >
+            Cargar con IA
+          </button>
+          <button
+            type="button"
+            onClick={onOpenDatos}
+            className="col-span-2 rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
+          >
+            Datos
+          </button>
         </div>
       </div>
     </div>

@@ -921,3 +921,33 @@ algo puntual.
   cambiando `settings.theme` directamente ya que el menú de cuenta
   necesita sesión real de Supabase, no disponible en el entorno de
   testeo local). `npm run build` limpio antes y después de los cambios.
+- **2026-09-12**: ajustes al menú de cuenta y a Preferencias, a pedido
+  del usuario tras ver el rediseño anterior.
+  - `AuthPanel.tsx`: la barra de cuenta logueada pasó de ser
+    semi-transparente a una barra sólida (`bg-surface`, con borde
+    inferior), muestra el **nombre** de la cuenta vinculada
+    (`user_metadata.full_name`/`name`, que Google sí completa) en vez
+    del email — si no hay nombre disponible (login por magic link, que
+    no tiene metadata), cae al email como antes. El botón que abre el
+    menú pasó de un círculo con la inicial a un ícono de engranaje
+    (⚙), que abre el mismo menú de siempre (Preferencias / Cerrar
+    sesión). No se agregó opción de contraseña, a pedido explícito del
+    usuario ("no pongamos la contraseña").
+  - `Preferences.tsx`: se agregó una tercera sección, "Herramientas",
+    con los mismos 3 accesos que antes vivían en la tarjeta
+    "Herramientas" de Inicio (Objetivo, Cargar con IA, Datos) — ahora
+    reciben `onOpenCalc/onOpenAI/onOpenDatos` como props y abren los
+    mismos paneles de siempre desde adentro de Preferencias.
+  - `page.tsx`: se sacó la tarjeta "Herramientas" de Inicio (ya no
+    hace falta, vive en Preferencias). Como el layout de Inicio en
+    desktop era de 2 columnas (`lg:grid-cols-[1.3fr_1fr]`) y la
+    columna derecha solo tenía esa tarjeta, se simplificó a una sola
+    columna centrada (`mx-auto max-w-lg`) para no dejar una columna
+    vacía.
+  Probado con Playwright: como el menú de cuenta necesita sesión real
+  de Supabase (no disponible en local), se forzó temporalmente el
+  estado de `AuthPanel` en el archivo (revertido después de la
+  captura, no quedó en el código) para verificar la barra sólida, el
+  nombre "Gabriel Rosa", el ícono de engranaje, el menú desplegable, y
+  que "Cargar con IA" desde adentro de Preferencias abre el mismo modal
+  de siempre — todo sin errores de consola. `npm run build` limpio.

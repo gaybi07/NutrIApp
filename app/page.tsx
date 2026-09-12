@@ -24,7 +24,6 @@ import { Preferences } from "@/components/Preferences";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
 import { AppTour } from "@/components/AppTour";
 import { TipPopup } from "@/components/TipPopup";
-import { Collapsible } from "@/components/Collapsible";
 import { isSupabaseConfigured } from "@/lib/supabase/browser";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 import { useInventory } from "@/lib/useInventory";
@@ -205,7 +204,7 @@ export default function Home() {
       )}
 
       {activeTab === "inicio" && (
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.3fr_1fr] lg:items-start">
+      <div className="mx-auto max-w-lg">
         <div className="min-w-0">
           <TodayCard
             entry={todayEntry}
@@ -262,31 +261,6 @@ export default function Home() {
               avgGasto={settings.tdeeFallback}
             />
           </div>
-        </div>
-
-        <div className="min-w-0">
-          <Collapsible eyebrow="Herramientas" title="Calculadora y carga con IA" info={SECTION_HELP.herramientas}>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => setPanel("calc")}
-                className="rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
-              >
-                Objetivo
-              </button>
-              <button
-                onClick={() => setPanel("ai")}
-                className="rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
-              >
-                Cargar con IA
-              </button>
-              <button
-                onClick={() => setPanel("datos")}
-                className="col-span-2 rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
-              >
-                Datos
-              </button>
-            </div>
-          </Collapsible>
         </div>
       </div>
       )}
@@ -466,7 +440,13 @@ export default function Home() {
             >
               Cerrar
             </button>
-            <Preferences settings={settings} onSave={saveSettings} />
+            <Preferences
+              settings={settings}
+              onSave={saveSettings}
+              onOpenCalc={() => setPanel("calc")}
+              onOpenAI={() => setPanel("ai")}
+              onOpenDatos={() => setPanel("datos")}
+            />
           </div>
         </div>
       )}
