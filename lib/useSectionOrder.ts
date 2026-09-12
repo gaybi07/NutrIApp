@@ -4,6 +4,26 @@ import { useCallback } from "react";
 import { closestCenter, DragEndEvent, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 
+// Mientras se mantiene apretada la manito y se mueve el dedo, algunos
+// celulares confunden ese gesto sostenido con un pinch/doble-tap de zoom
+// nativo del navegador. Se bloquea el zoom SOLO mientras dura el arrastre
+// (no de forma permanente, para no repetir el bug ya conocido de que
+// bloquear el zoom para toda la app rompe el scroll normal) y se restaura
+// apenas se suelta o se cancela.
+let originalViewportContent: string | null = null;
+
+function lockZoom() {
+  const meta = document.querySelector('meta[name="viewport"]');
+  if (!meta) return;
+  if (originalViewportContent === null) originalViewportContent = meta.getAttribute("content") || "width=device-width, initial-scale=1";
+  meta.setAttribute("content", `${originalViewportContent}, maximum-scale=1, user-scalable=no`);
+}
+
+function unlockZoom() {
+  const meta = document.querySelector('meta[name="viewport"]');
+  if (meta && originalViewportContent !== null) meta.setAttribute("content", originalViewportContent);
+}
+
 /**
  * Arma los sensores + el handler de reordenamiento para una lista de
  * bloques reordenables (mantener apretado, como mover íconos en la
@@ -20,8 +40,13 @@ export function useSectionOrder<T extends string>(order: T[], onReorder: (next: 
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
+  const handleDragStart = useCallback(() => {
+    lockZoom();
+  }, []);
+
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
+      unlockZoom();
       const { active, over } = event;
       if (!over || active.id === over.id) return;
       const oldIndex = order.indexOf(active.id as T);
@@ -32,5 +57,9 @@ export function useSectionOrder<T extends string>(order: T[], onReorder: (next: 
     [order, onReorder]
   );
 
-  return { sensors, handleDragEnd, collisionDetection: closestCenter };
+  const handleDragCancel = useCallback(() => {
+    unlockZoom();
+  }, []);
+
+  return { sensors, handleDragStart, handleDragEnd, handleDragCancel, collisionDetection: closestCenter };
 }

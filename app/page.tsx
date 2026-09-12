@@ -232,7 +232,7 @@ export default function Home() {
       {activeTab === "inicio" && (
       <div className="mx-auto max-w-lg">
         <div className="min-w-0">
-          <DndContext sensors={inicioDrag.sensors} collisionDetection={inicioDrag.collisionDetection} onDragEnd={inicioDrag.handleDragEnd}>
+          <DndContext sensors={inicioDrag.sensors} collisionDetection={inicioDrag.collisionDetection} onDragStart={inicioDrag.handleDragStart} onDragEnd={inicioDrag.handleDragEnd} onDragCancel={inicioDrag.handleDragCancel}>
             <SortableContext items={inicioOrder} strategy={verticalListSortingStrategy}>
               {inicioOrder.map((blockId) => (
                 <SortableSection key={blockId} id={blockId}>

@@ -1453,3 +1453,29 @@ algo puntual.
   deformación en los bloques vecinos), y se confirmó que soltarla
   sigue reordenando bien (`["comidas","semana","hoy"]`) — sin errores
   de consola. `npx tsc --noEmit` y `npm run build` limpios.
+- **2026-09-12**: seguía viéndose mal al arrastrar en el celular —
+  "como que se hace un zoom extremo". No era un problema de CSS (ya
+  no queda ningún `CSS.Transform` con scale en el código, se había
+  cambiado a `CSS.Translate` en el cambio anterior): es el gesto
+  nativo de zoom del navegador (pinch / doble-tap) confundiéndose con
+  el mantener-apretado-y-mover del arrastre.
+  - `lib/useSectionOrder.ts`: ahora bloquea el zoom del navegador
+    (`maximum-scale=1, user-scalable=no` en el `<meta name="viewport">`)
+    JUSTO mientras dura un arrastre — desde que se dispara
+    `onDragStart` hasta `onDragEnd`/`onDragCancel` — y lo restaura al
+    valor original apenas termina. A propósito NO se bloqueó el zoom
+    de forma permanente para toda la app: eso ya se había probado
+    antes (combinado con `overscroll-behavior: none`) y rompió el
+    scroll normal del celular, así que ahora el bloqueo es temporal y
+    quirúrgico, solo durante el gesto de arrastre.
+  - Las 4 solapas (`app/page.tsx`, `ComidasTab`, `MacrosTab`,
+    `ActividadTab`) pasan `onDragStart`/`onDragCancel` además del ya
+    existente `onDragEnd` al `<DndContext>`.
+  Probado con Playwright emulando un iPhone 13 (`hasTouch`, viewport
+  real de celular): se confirmó que el `<meta name="viewport">` pasa
+  de `width=device-width, initial-scale=1` a esa misma cadena +
+  `maximum-scale=1, user-scalable=no` apenas arranca el arrastre, y
+  se restaura exactamente al valor original apenas se suelta; el
+  reordenamiento sigue funcionando y el scroll normal después de
+  soltar sigue andando — sin errores de consola. `npx tsc --noEmit` y
+  `npm run build` limpios.

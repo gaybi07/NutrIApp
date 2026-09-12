@@ -267,7 +267,7 @@ export function MacrosTab({
   };
 
   return (
-    <DndContext sensors={drag.sensors} collisionDetection={drag.collisionDetection} onDragEnd={drag.handleDragEnd}>
+    <DndContext sensors={drag.sensors} collisionDetection={drag.collisionDetection} onDragStart={drag.handleDragStart} onDragEnd={drag.handleDragEnd} onDragCancel={drag.handleDragCancel}>
       <SortableContext items={blockOrder} strategy={verticalListSortingStrategy}>
         {blockOrder.map((blockId) => (
           <SortableSection key={blockId} id={blockId}>
