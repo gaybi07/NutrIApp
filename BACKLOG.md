@@ -1063,3 +1063,16 @@ algo puntual.
   aplica en vivo, y el popup de ayuda (InfoHint) abre con el tamaño
   nuevo y cierra al tocar afuera sin mover el scroll de la página.
   `npm run build` limpio.
+- **2026-09-12**: el usuario reportó "no me deja scrollear en la app"
+  en su celular después del cambio anterior. Revertido de inmediato lo
+  que había agregado para "bloquear zoom y scroll de más": `viewport`
+  en `app/layout.tsx` (sacados `maximumScale: 1` y `userScalable:
+  false` — probablemente el causante, hay quirks conocidos donde
+  `user-scalable=no` rompe el scroll normal en algunos navegadores
+  mobile) y `overscroll-behavior: none` en `html, body` de
+  `globals.css` (también sospechoso al combinarse con el `TabBar`
+  `sticky`). No se pudo reproducir el bug en el entorno de testeo
+  local (Playwright/Chromium headless no tiene los mismos quirks de
+  Safari/Chrome mobile), así que se optó por revertir ambos cambios en
+  vez de intentar aislar cuál era el culpable — recuperar el scroll es
+  más importante que bloquear el pinch-zoom. `npm run build` limpio.
