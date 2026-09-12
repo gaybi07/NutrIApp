@@ -22,6 +22,8 @@ export function ComidasTab({
   replaceItems,
   order,
   onReorder,
+  hidden,
+  onHide,
 }: {
   items: InventoryItem[];
   consumeAmounts: (amounts: Array<{ id: string; quantity: number }>) => void;
@@ -34,15 +36,18 @@ export function ComidasTab({
   replaceItems: (items: InventoryItem[]) => void;
   order?: ComidasBlockId[];
   onReorder: (next: ComidasBlockId[]) => void;
+  hidden?: ComidasBlockId[];
+  onHide: (id: ComidasBlockId) => void;
 }) {
   const blockOrder = resolveOrder(order, DEFAULT_COMIDAS_ORDER);
   const drag = useSectionOrder(blockOrder, onReorder);
+  const visibleOrder = blockOrder.filter((id) => !(hidden || []).includes(id));
 
   return (
     <DndContext sensors={drag.sensors} collisionDetection={drag.collisionDetection} onDragStart={drag.handleDragStart} onDragEnd={drag.handleDragEnd} onDragCancel={drag.handleDragCancel}>
-      <SortableContext items={blockOrder} strategy={verticalListSortingStrategy}>
-        {blockOrder.map((blockId) => (
-          <SortableSection key={blockId} id={blockId}>
+      <SortableContext items={visibleOrder} strategy={verticalListSortingStrategy}>
+        {visibleOrder.map((blockId) => (
+          <SortableSection key={blockId} id={blockId} onHide={() => onHide(blockId)}>
             {blockId === "recetas" && (
               <RecipePlanner
                 items={items}

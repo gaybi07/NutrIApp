@@ -92,7 +92,7 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
 
-  const SETTINGS_COLUMNS = "goal, tdee_fallback, weekly_weights, calculator_profile, tour_done, week_plan, routines, training_schedule, theme, enabled_tabs, font_size, inicio_order, comidas_order, macros_order, actividad_order";
+  const SETTINGS_COLUMNS = "goal, tdee_fallback, weekly_weights, calculator_profile, tour_done, week_plan, routines, training_schedule, theme, enabled_tabs, font_size, inicio_order, comidas_order, macros_order, actividad_order, inicio_hidden, comidas_hidden, macros_hidden, actividad_hidden";
   const SETTINGS_COLUMNS_BASE = "goal, tdee_fallback, weekly_weights, calculator_profile, tour_done, week_plan, routines, training_schedule, theme, enabled_tabs, font_size";
 
   const [daysResult, settingsResultFull] = await Promise.all([
@@ -132,6 +132,10 @@ export async function GET() {
           comidasOrder: nonEmptyArray((settingsResult.data as Record<string, unknown>).comidas_order) as Settings["comidasOrder"],
           macrosOrder: nonEmptyArray((settingsResult.data as Record<string, unknown>).macros_order) as Settings["macrosOrder"],
           actividadOrder: nonEmptyArray((settingsResult.data as Record<string, unknown>).actividad_order) as Settings["actividadOrder"],
+          inicioHidden: ((settingsResult.data as Record<string, unknown>).inicio_hidden as Settings["inicioHidden"]) || [],
+          comidasHidden: ((settingsResult.data as Record<string, unknown>).comidas_hidden as Settings["comidasHidden"]) || [],
+          macrosHidden: ((settingsResult.data as Record<string, unknown>).macros_hidden as Settings["macrosHidden"]) || [],
+          actividadHidden: ((settingsResult.data as Record<string, unknown>).actividad_hidden as Settings["actividadHidden"]) || [],
         }
       : DEFAULT_SETTINGS,
   });
@@ -174,12 +178,20 @@ export async function PUT(req: NextRequest) {
       comidas_order: settings.comidasOrder || [],
       macros_order: settings.macrosOrder || [],
       actividad_order: settings.actividadOrder || [],
+      inicio_hidden: settings.inicioHidden || [],
+      comidas_hidden: settings.comidasHidden || [],
+      macros_hidden: settings.macrosHidden || [],
+      actividad_hidden: settings.actividadHidden || [],
     };
     let { error } = await supabase.from("user_settings").upsert(settingsRow);
     // Igual que en GET: si todavía no se corrió la migración de las columnas
-    // de orden, reintentamos sin ellas en vez de perder el resto del guardado.
+    // de orden/apagado, reintentamos sin ellas en vez de perder el resto del guardado.
     if (error?.message?.includes("does not exist")) {
-      const { inicio_order, comidas_order, macros_order, actividad_order, ...baseRow } = settingsRow;
+      const {
+        inicio_order, comidas_order, macros_order, actividad_order,
+        inicio_hidden, comidas_hidden, macros_hidden, actividad_hidden,
+        ...baseRow
+      } = settingsRow;
       ({ error } = await supabase.from("user_settings").upsert(baseRow));
     }
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

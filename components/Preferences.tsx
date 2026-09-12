@@ -1,6 +1,23 @@
 "use client";
 
-import { Settings, ThemeMode, MainTab, OPTIONAL_TABS, DEFAULT_ENABLED_TABS, FontSize, FONT_SIZE_OPTIONS, resolveOrder } from "@/lib/types";
+import {
+  Settings,
+  ThemeMode,
+  MainTab,
+  OPTIONAL_TABS,
+  DEFAULT_ENABLED_TABS,
+  FontSize,
+  FONT_SIZE_OPTIONS,
+  resolveOrder,
+  DEFAULT_INICIO_ORDER,
+  INICIO_BLOCK_LABELS,
+  DEFAULT_COMIDAS_ORDER,
+  COMIDAS_BLOCK_LABELS,
+  DEFAULT_MACROS_ORDER,
+  MACROS_BLOCK_LABELS,
+  DEFAULT_ACTIVIDAD_ORDER,
+  ACTIVIDAD_BLOCK_LABELS,
+} from "@/lib/types";
 
 const THEME_OPTIONS: { value: ThemeMode; label: string; description: string }[] = [
   { value: "oscuro", label: "Oscuro", description: "Fondo oscuro, como está ahora." },
@@ -155,6 +172,73 @@ export function ToolsSettings({
         >
           Datos
         </button>
+      </div>
+    </div>
+  );
+}
+
+function toggleHidden<T extends string>(list: T[] | undefined, id: T): T[] {
+  const current = list || [];
+  return current.includes(id) ? current.filter((x) => x !== id) : [...current, id];
+}
+
+/** Prende/apaga secciones apagadas con el foquito (💡) desde cualquier
+ * solapa — una vez apagada, una sección desaparece de la pantalla y
+ * este panel es el único lugar para volver a prenderla. */
+export function SectionsSettings({ settings, onSave }: { settings: Settings; onSave: (settings: Settings) => void }) {
+  const renderGroup = <T extends string,>(
+    title: string,
+    order: T[],
+    labels: Record<T, string>,
+    hidden: T[] | undefined,
+    onToggle: (id: T) => void
+  ) => (
+    <div key={title}>
+      <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-textMuted">{title}</div>
+      <div className="flex flex-col gap-2">
+        {order.map((id) => {
+          const isHidden = (hidden || []).includes(id);
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onToggle(id)}
+              className={`flex items-center justify-between rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                isHidden ? "border-border opacity-60" : "border-gold/60 bg-gold/10"
+              }`}
+            >
+              <span className={`font-sans text-sm ${isHidden ? "text-textMuted" : "text-text"}`}>{labels[id]}</span>
+              <span className={`font-mono text-[9px] uppercase tracking-wide ${isHidden ? "text-textMuted" : "text-gold"}`}>
+                {isHidden ? "Apagada" : "✓ Prendida"}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  return (
+    <div>
+      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold mb-1">Preferencias</div>
+      <h2 className="font-display text-xl leading-none mb-1">Secciones</h2>
+      <div className="mb-4 text-[11px] text-textMuted">
+        Apagá con el foquito (💡) las secciones que no te interesan desde cualquier solapa — desaparecen de la
+        pantalla. Volvé a prenderlas acá.
+      </div>
+      <div className="flex flex-col gap-4">
+        {renderGroup("Inicio", DEFAULT_INICIO_ORDER, INICIO_BLOCK_LABELS, settings.inicioHidden, (id) =>
+          onSave({ ...settings, inicioHidden: toggleHidden(settings.inicioHidden, id) })
+        )}
+        {renderGroup("Comidas", DEFAULT_COMIDAS_ORDER, COMIDAS_BLOCK_LABELS, settings.comidasHidden, (id) =>
+          onSave({ ...settings, comidasHidden: toggleHidden(settings.comidasHidden, id) })
+        )}
+        {renderGroup("Macros", DEFAULT_MACROS_ORDER, MACROS_BLOCK_LABELS, settings.macrosHidden, (id) =>
+          onSave({ ...settings, macrosHidden: toggleHidden(settings.macrosHidden, id) })
+        )}
+        {renderGroup("Entreno", DEFAULT_ACTIVIDAD_ORDER, ACTIVIDAD_BLOCK_LABELS, settings.actividadHidden, (id) =>
+          onSave({ ...settings, actividadHidden: toggleHidden(settings.actividadHidden, id) })
+        )}
       </div>
     </div>
   );

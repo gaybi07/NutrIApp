@@ -1516,3 +1516,41 @@ algo puntual.
   manito de "Indicadores" hasta arriba de todo, queda primero en la
   pantalla y el orden nuevo persiste — sin errores de consola. `npx
   tsc --noEmit` y `npm run build` limpios.
+- **2026-09-12**: pedido de un "foquito" (💡) para apagar secciones
+  que no interesan, en cualquiera de las 4 solapas. Se preguntó cómo
+  debía comportarse el apagado (¿se achica en el lugar, o desaparece
+  del todo?) y se eligió que desaparezca por completo de la pantalla,
+  con una lista nueva en Preferencias para volver a prenderlas.
+  - `components/SortableSection.tsx`: al lado de la manito (✋) ahora
+    hay un foquito — tocarlo llama a un nuevo `onHide` prop en vez de
+    arrastrar nada.
+  - `lib/types.ts`: 4 campos nuevos en `Settings`
+    (`inicioHidden`/`comidasHidden`/`macrosHidden`/`actividadHidden`,
+    uno por solapa) más un mapa de labels legibles por bloque
+    (`INICIO_BLOCK_LABELS`, etc.) para mostrarlos en el panel nuevo.
+  - `app/page.tsx`, `ComidasTab.tsx`, `MacrosTab.tsx`,
+    `ActividadTab.tsx`: el orden que se manda a `SortableContext`/
+    `.map()` ahora se filtra (`visibleOrder`) sacando los bloques
+    apagados — no se renderizan pero siguen en el `order` guardado,
+    así que al reactivarlos vuelven a su posición de siempre.
+  - `components/Preferences.tsx`: panel nuevo `SectionsSettings`
+    ("Secciones") que lista los bloques de las 4 solapas agrupados,
+    cada uno con su estado (✓ Prendida / Apagada) — tocarlo alterna.
+    Nueva entrada "Secciones" en el menú del engranaje (⚙), entre
+    "Solapas" y "Herramientas" (`AuthPanel.tsx`).
+  - Supabase: 4 columnas nuevas (`inicio_hidden`, `comidas_hidden`,
+    `macros_hidden`, `actividad_hidden`), mismo patrón jsonb que las
+    de orden — `migration_2026-09-12f_add_section_hidden.sql`
+    (**falta correrla**).
+  Como el menú del engranaje solo aparece autenticado con Supabase (en
+  "Modo local" no se ve), para poder probar el panel "Secciones" con
+  Playwright sin tocar la cuenta real se agregó temporalmente un flag
+  de test (`NEXT_PUBLIC_TEST_FORCE_GEAR`) que se sacó del código antes
+  de terminar — se confirmó con `git diff` que `AuthPanel.tsx` quedó
+  limpio, sin ese flag.
+  Probado con Playwright: tocar el foquito de "Indicadores" en Inicio
+  lo hace desaparecer al toque (y `inicioHidden` pasa a
+  `["indicadores"]`); en el panel "Secciones" aparece marcado como
+  "Apagada"; al tocarlo ahí vuelve a aparecer en Inicio con las 6
+  manitos de siempre — sin errores de consola. `npx tsc --noEmit` y
+  `npm run build` limpios.

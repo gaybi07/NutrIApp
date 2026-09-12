@@ -8,12 +8,14 @@ export function AuthPanel({
   onOpenTheme,
   onOpenFontSize,
   onOpenTabs,
+  onOpenSections,
   onOpenTools,
 }: {
   onAuthChange?: (authenticated: boolean) => void;
   onOpenTheme?: () => void;
   onOpenFontSize?: () => void;
   onOpenTabs?: () => void;
+  onOpenSections?: () => void;
   onOpenTools?: () => void;
 }) {
   const [email, setEmail] = useState("");
@@ -131,6 +133,16 @@ export function AuthPanel({
                 className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
               >
                 Solapas
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onOpenSections?.();
+                }}
+                className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
+              >
+                Secciones
               </button>
               <button
                 type="button"

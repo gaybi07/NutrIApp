@@ -85,6 +85,8 @@ export function ActividadTab({
   onSaveSchedule,
   order,
   onReorder,
+  hidden,
+  onHide,
 }: {
   entry: DayEntry;
   weekDates: string[];
@@ -98,9 +100,12 @@ export function ActividadTab({
   onSaveSchedule: (schedule: TrainingSchedule) => void;
   order?: ActividadBlockId[];
   onReorder: (next: ActividadBlockId[]) => void;
+  hidden?: ActividadBlockId[];
+  onHide: (id: ActividadBlockId) => void;
 }) {
   const blockOrder = resolveOrder(order, DEFAULT_ACTIVIDAD_ORDER);
   const drag = useSectionOrder(blockOrder, onReorder);
+  const visibleOrder = blockOrder.filter((id) => !(hidden || []).includes(id));
 
   const sessions = getTrainingSessions(entry);
   const trainingKcal = estimateTrainingCalories(entry);
@@ -179,9 +184,9 @@ export function ActividadTab({
 
   return (
     <DndContext sensors={drag.sensors} collisionDetection={drag.collisionDetection} onDragStart={drag.handleDragStart} onDragEnd={drag.handleDragEnd} onDragCancel={drag.handleDragCancel}>
-      <SortableContext items={blockOrder} strategy={verticalListSortingStrategy}>
-        {blockOrder.map((blockId) => (
-          <SortableSection key={blockId} id={blockId}>
+      <SortableContext items={visibleOrder} strategy={verticalListSortingStrategy}>
+        {visibleOrder.map((blockId) => (
+          <SortableSection key={blockId} id={blockId} onHide={() => onHide(blockId)}>
             {blocks[blockId]}
           </SortableSection>
         ))}

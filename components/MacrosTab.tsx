@@ -46,6 +46,8 @@ export function MacrosTab({
   onUpsert,
   order,
   onReorder,
+  hidden,
+  onHide,
 }: {
   entry: DayEntry;
   goal: number;
@@ -59,9 +61,12 @@ export function MacrosTab({
   onUpsert: (entry: DayEntry) => void;
   order?: MacrosBlockId[];
   onReorder: (next: MacrosBlockId[]) => void;
+  hidden?: MacrosBlockId[];
+  onHide: (id: MacrosBlockId) => void;
 }) {
   const blockOrder = resolveOrder(order, DEFAULT_MACROS_ORDER);
   const drag = useSectionOrder(blockOrder, onReorder);
+  const visibleOrder = blockOrder.filter((id) => !(hidden || []).includes(id));
   const targets = macroTargets(goal, proteinTarget);
   const consumedKcal = dayTotal(entry);
   const protein = dayProt(entry);
@@ -268,9 +273,9 @@ export function MacrosTab({
 
   return (
     <DndContext sensors={drag.sensors} collisionDetection={drag.collisionDetection} onDragStart={drag.handleDragStart} onDragEnd={drag.handleDragEnd} onDragCancel={drag.handleDragCancel}>
-      <SortableContext items={blockOrder} strategy={verticalListSortingStrategy}>
-        {blockOrder.map((blockId) => (
-          <SortableSection key={blockId} id={blockId}>
+      <SortableContext items={visibleOrder} strategy={verticalListSortingStrategy}>
+        {visibleOrder.map((blockId) => (
+          <SortableSection key={blockId} id={blockId} onHide={() => onHide(blockId)}>
             {blocks[blockId]}
           </SortableSection>
         ))}

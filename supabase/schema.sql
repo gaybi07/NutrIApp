@@ -53,7 +53,11 @@ create table public.user_settings (
   inicio_order jsonb not null default '[]'::jsonb,
   comidas_order jsonb not null default '[]'::jsonb,
   macros_order jsonb not null default '[]'::jsonb,
-  actividad_order jsonb not null default '[]'::jsonb
+  actividad_order jsonb not null default '[]'::jsonb,
+  inicio_hidden jsonb not null default '[]'::jsonb,
+  comidas_hidden jsonb not null default '[]'::jsonb,
+  macros_hidden jsonb not null default '[]'::jsonb,
+  actividad_hidden jsonb not null default '[]'::jsonb
 );
 
 alter table public.days enable row level security;

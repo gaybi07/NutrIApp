@@ -25,7 +25,7 @@ import { TodayCard } from "@/components/TodayCard";
 import { TodayMealsBreakdown } from "@/components/TodayMealsBreakdown";
 import { TrainingEntryForm } from "@/components/TrainingEntryForm";
 import { SleepEntryForm } from "@/components/SleepEntryForm";
-import { ThemeSettings, FontSizeSettings, TabsSettings, ToolsSettings } from "@/components/Preferences";
+import { ThemeSettings, FontSizeSettings, TabsSettings, ToolsSettings, SectionsSettings } from "@/components/Preferences";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
 import { AppTour } from "@/components/AppTour";
 import { TipPopup } from "@/components/TipPopup";
@@ -44,7 +44,9 @@ export default function Home() {
   const [weekOffset, setWeekOffset] = useState(0);
   const [activeTab, setActiveTab] = useState<MainTab>("inicio");
   const [panel, setPanel] = useState<
-    "calc" | "ai" | "entreno" | "sueno" | "datos" | "planificador" | "tema" | "tamano-letra" | "solapas" | "herramientas" | null
+    | "calc" | "ai" | "entreno" | "sueno" | "datos" | "planificador"
+    | "tema" | "tamano-letra" | "solapas" | "herramientas" | "secciones"
+    | null
   >(null);
   const [authenticated, setAuthenticated] = useState(!isSupabaseConfigured);
   const handleAuthChange = useCallback((value: boolean) => setAuthenticated(value), []);
@@ -60,6 +62,10 @@ export default function Home() {
 
   const inicioOrder = resolveOrder(settings.inicioOrder, DEFAULT_INICIO_ORDER);
   const inicioDrag = useSectionOrder(inicioOrder, (next) => saveSettings({ ...settings, inicioOrder: next }));
+  const inicioHidden = settings.inicioHidden || [];
+  const inicioVisible = inicioOrder.filter((id) => !inicioHidden.includes(id));
+  const hideInicioBlock = (id: (typeof inicioOrder)[number]) =>
+    saveSettings({ ...settings, inicioHidden: [...inicioHidden, id] });
 
   const enabledTabs = resolveOrder(settings.enabledTabs, DEFAULT_ENABLED_TABS);
   useEffect(() => {
@@ -169,6 +175,7 @@ export default function Home() {
         onOpenTheme={() => setPanel("tema")}
         onOpenFontSize={() => setPanel("tamano-letra")}
         onOpenTabs={() => setPanel("solapas")}
+        onOpenSections={() => setPanel("secciones")}
         onOpenTools={() => setPanel("herramientas")}
       />
 
@@ -209,6 +216,8 @@ export default function Home() {
           onUpsert={upsertDay}
           order={settings.macrosOrder}
           onReorder={(macrosOrder) => saveSettings({ ...settings, macrosOrder })}
+          hidden={settings.macrosHidden}
+          onHide={(id) => saveSettings({ ...settings, macrosHidden: [...(settings.macrosHidden || []), id] })}
         />
       )}
 
@@ -226,6 +235,8 @@ export default function Home() {
           onSaveSchedule={(trainingSchedule) => saveSettings({ ...settings, trainingSchedule })}
           order={settings.actividadOrder}
           onReorder={(actividadOrder) => saveSettings({ ...settings, actividadOrder })}
+          hidden={settings.actividadHidden}
+          onHide={(id) => saveSettings({ ...settings, actividadHidden: [...(settings.actividadHidden || []), id] })}
         />
       )}
 
@@ -233,9 +244,9 @@ export default function Home() {
       <div className="mx-auto max-w-lg">
         <div className="min-w-0">
           <DndContext sensors={inicioDrag.sensors} collisionDetection={inicioDrag.collisionDetection} onDragStart={inicioDrag.handleDragStart} onDragEnd={inicioDrag.handleDragEnd} onDragCancel={inicioDrag.handleDragCancel}>
-            <SortableContext items={inicioOrder} strategy={verticalListSortingStrategy}>
-              {inicioOrder.map((blockId) => (
-                <SortableSection key={blockId} id={blockId}>
+            <SortableContext items={inicioVisible} strategy={verticalListSortingStrategy}>
+              {inicioVisible.map((blockId) => (
+                <SortableSection key={blockId} id={blockId} onHide={() => hideInicioBlock(blockId)}>
                   {blockId === "hoy" && (
                     <TodayCard
                       entry={todayEntry}
@@ -328,6 +339,8 @@ export default function Home() {
           replaceItems={replaceInventory}
           order={settings.comidasOrder}
           onReorder={(comidasOrder) => saveSettings({ ...settings, comidasOrder })}
+          hidden={settings.comidasHidden}
+          onHide={(id) => saveSettings({ ...settings, comidasHidden: [...(settings.comidasHidden || []), id] })}
         />
       )}
 
@@ -527,6 +540,23 @@ export default function Home() {
               Cerrar
             </button>
             <TabsSettings settings={settings} onSave={saveSettings} />
+          </div>
+        </div>
+      )}
+
+      {panel === "secciones" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>
+          <div
+            className="relative my-4 max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-3 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              onClick={() => setPanel(null)}
+              className="absolute right-3 top-3 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+            >
+              Cerrar
+            </button>
+            <SectionsSettings settings={settings} onSave={saveSettings} />
           </div>
         </div>
       )}

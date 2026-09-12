@@ -18,8 +18,12 @@ import { CSS } from "@dnd-kit/utilities";
  * vez de mover todo su contenido (algunos bloques miden más de una
  * pantalla completa) — de lo contrario, arrastrarlo tapa toda la
  * pantalla y se ve mal en el celular.
+ *
+ * Al lado de la manito hay un foquito (💡) para apagar del todo una
+ * sección que no interesa — desaparece de la pantalla y se puede
+ * volver a prender desde Preferencias > Secciones.
  */
-export function SortableSection({ id, children }: { id: string; children: ReactNode }) {
+export function SortableSection({ id, onHide, children }: { id: string; onHide?: () => void; children: ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
   const style = {
@@ -33,17 +37,29 @@ export function SortableSection({ id, children }: { id: string; children: ReactN
 
   return (
     <div ref={setNodeRef} style={style} className="relative">
-      <button
-        type="button"
-        aria-label="Mantené apretada la manito para mover esta sección"
-        {...attributes}
-        {...listeners}
-        className={`absolute -top-1.5 -right-1.5 z-10 flex h-6 w-6 touch-none select-none items-center justify-center rounded-full border text-[11px] leading-none opacity-60 shadow-sm transition-all active:bg-border/80 active:opacity-100 ${
-          isDragging ? "cursor-grabbing bg-border border-gold opacity-100" : "cursor-grab bg-surface border-border"
-        }`}
-      >
-        ✋
-      </button>
+      <div className="absolute -top-1.5 -right-1.5 z-10 flex items-center gap-1">
+        {onHide && (
+          <button
+            type="button"
+            aria-label="Apagar esta sección"
+            onClick={onHide}
+            className="flex h-6 w-6 select-none items-center justify-center rounded-full border border-border bg-surface text-[11px] leading-none opacity-60 shadow-sm transition-all active:bg-border/80 active:opacity-100"
+          >
+            💡
+          </button>
+        )}
+        <button
+          type="button"
+          aria-label="Mantené apretada la manito para mover esta sección"
+          {...attributes}
+          {...listeners}
+          className={`flex h-6 w-6 touch-none select-none items-center justify-center rounded-full border text-[11px] leading-none opacity-60 shadow-sm transition-all active:bg-border/80 active:opacity-100 ${
+            isDragging ? "cursor-grabbing bg-border border-gold opacity-100" : "cursor-grab bg-surface border-border"
+          }`}
+        >
+          ✋
+        </button>
+      </div>
       <div
         className={isDragging ? "overflow-hidden rounded-2xl shadow-lg" : undefined}
         style={isDragging ? { maxHeight: 72, opacity: 0.9, pointerEvents: "none" } : undefined}

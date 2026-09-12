@@ -133,20 +133,54 @@ export type InicioBlockId = "hoy" | "comidas" | "semanaNav" | "pesoSemana" | "in
 export const DEFAULT_INICIO_ORDER: InicioBlockId[] = [
   "hoy", "comidas", "semanaNav", "pesoSemana", "indicadores", "tablaSemana",
 ];
+export const INICIO_BLOCK_LABELS: Record<InicioBlockId, string> = {
+  hoy: "Hoy",
+  comidas: "Editar comidas de hoy",
+  semanaNav: "Semana del (fecha)",
+  pesoSemana: "Peso de esta semana",
+  indicadores: "Indicadores",
+  tablaSemana: "Tabla de la semana",
+};
 
 export type ComidasBlockId = "recetas" | "comunes" | "planificador" | "compras";
 export const DEFAULT_COMIDAS_ORDER: ComidasBlockId[] = ["recetas", "comunes", "planificador", "compras"];
+export const COMIDAS_BLOCK_LABELS: Record<ComidasBlockId, string> = {
+  recetas: "Planner de cocina",
+  comunes: "Comidas más comunes",
+  planificador: "Planificador semanal",
+  compras: "Registro de compras",
+};
 
 export type MacrosBlockId = "resumen" | "ranking" | "reparto" | "semana" | "proteina" | "fibra" | "diversidad" | "tabla";
 export const DEFAULT_MACROS_ORDER: MacrosBlockId[] = [
   "resumen", "ranking", "reparto", "semana", "proteina", "fibra", "diversidad", "tabla",
 ];
+export const MACROS_BLOCK_LABELS: Record<MacrosBlockId, string> = {
+  resumen: "Hoy · Macros",
+  ranking: "Ranking de días",
+  reparto: "Reparto de macros de hoy",
+  semana: "Macros de la semana",
+  proteina: "Proteína vs objetivo",
+  fibra: "Fibra de la semana",
+  diversidad: "Diversidad de esta semana",
+  tabla: "Tabla nutricional de la semana",
+};
 
 export type ActividadBlockId =
   | "resumen" | "ejercicios" | "pasosEditar" | "pasosChart" | "entrenoChart" | "suenoChart" | "volumenChart" | "rutinas";
 export const DEFAULT_ACTIVIDAD_ORDER: ActividadBlockId[] = [
   "resumen", "ejercicios", "pasosEditar", "pasosChart", "entrenoChart", "suenoChart", "volumenChart", "rutinas",
 ];
+export const ACTIVIDAD_BLOCK_LABELS: Record<ActividadBlockId, string> = {
+  resumen: "Hoy · Actividad",
+  ejercicios: "Ejercicios",
+  pasosEditar: "Pasos (editar)",
+  pasosChart: "Gráfico de pasos",
+  entrenoChart: "Gráfico de entrenamiento",
+  suenoChart: "Gráfico de sueño",
+  volumenChart: "Gráfico de volumen",
+  rutinas: "Rutinas",
+};
 
 /** Supabase guarda el orden custom como jsonb con default '[]', así que un
  * array vacío (todavía no personalizado) no debe pisar el orden por
@@ -180,6 +214,10 @@ export interface Settings {
   comidasOrder?: ComidasBlockId[]; // ídem, solapa Comidas
   macrosOrder?: MacrosBlockId[]; // ídem, solapa Macros
   actividadOrder?: ActividadBlockId[]; // ídem, solapa Entrenamientos
+  inicioHidden?: InicioBlockId[]; // bloques de Inicio apagados con el foquito — se pueden reactivar en Preferencias > Secciones
+  comidasHidden?: ComidasBlockId[]; // ídem, solapa Comidas
+  macrosHidden?: MacrosBlockId[]; // ídem, solapa Macros
+  actividadHidden?: ActividadBlockId[]; // ídem, solapa Entrenamientos
 }
 
 export const MEAL_LABELS: Record<MealKey, string> = {
