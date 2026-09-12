@@ -1,4 +1,4 @@
-import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, TrainingSession, GoalMode, ExerciseEntry, Weekday, WEEKDAYS } from "./types";
+import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, TrainingSession, GoalMode, ExerciseEntry, Weekday, WEEKDAYS, MealItem } from "./types";
 
 /**
  * Sesiones de entrenamiento del día. Si ya tiene el formato nuevo
@@ -35,6 +35,65 @@ export function dayFat(d: DayEntry): number {
 /** Total de fibra (g) consumida en el día. */
 export function dayFiber(d: DayEntry): number {
   return (d.desF || 0) + (d.almF || 0) + (d.merF || 0) + (d.cenF || 0);
+}
+
+/**
+ * Desglose editable de una comida del día. Si ya tiene items guardados, los
+ * devuelve tal cual. Si no (comidas cargadas antes de este desglose, o
+ * importadas de un respaldo viejo), arma un único item "sin desglosar" a
+ * partir del total agregado — así sigue siendo editable/borrable en vez de
+ * quedar como un número fijo que no se puede tocar.
+ */
+export function getMealItems(entry: DayEntry, meal: MealKey): MealItem[] {
+  const itemsKey = `${meal}Items` as keyof DayEntry;
+  const items = entry[itemsKey] as MealItem[] | undefined;
+  if (items && items.length > 0) return items;
+  const kKey = `${meal}K` as keyof DayEntry;
+  const kcal = (entry[kKey] as number) || 0;
+  if (kcal <= 0) return [];
+  const pKey = `${meal}P` as keyof DayEntry;
+  const cKey = `${meal}C` as keyof DayEntry;
+  const gKey = `${meal}G` as keyof DayEntry;
+  const fKey = `${meal}F` as keyof DayEntry;
+  return [
+    {
+      id: "legacy",
+      nombre: "Comida cargada",
+      kcal,
+      protein: (entry[pKey] as number) || 0,
+      carbs: (entry[cKey] as number) || 0,
+      fat: (entry[gKey] as number) || 0,
+      fiber: (entry[fKey] as number) || 0,
+    },
+  ];
+}
+
+/** Suma kcal/proteína/carbohidratos/grasas/fibra de una lista de items. */
+export function sumMealItems(items: MealItem[]): { kcal: number; protein: number; carbs: number; fat: number; fiber: number } {
+  return items.reduce(
+    (acc, item) => ({
+      kcal: acc.kcal + item.kcal,
+      protein: acc.protein + item.protein,
+      carbs: acc.carbs + (item.carbs || 0),
+      fat: acc.fat + (item.fat || 0),
+      fiber: acc.fiber + (item.fiber || 0),
+    }),
+    { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
+  );
+}
+
+/** Reemplaza los items de una comida y recalcula sus totales agregados (K/P/C/G/F) a partir de ellos. */
+export function applyMealItems(entry: DayEntry, meal: MealKey, items: MealItem[]): DayEntry {
+  const sums = sumMealItems(items);
+  return {
+    ...entry,
+    [`${meal}Items`]: items,
+    [`${meal}K`]: sums.kcal,
+    [`${meal}P`]: sums.protein,
+    [`${meal}C`]: sums.carbs,
+    [`${meal}G`]: sums.fat,
+    [`${meal}F`]: sums.fiber,
+  };
 }
 
 export interface MacroTargets {

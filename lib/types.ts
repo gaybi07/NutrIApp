@@ -58,6 +58,17 @@ export interface Routine {
 /** Qué rutina corresponde a cada día de la semana — se repite todas las semanas hasta que se cambie. */
 export type TrainingSchedule = Partial<Record<Weekday, string>>; // weekday -> Routine.id
 
+/** Un alimento/plato individual dentro de una comida (ej. "Puré de papas" adentro de la Cena) — editable y borrable por separado. */
+export interface MealItem {
+  id: string;
+  nombre: string;
+  kcal: number;
+  protein: number;
+  carbs?: number;
+  fat?: number;
+  fiber?: number;
+}
+
 export interface DayEntry {
   fecha: string; // YYYY-MM-DD
   desK: number;
@@ -89,6 +100,10 @@ export interface DayEntry {
   entrenamientos?: TrainingSession[]; // formato nuevo: soporta más de un entrenamiento por día
   ejercicios?: ExerciseEntry[]; // desglose real de lo entrenado ese día (series/reps/peso por ejercicio)
   alimentos?: string[]; // nombres de ingredientes comidos ese día (para diversidad de grupos alimenticios en Macros)
+  desItems?: MealItem[]; // desglose editable del desayuno — la suma de estos da desK/desP/desC/desG/desF
+  almItems?: MealItem[];
+  merItems?: MealItem[];
+  cenItems?: MealItem[];
 }
 
 export type WeekPlan = Record<string, Partial<Record<MealKey, string>>>; // fecha -> comida -> título de receta

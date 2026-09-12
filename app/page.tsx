@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useLocalDays } from "@/lib/useLocalDays";
-import { isoMonday, addDays, fmtDate, summarizeWeek, proteinTargetForWeight } from "@/lib/calculations";
+import { isoMonday, addDays, fmtDate, summarizeWeek, proteinTargetForWeight, getMealItems, applyMealItems } from "@/lib/calculations";
 import { TabBar, MainTab } from "@/components/TabBar";
 import { MacrosTab } from "@/components/MacrosTab";
 import { ActividadTab } from "@/components/ActividadTab";
@@ -21,6 +21,7 @@ import { DailySteps } from "@/components/DailySteps";
 import { DataImport } from "@/components/DataImport";
 import { MealMemoryImport } from "@/components/MealMemoryImport";
 import { TodayCard } from "@/components/TodayCard";
+import { TodayMealsBreakdown } from "@/components/TodayMealsBreakdown";
 import { TrainingEntryForm } from "@/components/TrainingEntryForm";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
 import { AppTour } from "@/components/AppTour";
@@ -29,7 +30,7 @@ import { Collapsible } from "@/components/Collapsible";
 import { isSupabaseConfigured } from "@/lib/supabase/browser";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 import { useInventory } from "@/lib/useInventory";
-import { DayEntry, emptyDay, MealKey } from "@/lib/types";
+import { emptyDay, MealKey } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 
@@ -99,15 +100,17 @@ export default function Home() {
     [saveSettings, settings]
   );
 
-  const useRecipeAsMeal = useCallback((recipe: { kcal: number; protein: number }, meal: MealKey) => {
+  const useRecipeAsMeal = useCallback((recipe: { kcal: number; protein: number; title?: string }, meal: MealKey) => {
     const fecha = fmtDate(new Date());
     const existing = days.find((day) => day.fecha === fecha) || emptyDay(fecha);
-    const next: DayEntry = {
-      ...existing,
-      [`${meal}K`]: existing[`${meal}K`] + recipe.kcal,
-      [`${meal}P`]: existing[`${meal}P`] + recipe.protein,
+    const items = getMealItems(existing, meal);
+    const newItem = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      nombre: recipe.title || "Receta",
+      kcal: recipe.kcal,
+      protein: recipe.protein,
     };
-    upsertDay(next);
+    upsertDay(applyMealItems(existing, meal, [...items, newItem]));
   }, [days, upsertDay]);
 
   if (!loaded || !authenticated) {
@@ -199,6 +202,8 @@ export default function Home() {
             onLogMeal={() => setPanel("ai")}
             onLogTraining={() => setPanel("entreno")}
           />
+
+          <TodayMealsBreakdown entry={todayEntry} onUpsert={upsertDay} />
 
           <div className="mt-2 rounded-2xl border border-border/80 bg-surface/70 px-3 py-2.5 shadow-[0_0_0_1px_rgba(58,54,47,0.4)]">
             <div className="mb-1.5 flex items-center font-mono text-[10px] uppercase tracking-[0.22em] text-gold">

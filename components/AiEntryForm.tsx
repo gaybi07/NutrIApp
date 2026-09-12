@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { DayEntry, MealKey, MEAL_LABELS, emptyDay } from "@/lib/types";
+import { DayEntry, MealKey, MEAL_LABELS, MealItem, emptyDay } from "@/lib/types";
 import { countDigits, MAX_DIGITS, MAX_TEXT_LENGTH, normalizeNumberInput } from "@/lib/inputLimits";
-import { fmtDate } from "@/lib/calculations";
+import { fmtDate, getMealItems, applyMealItems } from "@/lib/calculations";
 import { FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 import { useMealMemory } from "@/lib/useMealMemory";
@@ -85,6 +85,7 @@ export function AiEntryForm({
     detalle: string;
     resumen: string;
     ingredientes: string;
+    items: Omit<MealItem, "id">[];
   } | null>(null);
   const { memory: mealMemory, remember, findMatch } = useMealMemory();
   const [recording, setRecording] = useState(false);
@@ -146,6 +147,7 @@ export function AiEntryForm({
           detalle: "",
           resumen: match.text,
           ingredientes: "",
+          items: [{ nombre: match.text, kcal: match.kcal, protein: match.protein, carbs: match.carbs, fat: match.fat, fiber: match.fiber }],
         });
         setStatus(`Encontrado en tu memoria: "${match.text}" — revisá y guardá, o recalculá con IA si cambió algo ↓`);
         return;
@@ -161,6 +163,17 @@ export function AiEntryForm({
       });
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "No se pudo calcular la comida");
+      const items: Omit<MealItem, "id">[] =
+        Array.isArray(data.items) && data.items.length > 0
+          ? data.items.map((i: Partial<MealItem>) => ({
+              nombre: i.nombre || "Alimento",
+              kcal: i.kcal || 0,
+              protein: i.protein || 0,
+              carbs: i.carbs || 0,
+              fat: i.fat || 0,
+              fiber: i.fiber || 0,
+            }))
+          : [{ nombre: data.resumen || text.trim(), kcal: data.kcal, protein: data.protein, carbs: data.carbs || 0, fat: data.fat || 0, fiber: data.fiber || 0 }];
       setPreview({
         kcal: data.kcal,
         protein: data.protein,
@@ -170,6 +183,7 @@ export function AiEntryForm({
         detalle: data.detalle || "",
         resumen: data.resumen || text.trim(),
         ingredientes: data.ingredientes || "",
+        items,
       });
       setStatus("Revisá el resultado y guardá si está bien ↓");
     } catch (e) {
@@ -182,22 +196,19 @@ export function AiEntryForm({
   const handleSave = () => {
     if (!preview) return;
     const existing = days.find((d) => d.fecha === fecha) || emptyDay(fecha);
-    const kKey = `${meal}K` as keyof DayEntry;
-    const pKey = `${meal}P` as keyof DayEntry;
-    const cKey = `${meal}C` as keyof DayEntry;
-    const gKey = `${meal}G` as keyof DayEntry;
-    const fKey = `${meal}F` as keyof DayEntry;
     const nuevosAlimentos = preview.ingredientes ? parseInventoryText(preview.ingredientes).map((i) => i.name) : [];
     const alimentosDelDia = Array.from(new Set([...(existing.alimentos || []), ...nuevosAlimentos]));
-    const updated: DayEntry = {
-      ...existing,
-      [kKey]: (existing[kKey] as number) + preview.kcal,
-      [pKey]: (existing[pKey] as number) + preview.protein,
-      [cKey]: ((existing[cKey] as number) || 0) + preview.carbs,
-      [gKey]: ((existing[gKey] as number) || 0) + preview.fat,
-      [fKey]: ((existing[fKey] as number) || 0) + preview.fiber,
-      alimentos: alimentosDelDia,
-    };
+    // Si es un solo item, refleja cualquier ajuste manual que se haya hecho en la grilla de arriba antes de guardar.
+    const rawItems =
+      preview.items.length === 1
+        ? [{ ...preview.items[0], kcal: preview.kcal, protein: preview.protein, carbs: preview.carbs, fat: preview.fat, fiber: preview.fiber }]
+        : preview.items;
+    const nuevosItems: MealItem[] = rawItems.map((item, i) => ({
+      ...item,
+      id: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
+    }));
+    const itemsActuales = getMealItems(existing, meal);
+    const updated = { ...applyMealItems(existing, meal, [...itemsActuales, ...nuevosItems]), alimentos: alimentosDelDia };
     onUpsert(updated);
     const result = onConsumeInventory?.(preview.ingredientes || text);
     remember(preview.resumen || text, preview.kcal, preview.protein, preview.carbs, preview.fat, meal, preview.fiber);

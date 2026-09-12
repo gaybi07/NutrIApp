@@ -780,3 +780,50 @@ algo puntual.
   colores correctos; el cursor del tooltip usa el dorado sutil (no
   gris); el modal de Ledger guarda el minutaje editado (90 en vez del
   valor previo) junto con la intensidad elegida.
+- **2026-09-12**: comidas ya cargadas ahora se pueden editar/borrar por
+  alimento, en vez de quedar como un solo total opaco por comida. El
+  usuario reportó que cargar de más/de menos una comida ya guardada no
+  se podía corregir, y pidió que el desglose de una comida (ej. "Cena")
+  se guarde separado en sus alimentos (milanesa, puré, ensalada) en vez
+  de un único número.
+  - Nuevo tipo `MealItem` (`lib/types.ts`) y campos `desItems/almItems/
+    merItems/cenItems` en `DayEntry`. Nuevas funciones en
+    `lib/calculations.ts`: `getMealItems()` (si no hay items cargados
+    todavía, sintetiza uno solo "Comida cargada" a partir del total
+    viejo — así los datos históricos también quedan editables sin
+    migrarlos a mano), `sumMealItems()` y `applyMealItems()` (guarda
+    los items y recalcula los 5 totales de la comida a partir de ellos,
+    single source of truth).
+  - `/api/parse-meal`: el prompt a la IA ahora pide también un array
+    `items` (cada alimento/plato con su propio kcal/proteína/carbos/
+    grasas/fibra, sumando exacto al total) — desglose 100% automático,
+    sin que el usuario tenga que separar nada a mano.
+  - `AiEntryForm.tsx`: al guardar, arma los `MealItem[]` a partir de la
+    respuesta de la IA (o de la memoria personal, como un solo item) y
+    los agrega a los que ya hubiera esa comida, en vez de sumar
+    directamente a los 5 campos agregados.
+  - Nuevo componente `TodayMealsBreakdown.tsx`, dentro de "Hoy" en
+    Inicio: lista cada comida de hoy desglosada en sus alimentos, cada
+    uno con kcal/proteína editables y un botón × para borrarlo — al
+    cambiar algo, se recalculan solos los totales de "Hoy" (barra de
+    kcal, proteína, etc).
+  - Agregada columna `des_items/alm_items/mer_items/cen_items jsonb` a
+    `supabase/schema.sql` + migración nueva
+    `migration_2026-09-12_add_meal_items.sql` (falta correrla en
+    Supabase) + mapeo bidireccional en `app/api/data/route.ts`.
+  - Encontrado y corregido de paso: `useRecipeAsMeal` en `page.tsx` (usar
+    una receta desde "Comidas") todavía sumaba directo a los 5 campos
+    agregados de la comida sin tocar los items — con el nuevo sistema
+    eso hubiera desincronizado el total mostrado del detalle
+    itemizado (o directamente lo hubiera "borrado" en cuanto se editara
+    cualquier otro item de esa comida, porque el total se recalcula
+    como suma de items). Ahora también agrega la receta como un
+    `MealItem` más.
+  Probado con Playwright mockeando `/api/parse-meal`: una comida con 3
+  items (milanesa/puré/ensalada) se guarda desglosada, el total de "Hoy"
+  coincide con la suma; borrar un item recalcula el total en vivo (640
+  → 580 kcal, 40g → 38g proteína) sin errores de consola. Confirmado
+  también que una comida vieja sin `items` (solo `cenK/cenP/...`)
+  aparece como un item editable "Comida cargada" y que editarlo
+  actualiza bien el total de la comida — la corrección central que
+  pidió el usuario.

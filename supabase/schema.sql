@@ -30,6 +30,10 @@ create table public.days (
   entrenamientos jsonb not null default '[]'::jsonb,
   ejercicios jsonb not null default '[]'::jsonb,
   alimentos jsonb not null default '[]'::jsonb,
+  des_items jsonb not null default '[]'::jsonb,
+  alm_items jsonb not null default '[]'::jsonb,
+  mer_items jsonb not null default '[]'::jsonb,
+  cen_items jsonb not null default '[]'::jsonb,
   primary key (user_id, fecha)
 );
 

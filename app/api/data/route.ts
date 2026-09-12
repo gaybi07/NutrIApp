@@ -36,6 +36,10 @@ function toDay(row: Record<string, unknown>): DayEntry {
     entrenamientos: (row.entrenamientos as DayEntry["entrenamientos"]) || undefined,
     ejercicios: (row.ejercicios as DayEntry["ejercicios"]) || undefined,
     alimentos: (row.alimentos as DayEntry["alimentos"]) || undefined,
+    desItems: (row.des_items as DayEntry["desItems"]) || undefined,
+    almItems: (row.alm_items as DayEntry["almItems"]) || undefined,
+    merItems: (row.mer_items as DayEntry["merItems"]) || undefined,
+    cenItems: (row.cen_items as DayEntry["cenItems"]) || undefined,
   };
 }
 
@@ -72,6 +76,10 @@ function toDayRow(day: DayEntry, userId: string) {
     entrenamientos: day.entrenamientos || [],
     ejercicios: day.ejercicios || [],
     alimentos: day.alimentos || [],
+    des_items: day.desItems || [],
+    alm_items: day.almItems || [],
+    mer_items: day.merItems || [],
+    cen_items: day.cenItems || [],
   };
 }
 

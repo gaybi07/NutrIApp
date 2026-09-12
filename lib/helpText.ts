@@ -19,6 +19,7 @@ export const SECTION_HELP = {
   rutinaSemanal: "Qué rutina te toca cada día de la semana (o descanso). Se repite todas las semanas hasta que la cambies — no hace falta armarla de nuevo cada vez.",
   rutinas: "Plantillas reusables de ejercicios (ej. \"Día A: Pecho/Tríceps\") con series, repeticiones y peso. Se arman una vez y se asignan a los días de la semana.",
   ejerciciosHoy: "Lo que realmente entrenaste hoy. Si tenés una rutina asignada para hoy, se precarga sola — ajustá los números si hiciste algo distinto a lo planeado.",
+  detalleComidas: "El desglose de lo que cargaste hoy, alimento por alimento dentro de cada comida (la IA lo separa sola). Editá las kcal o proteína de un alimento puntual, o borralo con la ×, sin tener que recargar toda la comida de nuevo.",
 } as const;
 
 export const FIELD_HELP = {
