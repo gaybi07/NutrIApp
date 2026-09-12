@@ -827,3 +827,24 @@ algo puntual.
   aparece como un item editable "Comida cargada" y que editarlo
   actualiza bien el total de la comida — la corrección central que
   pidió el usuario.
+- **2026-09-12**: usuario reportó que después de todo lo anterior
+  "no puedo editar la comida cargada" — no veía ninguna opción. La
+  causa: la sección nueva ("Detalle de comidas") arranca colapsada por
+  `Collapsible`, y su título no dejaba claro que ahí adentro se podía
+  editar. Se cambió `defaultOpen` a `true` (se abre sola, ya que solo
+  aparece cuando hay algo para editar) y se renombró el título a
+  "Editar comidas de hoy" para que la opción de edición sea obvia sin
+  tener que tocar nada primero.
+- **2026-09-12**: a pedido del usuario, el tooltip del gráfico semanal
+  ("Indicadores") ahora también muestra, debajo del desglose de kcal
+  por comida, los pasos del día, el entrenamiento (tipo e intensidad +
+  minutos, o "No entrenó") y el déficit/superávit de ese día — antes
+  solo mostraba las kcal de cada comida y las líneas de objetivo/gasto.
+  Se reemplazó el `Tooltip` default de Recharts por un `content`
+  custom (`ChartTooltip` en `WeeklyChart.tsx`) que lee `pasos`,
+  `sessions` (vía `getTrainingSessions()`) y `deficit` (vía
+  `dayDeficit()`, misma función que ya usa `Ledger.tsx`) agregados a
+  los datos de cada día de la semana. Probado con Playwright: al pasar
+  el mouse sobre una barra se ve "Pasos: 3.000", "Moderado · 45 min" y
+  "Déficit: 1.397 kcal" con los colores correctos, sin errores de
+  consola.

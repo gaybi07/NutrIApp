@@ -1,11 +1,53 @@
 "use client";
 
 import { ComposedChart, Bar, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
-import { DayEntry } from "@/lib/types";
-import { dayGoal, estimateGasto } from "@/lib/calculations";
+import { DayEntry, TrainingSession, INTENSITY_STYLES } from "@/lib/types";
+import { dayGoal, estimateGasto, dayDeficit, getTrainingSessions } from "@/lib/calculations";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 const COLORS = { des: "#8A9A7C", alm: "#C9A227", mer: "#7C93A3", cen: "#B5533C" };
+
+type ChartRow = {
+  dow: string;
+  des: number;
+  alm: number;
+  mer: number;
+  cen: number;
+  pasos: number;
+  sessions: TrainingSession[];
+  goal: number;
+  gasto: number;
+  deficit: number;
+};
+
+function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: { name?: string; value?: number; color?: string; dataKey?: string; payload: ChartRow }[]; label?: string }) {
+  if (!active || !payload || payload.length === 0) return null;
+  const row = payload[0].payload;
+  const deficitPositive = row.deficit >= 0;
+
+  return (
+    <div style={{ background: "#242220", border: "1px solid #3A362F", borderRadius: 8, padding: "8px 10px", minWidth: 150 }}>
+      <div style={{ color: "#EDE7DA", fontSize: 12, fontWeight: 600, marginBottom: 4 }}>{label}</div>
+      {payload.map((entry) => (
+        <div key={entry.dataKey} style={{ color: entry.color, fontSize: 12 }}>
+          {entry.name}: {Math.round(entry.value || 0).toLocaleString("es-AR")}
+        </div>
+      ))}
+      <div style={{ marginTop: 6, paddingTop: 6, borderTop: "1px dashed #3A362F", fontSize: 11, color: "#9C958A", display: "flex", flexDirection: "column", gap: 2 }}>
+        <div>Pasos: {row.pasos.toLocaleString("es-AR")}</div>
+        <div>
+          {row.sessions.length === 0
+            ? "No entrenó"
+            : row.sessions.map((s) => `${INTENSITY_STYLES[s.intensidad].label} · ${s.minutos} min`).join(" + ")}
+        </div>
+        <div style={{ color: deficitPositive ? "#8A9A7C" : "#B5533C" }}>
+          {deficitPositive ? "Déficit" : "Superávit"}: {deficitPositive ? "" : "-"}
+          {Math.abs(row.deficit).toLocaleString("es-AR")} kcal
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function WeeklyChart({
   weekDates,
@@ -20,19 +62,21 @@ export function WeeklyChart({
   avgGoal: number;
   avgGasto: number;
 }) {
-  const data = weekDates.map((fecha, i) => {
+  const data: ChartRow[] = weekDates.map((fecha, i) => {
     const d = weekDays[i];
     const dow = DOW[new Date(`${fecha}T00:00:00`).getDay()];
-    if (!d) return { dow, des: 0, alm: 0, mer: 0, cen: 0, trained: false, goal: goal, gasto: avgGasto };
+    if (!d) return { dow, des: 0, alm: 0, mer: 0, cen: 0, pasos: 0, sessions: [], goal, gasto: avgGasto, deficit: 0 };
     return {
       dow,
       des: d.desK,
       alm: d.almK,
       mer: d.merK,
       cen: d.cenK,
-      trained: d.entreno,
+      pasos: d.pasos || 0,
+      sessions: getTrainingSessions(d),
       goal: dayGoal(d, goal, avgGasto),
       gasto: estimateGasto(d, avgGasto),
+      deficit: dayDeficit(d, avgGasto),
     };
   });
 
@@ -68,15 +112,11 @@ export function WeeklyChart({
             tickLine={false}
             domain={yDomain}
           />
-          <Tooltip
-            contentStyle={{ background: "#242220", border: "1px solid #3A362F", borderRadius: 8, fontSize: 12 }}
-            labelStyle={{ color: "#EDE7DA" }}
-            cursor={{ fill: "rgba(201,162,39,0.10)" }}
-          />
-          <Bar dataKey="des" stackId="a" fill={COLORS.des} />
-          <Bar dataKey="alm" stackId="a" fill={COLORS.alm} />
-          <Bar dataKey="mer" stackId="a" fill={COLORS.mer} />
-          <Bar dataKey="cen" stackId="a" fill={COLORS.cen} radius={[3, 3, 0, 0]} />
+          <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(201,162,39,0.10)" }} />
+          <Bar dataKey="des" name="Desayuno" stackId="a" fill={COLORS.des} />
+          <Bar dataKey="alm" name="Almuerzo" stackId="a" fill={COLORS.alm} />
+          <Bar dataKey="mer" name="Merienda" stackId="a" fill={COLORS.mer} />
+          <Bar dataKey="cen" name="Cena" stackId="a" fill={COLORS.cen} radius={[3, 3, 0, 0]} />
           <Line type="monotone" dataKey="goal" name="Objetivo diario" stroke="#EDE7DA" strokeWidth={2} dot={{ r: 2.5, fill: "#EDE7DA" }} strokeDasharray="4 3" />
           <Line type="monotone" dataKey="gasto" name="Gasto" stroke="#5FA8D3" strokeWidth={2} dot={{ r: 2.5, fill: "#5FA8D3" }} />
         </ComposedChart>
