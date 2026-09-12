@@ -42,16 +42,19 @@
   --color-border: 217 230 217;
 }
 
+/* Alto contraste: fondo negro + texto/íconos en colores flúor bien
+   saturados (verde, celeste, naranja/rosado) — nada de verde oscuro
+   apagado como el tema oscuro normal. */
 [data-theme="alto-contraste"] {
-  --color-bg: 255 255 255;
-  --color-surface: 255 255 255;
-  --color-surface-alt: 244 244 244;
-  --color-text: 0 0 0;
-  --color-text-muted: 33 33 33;
-  --color-accent: 0 92 48;
-  --color-rust: 153 0 0;
-  --color-sage: 0 90 77;
-  --color-border: 0 0 0;
+  --color-bg: 0 0 0;
+  --color-surface: 0 0 0;
+  --color-surface-alt: 20 20 20;
+  --color-text: 255 255 255;
+  --color-text-muted: 190 190 190;
+  --color-accent: 57 255 20;
+  --color-rust: 255 107 0;
+  --color-sage: 0 229 255;
+  --color-border: 210 210 210;
 }
 
 html, body {

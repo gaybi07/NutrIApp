@@ -5,7 +5,7 @@ import { Settings, ThemeMode, MainTab, OPTIONAL_TABS, DEFAULT_ENABLED_TABS } fro
 const THEME_OPTIONS: { value: ThemeMode; label: string; description: string }[] = [
   { value: "oscuro", label: "Oscuro", description: "Fondo oscuro, como está ahora." },
   { value: "claro", label: "Claro", description: "Fondo blanco, look más liviano." },
-  { value: "alto-contraste", label: "Alto contraste", description: "Máximo contraste, letras y bordes bien marcados." },
+  { value: "alto-contraste", label: "Alto contraste", description: "Fondo negro con colores flúor bien marcados — verde, celeste, naranja." },
 ];
 
 const TAB_LABELS: Record<MainTab, string> = {

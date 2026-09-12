@@ -951,3 +951,21 @@ algo puntual.
   nombre "Gabriel Rosa", el ícono de engranaje, el menú desplegable, y
   que "Cargar con IA" desde adentro de Preferencias abre el mismo modal
   de siempre — todo sin errores de consola. `npm run build` limpio.
+- **2026-09-12**: rediseño del tema "Alto contraste" a pedido del
+  usuario — la versión anterior era clara (fondo blanco, verde muy
+  oscuro), y lo que en realidad quería era fondo **negro** con texto e
+  íconos en colores **flúor** (verde, celeste, naranja), sin relación
+  con el verde apagado del tema oscuro normal. Se reescribió el bloque
+  `[data-theme="alto-contraste"]` en `app/globals.css`: `bg`/`surface`
+  ahora son negro puro (las tarjetas se distinguen solo por el borde,
+  no por un fondo más claro — más "alto contraste" real), `accent`
+  pasó a verde neón (`#39FF14`), `sage` a celeste neón (`#00E5FF`) y
+  `rust` a naranja neón (`#FF6B00`); `text` blanco puro. No se tocaron
+  los colores de intensidad de entreno (`INTENSITY_STYLES` en
+  `lib/types.ts`) ni los colores categóricos de los gráficos de
+  comidas/macros — siguen siendo los mismos en los 3 temas, como pidió
+  el usuario desde el principio, y ya se ven bien vívidos por sí solos
+  contra el negro. Verificado con Playwright (`settings.theme =
+  "alto-contraste"`): fondo negro, botones y textos en verde/celeste/
+  naranja bien saturados en Inicio, Macros y Entrenamientos, sin
+  errores de consola. `npm run build` limpio.
