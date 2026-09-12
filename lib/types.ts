@@ -114,7 +114,7 @@ export type MainTab = "inicio" | "comidas" | "macros" | "actividad";
 export const OPTIONAL_TABS: MainTab[] = ["macros", "comidas", "actividad"];
 export const DEFAULT_ENABLED_TABS: MainTab[] = ["inicio", "comidas", "macros", "actividad"];
 
-export type ThemeMode = "claro" | "oscuro" | "alto-contraste";
+export type ThemeMode = "claro" | "oscuro" | "neon";
 
 export interface Settings {
   goal: number; // kcal objetivo diario de consumo
@@ -125,7 +125,7 @@ export interface Settings {
   weekPlan?: WeekPlan; // planificador de comidas por día, se sincroniza entre dispositivos
   routines?: Routine[]; // rutinas de entrenamiento reusables
   trainingSchedule?: TrainingSchedule; // qué rutina toca cada día de la semana
-  theme?: ThemeMode; // claro / oscuro / alto contraste, elegido desde Preferencias
+  theme?: ThemeMode; // claro / oscuro / neon, elegido desde Preferencias
   enabledTabs?: MainTab[]; // qué solapas de arriba se muestran además de Inicio (que siempre está)
 }
 

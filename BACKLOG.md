@@ -969,3 +969,36 @@ algo puntual.
   "alto-contraste"`): fondo negro, botones y textos en verde/celeste/
   naranja bien saturados en Inicio, Macros y Entrenamientos, sin
   errores de consola. `npm run build` limpio.
+- **2026-09-12**: el usuario aclaró que lo que quería con "alto
+  contraste" era en realidad un tema **neón** distinto — no un tema
+  claro/oscuro más con acentos flúor, sino que la base (fondos,
+  tarjetas y botones) quede en negro y gris puro, y el color viva
+  solo en el detalle (letras, bordes, íconos, puntos de gráfico) con
+  un efecto de luz de neón real, no relleno sólido. Cambios:
+  - Renombrado el tema de `"alto-contraste"` a `"neon"` en todo el
+    código (`ThemeMode` en `lib/types.ts`, el selector `[data-theme]`
+    en `globals.css`, el valor/label en `Preferences.tsx` → "Neón").
+  - Paleta: fondo casi negro (`8 8 9`), verde neón de acento
+    (`#39FF5A`), amarillo neón (`#FFE000`) y rosa neón (`#FF2D95`) —
+    los 3 colores que pidió explícitamente ("amarillo brillante,
+    rosaditos, verdes").
+  - **Los botones "sólidos"** (`bg-gold text-bg` / `bg-sage text-bg`,
+    usados en casi todos los CTA de la app) se invierten SOLO en este
+    tema vía `[data-theme="neon"] .bg-gold.text-bg { ... }`: en vez de
+    rellenarse del color de acento, quedan con fondo gris oscuro
+    (`surface-alt`) y el borde + la letra en el color, con
+    `text-shadow`/`box-shadow` para el efecto de resplandor — se
+    aprovechó que Tailwind ya componía esas dos clases juntas en cada
+    botón, así no hizo falta tocar ningún componente.
+  - Cualquier texto con `text-gold`/`text-sage`/`text-rust` (números,
+    títulos, eyebrows) también tira su propio resplandor en este tema.
+  - Los puntos y líneas de los gráficos (Recharts) tienen un halo
+    blanco suave (`filter: drop-shadow`) para que se vean "prendidos".
+  - Sin tocar `INTENSITY_STYLES` (colores de entreno) ni los colores
+    categóricos de gráficos de comidas/macros, como en los cambios de
+    tema anteriores.
+  Verificado con Playwright (`settings.theme = "neon"`): fondo negro
+  real en Inicio/Macros, botones "+ Cargar comida"/"+ Entrenamiento"/
+  "Cargar peso semanal" con fondo oscuro y borde+letra brillando en
+  verde/rosa, número "1.300" (restantes) y "Pendiente" con resplandor
+  rosa/amarillo, sin errores de consola. `npm run build` limpio.

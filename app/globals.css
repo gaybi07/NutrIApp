@@ -42,19 +42,19 @@
   --color-border: 217 230 217;
 }
 
-/* Alto contraste: fondo negro + texto/íconos en colores flúor bien
-   saturados (verde, celeste, naranja/rosado) — nada de verde oscuro
-   apagado como el tema oscuro normal. */
-[data-theme="alto-contraste"] {
-  --color-bg: 0 0 0;
-  --color-surface: 0 0 0;
-  --color-surface-alt: 20 20 20;
-  --color-text: 255 255 255;
-  --color-text-muted: 190 190 190;
-  --color-accent: 57 255 20;
-  --color-rust: 255 107 0;
-  --color-sage: 0 229 255;
-  --color-border: 210 210 210;
+/* Neón: la base (fondos, tarjetas, botones) es negro y gris — el color
+   solo aparece en el detalle, letras/íconos/bordes con un efecto de luz
+   de neón (verde, amarillo, rosa flúor), nunca como relleno sólido. */
+[data-theme="neon"] {
+  --color-bg: 8 8 9;
+  --color-surface: 16 16 18;
+  --color-surface-alt: 24 24 27;
+  --color-text: 235 235 235;
+  --color-text-muted: 150 150 155;
+  --color-accent: 57 255 90;
+  --color-rust: 255 224 0;
+  --color-sage: 255 45 149;
+  --color-border: 60 60 64;
 }
 
 html, body {
@@ -101,8 +101,45 @@ label {
   margin-bottom: 4px;
 }
 
-[data-theme="alto-contraste"] input,
-[data-theme="alto-contraste"] select,
-[data-theme="alto-contraste"] textarea {
+[data-theme="neon"] input,
+[data-theme="neon"] select,
+[data-theme="neon"] textarea {
   border-width: 2px;
+}
+
+/* Efecto de luz de neón: el texto de color (títulos, botones, valores) tira
+   un resplandor del mismo color en vez de quedar plano. */
+[data-theme="neon"] .text-gold {
+  text-shadow: 0 0 6px rgb(var(--color-accent) / 0.85), 0 0 16px rgb(var(--color-accent) / 0.45);
+}
+[data-theme="neon"] .text-sage {
+  text-shadow: 0 0 6px rgb(var(--color-sage) / 0.85), 0 0 16px rgb(var(--color-sage) / 0.45);
+}
+[data-theme="neon"] .text-rust {
+  text-shadow: 0 0 6px rgb(var(--color-rust) / 0.85), 0 0 16px rgb(var(--color-rust) / 0.45);
+}
+
+/* Los botones "sólidos" (bg-gold/bg-sage + text-bg) se invierten en Neón:
+   en vez de un relleno de color plano, quedan negro/gris con el borde y la
+   letra prendidos en neón — el color vive en el detalle, no en el fondo. */
+[data-theme="neon"] .bg-gold.text-bg {
+  background-color: rgb(var(--color-surface-alt));
+  color: rgb(var(--color-accent));
+  border: 1px solid rgb(var(--color-accent));
+  text-shadow: 0 0 6px rgb(var(--color-accent) / 0.9), 0 0 16px rgb(var(--color-accent) / 0.5);
+  box-shadow: 0 0 10px rgb(var(--color-accent) / 0.35), inset 0 0 8px rgb(var(--color-accent) / 0.12);
+}
+[data-theme="neon"] .bg-sage.text-bg {
+  background-color: rgb(var(--color-surface-alt));
+  color: rgb(var(--color-sage));
+  border: 1px solid rgb(var(--color-sage));
+  text-shadow: 0 0 6px rgb(var(--color-sage) / 0.9), 0 0 16px rgb(var(--color-sage) / 0.5);
+  box-shadow: 0 0 10px rgb(var(--color-sage) / 0.35), inset 0 0 8px rgb(var(--color-sage) / 0.12);
+}
+
+/* Puntos y líneas de los gráficos con un halo suave, como un tubo de neón. */
+[data-theme="neon"] .recharts-dot,
+[data-theme="neon"] .recharts-line-curve,
+[data-theme="neon"] .recharts-bar-rectangle path {
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
 }
