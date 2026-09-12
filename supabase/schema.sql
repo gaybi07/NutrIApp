@@ -50,7 +50,10 @@ create table public.user_settings (
   theme text,
   enabled_tabs jsonb not null default '[]'::jsonb,
   font_size text,
-  inicio_order jsonb not null default '[]'::jsonb
+  inicio_order jsonb not null default '[]'::jsonb,
+  comidas_order jsonb not null default '[]'::jsonb,
+  macros_order jsonb not null default '[]'::jsonb,
+  actividad_order jsonb not null default '[]'::jsonb
 );
 
 alter table public.days enable row level security;

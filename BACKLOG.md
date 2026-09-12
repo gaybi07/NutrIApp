@@ -1323,3 +1323,45 @@ algo puntual.
   rápido en "+ Cargar comida" sigue abriendo el formulario sin
   activar un arrastre, y que el scroll normal de la página sigue
   funcionando — sin errores de consola. `npm run build` limpio.
+- **2026-09-12**: corrección sobre lo anterior — el agarre visible
+  (⠿) cambiaba cómo se veía Inicio, y el pedido era dejar el
+  aspecto de Inicio exactamente como estaba antes, pero poder
+  arrastrar manteniendo apretado en cualquier parte del bloque (como
+  un ícono de la pantalla de inicio del celular), y extender esa
+  misma posibilidad a las otras tres solapas, no solo a Inicio.
+  1. **Se sacó el botón de agarre**: `components/SortableSection.tsx`
+     ya no tiene el ⠿ — ahora `{...attributes} {...listeners}` de
+     dnd-kit se aplican directamente sobre todo el `div` que envuelve
+     el bloque, así que mantener apretado en cualquier punto (sin
+     tocar ningún botón) arranca el arrastre. La detección de
+     "mantené apretado, no toque rápido" sigue siendo el mismo
+     `activationConstraint: { delay: 300, tolerance: 8 }` — por eso
+     no hizo falta agregar `touch-action: none` (que hubiera roto el
+     scroll normal de bloques grandes).
+  2. **Se armó `lib/useSectionOrder.ts`**: hook chico que junta los
+     sensores de dnd-kit (`PointerSensor` + `KeyboardSensor`) y el
+     `handleDragEnd` que reordena con `arrayMove`, para no repetir el
+     mismo código en las 4 solapas.
+  3. **Comidas, Macros y Entreno ahora también se pueden reordenar**,
+     igual que Inicio:
+     - `Comidas` (4 bloques): Recetas, Comidas frecuentes,
+       Planificador semanal, Registro de compras.
+     - `Macros` (8 bloques): Resumen, Ranking, Reparto, Semana,
+       Proteína, Fibra, Diversidad, Tabla nutricional.
+     - `Entreno` (8 bloques): Resumen, Ejercicios, Pasos (editar),
+       gráfico de Pasos, gráfico de Entrenamiento, gráfico de Sueño,
+       gráfico de Volumen, Rutinas.
+     - Nuevos campos `Settings.comidasOrder` / `macrosOrder` /
+       `actividadOrder` (junto al ya existente `inicioOrder`),
+       sincronizados con Supabase vía
+       `migration_2026-09-12e_add_more_section_orders.sql` (**falta
+       correrla**) y las columnas `comidas_order` / `macros_order` /
+       `actividad_order` en `user_settings`.
+  Probado con Playwright en las 4 solapas: no aparece ningún botón de
+  agarre en ningún lado (Inicio se ve pixel a pixel como antes de
+  este cambio), el toque normal en "+ Cargar comida" sigue abriendo
+  el formulario, el scroll normal funciona, y en cada solapa se
+  confirmó que mantener apretado ~300ms+ y arrastrar hacia abajo
+  reordena los bloques de verdad (por ejemplo en Macros: `Resumen`
+  pasó del principio al final) y ese orden queda guardado — sin
+  errores de consola. `npx tsc --noEmit` y `npm run build` limpios.

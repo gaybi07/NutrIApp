@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { closestCenter, DndContext, DragEndEvent, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { SortableContext, arrayMove, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { DndContext } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { SortableSection } from "@/components/SortableSection";
+import { useSectionOrder } from "@/lib/useSectionOrder";
 import { useLocalDays } from "@/lib/useLocalDays";
 import { isoMonday, addDays, fmtDate, summarizeWeek, proteinTargetForWeight, getMealItems, applyMealItems } from "@/lib/calculations";
 import { TabBar, MainTab } from "@/components/TabBar";
@@ -58,24 +59,7 @@ export default function Home() {
   }, [settings.fontSize]);
 
   const inicioOrder = settings.inicioOrder || DEFAULT_INICIO_ORDER;
-  const inicioSensors = useSensors(
-    // El delay hace que haga falta mantener apretado un rato (no un toque
-    // normal) antes de que arranque el arrastre — así no se pisa con
-    // tocar botones/inputs de adentro ni con el scroll normal de la página.
-    useSensor(PointerSensor, { activationConstraint: { delay: 300, tolerance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-  const handleInicioDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event;
-      if (!over || active.id === over.id) return;
-      const oldIndex = inicioOrder.indexOf(active.id as (typeof inicioOrder)[number]);
-      const newIndex = inicioOrder.indexOf(over.id as (typeof inicioOrder)[number]);
-      if (oldIndex === -1 || newIndex === -1) return;
-      saveSettings({ ...settings, inicioOrder: arrayMove(inicioOrder, oldIndex, newIndex) });
-    },
-    [inicioOrder, settings, saveSettings]
-  );
+  const inicioDrag = useSectionOrder(inicioOrder, (next) => saveSettings({ ...settings, inicioOrder: next }));
 
   const enabledTabs = settings.enabledTabs || DEFAULT_ENABLED_TABS;
   useEffect(() => {
@@ -223,6 +207,8 @@ export default function Home() {
           weightKg={currentWeightKg}
           tdeeFallback={settings.tdeeFallback}
           onUpsert={upsertDay}
+          order={settings.macrosOrder}
+          onReorder={(macrosOrder) => saveSettings({ ...settings, macrosOrder })}
         />
       )}
 
@@ -238,13 +224,15 @@ export default function Home() {
           schedule={settings.trainingSchedule || {}}
           onSaveRoutines={(routines) => saveSettings({ ...settings, routines })}
           onSaveSchedule={(trainingSchedule) => saveSettings({ ...settings, trainingSchedule })}
+          order={settings.actividadOrder}
+          onReorder={(actividadOrder) => saveSettings({ ...settings, actividadOrder })}
         />
       )}
 
       {activeTab === "inicio" && (
       <div className="mx-auto max-w-lg">
         <div className="min-w-0">
-          <DndContext sensors={inicioSensors} collisionDetection={closestCenter} onDragEnd={handleInicioDragEnd}>
+          <DndContext sensors={inicioDrag.sensors} collisionDetection={inicioDrag.collisionDetection} onDragEnd={inicioDrag.handleDragEnd}>
             <SortableContext items={inicioOrder} strategy={verticalListSortingStrategy}>
               {inicioOrder.map((blockId) => (
                 <SortableSection key={blockId} id={blockId}>
@@ -333,6 +321,8 @@ export default function Home() {
           onOpenPlanificador={() => setPanel("planificador")}
           addInventoryText={addText}
           replaceItems={replaceInventory}
+          order={settings.comidasOrder}
+          onReorder={(comidasOrder) => saveSettings({ ...settings, comidasOrder })}
         />
       )}
 

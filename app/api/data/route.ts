@@ -90,7 +90,7 @@ export async function GET() {
 
   const [daysResult, settingsResult] = await Promise.all([
     supabase.from("days").select("*").order("fecha", { ascending: true }),
-    supabase.from("user_settings").select("goal, tdee_fallback, weekly_weights, calculator_profile, tour_done, week_plan, routines, training_schedule, theme, enabled_tabs, font_size, inicio_order").eq("user_id", user.id).maybeSingle(),
+    supabase.from("user_settings").select("goal, tdee_fallback, weekly_weights, calculator_profile, tour_done, week_plan, routines, training_schedule, theme, enabled_tabs, font_size, inicio_order, comidas_order, macros_order, actividad_order").eq("user_id", user.id).maybeSingle(),
   ]);
 
   if (daysResult.error) return NextResponse.json({ error: daysResult.error.message }, { status: 500 });
@@ -112,6 +112,9 @@ export async function GET() {
           enabledTabs: ((settingsResult.data as Record<string, unknown>).enabled_tabs as Settings["enabledTabs"]) || undefined,
           fontSize: ((settingsResult.data as Record<string, unknown>).font_size as Settings["fontSize"]) || undefined,
           inicioOrder: ((settingsResult.data as Record<string, unknown>).inicio_order as Settings["inicioOrder"]) || undefined,
+          comidasOrder: ((settingsResult.data as Record<string, unknown>).comidas_order as Settings["comidasOrder"]) || undefined,
+          macrosOrder: ((settingsResult.data as Record<string, unknown>).macros_order as Settings["macrosOrder"]) || undefined,
+          actividadOrder: ((settingsResult.data as Record<string, unknown>).actividad_order as Settings["actividadOrder"]) || undefined,
         }
       : DEFAULT_SETTINGS,
   });
@@ -151,6 +154,9 @@ export async function PUT(req: NextRequest) {
       enabled_tabs: settings.enabledTabs || [],
       font_size: settings.fontSize || null,
       inicio_order: settings.inicioOrder || [],
+      comidas_order: settings.comidasOrder || [],
+      macros_order: settings.macrosOrder || [],
+      actividad_order: settings.actividadOrder || [],
     });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }

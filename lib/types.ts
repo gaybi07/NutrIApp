@@ -125,11 +125,26 @@ export const FONT_SIZE_OPTIONS: { value: FontSize; label: string; description: s
   { value: "grande", label: "Grande", description: "Letra bien grande, ideal si cuesta leer en el celular.", previewPx: 21 },
 ];
 
-/** Los 3 bloques grandes de Inicio, en el orden que el usuario eligió
- * arrastrándolos (mantener apretado el "agarre" de cada uno) — si no
- * personalizó nada todavía, se usa este orden por default. */
+/** Los bloques grandes de cada solapa, en el orden que el usuario eligió
+ * arrastrándolos (mantener apretado en cualquier parte del bloque, como
+ * mover íconos en la pantalla de inicio del celular) — si no personalizó
+ * nada todavía, se usa el orden por default de cada solapa. */
 export type InicioBlockId = "hoy" | "comidas" | "semana";
 export const DEFAULT_INICIO_ORDER: InicioBlockId[] = ["hoy", "comidas", "semana"];
+
+export type ComidasBlockId = "recetas" | "comunes" | "planificador" | "compras";
+export const DEFAULT_COMIDAS_ORDER: ComidasBlockId[] = ["recetas", "comunes", "planificador", "compras"];
+
+export type MacrosBlockId = "resumen" | "ranking" | "reparto" | "semana" | "proteina" | "fibra" | "diversidad" | "tabla";
+export const DEFAULT_MACROS_ORDER: MacrosBlockId[] = [
+  "resumen", "ranking", "reparto", "semana", "proteina", "fibra", "diversidad", "tabla",
+];
+
+export type ActividadBlockId =
+  | "resumen" | "ejercicios" | "pasosEditar" | "pasosChart" | "entrenoChart" | "suenoChart" | "volumenChart" | "rutinas";
+export const DEFAULT_ACTIVIDAD_ORDER: ActividadBlockId[] = [
+  "resumen", "ejercicios", "pasosEditar", "pasosChart", "entrenoChart", "suenoChart", "volumenChart", "rutinas",
+];
 
 export interface Settings {
   goal: number; // kcal objetivo diario de consumo
@@ -144,6 +159,9 @@ export interface Settings {
   enabledTabs?: MainTab[]; // qué solapas de arriba se muestran además de Inicio (que siempre está)
   fontSize?: FontSize; // chico / mediano / grande, elegido en el onboarding o desde Preferencias
   inicioOrder?: InicioBlockId[]; // orden de los bloques de Inicio, elegido arrastrándolos
+  comidasOrder?: ComidasBlockId[]; // ídem, solapa Comidas
+  macrosOrder?: MacrosBlockId[]; // ídem, solapa Macros
+  actividadOrder?: ActividadBlockId[]; // ídem, solapa Entrenamientos
 }
 
 export const MEAL_LABELS: Record<MealKey, string> = {

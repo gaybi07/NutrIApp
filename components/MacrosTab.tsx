@@ -1,9 +1,14 @@
 "use client";
 
+import { ReactNode } from "react";
+import { DndContext } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { BarChart, Bar, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip, PieChart, Pie, Cell } from "recharts";
-import { DayEntry } from "@/lib/types";
+import { DayEntry, MacrosBlockId, DEFAULT_MACROS_ORDER } from "@/lib/types";
 import { dayTotal, dayProt, dayCarbs, dayFat, dayFiber, macroTargets } from "@/lib/calculations";
 import { classifyIngredient, FOOD_GROUP_LABELS, FoodGroup } from "@/lib/foodGroups";
+import { useSectionOrder } from "@/lib/useSectionOrder";
+import { SortableSection } from "@/components/SortableSection";
 import { SECTION_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 import { RankingCard } from "@/components/RankingCard";
@@ -39,6 +44,8 @@ export function MacrosTab({
   weightKg,
   tdeeFallback,
   onUpsert,
+  order,
+  onReorder,
 }: {
   entry: DayEntry;
   goal: number;
@@ -50,7 +57,11 @@ export function MacrosTab({
   weightKg: number;
   tdeeFallback: number;
   onUpsert: (entry: DayEntry) => void;
+  order?: MacrosBlockId[];
+  onReorder: (next: MacrosBlockId[]) => void;
 }) {
+  const blockOrder = order || DEFAULT_MACROS_ORDER;
+  const drag = useSectionOrder(blockOrder, onReorder);
   const targets = macroTargets(goal, proteinTarget);
   const consumedKcal = dayTotal(entry);
   const protein = dayProt(entry);
@@ -96,8 +107,7 @@ export function MacrosTab({
     }
   }
 
-  return (
-    <div>
+  const resumenBlock = (
       <section className="mb-4 rounded-2xl border border-gold/40 bg-surface p-3">
         <div className="mb-3 flex items-center font-mono text-[10px] uppercase tracking-[0.18em] text-gold">
           Hoy · Macros
@@ -120,9 +130,11 @@ export function MacrosTab({
           + Cargar comida
         </button>
       </section>
+  );
 
-      <RankingCard days={days} weightKg={weightKg} />
+  const rankingBlock = <RankingCard days={days} weightKg={weightKg} />;
 
+  const repartoBlock = (
       <div className="mb-4 rounded-xl border border-border bg-surface p-4">
         <div className="mb-3 font-mono text-[10px] uppercase tracking-wide text-textMuted">Reparto de macros de hoy</div>
         {pieData.length > 0 ? (
@@ -151,7 +163,9 @@ export function MacrosTab({
           <span className="flex items-center gap-1"><i className="chart-neon-c inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.fat }} />Grasas</span>
         </div>
       </div>
+  );
 
+  const semanaBlock = (
       <div className="mb-4 rounded-xl border border-border bg-surface p-4">
         <div className="mb-3 flex justify-between font-mono text-[10px] uppercase tracking-wide text-textMuted">
           <span>Macros de la semana</span>
@@ -174,7 +188,9 @@ export function MacrosTab({
           <span className="flex items-center gap-1"><i className="chart-neon-c inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.fat }} />Grasas</span>
         </div>
       </div>
+  );
 
+  const proteinaBlock = (
       <div className="mb-4 rounded-xl border border-border bg-surface p-4">
         <div className="mb-3 font-mono text-[10px] uppercase tracking-wide text-textMuted">Proteína vs objetivo</div>
         <ResponsiveContainer width="100%" height={160}>
@@ -187,7 +203,9 @@ export function MacrosTab({
           </BarChart>
         </ResponsiveContainer>
       </div>
+  );
 
+  const fibraBlock = (
       <div className="mb-4 rounded-xl border border-border bg-surface p-4">
         <div className="mb-3 font-mono text-[10px] uppercase tracking-wide text-textMuted">Fibra de la semana</div>
         <ResponsiveContainer width="100%" height={160}>
@@ -200,7 +218,9 @@ export function MacrosTab({
           </BarChart>
         </ResponsiveContainer>
       </div>
+  );
 
+  const diversidadBlock = (
       <div className="mb-4 rounded-xl border border-border bg-surface p-4">
         <div className="mb-1 font-mono text-[10px] uppercase tracking-wide text-textMuted">Diversidad de esta semana</div>
         <div className="mb-3 text-[11px] text-textMuted">Cuántos alimentos distintos comiste de cada grupo — variar suma, no solo repetir lo mismo.</div>
@@ -229,8 +249,32 @@ export function MacrosTab({
           })}
         </div>
       </div>
+  );
 
-      <Ledger weekDates={weekDates} weekDays={weekDays} goal={goal} tdeeFallback={tdeeFallback} onUpsert={onUpsert} variant="nutricion" />
-    </div>
+  const tablaBlock = (
+    <Ledger weekDates={weekDates} weekDays={weekDays} goal={goal} tdeeFallback={tdeeFallback} onUpsert={onUpsert} variant="nutricion" />
+  );
+
+  const blocks: Record<MacrosBlockId, ReactNode> = {
+    resumen: resumenBlock,
+    ranking: rankingBlock,
+    reparto: repartoBlock,
+    semana: semanaBlock,
+    proteina: proteinaBlock,
+    fibra: fibraBlock,
+    diversidad: diversidadBlock,
+    tabla: tablaBlock,
+  };
+
+  return (
+    <DndContext sensors={drag.sensors} collisionDetection={drag.collisionDetection} onDragEnd={drag.handleDragEnd}>
+      <SortableContext items={blockOrder} strategy={verticalListSortingStrategy}>
+        {blockOrder.map((blockId) => (
+          <SortableSection key={blockId} id={blockId}>
+            {blocks[blockId]}
+          </SortableSection>
+        ))}
+      </SortableContext>
+    </DndContext>
   );
 }

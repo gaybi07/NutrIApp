@@ -1,8 +1,13 @@
 "use client";
 
+import { ReactNode } from "react";
+import { DndContext } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { BarChart, Bar, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip } from "recharts";
-import { DayEntry, INTENSITY_STYLES, Routine, TrainingSchedule } from "@/lib/types";
+import { DayEntry, INTENSITY_STYLES, Routine, TrainingSchedule, ActividadBlockId, DEFAULT_ACTIVIDAD_ORDER } from "@/lib/types";
 import { estimateTrainingCalories, getTrainingSessions, totalVolume } from "@/lib/calculations";
+import { useSectionOrder } from "@/lib/useSectionOrder";
+import { SortableSection } from "@/components/SortableSection";
 import { SECTION_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 import { ExerciseLogCard } from "@/components/ExerciseLogCard";
@@ -78,6 +83,8 @@ export function ActividadTab({
   schedule,
   onSaveRoutines,
   onSaveSchedule,
+  order,
+  onReorder,
 }: {
   entry: DayEntry;
   weekDates: string[];
@@ -89,7 +96,12 @@ export function ActividadTab({
   schedule: TrainingSchedule;
   onSaveRoutines: (routines: Routine[]) => void;
   onSaveSchedule: (schedule: TrainingSchedule) => void;
+  order?: ActividadBlockId[];
+  onReorder: (next: ActividadBlockId[]) => void;
 }) {
+  const blockOrder = order || DEFAULT_ACTIVIDAD_ORDER;
+  const drag = useSectionOrder(blockOrder, onReorder);
+
   const sessions = getTrainingSessions(entry);
   const trainingKcal = estimateTrainingCalories(entry);
   const intensidad = sessions.length === 1 ? sessions[0].intensidad : entry.entreno ? "moderado" : "ninguno";
@@ -101,8 +113,8 @@ export function ActividadTab({
   const sleepData = weekDates.map((fecha, i) => weekRow(fecha, weekDays[i], (d) => d.suenoHoras || 0));
   const volumeData = weekDates.map((fecha, i) => weekRow(fecha, weekDays[i], (d) => totalVolume(d.ejercicios)));
 
-  return (
-    <div>
+  const blocks: Record<ActividadBlockId, ReactNode> = {
+    resumen: (
       <section className="mb-4 rounded-2xl border border-gold/40 bg-surface p-3">
         <div className="mb-3 flex items-center font-mono text-[10px] uppercase tracking-[0.18em] text-gold">
           Hoy · Actividad
@@ -145,13 +157,12 @@ export function ActividadTab({
           </button>
         </div>
       </section>
-
-      <ExerciseLogCard entry={entry} routines={routines} schedule={schedule} onSave={onUpsert} />
-
-      <DailySteps weekDates={weekDates} weekDays={weekDays} onUpsert={onUpsert} />
-
-      <WeekBarChart title="Pasos de la semana" data={stepsData} color={STEPS_COLOR} unit="pasos" neonClass="chart-neon-a" />
-      <WeekBarChart title="Calorías quemadas entrenando" data={trainingData} color={TRAINING_COLOR} unit="kcal" neonClass="chart-neon-b" />
+    ),
+    ejercicios: <ExerciseLogCard entry={entry} routines={routines} schedule={schedule} onSave={onUpsert} />,
+    pasosEditar: <DailySteps weekDates={weekDates} weekDays={weekDays} onUpsert={onUpsert} />,
+    pasosChart: <WeekBarChart title="Pasos de la semana" data={stepsData} color={STEPS_COLOR} unit="pasos" neonClass="chart-neon-a" />,
+    entrenoChart: <WeekBarChart title="Calorías quemadas entrenando" data={trainingData} color={TRAINING_COLOR} unit="kcal" neonClass="chart-neon-b" />,
+    suenoChart: (
       <WeekBarChart
         title="Sueño de la semana"
         data={sleepData}
@@ -161,9 +172,20 @@ export function ActividadTab({
         referenceLabel={`recomendado ${SLEEP_TARGET_HOURS}h`}
         neonClass="chart-neon-c"
       />
-      <WeekBarChart title="Volumen entrenado (series × reps × peso)" data={volumeData} color={VOLUME_COLOR} unit="kg" neonClass="chart-neon-d" />
+    ),
+    volumenChart: <WeekBarChart title="Volumen entrenado (series × reps × peso)" data={volumeData} color={VOLUME_COLOR} unit="kg" neonClass="chart-neon-d" />,
+    rutinas: <RoutineManager routines={routines} schedule={schedule} onSaveRoutines={onSaveRoutines} onSaveSchedule={onSaveSchedule} />,
+  };
 
-      <RoutineManager routines={routines} schedule={schedule} onSaveRoutines={onSaveRoutines} onSaveSchedule={onSaveSchedule} />
-    </div>
+  return (
+    <DndContext sensors={drag.sensors} collisionDetection={drag.collisionDetection} onDragEnd={drag.handleDragEnd}>
+      <SortableContext items={blockOrder} strategy={verticalListSortingStrategy}>
+        {blockOrder.map((blockId) => (
+          <SortableSection key={blockId} id={blockId}>
+            {blocks[blockId]}
+          </SortableSection>
+        ))}
+      </SortableContext>
+    </DndContext>
   );
 }
