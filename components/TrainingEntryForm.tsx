@@ -113,7 +113,7 @@ export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: 
                     type="button"
                     onClick={() => setNuevaIntensidad(value)}
                     className={`rounded-lg border px-2 py-1.5 text-left font-mono text-[9.5px] uppercase tracking-wide transition-colors ${
-                      active ? "" : "border-border text-textMuted"
+                      active ? `intensity-${value}` : "border-border text-textMuted"
                     }`}
                     style={active ? { background: style.background, color: style.color, borderColor: style.background } : undefined}
                   >

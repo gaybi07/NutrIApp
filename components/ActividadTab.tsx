@@ -124,7 +124,7 @@ export function ActividadTab({
             type="button"
             onClick={onLogTraining}
             className={`flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] ${
-              sessions.length > 0 ? "" : "bg-sage text-bg border-sage/60"
+              sessions.length > 0 ? `intensity-${intensidad}` : "bg-sage text-bg border-sage/60"
             }`}
             style={sessions.length > 0 ? { background: trainingStyle.background, color: trainingStyle.color, borderColor: trainingStyle.background } : undefined}
           >

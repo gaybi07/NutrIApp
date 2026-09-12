@@ -207,3 +207,54 @@ html[data-font-size="grande"] .text-\[15px\] { font-size: 19px; }
 [data-theme="neon"] .recharts-bar-rectangle path {
   filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
 }
+
+/* Los botones de intensidad de entreno (leve/moderado/exigente/al fallo)
+   vienen con su color inline (INTENSITY_STYLES, igual en los 3 temas por
+   pedido del usuario) — acá se invierten igual que el resto de los
+   botones sólidos, con !important porque un estilo inline siempre le
+   gana a una clase. Cada intensidad mantiene su propia identidad de
+   color, solo que ahora "prendida" en vez de rellena. */
+[data-theme="neon"] .intensity-leve {
+  background-color: rgb(var(--color-surface-alt)) !important;
+  color: #4fd8ff !important;
+  border-color: #4fd8ff !important;
+  text-shadow: 0 0 6px rgba(79, 216, 255, 0.9), 0 0 16px rgba(79, 216, 255, 0.5);
+  box-shadow: 0 0 10px rgba(79, 216, 255, 0.35), inset 0 0 8px rgba(79, 216, 255, 0.12);
+}
+[data-theme="neon"] .intensity-moderado {
+  background-color: rgb(var(--color-surface-alt)) !important;
+  color: #ff6b35 !important;
+  border-color: #ff6b35 !important;
+  text-shadow: 0 0 6px rgba(255, 107, 53, 0.9), 0 0 16px rgba(255, 107, 53, 0.5);
+  box-shadow: 0 0 10px rgba(255, 107, 53, 0.35), inset 0 0 8px rgba(255, 107, 53, 0.12);
+}
+[data-theme="neon"] .intensity-exigente {
+  background-color: rgb(var(--color-surface-alt)) !important;
+  color: #ffe000 !important;
+  border-color: #ffe000 !important;
+  text-shadow: 0 0 6px rgba(255, 224, 0, 0.9), 0 0 16px rgba(255, 224, 0, 0.5);
+  box-shadow: 0 0 10px rgba(255, 224, 0, 0.35), inset 0 0 8px rgba(255, 224, 0, 0.12);
+}
+[data-theme="neon"] .intensity-fallo {
+  background-color: rgb(var(--color-surface-alt)) !important;
+  color: #c77dff !important;
+  border-color: #c77dff !important;
+  text-shadow: 0 0 6px rgba(199, 125, 255, 0.9), 0 0 16px rgba(199, 125, 255, 0.5);
+  box-shadow: 0 0 10px rgba(199, 125, 255, 0.35), inset 0 0 8px rgba(199, 125, 255, 0.12);
+}
+[data-theme="neon"] .intensity-ninguno {
+  background-color: rgb(var(--color-surface-alt)) !important;
+  color: rgb(var(--color-text)) !important;
+  border-color: rgb(var(--color-border)) !important;
+}
+
+/* Gráfico semanal (Indicadores): las barras por comida y la línea de
+   Gasto también prenden en neón — el resto (Objetivo diario, déficit)
+   ya sigue el texto/acento del tema. Los mismos colores se aplican
+   tanto al `fill`/`stroke` del gráfico (atributo SVG, le gana cualquier
+   regla de CSS) como al `background-color` de los puntitos de la
+   leyenda de abajo (ahí sí hace falta !important porque es inline). */
+[data-theme="neon"] .chart-des { fill: #4fd8ff !important; background-color: #4fd8ff !important; }
+[data-theme="neon"] .chart-mer { fill: #c77dff !important; background-color: #c77dff !important; }
+[data-theme="neon"] .chart-cen { fill: #ff6b35 !important; background-color: #ff6b35 !important; }
+[data-theme="neon"] .chart-gasto { stroke: #4fd8ff !important; background-color: #4fd8ff !important; }

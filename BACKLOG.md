@@ -1098,3 +1098,34 @@ algo puntual.
   "RESTANTES"/"PROTEÍNA"/"PASOS"/"DESAYUNO"/"KCAL" y los valores
   numéricos con un brillo blanco-celeste visible, sin ningún texto
   gris plano, sin errores de consola. `npm run build` limpio.
+- **2026-09-12**: el usuario mandó una captura señalando dos cosas que
+  seguían sin ser "neón" en ese tema: el botón de intensidad de
+  entreno (ej. "● MODERADO") y las barras del gráfico semanal —
+  ambos con relleno sólido de color en vez de brillar como el resto.
+  - **Botón de intensidad**: usa colores inline de
+    `INTENSITY_STYLES` (mismos en los 3 temas, a pedido del usuario en
+    su momento — eso no cambió), así que no se podía tocar con una
+    clase normal. Se le agregó una clase `intensity-${intensidad}` a
+    cada lugar donde se renderiza (`TodayCard.tsx`, `ActividadTab.tsx`,
+    `TrainingEntryForm.tsx`) y se agregaron 5 reglas en
+    `globals.css` (`.intensity-leve/moderado/exigente/fallo/ninguno`)
+    con `!important` (necesario para ganarle a un `style` inline) que
+    invierten el botón igual que los demás: fondo oscuro, borde y
+    letra prendidos en un color propio por intensidad — celeste
+    (leve), naranja (moderado), amarillo (exigente), violeta (al
+    fallo) — así cada intensidad se sigue distinguiendo pero ahora
+    brilla en vez de ser un rectángulo de color plano.
+  - **Gráfico semanal**: en `WeeklyChart.tsx` se le agregó `className`
+    a las barras de Desayuno/Merienda/Cena y a la línea de "Gasto"
+    (`chart-des/chart-mer/chart-cen/chart-gasto`), con las mismas
+    reglas neón en `globals.css` (celeste/violeta/naranja/celeste)
+    aplicadas tanto al `fill`/`stroke` del gráfico (atributo SVG, le
+    gana a cualquier CSS sin necesitar `!important`) como al
+    `background-color` de los puntitos de la leyenda de abajo (ahí sí
+    con `!important` porque esos son inline). "Almuerzo" y "Objetivo
+    diario" no necesitaron cambios — ya seguían el acento/texto del
+    tema, que en Neón ya es verde/blanco brillante.
+  Verificado con Playwright: captura de Inicio en Neón muestra el
+  botón "MODERADO" oscuro con borde y letra naranja brillante, y el
+  gráfico semanal con barras celeste/verde/violeta/naranja y la línea
+  de Gasto celeste, sin errores de consola. `npm run build` limpio.
