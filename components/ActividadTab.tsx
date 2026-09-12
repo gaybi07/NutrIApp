@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { BarChart, Bar, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip } from "recharts";
-import { DayEntry, INTENSITY_STYLES, Routine, TrainingSchedule, ActividadBlockId, DEFAULT_ACTIVIDAD_ORDER } from "@/lib/types";
+import { DayEntry, INTENSITY_STYLES, Routine, TrainingSchedule, ActividadBlockId, DEFAULT_ACTIVIDAD_ORDER, resolveOrder } from "@/lib/types";
 import { estimateTrainingCalories, getTrainingSessions, totalVolume } from "@/lib/calculations";
 import { useSectionOrder } from "@/lib/useSectionOrder";
 import { SortableSection } from "@/components/SortableSection";
@@ -99,7 +99,7 @@ export function ActividadTab({
   order?: ActividadBlockId[];
   onReorder: (next: ActividadBlockId[]) => void;
 }) {
-  const blockOrder = order || DEFAULT_ACTIVIDAD_ORDER;
+  const blockOrder = resolveOrder(order, DEFAULT_ACTIVIDAD_ORDER);
   const drag = useSectionOrder(blockOrder, onReorder);
 
   const sessions = getTrainingSessions(entry);

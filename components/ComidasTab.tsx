@@ -2,7 +2,7 @@
 
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { InventoryItem, MealKey, WeekPlan, ComidasBlockId, DEFAULT_COMIDAS_ORDER } from "@/lib/types";
+import { InventoryItem, MealKey, WeekPlan, ComidasBlockId, DEFAULT_COMIDAS_ORDER, resolveOrder } from "@/lib/types";
 import { useSectionOrder } from "@/lib/useSectionOrder";
 import { SortableSection } from "@/components/SortableSection";
 import { RecipePlanner } from "@/components/RecipePlanner";
@@ -35,7 +35,7 @@ export function ComidasTab({
   order?: ComidasBlockId[];
   onReorder: (next: ComidasBlockId[]) => void;
 }) {
-  const blockOrder = order || DEFAULT_COMIDAS_ORDER;
+  const blockOrder = resolveOrder(order, DEFAULT_COMIDAS_ORDER);
   const drag = useSectionOrder(blockOrder, onReorder);
 
   return (

@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { BarChart, Bar, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip, PieChart, Pie, Cell } from "recharts";
-import { DayEntry, MacrosBlockId, DEFAULT_MACROS_ORDER } from "@/lib/types";
+import { DayEntry, MacrosBlockId, DEFAULT_MACROS_ORDER, resolveOrder } from "@/lib/types";
 import { dayTotal, dayProt, dayCarbs, dayFat, dayFiber, macroTargets } from "@/lib/calculations";
 import { classifyIngredient, FOOD_GROUP_LABELS, FoodGroup } from "@/lib/foodGroups";
 import { useSectionOrder } from "@/lib/useSectionOrder";
@@ -60,7 +60,7 @@ export function MacrosTab({
   order?: MacrosBlockId[];
   onReorder: (next: MacrosBlockId[]) => void;
 }) {
-  const blockOrder = order || DEFAULT_MACROS_ORDER;
+  const blockOrder = resolveOrder(order, DEFAULT_MACROS_ORDER);
   const drag = useSectionOrder(blockOrder, onReorder);
   const targets = macroTargets(goal, proteinTarget);
   const consumedKcal = dayTotal(entry);

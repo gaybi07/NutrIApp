@@ -146,6 +146,13 @@ export const DEFAULT_ACTIVIDAD_ORDER: ActividadBlockId[] = [
   "resumen", "ejercicios", "pasosEditar", "pasosChart", "entrenoChart", "suenoChart", "volumenChart", "rutinas",
 ];
 
+/** Supabase guarda el orden custom como jsonb con default '[]', así que un
+ * array vacío (todavía no personalizado) no debe pisar el orden por
+ * default — un `order || fallback` común falla porque `[]` es truthy. */
+export function resolveOrder<T>(order: T[] | undefined, fallback: T[]): T[] {
+  return order && order.length > 0 ? order : fallback;
+}
+
 export interface Settings {
   goal: number; // kcal objetivo diario de consumo
   tdeeFallback: number; // gasto de referencia cuando no hay pasos cargados

@@ -1365,3 +1365,29 @@ algo puntual.
   reordena los bloques de verdad (por ejemplo en Macros: `Resumen`
   pasó del principio al final) y ese orden queda guardado — sin
   errores de consola. `npx tsc --noEmit` y `npm run build` limpios.
+- **2026-09-12 (hotfix)**: bug grave del cambio anterior — no se veía
+  nada en ninguna solapa. Causa: Supabase guarda las columnas de
+  orden (`inicio_order`, `comidas_order`, `macros_order`,
+  `actividad_order`, `enabled_tabs`) con default `'[]'::jsonb`, y el
+  código hacía `settings.xOrder || DEFAULT_ORDEN` — un array vacío
+  `[]` es *truthy* en JS, así que ese `||` nunca caía al default:
+  cada solapa terminaba mapeando sobre una lista de bloques vacía (o,
+  en el caso de `enabled_tabs`, ocultando todas las solapas menos
+  Inicio). Arreglado con un helper nuevo, `resolveOrder()` en
+  `lib/types.ts`, que trata un array vacío igual que "todavía no
+  personalizado" y usa el orden por default. Se aplicó en las 4
+  solapas, en `enabledTabs` (`app/page.tsx` y
+  `components/Preferences.tsx`) y en el mapeo de `app/api/data/route.ts`
+  (ahora un array vacío que viene de Supabase se normaliza a
+  `undefined` antes de llegar a los componentes).
+  De paso, se blindó `app/api/data/route.ts` contra el caso de no
+  haber corrido todavía la migración de estas columnas: si Postgres
+  devuelve "column does not exist" (en el `GET` o en el `PUT`), se
+  reintenta la consulta sin esas 4 columnas en vez de tirar un 500 que
+  tumbaba toda la carga de datos.
+  Verificado con Playwright reproduciendo el bug exacto (settings con
+  `inicioOrder`/`comidasOrder`/`macrosOrder`/`actividadOrder`/
+  `enabledTabs` todos en `[]`, como quedarían guardados en Supabase
+  antes de personalizar nada): las 4 solapas se ven completas de
+  nuevo, sin errores de consola. `npx tsc --noEmit` y `npm run build`
+  limpios.

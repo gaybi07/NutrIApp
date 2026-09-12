@@ -32,7 +32,7 @@ import { TipPopup } from "@/components/TipPopup";
 import { isSupabaseConfigured } from "@/lib/supabase/browser";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 import { useInventory } from "@/lib/useInventory";
-import { emptyDay, MealKey, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER } from "@/lib/types";
+import { emptyDay, MealKey, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER, resolveOrder } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 
@@ -58,10 +58,10 @@ export default function Home() {
     document.documentElement.setAttribute("data-font-size", settings.fontSize || "chico");
   }, [settings.fontSize]);
 
-  const inicioOrder = settings.inicioOrder || DEFAULT_INICIO_ORDER;
+  const inicioOrder = resolveOrder(settings.inicioOrder, DEFAULT_INICIO_ORDER);
   const inicioDrag = useSectionOrder(inicioOrder, (next) => saveSettings({ ...settings, inicioOrder: next }));
 
-  const enabledTabs = settings.enabledTabs || DEFAULT_ENABLED_TABS;
+  const enabledTabs = resolveOrder(settings.enabledTabs, DEFAULT_ENABLED_TABS);
   useEffect(() => {
     if (activeTab !== "inicio" && !enabledTabs.includes(activeTab)) setActiveTab("inicio");
   }, [activeTab, enabledTabs]);

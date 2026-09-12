@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings, ThemeMode, MainTab, OPTIONAL_TABS, DEFAULT_ENABLED_TABS, FontSize, FONT_SIZE_OPTIONS } from "@/lib/types";
+import { Settings, ThemeMode, MainTab, OPTIONAL_TABS, DEFAULT_ENABLED_TABS, FontSize, FONT_SIZE_OPTIONS, resolveOrder } from "@/lib/types";
 
 const THEME_OPTIONS: { value: ThemeMode; label: string; description: string }[] = [
   { value: "oscuro", label: "Oscuro", description: "Fondo oscuro, como está ahora." },
@@ -78,7 +78,7 @@ export function FontSizeSettings({ settings, onSave }: { settings: Settings; onS
 }
 
 export function TabsSettings({ settings, onSave }: { settings: Settings; onSave: (settings: Settings) => void }) {
-  const enabledTabs = settings.enabledTabs || DEFAULT_ENABLED_TABS;
+  const enabledTabs = resolveOrder(settings.enabledTabs, DEFAULT_ENABLED_TABS);
   const toggleTab = (tab: MainTab) => {
     const has = enabledTabs.includes(tab);
     const next = has ? enabledTabs.filter((t) => t !== tab) : [...enabledTabs, tab];

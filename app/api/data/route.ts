@@ -43,6 +43,10 @@ function toDay(row: Record<string, unknown>): DayEntry {
   };
 }
 
+function nonEmptyArray<T>(value: unknown): T[] | undefined {
+  return Array.isArray(value) && value.length > 0 ? (value as T[]) : undefined;
+}
+
 function toDayRow(day: DayEntry, userId: string) {
   return {
     user_id: userId,
@@ -88,12 +92,25 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
 
-  const [daysResult, settingsResult] = await Promise.all([
+  const SETTINGS_COLUMNS = "goal, tdee_fallback, weekly_weights, calculator_profile, tour_done, week_plan, routines, training_schedule, theme, enabled_tabs, font_size, inicio_order, comidas_order, macros_order, actividad_order";
+  const SETTINGS_COLUMNS_BASE = "goal, tdee_fallback, weekly_weights, calculator_profile, tour_done, week_plan, routines, training_schedule, theme, enabled_tabs, font_size";
+
+  const [daysResult, settingsResultFull] = await Promise.all([
     supabase.from("days").select("*").order("fecha", { ascending: true }),
-    supabase.from("user_settings").select("goal, tdee_fallback, weekly_weights, calculator_profile, tour_done, week_plan, routines, training_schedule, theme, enabled_tabs, font_size, inicio_order, comidas_order, macros_order, actividad_order").eq("user_id", user.id).maybeSingle(),
+    supabase.from("user_settings").select(SETTINGS_COLUMNS).eq("user_id", user.id).maybeSingle(),
   ]);
 
   if (daysResult.error) return NextResponse.json({ error: daysResult.error.message }, { status: 500 });
+
+  // Si todavía no se corrió la migración que agrega las columnas de orden
+  // (comidas_order/macros_order/actividad_order/inicio_order), Postgres
+  // devuelve "column does not exist" y no queremos que eso tire abajo TODA
+  // la carga de datos — reintentamos sin esas columnas y usamos el orden
+  // por default hasta que se corra la migración.
+  let settingsResult = settingsResultFull;
+  if (settingsResult.error?.message?.includes("does not exist")) {
+    settingsResult = await supabase.from("user_settings").select(SETTINGS_COLUMNS_BASE).eq("user_id", user.id).maybeSingle();
+  }
   if (settingsResult.error) return NextResponse.json({ error: settingsResult.error.message }, { status: 500 });
 
   return NextResponse.json({
@@ -109,12 +126,12 @@ export async function GET() {
           routines: ((settingsResult.data as Record<string, unknown>).routines as Settings["routines"]) || [],
           trainingSchedule: ((settingsResult.data as Record<string, unknown>).training_schedule as Settings["trainingSchedule"]) || {},
           theme: ((settingsResult.data as Record<string, unknown>).theme as Settings["theme"]) || undefined,
-          enabledTabs: ((settingsResult.data as Record<string, unknown>).enabled_tabs as Settings["enabledTabs"]) || undefined,
+          enabledTabs: nonEmptyArray((settingsResult.data as Record<string, unknown>).enabled_tabs) as Settings["enabledTabs"],
           fontSize: ((settingsResult.data as Record<string, unknown>).font_size as Settings["fontSize"]) || undefined,
-          inicioOrder: ((settingsResult.data as Record<string, unknown>).inicio_order as Settings["inicioOrder"]) || undefined,
-          comidasOrder: ((settingsResult.data as Record<string, unknown>).comidas_order as Settings["comidasOrder"]) || undefined,
-          macrosOrder: ((settingsResult.data as Record<string, unknown>).macros_order as Settings["macrosOrder"]) || undefined,
-          actividadOrder: ((settingsResult.data as Record<string, unknown>).actividad_order as Settings["actividadOrder"]) || undefined,
+          inicioOrder: nonEmptyArray((settingsResult.data as Record<string, unknown>).inicio_order) as Settings["inicioOrder"],
+          comidasOrder: nonEmptyArray((settingsResult.data as Record<string, unknown>).comidas_order) as Settings["comidasOrder"],
+          macrosOrder: nonEmptyArray((settingsResult.data as Record<string, unknown>).macros_order) as Settings["macrosOrder"],
+          actividadOrder: nonEmptyArray((settingsResult.data as Record<string, unknown>).actividad_order) as Settings["actividadOrder"],
         }
       : DEFAULT_SETTINGS,
   });
@@ -140,7 +157,7 @@ export async function PUT(req: NextRequest) {
 
   if (body.settings) {
     const settings = body.settings as Settings;
-    const { error } = await supabase.from("user_settings").upsert({
+    const settingsRow: Record<string, unknown> = {
       user_id: user.id,
       goal: settings.goal,
       tdee_fallback: settings.tdeeFallback,
@@ -157,7 +174,14 @@ export async function PUT(req: NextRequest) {
       comidas_order: settings.comidasOrder || [],
       macros_order: settings.macrosOrder || [],
       actividad_order: settings.actividadOrder || [],
-    });
+    };
+    let { error } = await supabase.from("user_settings").upsert(settingsRow);
+    // Igual que en GET: si todavía no se corrió la migración de las columnas
+    // de orden, reintentamos sin ellas en vez de perder el resto del guardado.
+    if (error?.message?.includes("does not exist")) {
+      const { inicio_order, comidas_order, macros_order, actividad_order, ...baseRow } = settingsRow;
+      ({ error } = await supabase.from("user_settings").upsert(baseRow));
+    }
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
