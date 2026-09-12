@@ -54,10 +54,16 @@ const DEFAULT_SUGGESTIONS: Record<MealKey, string[]> = {
 type SpeechRecognitionInstance = {
   lang: string;
   interimResults: boolean;
+  continuous: boolean;
   maxAlternatives: number;
   start: () => void;
   stop: () => void;
-  onresult: ((event: { results: { [index: number]: { [index: number]: { transcript: string } } } }) => void) | null;
+  onresult:
+    | ((event: {
+        resultIndex: number;
+        results: { length: number; [index: number]: { isFinal: boolean; [index: number]: { transcript: string } } };
+      }) => void)
+    | null;
   onerror: (() => void) | null;
   onend: (() => void) | null;
 };
@@ -112,10 +118,20 @@ export function AiEntryForm({
     const recognition = new SpeechRecognitionCtor();
     recognition.lang = "es-AR";
     recognition.interimResults = false;
+    // "continuous" evita que el reconocimiento se corte solo apenas detecta
+    // un segundo de silencio — sigue escuchando (varias frases, con pausas
+    // para pensar) hasta que el usuario toca "parar" a propósito.
+    recognition.continuous = true;
     recognition.maxAlternatives = 1;
     recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      setText((prev) => (prev ? `${prev} ${transcript}` : transcript));
+      let finalTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) finalTranscript += `${event.results[i][0].transcript} `;
+      }
+      finalTranscript = finalTranscript.trim();
+      if (finalTranscript) {
+        setText((prev) => (prev ? `${prev} ${finalTranscript}` : finalTranscript));
+      }
     };
     recognition.onerror = () => {
       setRecording(false);
@@ -355,7 +371,22 @@ export function AiEntryForm({
               />
             </div>
           </div>
-          {preview.detalle && <div className="text-[11px] text-textMuted italic my-2">{preview.detalle}</div>}
+          {preview.items.length > 0 && (
+            <div className="my-2 flex flex-col gap-1">
+              {preview.items.map((item, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between gap-2 rounded-lg border border-border bg-bg/40 px-2.5 py-1.5 text-[11px]"
+                >
+                  <span className="text-text">{item.nombre}</span>
+                  <span className="shrink-0 text-textMuted">
+                    {item.kcal} kcal · {item.protein}g prot
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+          {preview.detalle && <div className="text-[11px] text-textMuted italic mb-2">{preview.detalle}</div>}
           <button
             type="button"
             onClick={() => handleCalc(true)}

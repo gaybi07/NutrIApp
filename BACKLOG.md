@@ -1129,3 +1129,41 @@ algo puntual.
   botón "MODERADO" oscuro con borde y letra naranja brillante, y el
   gráfico semanal con barras celeste/verde/violeta/naranja y la línea
   de Gasto celeste, sin errores de consola. `npm run build` limpio.
+- **2026-09-12**: dos ajustes a "Registrar con IA" (`AiEntryForm.tsx`),
+  a pedido del usuario.
+  1. **Grabación de audio se cortaba muy rápido**: el usuario notó que
+     al hacer una pausa de un segundo para pensar, la grabación se
+     frenaba sola. La Web Speech API por default termina el
+     reconocimiento apenas detecta el final de una frase (silencio
+     corto). Se activó `recognition.continuous = true`, que la deja
+     escuchando varias frases/pausas seguidas hasta que el usuario
+     toca "parar" a propósito (o hasta el timeout mucho más largo que
+     usa el navegador por silencio total). Como en modo continuo
+     `onresult` puede dispararse varias veces con resultados
+     acumulados, se reescribió para ir concatenando solo lo que
+     `event.resultIndex` marca como nuevo y finalizado (`isFinal`), en
+     vez de leer siempre `results[0][0]` (que ya no alcanza en este
+     modo).
+  2. **La descripción no decía las kcal de cada alimento**: el usuario
+     cargó "pollo" y el desglose solo mencionaba los gramos, no las
+     kcal que aportaba. La causa: la app dependía de que el campo
+     `detalle` (texto libre generado por la IA) mencionara los números
+     correctamente, sin garantía. Como `parse-meal` ya devuelve
+     `items` (cada alimento con su propio kcal/proteína exactos, la
+     misma data que se termina guardando), se agregó una lista
+     estructurada en el preview — cada item como
+     "Pollo (250 g) — 412 kcal · 38g prot" — en vez de confiar en la
+     prosa de `detalle`. También se ajustó el prompt de
+     `/api/parse-meal` para que el nombre de cada item siempre
+     incluya la cantidad entre paréntesis (antes decía solo "Pollo",
+     ahora "Pollo (250 g)"), así la fila queda autocontenida sin tener
+     que mirar el campo de ingredientes aparte.
+  Probado con Playwright mockeando `/api/parse-meal`: al calcular
+  "pollo", el preview muestra la fila "Pollo (250 g) · 412 kcal · 38g
+  prot" (antes solo se veía el detalle en texto libre), sin errores de
+  consola. La grabación en sí (silencio antes de cortar) no se puede
+  probar en un navegador headless — depende del reconocimiento de voz
+  real del dispositivo — pero el cambio de código (`continuous: true`
+  + acumulación por `resultIndex`) es el fix estándar y documentado
+  para este comportamiento de la Web Speech API. `npm run build`
+  limpio.
