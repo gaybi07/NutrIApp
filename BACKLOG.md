@@ -1426,3 +1426,30 @@ algo puntual.
   desde la manito de "Hoy" hasta el fondo de Inicio reordena
   correctamente a `["comidas","semana","hoy"]` — sin errores de
   consola. `npx tsc --noEmit` y `npm run build` limpios.
+- **2026-09-12**: la manito quedó pidiendo dos ajustes más — que sea
+  más discreta, y que arrastrar en el celu no "tape toda la
+  pantalla" y se vea feo.
+  - Manito más chica y discreta: de `h-9 w-9` a `h-6 w-6`, con
+    `opacity-60` en reposo (antes se veía siempre a full opacidad) —
+    solo se pone bien visible (`opacity-100`) al tocarla o mientras
+    se arrastra.
+  - Mientras se arrastra, el bloque ya no mueve TODO su contenido
+    (algunos bloques miden más de una pantalla completa) — ahora se
+    "achica" a una franja de 72px con `overflow: hidden` y una
+    sombra, así solo se ve una vista previa chica siguiendo el dedo
+    en vez de tapar la pantalla.
+  - Bug de raíz encontrado sacando una captura a mitad del arrastre:
+    dnd-kit usa `CSS.Transform.toString(transform)` para animar los
+    bloques vecinos haciendo lugar, y ese helper incluye
+    `scaleX`/`scaleY` — en bloques altos eso se veía como el texto
+    estirado/deformado tipo "efecto ola" mientras se reordenaba.
+    Cambiado a `CSS.Translate.toString(transform)` (mismo paquete
+    `@dnd-kit/utilities`), que solo traslada sin escalar — es el
+    workaround conocido de dnd-kit para este problema en listas
+    verticales.
+  Probado con Playwright: se sacó una captura literalmente a mitad
+  del arrastre (antes mostraba el texto deformado tipo ola; ahora se
+  ve una franja chica con borde de color siguiendo el mouse, sin
+  deformación en los bloques vecinos), y se confirmó que soltarla
+  sigue reordenando bien (`["comidas","semana","hoy"]`) — sin errores
+  de consola. `npx tsc --noEmit` y `npm run build` limpios.
