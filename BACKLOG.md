@@ -739,3 +739,44 @@ algo puntual.
      prueba el panel queda abierto con "1 días importados ✓" visible;
      el botón de exportar dispara una descarga real cuyo contenido
      (parseado de vuelta) tiene los mismos días y el settings completo.
+- **2026-09-11**: tres bugs reales reportados por el usuario tras
+  probar a mano lo que mi barrido automático de QA no detectó (solo
+  chequeaba que lo que ya existía funcionara, no si el RESULTADO se
+  veía bien).
+  1. **Bug real de raíz** en `WeeklyChart.tsx` ("Indicadores"): las
+     líneas de "Objetivo diario" y "Gasto" no se veían nunca. La causa
+     real: Recharts ignora en silencio los `<Line>` que se meten
+     adentro de un `<BarChart>` — esa combinación (barras + línea)
+     solo se soporta con `<ComposedChart>`. Se cambió el contenedor;
+     confirmado con el DOM que antes había 0 `<path>` de línea y ahora
+     hay 2. De paso: el eje Y no consideraba los valores de las líneas
+     al calcular su rango, así que aunque las líneas ya renderizaran
+     podían quedar recortadas por arriba — se agregó un dominio
+     explícito que contempla barras y líneas. También se sacaron dos
+     `ReferenceLine` redundantes (mismo color que las líneas de datos,
+     tapándolas) y se le puso un color distinto a cada línea (antes
+     "Gasto" compartía el mismo verde que la barra de Desayuno, y
+     "Objetivo" el mismo dorado que la de Almuerzo — se camuflaban).
+     Se agregó a la leyenda debajo del gráfico.
+  2. Al tocar/tapear cualquier barra de cualquier gráfico (Recharts
+     `<Tooltip>` sin `cursor` configurado), aparecía el resaltado por
+     default: un rectángulo gris claro semitransparente, horrible
+     sobre el fondo oscuro de la app. Se le puso
+     `cursor={{ fill: "rgba(201,162,39,0.10)" }}` (un dorado sutil) a
+     los `Tooltip` de `WeeklyChart.tsx`, `MacrosTab.tsx` (3 gráficos)
+     y `ActividadTab.tsx` (el `WeekBarChart` compartido de los 4
+     gráficos de esa pestaña) — el mismo bug estaba en los 7 lugares.
+  3. El modal de intensidad de entrenamiento en `Ledger.tsx` (tocar el
+     círculo de color de un día en "Tabla de la semana") dejaba elegir
+     leve/moderado/exigente/al fallo pero no la duración — siempre
+     guardaba con los minutos que ya hubiera o 60 por default, a
+     diferencia de `TrainingEntryForm.tsx` que sí deja editarla. Se
+     agregó un input de "Duración (min)" al modal (con el mismo límite
+     de dígitos y ayuda contextual que ya se usa en el resto de la
+     app), y la estimación de kcal por intensidad dentro del modal
+     ahora recalcula en vivo con el valor que se esté escribiendo, no
+     con el que ya estaba guardado.
+  Probado con Playwright: el DOM ahora tiene 2 `path` de línea con los
+  colores correctos; el cursor del tooltip usa el dorado sutil (no
+  gris); el modal de Ledger guarda el minutaje editado (90 en vez del
+  valor previo) junto con la intensidad elegida.

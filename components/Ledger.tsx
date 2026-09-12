@@ -5,7 +5,9 @@ import { DayEntry, emptyDay, TrainingIntensity, INTENSITY_STYLES } from "@/lib/t
 import { dayTotal, dayProt, dayDeficit, estimateTrainingCalories } from "@/lib/calculations";
 import { Collapsible } from "@/components/Collapsible";
 import { useEscapeKey } from "@/lib/useEscapeKey";
-import { SECTION_HELP } from "@/lib/helpText";
+import { SECTION_HELP, FIELD_HELP } from "@/lib/helpText";
+import { InfoHint } from "@/components/InfoHint";
+import { clampNumber, countDigits, MAX_MINUTES_DIGITS } from "@/lib/inputLimits";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
@@ -25,15 +27,21 @@ export function Ledger({
 }) {
   const anyData = weekDays.some((d) => d);
   const [activeDate, setActiveDate] = useState<string | null>(null);
+  const [minutosInput, setMinutosInput] = useState("60");
   useEscapeKey(() => setActiveDate(null), activeDate !== null);
 
   const activeDay = activeDate ? weekDays[weekDates.indexOf(activeDate)] : null;
   const activeIntensity = activeDay?.entreno ? activeDay.entrenoIntensidad || "moderado" : "ninguno";
 
+  const openDay = (fecha: string, d: DayEntry | null) => {
+    setActiveDate(fecha);
+    setMinutosInput(String(d?.entrenoMinutos || 60));
+  };
+
   const saveIntensity = (intensidad: TrainingIntensity | "ninguno") => {
     if (!activeDate) return;
     const existing = activeDay || emptyDay(activeDate);
-    const minutos = existing.entrenoMinutos || 60;
+    const minutos = clampNumber(Number(minutosInput) || 60, 9999);
     onUpsert({
       ...existing,
       entreno: intensidad !== "ninguno",
@@ -79,7 +87,7 @@ export function Ledger({
               <button
                 type="button"
                 aria-label={`Elegir intensidad del ${fecha}`}
-                onClick={() => setActiveDate(fecha)}
+                onClick={() => openDay(fecha, d)}
                 className="flex min-w-0 items-center gap-1 text-left"
               >
                 <span
@@ -95,6 +103,22 @@ export function Ledger({
           <div className="w-full max-w-sm rounded-2xl border border-border bg-surface p-4 shadow-2xl" onClick={(event) => event.stopPropagation()}>
             <div className="mb-1 font-display text-xl text-text">Intensidad del entrenamiento</div>
             <div className="mb-3 text-[11px] text-textMuted">Elegí la opción para ese día. El gasto se calcula con tu peso y duración.</div>
+            <div className="mb-3">
+              <label className="mb-1 flex items-center font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
+                Duración (min)<InfoHint text={FIELD_HELP.minutosEntrenamiento} />
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="9999"
+                step="5"
+                value={minutosInput}
+                onChange={(event) => {
+                  if (countDigits(event.target.value) <= MAX_MINUTES_DIGITS) setMinutosInput(event.target.value);
+                }}
+                className="w-full"
+              />
+            </div>
             <div className="space-y-2">
               {Object.entries(INTENSITY_STYLES).map(([value, style]) => {
                 const intensity = value as TrainingIntensity | "ninguno";
@@ -102,6 +126,7 @@ export function Ledger({
                   ...(activeDay || emptyDay(activeDate)),
                   entreno: true,
                   entrenoIntensidad: intensity,
+                  entrenoMinutos: clampNumber(Number(minutosInput) || 60, 9999),
                 });
                 return (
                   <button

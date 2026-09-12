@@ -149,7 +149,7 @@ export function MacrosTab({
           <BarChart data={weekMacroData} margin={{ left: -20, right: 0, top: 5, bottom: 0 }}>
             <XAxis dataKey="dow" tick={{ fill: "#9C958A", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "#3A362F" }} tickLine={false} />
             <YAxis tick={{ fill: "#9C958A", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: "#242220", border: "1px solid #3A362F", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "#EDE7DA" }} />
+            <Tooltip contentStyle={{ background: "#242220", border: "1px solid #3A362F", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "#EDE7DA" }} cursor={{ fill: "rgba(201,162,39,0.10)" }} />
             <ReferenceLine y={goal} stroke="#C9A227" strokeDasharray="4 4" label={{ value: `objetivo ${goal}`, fill: "#C9A227", fontSize: 9, position: "right" }} />
             <Bar dataKey="protein" stackId="a" fill={COLORS.protein} />
             <Bar dataKey="carbs" stackId="a" fill={COLORS.carbs} />
@@ -169,7 +169,7 @@ export function MacrosTab({
           <BarChart data={proteinWeekData} margin={{ left: -20, right: 0, top: 5, bottom: 0 }}>
             <XAxis dataKey="dow" tick={{ fill: "#9C958A", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "#3A362F" }} tickLine={false} />
             <YAxis tick={{ fill: "#9C958A", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: "#242220", border: "1px solid #3A362F", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "#EDE7DA" }} />
+            <Tooltip contentStyle={{ background: "#242220", border: "1px solid #3A362F", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "#EDE7DA" }} cursor={{ fill: "rgba(201,162,39,0.10)" }} />
             <ReferenceLine y={proteinTarget} stroke="#8A9A7C" strokeDasharray="4 4" label={{ value: `obj. ${proteinTarget}g`, fill: "#8A9A7C", fontSize: 9, position: "right" }} />
             <Bar dataKey="protein" fill={COLORS.protein} radius={[3, 3, 0, 0]} />
           </BarChart>
@@ -182,7 +182,7 @@ export function MacrosTab({
           <BarChart data={fiberWeekData} margin={{ left: -20, right: 0, top: 5, bottom: 0 }}>
             <XAxis dataKey="dow" tick={{ fill: "#9C958A", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "#3A362F" }} tickLine={false} />
             <YAxis tick={{ fill: "#9C958A", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: "#242220", border: "1px solid #3A362F", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "#EDE7DA" }} />
+            <Tooltip contentStyle={{ background: "#242220", border: "1px solid #3A362F", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "#EDE7DA" }} cursor={{ fill: "rgba(201,162,39,0.10)" }} />
             <ReferenceLine y={targets.fiberG} stroke={COLORS.fiber} strokeDasharray="4 4" label={{ value: `obj. ${targets.fiberG}g`, fill: COLORS.fiber, fontSize: 9, position: "right" }} />
             <Bar dataKey="fiber" fill={COLORS.fiber} radius={[3, 3, 0, 0]} />
           </BarChart>

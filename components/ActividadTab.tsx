@@ -46,6 +46,7 @@ function WeekBarChart({
             contentStyle={{ background: "#242220", border: "1px solid #3A362F", borderRadius: 8, fontSize: 12 }}
             labelStyle={{ color: "#EDE7DA" }}
             formatter={(value: number) => `${value.toLocaleString("es-AR")} ${unit}`}
+            cursor={{ fill: "rgba(201,162,39,0.10)" }}
           />
           {referenceValue != null && (
             <ReferenceLine
