@@ -1232,3 +1232,25 @@ algo puntual.
   paleta — coherente con Indicadores. Un item cargado sin `gramos`
   (400 kcal) aparece solo con "100" en el campo de gramos apenas se
   abre la app, sin errores de consola. `npm run build` limpio.
+- **2026-09-12**: reorganizado el menú del engranaje (⚙) a pedido del
+  usuario — antes tenía un solo ítem "Preferencias" que llevaba a un
+  panel único con Tema + Tamaño de letra + Solapas + Herramientas todo
+  junto; ahora el menú lista las 4 secciones directo (más "Cerrar
+  sesión"): **Preferencias** (quedó solo para el tema — oscuro/claro/
+  neón), **Tamaño de letra**, **Solapas** y **Herramientas**, cada una
+  abriendo su propio panel chico y enfocado.
+  - `components/Preferences.tsx` se partió en 4 componentes
+    exportados (`ThemeSettings`, `FontSizeSettings`, `TabsSettings`,
+    `ToolsSettings`) en vez de un único `Preferences` con todo junto.
+  - `AuthPanel.tsx`: el menú desplegable pasó de 2 a 5 botones
+    (`onOpenPreferences` se separó en `onOpenTheme`/`onOpenFontSize`/
+    `onOpenTabs`/`onOpenTools`).
+  - `page.tsx`: el panel único `"preferencias"` se reemplazó por 4
+    valores de panel (`"tema"`, `"tamano-letra"`, `"solapas"`,
+    `"herramientas"`), cada uno con su propio modal.
+  Probado con Playwright (forzando temporalmente el estado logueado de
+  `AuthPanel` para poder abrir el menú sin sesión real de Supabase,
+  revertido después de la captura): el menú lista los 5 ítems en el
+  orden pedido, y cada uno abre el panel correcto (Tema, Tamaño de
+  letra, Solapas, Herramientas), sin errores de consola. `npm run
+  build` limpio.

@@ -5,10 +5,16 @@ import { isSupabaseConfigured, supabase } from "@/lib/supabase/browser";
 
 export function AuthPanel({
   onAuthChange,
-  onOpenPreferences,
+  onOpenTheme,
+  onOpenFontSize,
+  onOpenTabs,
+  onOpenTools,
 }: {
   onAuthChange?: (authenticated: boolean) => void;
-  onOpenPreferences?: () => void;
+  onOpenTheme?: () => void;
+  onOpenFontSize?: () => void;
+  onOpenTabs?: () => void;
+  onOpenTools?: () => void;
 }) {
   const [email, setEmail] = useState("");
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -100,11 +106,41 @@ export function AuthPanel({
                 type="button"
                 onClick={() => {
                   setMenuOpen(false);
-                  onOpenPreferences?.();
+                  onOpenTheme?.();
                 }}
                 className="block w-full px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
               >
                 Preferencias
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onOpenFontSize?.();
+                }}
+                className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
+              >
+                Tamaño de letra
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onOpenTabs?.();
+                }}
+                className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
+              >
+                Solapas
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onOpenTools?.();
+                }}
+                className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
+              >
+                Herramientas
               </button>
               <button
                 type="button"

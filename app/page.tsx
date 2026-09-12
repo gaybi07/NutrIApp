@@ -20,7 +20,7 @@ import { TodayCard } from "@/components/TodayCard";
 import { TodayMealsBreakdown } from "@/components/TodayMealsBreakdown";
 import { TrainingEntryForm } from "@/components/TrainingEntryForm";
 import { SleepEntryForm } from "@/components/SleepEntryForm";
-import { Preferences } from "@/components/Preferences";
+import { ThemeSettings, FontSizeSettings, TabsSettings, ToolsSettings } from "@/components/Preferences";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
 import { AppTour } from "@/components/AppTour";
 import { TipPopup } from "@/components/TipPopup";
@@ -38,7 +38,9 @@ export default function Home() {
   const { items: inventory, addText, consumeByText, consumeItem, consumeAmounts, persist: replaceInventory } = useInventory();
   const [weekOffset, setWeekOffset] = useState(0);
   const [activeTab, setActiveTab] = useState<MainTab>("inicio");
-  const [panel, setPanel] = useState<"calc" | "ai" | "entreno" | "sueno" | "datos" | "planificador" | "preferencias" | null>(null);
+  const [panel, setPanel] = useState<
+    "calc" | "ai" | "entreno" | "sueno" | "datos" | "planificador" | "tema" | "tamano-letra" | "solapas" | "herramientas" | null
+  >(null);
   const [authenticated, setAuthenticated] = useState(!isSupabaseConfigured);
   const handleAuthChange = useCallback((value: boolean) => setAuthenticated(value), []);
   useEscapeKey(() => setPanel(null), panel !== null);
@@ -154,7 +156,13 @@ export default function Home() {
 
   return (
     <main>
-      <AuthPanel onAuthChange={handleAuthChange} onOpenPreferences={() => setPanel("preferencias")} />
+      <AuthPanel
+        onAuthChange={handleAuthChange}
+        onOpenTheme={() => setPanel("tema")}
+        onOpenFontSize={() => setPanel("tamano-letra")}
+        onOpenTabs={() => setPanel("solapas")}
+        onOpenTools={() => setPanel("herramientas")}
+      />
 
       {syncError && (
         <div className="mb-4 rounded-xl border border-rust/40 bg-rust/10 px-3 py-2 text-[11px] text-rust">
@@ -434,7 +442,7 @@ export default function Home() {
         </div>
       )}
 
-      {panel === "preferencias" && (
+      {panel === "tema" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>
           <div
             className="relative my-4 max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-3 shadow-2xl"
@@ -446,9 +454,58 @@ export default function Home() {
             >
               Cerrar
             </button>
-            <Preferences
-              settings={settings}
-              onSave={saveSettings}
+            <ThemeSettings settings={settings} onSave={saveSettings} />
+          </div>
+        </div>
+      )}
+
+      {panel === "tamano-letra" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>
+          <div
+            className="relative my-4 max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-3 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              onClick={() => setPanel(null)}
+              className="absolute right-3 top-3 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+            >
+              Cerrar
+            </button>
+            <FontSizeSettings settings={settings} onSave={saveSettings} />
+          </div>
+        </div>
+      )}
+
+      {panel === "solapas" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>
+          <div
+            className="relative my-4 max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-3 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              onClick={() => setPanel(null)}
+              className="absolute right-3 top-3 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+            >
+              Cerrar
+            </button>
+            <TabsSettings settings={settings} onSave={saveSettings} />
+          </div>
+        </div>
+      )}
+
+      {panel === "herramientas" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>
+          <div
+            className="relative my-4 max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-3 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              onClick={() => setPanel(null)}
+              className="absolute right-3 top-3 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+            >
+              Cerrar
+            </button>
+            <ToolsSettings
               onOpenCalc={() => setPanel("calc")}
               onOpenAI={() => setPanel("ai")}
               onOpenDatos={() => setPanel("datos")}
