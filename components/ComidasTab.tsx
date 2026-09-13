@@ -4,7 +4,9 @@ import { useState } from "react";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import {
+  InventoryCategory,
   InventoryItem,
+  InventoryNutrition,
   MealKey,
   WeekPlan,
   ComidasBlockId,
@@ -36,6 +38,9 @@ export function ComidasTab({
   weekPlan,
   onOpenPlanificador,
   addInventoryText,
+  addStructuredItems,
+  updateInventoryItem,
+  applyInventoryReview,
   replaceItems,
   order,
   onReorder,
@@ -50,6 +55,9 @@ export function ComidasTab({
   weekPlan: WeekPlan;
   onOpenPlanificador: () => void;
   addInventoryText: (text: string) => void;
+  addStructuredItems: (entries: Array<{ name: string; quantity: number; unit: InventoryItem["unit"]; category?: InventoryCategory; nutritionPer100g?: InventoryNutrition }>) => void;
+  updateInventoryItem: (id: string, patch: Partial<InventoryItem>) => void;
+  applyInventoryReview: (corrections: Array<{ id: string; name: string; quantity: number; unit: InventoryItem["unit"]; category?: InventoryCategory; nutritionPer100g?: InventoryNutrition }>) => void;
   replaceItems: (items: InventoryItem[]) => void;
   order?: ComidasBlockId[];
   onReorder: (next: ComidasBlockId[]) => void;
@@ -86,7 +94,14 @@ export function ComidasTab({
         <SortableContext items={visibleOrder} strategy={verticalListSortingStrategy}>
           {visibleOrder.map((blockId) => (
             <SortableSection key={blockId} id={blockId} onHide={() => onHide(blockId)}>
-              {blockId === "alacena" && <AlacenaCard items={items} replaceItems={replaceItems} />}
+              {blockId === "alacena" && (
+                <AlacenaCard
+                  items={items}
+                  replaceItems={replaceItems}
+                  updateItem={updateInventoryItem}
+                  applyReview={applyInventoryReview}
+                />
+              )}
               {blockId === "sugerencias" && (
                 <RecipePlanner
                   items={items}
@@ -97,7 +112,7 @@ export function ComidasTab({
                 />
               )}
               {blockId === "comunes" && <CommonMealsCard />}
-              {blockId === "compras" && <ShoppingLog addInventoryText={addInventoryText} />}
+              {blockId === "compras" && <ShoppingLog addInventoryText={addInventoryText} addStructuredItems={addStructuredItems} />}
               {blockId === "planificador" && (
                 <button
                   type="button"

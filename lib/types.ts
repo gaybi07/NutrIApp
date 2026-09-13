@@ -2,11 +2,40 @@ export type MealKey = "des" | "alm" | "mer" | "cen";
 export type TrainingIntensity = "leve" | "moderado" | "exigente" | "fallo";
 export type GoalMode = "perder" | "recomponer" | "aumentar";
 
+export type InventoryCategory = "carnes" | "lacteos" | "huevos" | "verduras" | "frutas" | "harinas" | "bebidas" | "condimentos" | "otros";
+export const INVENTORY_CATEGORIES: { id: InventoryCategory; label: string }[] = [
+  { id: "carnes", label: "Carnes" },
+  { id: "lacteos", label: "Lácteos" },
+  { id: "huevos", label: "Huevos" },
+  { id: "verduras", label: "Verduras" },
+  { id: "frutas", label: "Frutas" },
+  { id: "harinas", label: "Harinas y cereales" },
+  { id: "bebidas", label: "Bebidas" },
+  { id: "condimentos", label: "Condimentos" },
+  { id: "otros", label: "Otros" },
+];
+export const INVENTORY_CATEGORY_LABELS: Record<InventoryCategory, string> = Object.fromEntries(
+  INVENTORY_CATEGORIES.map((c) => [c.id, c.label])
+) as Record<InventoryCategory, string>;
+
+export interface InventoryNutrition {
+  kcal: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+}
+
 export interface InventoryItem {
   id: string;
   name: string;
   quantity: number;
   unit: "g" | "ml" | "u.";
+  category?: InventoryCategory;
+  nutritionPer100g?: InventoryNutrition;
+  // El usuario ya revisó/corrigió el valor nutricional a mano — no pisarlo
+  // con una nueva estimación de la IA (ej. al usar "Revisar con IA").
+  nutritionConfirmed?: boolean;
 }
 
 export interface CalculatorProfile {

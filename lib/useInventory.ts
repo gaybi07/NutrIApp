@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { InventoryItem } from "./types";
+import { InventoryCategory, InventoryItem, InventoryNutrition } from "./types";
 
 const INVENTORY_KEY = "registro:inventory:v1";
 
@@ -20,6 +20,23 @@ function defaultUnitForName(name: string): InventoryItem["unit"] {
   if (/(huevo|palta|banana|manzana|yogur|yogurt|tomate|cebolla|papa|morron|limon)/.test(key)) return "u.";
   if (/(leche|agua|aceite|salsa|jugo)/.test(key)) return "ml";
   return "g";
+}
+
+/** Categoría por defecto para lo que se carga a mano/dictado (sin pasar por
+ * la IA, que ya clasifica ella misma) — heurística simple por palabras
+ * clave, así todo lo de la alacena queda filtrable por categoría sin
+ * excepción, venga de donde venga. */
+function defaultCategoryForName(name: string): InventoryCategory {
+  const key = inventoryKey(name);
+  if (/(pollo|carne|cerdo|vacuno|milanesa|pescado|atun|jamon|salchicha|chorizo|pechuga|bife|asado|hamburgues|panceta)/.test(key)) return "carnes";
+  if (/(leche|yogur|yogurt|queso|manteca|crema|ricota)/.test(key)) return "lacteos";
+  if (/(huevo)/.test(key)) return "huevos";
+  if (/(tomate|cebolla|papa|zanahoria|zapallo|lechuga|morron|repollo|brocoli|verdura|espinaca|ajo|choclo|berenjena|acelga)/.test(key)) return "verduras";
+  if (/(banana|manzana|naranja|limon|frutilla|pera|uva|fruta|palta|mandarina|durazno|kiwi)/.test(key)) return "frutas";
+  if (/(harina|arroz|fideo|pasta|avena|pan|galletita|cereal|lenteja|garbanzo|poroto)/.test(key)) return "harinas";
+  if (/(agua|jugo|gaseosa|vino|cerveza|bebida|mate|cafe|te)/.test(key)) return "bebidas";
+  if (/(sal|azucar|aceite|vinagre|salsa|mayonesa|mostaza|condimento|especia)/.test(key)) return "condimentos";
+  return "otros";
 }
 
 // Ojo con el orden: "kilo"/"litro" tienen que probarse ANTES que sus
@@ -113,12 +130,79 @@ export function useInventory() {
       parsed.forEach(({ name, quantity, unit }) => {
         const existing = next.find((item) => inventoryKey(item.name) === inventoryKey(name) && item.unit === unit);
         if (existing) existing.quantity += quantity;
-        else next.push({ id: `${Date.now()}-${name}-${Math.random()}`, name, quantity, unit });
+        else next.push({ id: `${Date.now()}-${name}-${Math.random()}`, name, quantity, unit, category: defaultCategoryForName(name) });
       });
       localStorage.setItem(INVENTORY_KEY, JSON.stringify(next));
       return next;
     });
   }, []);
+
+  /** Alta desde la IA (lectura de ticket): ya viene con categoría y
+   * nutrición por 100g estimadas, no hace falta re-derivarlas. */
+  const addStructuredItems = useCallback(
+    (entries: Array<{ name: string; quantity: number; unit: InventoryItem["unit"]; category?: InventoryCategory; nutritionPer100g?: InventoryNutrition }>) => {
+      setItems((previous) => {
+        const next = [...previous];
+        entries.forEach(({ name, quantity, unit, category, nutritionPer100g }) => {
+          const existing = next.find((item) => inventoryKey(item.name) === inventoryKey(name) && item.unit === unit);
+          if (existing) {
+            existing.quantity += quantity;
+            if (!existing.category && category) existing.category = category;
+            if (!existing.nutritionConfirmed && nutritionPer100g) existing.nutritionPer100g = nutritionPer100g;
+          } else {
+            next.push({ id: `${Date.now()}-${name}-${Math.random()}`, name, quantity, unit, category, nutritionPer100g });
+          }
+        });
+        localStorage.setItem(INVENTORY_KEY, JSON.stringify(next));
+        return next;
+      });
+    },
+    []
+  );
+
+  /** Edición a mano de un item puntual (categoría y/o nutrición desde
+   * Alacena) — si toca la nutrición, la marca "confirmada" para que
+   * "Revisar con IA" no se la pise después. */
+  const updateItem = useCallback((id: string, patch: Partial<InventoryItem>) => {
+    setItems((previous) => {
+      const next = previous.map((item) => (item.id === id ? { ...item, ...patch } : item));
+      localStorage.setItem(INVENTORY_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  /** Aplica las correcciones de "Revisar con IA" — matchea por id, y
+   * respeta la nutrición que el usuario ya haya confirmado a mano. */
+  const applyReview = useCallback(
+    (
+      corrections: Array<{
+        id: string;
+        name: string;
+        quantity: number;
+        unit: InventoryItem["unit"];
+        category?: InventoryCategory;
+        nutritionPer100g?: InventoryNutrition;
+      }>
+    ) => {
+      setItems((previous) => {
+        const next = previous.map((item) => {
+          const fix = corrections.find((c) => c.id === item.id);
+          if (!fix) return item;
+          return {
+            ...item,
+            name: fix.name,
+            quantity: fix.quantity,
+            unit: fix.unit,
+            category: fix.category || item.category,
+            nutritionPer100g: item.nutritionConfirmed ? item.nutritionPer100g : fix.nutritionPer100g || item.nutritionPer100g,
+          };
+        });
+        localStorage.setItem(INVENTORY_KEY, JSON.stringify(next));
+        return next;
+      });
+    },
+    []
+  );
 
   const consumeByText = useCallback((text: string) => {
     const parsed = parseInventoryText(text);
@@ -161,5 +245,5 @@ export function useInventory() {
     });
   }, []);
 
-  return { items, loaded, addText, consumeByText, consumeItem, consumeAmounts, persist };
+  return { items, loaded, addText, addStructuredItems, updateItem, applyReview, consumeByText, consumeItem, consumeAmounts, persist };
 }

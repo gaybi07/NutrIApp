@@ -12,7 +12,7 @@ export const SECTION_HELP = {
   tabla: "El detalle día por día de la semana: kcal, pasos, entrenamiento y su duración. Tocá el círculo de color de un día para cambiar la intensidad de entrenamiento de ese día puntual.",
   tablaNutricion: "El detalle nutricional día por día de la semana: kcal, proteína y déficit — la versión de esta tabla enfocada solo en comida, sin pasos ni entrenamiento (eso está en Inicio y en Entrenamientos).",
   pasos: "Si un día se te pasó cargar los pasos desde \"Hoy\", acá podés completarlos para cualquier día de la semana que estés mirando.",
-  alacena: "Lo que tenés cargado en la despensa. Se completa sola cuando cargás una comida con IA (te descuenta los ingredientes que reconoce) o cuando sumás productos desde Compras.",
+  alacena: "Lo que tenés cargado en la despensa. Se completa sola cuando cargás una comida con IA (te descuenta los ingredientes que reconoce) o cuando sumás productos desde Compras. Cada producto tiene una categoría (para filtrar) y un valor nutricional por 100g estimado por IA — tocalo para verlo, corregirlo y dejarlo fijo. \"Revisar con IA\" corrige de una los nombres/cantidades que hayan quedado mal cargados.",
   compras: "Sumá productos a tu alacena escribiéndolos, dictándolos por audio, o sacándole una foto (o pegando el texto) a tu ticket de compra para que la IA los cargue todos de una.",
   recetas: "Recetas armadas con lo que tenés en el inventario. Al usar una, se descuentan los ingredientes automáticamente y se suma directo a una comida de tu día.",
   macros: "Cómo se reparten tus kcal entre proteína, carbohidratos y grasas, hoy y durante la semana. El objetivo de proteína es por tu peso; lo que sobra del objetivo de kcal se reparte 50/50 entre carbohidratos y grasas.",

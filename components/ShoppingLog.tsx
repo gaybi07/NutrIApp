@@ -6,15 +6,24 @@ import { MAX_TEXT_LENGTH } from "@/lib/inputLimits";
 import { SECTION_HELP, FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 import { useSpeechToText } from "@/lib/useSpeechToText";
+import { InventoryCategory, InventoryItem, InventoryNutrition, INVENTORY_CATEGORY_LABELS } from "@/lib/types";
 
-export function ShoppingLog({ addInventoryText }: { addInventoryText: (text: string) => void }) {
+type AiShoppingItem = { name: string; quantity: number; unit: InventoryItem["unit"]; category?: InventoryCategory; nutritionPer100g?: InventoryNutrition };
+
+export function ShoppingLog({
+  addInventoryText,
+  addStructuredItems,
+}: {
+  addInventoryText: (text: string) => void;
+  addStructuredItems: (entries: AiShoppingItem[]) => void;
+}) {
   const [raw, setRaw] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   // Lo que devolvió la IA, pendiente de que el usuario lo revise y confirme
   // antes de que se descuente/sume de verdad al inventario.
-  const [aiResult, setAiResult] = useState<string[] | null>(null);
+  const [aiResult, setAiResult] = useState<AiShoppingItem[] | null>(null);
   const { supported: speechSupported, recording, toggle: toggleRecording } = useSpeechToText(
     (transcript) => setRaw((prev) => (prev ? `${prev}, ${transcript}` : transcript)),
     () => setStatus("No pude escucharte, probá de nuevo o escribilo a mano.")
@@ -67,7 +76,10 @@ export function ShoppingLog({ addInventoryText }: { addInventoryText: (text: str
       });
 
       const responseText = await res.text();
-      let data: { items?: string[]; error?: string };
+      let data: {
+        items?: Array<{ nombre: string; cantidad: number; unidad: InventoryItem["unit"]; categoria?: string; nutricion100g?: InventoryNutrition }>;
+        error?: string;
+      };
       try {
         data = JSON.parse(responseText);
       } catch {
@@ -77,7 +89,15 @@ export function ShoppingLog({ addInventoryText }: { addInventoryText: (text: str
         throw new Error(data.error || "No pude leer el ticket");
       }
 
-      setAiResult(data.items);
+      setAiResult(
+        data.items.map((item) => ({
+          name: item.nombre,
+          quantity: item.cantidad,
+          unit: item.unidad,
+          category: item.categoria as InventoryCategory | undefined,
+          nutritionPer100g: item.nutricion100g,
+        }))
+      );
       setStatus(`Encontré ${data.items.length} productos — revisá y confirmá ↓`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "No pude leer el ticket.");
@@ -86,11 +106,14 @@ export function ShoppingLog({ addInventoryText }: { addInventoryText: (text: str
     }
   };
 
-  const removeAiItem = (item: string) => setAiResult((prev) => (prev ? prev.filter((candidate) => candidate !== item) : prev));
+  const removeAiItem = (index: number) => setAiResult((prev) => (prev ? prev.filter((_, i) => i !== index) : prev));
 
   const confirmAiResult = () => {
     if (!aiResult || aiResult.length === 0) return;
-    addItems(aiResult);
+    addStructuredItems(aiResult);
+    setRaw("");
+    setImagePreview(null);
+    setStatus("Compra guardada ✓");
     setAiResult(null);
   };
 
@@ -121,13 +144,14 @@ export function ShoppingLog({ addInventoryText }: { addInventoryText: (text: str
             </div>
             {aiResult.length > 0 ? (
               <div className="flex flex-wrap gap-2">
-                {aiResult.map((item) => (
+                {aiResult.map((item, index) => (
                   <span
-                    key={item}
+                    key={`${item.name}-${index}`}
                     className="flex items-center gap-1.5 rounded-full border border-border bg-surface px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
                   >
-                    {item}
-                    <button type="button" onClick={() => removeAiItem(item)} className="text-rust" aria-label={`Quitar ${item}`}>
+                    {item.name} × {item.quantity} {item.unit}
+                    {item.category && <span className="text-textMuted">· {INVENTORY_CATEGORY_LABELS[item.category]}</span>}
+                    <button type="button" onClick={() => removeAiItem(index)} className="text-rust" aria-label={`Quitar ${item.name}`}>
                       ×
                     </button>
                   </span>

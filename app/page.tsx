@@ -40,7 +40,17 @@ const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "
 
 export default function Home() {
   const { days, settings, loaded, syncError, upsertDay, saveDays, saveSettings } = useLocalDays();
-  const { items: inventory, addText, consumeByText, consumeItem, consumeAmounts, persist: replaceInventory } = useInventory();
+  const {
+    items: inventory,
+    addText,
+    addStructuredItems,
+    updateItem: updateInventoryItem,
+    applyReview: applyInventoryReview,
+    consumeByText,
+    consumeItem,
+    consumeAmounts,
+    persist: replaceInventory,
+  } = useInventory();
   const [weekOffset, setWeekOffset] = useState(0);
   const [activeTab, setActiveTab] = useState<MainTab>("inicio");
   const [panel, setPanel] = useState<
@@ -336,6 +346,9 @@ export default function Home() {
           weekPlan={settings.weekPlan || {}}
           onOpenPlanificador={() => setPanel("planificador")}
           addInventoryText={addText}
+          addStructuredItems={addStructuredItems}
+          updateInventoryItem={updateInventoryItem}
+          applyInventoryReview={applyInventoryReview}
           replaceItems={replaceInventory}
           order={settings.comidasOrder}
           onReorder={(comidasOrder) => saveSettings({ ...settings, comidasOrder })}

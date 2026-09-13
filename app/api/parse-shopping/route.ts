@@ -1,23 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const SYSTEM_PROMPT = `Sos un asistente que lee tickets de supermercado. Tu trabajo es extraer solo los productos/items comprados a partir de una imagen o texto del ticket.
+const CATEGORIES = "carnes, lacteos, huevos, verduras, frutas, harinas, bebidas, condimentos, otros";
+
+const SYSTEM_PROMPT = `Sos un asistente que lee tickets de supermercado. Tu trabajo es extraer solo los productos/items comprados a partir de una imagen o texto del ticket, y clasificarlos para un inventario de alacena.
 
 Reglas:
-- Responde SOLO con JSON válido, sin markdown, sin texto extra.
-- Formato exacto: {"items": ["item 1", "item 2", "item 3"]}
-- Extrae nombres de productos, no precios, no cantidades, no subtotal, no total, no fechas ni datos del local.
-- Conserva la cantidad y unidad para inventario, por ejemplo "1 kg pollo", "500 g queso" o "2 unidades huevo".
-- Quita precios, subtotales, fechas y datos del local; no quites la cantidad del producto.
-- Elimina duplicados.
+- Respondé SOLO con JSON válido, sin markdown, sin texto extra.
+- Formato exacto: {"items": [{"nombre": "<string>", "cantidad": <numero>, "unidad": "g"|"ml"|"u.", "categoria": "<una de: ${CATEGORIES}>", "nutricion100g": {"kcal": <int>, "protein": <int>, "carbs": <int>, "fat": <int>, "fiber": <int>}}]}
+- "nombre": limpio, simple, singular, sin cantidad ni unidad pegada (ej. "pollo", no "1 kg pollo" ni "kilo de pollo").
+- "cantidad" y "unidad": convertí SIEMPRE a gramos ("g"), mililitros ("ml") o unidades ("u.") — si el ticket dice "2 kg" son 2000 "g"; si dice "1 litro" o "1 lt" son 1000 "ml"; si no hay cantidad clara, asumí 1 "u.".
+- "categoria": elegí la más apropiada de esta lista exacta (en minúscula, tal cual): ${CATEGORIES}.
+- "nutricion100g": valores típicos y realistas de ese alimento por cada 100g o 100ml (o por unidad si "unidad" es "u.", ej. 1 huevo) — punto medio del rango típico, gramos enteros.
+- Extrae nombres de productos, no precios, no subtotal, no total, no fechas ni datos del local.
+- Elimina duplicados (sumá cantidades si aparece repetido).
 - Si hay texto irrelevante del ticket, ignoralo.
 - Si un item es ambiguo, usa el nombre más claro posible.
-- Si no hay productos, devuelve una lista vacía.`;
+- Si no hay productos, devolvé una lista vacía.`;
 
 type GeminiResponse = {
   candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
 };
 
-function extractJson(text: string) {
+export type ParsedShoppingItem = {
+  nombre: string;
+  cantidad: number;
+  unidad: "g" | "ml" | "u.";
+  categoria: string;
+  nutricion100g?: { kcal: number; protein: number; carbs: number; fat: number; fiber: number };
+};
+
+function extractJson(text: string): { items: ParsedShoppingItem[] } {
   const clean = text.replace(/```json|```/g, "").trim();
   const start = clean.indexOf("{");
   const end = clean.lastIndexOf("}");
