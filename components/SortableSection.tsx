@@ -36,7 +36,7 @@ export function SortableSection({ id, onHide, children }: { id: string; onHide?:
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="relative">
+    <div ref={setNodeRef} style={style} className="relative break-inside-avoid">
       <div className="absolute -top-1.5 -right-1.5 z-10 flex items-center gap-1">
         {onHide && (
           <button
