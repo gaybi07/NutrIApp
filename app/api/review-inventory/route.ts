@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Le pide a la plataforma más tiempo que el default (10s en Vercel Hobby)
+// para las tandas más lentas — no hace nada si el plan no lo permite, pero
+// no molesta dejarlo.
+export const maxDuration = 30;
+
 const CATEGORIES = "carnes, lacteos, huevos, verduras, frutas, harinas, bebidas, condimentos, otros";
 
 const SYSTEM_PROMPT = `Sos un asistente que limpia el inventario de la alacena de una casa. Te paso una lista de productos con id/nombre/cantidad/unidad tal como quedaron guardados — a veces mal, por errores de un parser de texto anterior:
@@ -11,9 +16,9 @@ const SYSTEM_PROMPT = `Sos un asistente que limpia el inventario de la alacena d
 Para CADA item de la lista de entrada (conservando su "id" tal cual), devolvé:
 - "id": el mismo id que te pasaron para ese item.
 - "nombre": corregido y limpio — simple, singular, sin cantidad, unidad ni envase pegado (ej. "milanesa de pollo", no "kilos de milanesa de pollo"; "leche", no "itro de leche"; "limón", no "imón"; "aceite", no "botella de aceite"). Si ya estaba bien, dejalo igual.
-- "cantidad" y "unidad": la cantidad real en gramos ("g"), mililitros ("ml") o unidades ("u.") — si el nombre/cantidad original indicaban "2 kilos", la cantidad correcta es 2000 con unidad "g"; si eran "3 litros", 3000 con unidad "ml"; si era un envase con cantidad "1 g"/"1 ml" sin sentido, corregilo al tamaño real típico de ese envase (ver arriba). Si ya estaba bien convertido, dejalo igual.
+- "cantidad" y "unidad": la cantidad real en gramos ("g"), mililitros ("ml") o unidades ("u.") — si el nombre/cantidad original indicaban "2 kilos", la cantidad correcta es 2000 con unidad "g"; si eran "3 litros", 3000 con unidad "ml"; si era un envase con cantidad "1 g"/"1 ml" sin sentido, corregilo al tamaño real típico de ese envase (ver arriba). Revisá también la UNIDAD en sí, no solo la cantidad: si el producto en realidad se cuenta (alfajor, huevo, factura, empanada, medialuna, sandwich, yogur individual, etc.) pero quedó guardado en gramos o mililitros, corregí la unidad a "u." y la cantidad al número de unidades que corresponda. Si ya estaba todo bien, dejalo igual.
 - "categoria": la más apropiada de esta lista exacta (en minúscula, tal cual): ${CATEGORIES}.
-- "nutricion100g": OJO con la base según "unidad" — si "unidad" es "g" o "ml", son los valores por cada 100 g o 100 ml (NUNCA por el total de "cantidad"); si "unidad" es "u.", son los valores por UNA sola unidad del producto (ej. 1 huevo, 1 alfajor — no por 100 unidades). Solo poné un valor si estás razonablemente seguro de ese producto puntual — si el nombre es demasiado genérico o dudoso para estimar bien, poné "nutricion100g": null en vez de inventar un número.
+- "nutricion100g": OJO con la base según "unidad" — si "unidad" es "g" o "ml", son los valores por cada 100 g o 100 ml (NUNCA por el total de "cantidad"); si "unidad" es "u.", son los valores por UNA sola unidad del producto (ej. 1 huevo, 1 alfajor — no por 100 unidades). Dale prioridad a estimar: para la enorme mayoría de alimentos comunes (carnes, lácteos, verduras, frutas, harinas, fiambres, snacks típicos, etc.) podés dar un valor realista con tu conocimiento general aunque no sepas la marca exacta — usá "nutricion100g": null solo para productos realmente imposibles de estimar (una marca/producto muy de nicho, un nombre demasiado ambiguo para saber de qué se trata). Ante la duda, estimá; no dejes null por las dudas.
 
 Respondé SOLO con JSON válido, sin markdown, sin texto extra, con este formato exacto:
 {"items": [{"id": "<string>", "nombre": "<string>", "cantidad": <numero>, "unidad": "g"|"ml"|"u.", "categoria": "<string>", "nutricion100g": {"kcal": <int>, "protein": <int>, "carbs": <int>, "fat": <int>, "fiber": <int>} | null}]}`;

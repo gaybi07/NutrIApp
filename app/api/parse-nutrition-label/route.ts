@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const maxDuration = 30;
+
 const SYSTEM_PROMPT = `Sos un asistente que lee la tabla de información nutricional impresa en el envase de un producto, a partir de una foto.
 
 Te paso el nombre del producto y la unidad en la que se guarda en un inventario de alacena: "g" (se pesa en gramos), "ml" (se mide en mililitros) o "u." (se cuenta por unidad individual, ej. 1 alfajor, 1 yogur).

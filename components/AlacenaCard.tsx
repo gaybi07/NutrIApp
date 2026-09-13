@@ -7,6 +7,8 @@ import { Collapsible } from "@/components/Collapsible";
 import { SECTION_HELP } from "@/lib/helpText";
 
 const EMPTY_NUTRITION: InventoryNutrition = { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
+const REVIEW_BATCH_SIZE = 12;
+const REVIEW_TIMEOUT_MS = 25000;
 
 type ReviewCorrection = {
   id: string;
@@ -106,35 +108,62 @@ export function AlacenaCard({
   const reviewWithAi = async () => {
     if (items.length === 0) return;
     setReviewing(true);
-    setStatus("Revisando con IA...");
+    // Con la alacena entera en un solo pedido, un inventario grande puede
+    // tardar más que el límite de la función serverless y el fetch se
+    // queda esperando una respuesta que nunca llega — se manda en tandas
+    // chicas (con timeout propio) y se van aplicando las correcciones a
+    // medida que vuelven, así una tanda que falla no tira abajo las que
+    // ya se resolvieron bien.
+    const batches: InventoryItem[][] = [];
+    for (let i = 0; i < items.length; i += REVIEW_BATCH_SIZE) batches.push(items.slice(i, i + REVIEW_BATCH_SIZE));
+
+    let done = 0;
     try {
-      const res = await fetch("/api/review-inventory", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: items.map((item) => ({ id: item.id, name: item.name, quantity: item.quantity, unit: item.unit })) }),
-      });
-      const data = await res.json();
-      if (!res.ok || !Array.isArray(data.items)) throw new Error(data.error || "No pude revisar el inventario");
-      const corrections = data.items.map(
-        (fix: { id: string; nombre: string; cantidad: number; unidad: InventoryItem["unit"]; categoria?: string; nutricion100g?: InventoryNutrition | null }) => ({
-          id: fix.id,
-          name: fix.nombre,
-          quantity: fix.cantidad,
-          unit: fix.unidad,
-          category: fix.categoria as InventoryCategory | undefined,
-          nutritionPer100g: fix.nutricion100g ?? undefined,
-        })
-      );
-      applyReview(corrections);
-      corrections.forEach((fix: ReviewCorrection) => {
-        productMemory.remember({ name: fix.name, unit: fix.unit, category: fix.category, nutritionPer100g: fix.nutritionPer100g });
-      });
+      for (const batch of batches) {
+        setStatus(batches.length > 1 ? `Revisando con IA (tanda ${done + 1}/${batches.length})...` : "Revisando con IA...");
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), REVIEW_TIMEOUT_MS);
+        try {
+          const res = await fetch("/api/review-inventory", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: batch.map((item) => ({ id: item.id, name: item.name, quantity: item.quantity, unit: item.unit })) }),
+            signal: controller.signal,
+          });
+          const data = await res.json();
+          if (!res.ok || !Array.isArray(data.items)) throw new Error(data.error || "No pude revisar el inventario");
+          const corrections = data.items.map(
+            (fix: { id: string; nombre: string; cantidad: number; unidad: InventoryItem["unit"]; categoria?: string; nutricion100g?: InventoryNutrition | null }) => ({
+              id: fix.id,
+              name: fix.nombre,
+              quantity: fix.cantidad,
+              unit: fix.unidad,
+              category: fix.categoria as InventoryCategory | undefined,
+              nutritionPer100g: fix.nutricion100g ?? undefined,
+            })
+          );
+          applyReview(corrections);
+          corrections.forEach((fix: ReviewCorrection) => {
+            productMemory.remember({ name: fix.name, unit: fix.unit, category: fix.category, nutritionPer100g: fix.nutritionPer100g });
+          });
+        } finally {
+          clearTimeout(timeout);
+        }
+        done += 1;
+      }
       setStatus("Alacena revisada ✓");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "No pude revisar el inventario.");
+      const timedOut = error instanceof DOMException && error.name === "AbortError";
+      setStatus(
+        timedOut
+          ? `Tardó demasiado y lo corté — ya quedaron aplicadas ${done} de ${batches.length} tandas. Tocá "Revisar con IA" de nuevo para el resto.`
+          : error instanceof Error
+            ? error.message
+            : "No pude revisar el inventario."
+      );
     } finally {
       setReviewing(false);
-      setTimeout(() => setStatus(""), 4000);
+      setTimeout(() => setStatus(""), 6000);
     }
   };
 
