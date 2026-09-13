@@ -5,14 +5,19 @@ import { useEscapeKey } from "@/lib/useEscapeKey";
 import { SECTION_HELP } from "@/lib/helpText";
 
 const STOPS = [
-  { icon: "📅", title: "Hoy", text: SECTION_HELP.hoy },
-  { icon: "🗓️", title: "Semana del…", text: SECTION_HELP.semana },
-  { icon: "🏆", title: "Ranking de días", text: SECTION_HELP.ranking },
+  { icon: "👋", title: "Bienvenido", text: SECTION_HELP.bienvenida },
+  { icon: "📅", title: "Inicio · Hoy", text: SECTION_HELP.hoy },
+  { icon: "🗓️", title: "Inicio · Semana del…", text: SECTION_HELP.semana },
+  { icon: "🏆", title: "Inicio · Ranking de días", text: SECTION_HELP.ranking },
+  { icon: "📋", title: "Inicio · Tabla de la semana", text: SECTION_HELP.tabla },
+  { icon: "👣", title: "Inicio · Pasos de la semana", text: SECTION_HELP.pasos },
+  { icon: "🥫", title: "Comidas · Alacena", text: SECTION_HELP.comidasAlacena },
+  { icon: "📆", title: "Comidas · Planificado", text: SECTION_HELP.comidasPlanificado },
+  { icon: "🥗", title: "Macros", text: SECTION_HELP.macros },
+  { icon: "🏋️", title: "Entreno", text: SECTION_HELP.actividad },
   { icon: "🧮", title: "Calculadora y carga con IA", text: SECTION_HELP.herramientas },
-  { icon: "📋", title: "Tabla de la semana", text: SECTION_HELP.tabla },
-  { icon: "👣", title: "Pasos de la semana", text: SECTION_HELP.pasos },
-  { icon: "🛒", title: "Compras / Ticket", text: SECTION_HELP.compras },
-  { icon: "🍳", title: "Planner de cocina", text: SECTION_HELP.recetas },
+  { icon: "⚙️", title: "Configuraciones", text: SECTION_HELP.configuraciones },
+  { icon: "✋", title: "Ocultar y mover secciones", text: SECTION_HELP.ocultarMover },
 ];
 
 export function AppTour({ onFinish }: { onFinish: () => void }) {

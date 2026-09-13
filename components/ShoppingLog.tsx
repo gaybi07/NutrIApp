@@ -1,17 +1,14 @@
 "use client";
 
-import { ChangeEvent, useMemo, useState } from "react";
-import { InventoryItem } from "@/lib/types";
+import { useMemo, useState } from "react";
 import { Collapsible } from "@/components/Collapsible";
 import { MAX_TEXT_LENGTH } from "@/lib/inputLimits";
 import { SECTION_HELP, FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 
-export function ShoppingLog({ items, addInventoryText, replaceItems }: { items: InventoryItem[]; addInventoryText: (text: string) => void; replaceItems: (items: InventoryItem[]) => void }) {
+export function ShoppingLog({ addInventoryText }: { addInventoryText: (text: string) => void }) {
   const [raw, setRaw] = useState("");
-  const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const parsedItems = useMemo(() => {
     return Array.from(
@@ -25,107 +22,20 @@ export function ShoppingLog({ items, addInventoryText, replaceItems }: { items: 
     );
   }, [raw]);
 
-  const addItems = (source: string[]) => {
-    addInventoryText(source.join(", "));
+  const parseFromText = () => {
+    if (!raw.trim()) {
+      setStatus("Escribí los productos primero.");
+      return;
+    }
+    addInventoryText(parsedItems.join(", "));
     setRaw("");
-    setImagePreview(null);
     setStatus("Compra guardada ✓");
   };
 
-  const parseFromText = () => {
-    if (!raw.trim()) {
-      setStatus("Escribí los productos o pegas el ticket primero.");
-      return;
-    }
-    addItems(parsedItems);
-  };
-
-  const readTicket = async () => {
-    if (!raw.trim() && !imagePreview) {
-      setStatus("Pega el texto del ticket o subí una foto.");
-      return;
-    }
-
-    setLoading(true);
-    setStatus("Leyendo ticket...");
-
-    try {
-      const res = await fetch("/api/parse-shopping", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: raw,
-          imageDataUrl: imagePreview || undefined,
-        }),
-      });
-
-      const responseText = await res.text();
-      let data: { items?: string[]; error?: string };
-      try {
-        data = JSON.parse(responseText);
-      } catch {
-        throw new Error("El servidor no devolvió una respuesta válida. Reiniciá la app e intentá de nuevo.");
-      }
-      if (!res.ok || !Array.isArray(data.items)) {
-        throw new Error(data.error || "No pude leer el ticket");
-      }
-
-      addItems(data.items);
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "No pude leer el ticket.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      setImagePreview(String(reader.result));
-      setStatus("Foto cargada. Podés leerla con IA o cargar manualmente.");
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const clearItems = () => {
-    replaceItems([]);
-    setRaw("");
-    setImagePreview(null);
-    setStatus("Lista vaciada.");
-  };
-
   return (
-    <Collapsible
-      eyebrow="Compras"
-      title="Ticket / foto"
-      info={SECTION_HELP.compras}
-      badge={
-        <div className="rounded-full border border-border bg-bg/70 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
-          {items.length} items
-        </div>
-      }
-    >
-      <div className="mb-3 rounded-xl border border-dashed border-border bg-bg/40 p-2">
-        <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-textMuted mb-2">Opciones</div>
-        <div className="grid grid-cols-2 gap-2">
-          <label className="flex cursor-pointer items-center justify-center rounded-xl border border-border bg-surfaceAlt px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-text">
-            Subir foto
-            <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-          </label>
-          <button
-            onClick={parseFromText}
-            className="rounded-xl border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg"
-          >
-            Manual
-          </button>
-        </div>
-      </div>
-
+    <Collapsible eyebrow="Compras" title="Agregar productos" info={SECTION_HELP.compras}>
       <label className="mb-2 flex items-center font-mono text-[10px] uppercase tracking-[0.15em] text-textMuted">
-        Pegá el ticket o escribí lo que compraste
+        Escribí lo que compraste
         <InfoHint text={FIELD_HELP.ticketTexto} />
       </label>
       <textarea
@@ -137,32 +47,8 @@ export function ShoppingLog({ items, addInventoryText, replaceItems }: { items: 
         className="mb-2"
       />
 
-      {imagePreview && (
-        <div className="mb-3 overflow-hidden rounded-xl border border-border bg-bg/30">
-          <img src={imagePreview} alt="Ticket cargado" className="max-h-52 w-full object-cover" />
-        </div>
-      )}
-
-      <div className="flex gap-2">
-        <button
-          onClick={readTicket}
-          disabled={loading}
-          className="flex-1 rounded-xl border border-gold/60 bg-gold px-3 py-2 font-sans font-bold text-[12px] text-bg disabled:opacity-60"
-        >
-          {loading ? "Leyendo..." : "Leer con IA"}
-        </button>
-        <button
-          onClick={clearItems}
-          className="rounded-xl border border-border bg-bg/60 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
-        >
-          Limpiar
-        </button>
-      </div>
-
-      {status && <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-sage">{status}</div>}
-
       {parsedItems.length > 0 && (
-        <div className="mt-3 rounded-xl border border-border bg-bg/40 p-2">
+        <div className="mb-3 rounded-xl border border-border bg-bg/40 p-2">
           <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-textMuted mb-2">Vista previa</div>
           <div className="flex flex-wrap gap-2">
             {parsedItems.map((item) => (
@@ -177,20 +63,14 @@ export function ShoppingLog({ items, addInventoryText, replaceItems }: { items: 
         </div>
       )}
 
-      {items.length > 0 && (
-        <div className="mt-3 rounded-xl border border-border bg-bg/40 p-2">
-          <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-textMuted mb-2">Compras guardadas</div>
-          <div className="flex flex-wrap gap-2">
-            {items.map((item) => (
-              <div key={item.id} className="flex items-center gap-2 rounded-lg border border-sage/50 bg-sage/10 px-2 py-1 font-mono text-[10px] text-text">
-                <span className="uppercase tracking-[0.12em]">{item.name}</span>
-                <span className="text-gold">{item.quantity} {item.unit}</span>
-                <button type="button" onClick={() => replaceItems(items.filter((current) => current.id !== item.id))} className="text-rust">×</button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <button
+        onClick={parseFromText}
+        className="w-full rounded-xl border border-gold/60 bg-gold px-3 py-2 font-sans font-bold text-[12px] text-bg"
+      >
+        Agregar a la alacena
+      </button>
+
+      {status && <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-sage">{status}</div>}
     </Collapsible>
   );
 }

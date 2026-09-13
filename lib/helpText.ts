@@ -4,6 +4,7 @@
  * disponibles). Mantenerlos acá evita que los dos textos se desincronicen.
  */
 export const SECTION_HELP = {
+  bienvenida: "Un repaso rápido de las 4 solapas de arriba — Inicio, Comidas, Macros y Entreno — y de un par de cosas que se repiten en todas ellas. Dale \"Siguiente\" para el recorrido, o \"Saltear tour\" si ya la conocés.",
   hoy: "Lo primero que ves cada vez que entrás: cuántas kcal llevás consumidas sobre tu objetivo del día (se ajusta solo según los pasos y el entrenamiento que cargues), más tu proteína y pasos. Los botones \"+ Cargar comida\" y \"+ Entrenamiento\" son el atajo más rápido para registrar todo.",
   semana: "Navegá entre semanas con las flechas. Acá está el control de tu peso semanal, los indicadores agregados de la semana (colapsados, tocá para abrir) y el gráfico de kcal por día.",
   ranking: "Clasifica tus días según si llegaste a tu objetivo real de proteína diaria (1.3g por cada kilo de tu peso — el piso para no perder masa muscular). Tocá un día para ver el detalle por comida.",
@@ -11,8 +12,10 @@ export const SECTION_HELP = {
   tabla: "El detalle día por día de la semana: kcal, pasos, entrenamiento y su duración. Tocá el círculo de color de un día para cambiar la intensidad de entrenamiento de ese día puntual.",
   tablaNutricion: "El detalle nutricional día por día de la semana: kcal, proteína y déficit — la versión de esta tabla enfocada solo en comida, sin pasos ni entrenamiento (eso está en Inicio y en Entrenamientos).",
   pasos: "Si un día se te pasó cargar los pasos desde \"Hoy\", acá podés completarlos para cualquier día de la semana que estés mirando.",
-  compras: "Registrá lo que compraste — a mano o sacándole una foto al ticket — para armar tu inventario de la despensa. El Planner de cocina usa este inventario para sugerirte recetas.",
+  alacena: "Lo que tenés cargado en la despensa. Se completa sola cuando cargás una comida con IA (te descuenta los ingredientes que reconoce) o cuando sumás productos desde Compras o un ticket.",
+  compras: "Sumá productos a mano, escribiéndolos o pegando una lista, para completar tu alacena.",
   recetas: "Recetas armadas con lo que tenés en el inventario. Al usar una, se descuentan los ingredientes automáticamente y se suma directo a una comida de tu día.",
+  ticket: "Sacale una foto a tu ticket de compra (o pegá el texto) para que la IA sume todo a tu alacena de una.",
   macros: "Cómo se reparten tus kcal entre proteína, carbohidratos y grasas, hoy y durante la semana. El objetivo de proteína es por tu peso; lo que sobra del objetivo de kcal se reparte 50/50 entre carbohidratos y grasas.",
   planificador: "Elegí una receta del catálogo para cada comida de la semana que viene. Con lo que vayas eligiendo se arma sola la lista de lo que te falta comprar, comparando contra tu inventario actual.",
   comidasComunes: "Las comidas que más repetís, agrupadas por desayuno/almuerzo/merienda/cena, con un punto de color según su densidad de proteína (mismo criterio que usa el Ranking para clasificar comidas) — para que notes de un vistazo si lo que repetís tiende a ser bueno o mejorable.",
@@ -21,6 +24,10 @@ export const SECTION_HELP = {
   rutinas: "Plantillas reusables de ejercicios (ej. \"Día A: Pecho/Tríceps\") con series, repeticiones y peso. Se arman una vez y se asignan a los días de la semana.",
   ejerciciosHoy: "Lo que realmente entrenaste hoy. Si tenés una rutina asignada para hoy, se precarga sola — ajustá los números si hiciste algo distinto a lo planeado.",
   detalleComidas: "El desglose de lo que cargaste hoy, alimento por alimento dentro de cada comida (la IA lo separa sola). Editá los gramos de un alimento y las kcal/proteína se recalculan solas en la misma proporción; también podés tocarlas directo, o borrar el alimento con la ×, sin tener que recargar toda la comida de nuevo.",
+  comidasAlacena: "La solapa Comidas tiene dos partes. Alacena es tu despensa: lo que tenés cargado (se completa sola al cargar comidas con IA), cómo sumar productos a mano y qué te sugiere cocinar con lo que hay.",
+  comidasPlanificado: "Planificado es para adelantarte: elegís qué vas a comer cada día de la semana que viene, se arma sola la lista de lo que te falta comprar, y cargás el ticket de esa compra para sumarlo directo a tu alacena.",
+  configuraciones: "El ⚙ de arriba a la derecha tiene el tema (oscuro/claro/neón), el tamaño de letra, qué solapas mostrar arriba de todo, qué secciones tenés ocultas, y accesos directos a la calculadora y demás herramientas.",
+  ocultarMover: "En cada sección de la app vas a ver un ✋ y un 💡 en la esquina. Mantené apretado el ✋ para arrastrarla a otro orden, y tocá el 💡 para apagar del todo una sección que no te interesa — se puede volver a prender desde ⚙ > Secciones.",
 } as const;
 
 export const FIELD_HELP = {

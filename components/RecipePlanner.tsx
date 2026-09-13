@@ -108,16 +108,11 @@ export function RecipePlanner({
         </div>
       </div>
 
-      <div className="mb-3">
-        <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-textMuted mb-2">Heladera / alacena</div>
-        <div className="grid grid-cols-2 gap-2">
-          {items.length > 0 ? items.map((item) => (
-            <div key={item.id} className="rounded-xl border border-sage/60 bg-sage/10 px-2 py-2 text-left font-mono text-[11px] text-text">
-              {item.name} <span className="text-gold">× {item.quantity} {item.unit}</span>
-            </div>
-          )) : <div className="col-span-2 rounded-xl border border-dashed border-border p-3 text-[11px] text-textMuted">Cargá productos desde Compras para activar sugerencias reales.</div>}
+      {items.length === 0 && (
+        <div className="mb-3 rounded-xl border border-dashed border-border p-3 text-[11px] text-textMuted">
+          Cargá productos en Alacena para activar sugerencias reales.
         </div>
-      </div>
+      )}
 
       {selectedMeal ? <div>
         <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-textMuted mb-2">Sugerencias</div>
