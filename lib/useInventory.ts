@@ -22,6 +22,30 @@ function defaultUnitForName(name: string): InventoryItem["unit"] {
   return "g";
 }
 
+// Ojo con el orden: "kilo"/"litro" tienen que probarse ANTES que sus
+// abreviaturas de una sola letra ("l") — si no, en una alternancia regex
+// sin límite de palabra, "l" matchea de entrada las primeras letras de
+// "litro"/"limón" y trunca el nombre ("itro de leche"). El \b al final
+// del grupo evita justamente eso: obliga a que la unidad matcheada sea
+// la palabra completa, no un prefijo suelto de la palabra siguiente.
+const UNIT_TOKENS = "kilogramos?|kilos?|kg|gramos?|gr|g|litros?|mililitros?|lt|ml|l|unidades?|u\\.?";
+// Grupo capturable (así match[unitIndex] sigue trayendo el texto de la
+// unidad) envuelto en su propio \b — se usa siempre como "(?:UNIT_RE)?"
+// para que el "?" de opcionalidad no agregue un grupo de captura extra.
+const UNIT_RE = `(${UNIT_TOKENS})\\b`;
+
+/** Normaliza la unidad cruda que devolvió el regex a las 3 que usa el
+ * inventario (g/ml/u.), con su multiplicador — "kilo(s)" y "litro(s)"
+ * (palabra completa, como los escribe la gente a mano o dicta) se tratan
+ * igual que "kg" y "l". */
+function unitInfo(rawUnit: string): { unit: InventoryItem["unit"]; multiplier: number } {
+  if (/^(kilogramos?|kilos?|kg)$/.test(rawUnit)) return { unit: "g", multiplier: 1000 };
+  if (/^(gramos?|gr|g)$/.test(rawUnit)) return { unit: "g", multiplier: 1 };
+  if (/^(litros?|lt|l)$/.test(rawUnit)) return { unit: "ml", multiplier: 1000 };
+  if (/^(mililitros?|ml)$/.test(rawUnit)) return { unit: "ml", multiplier: 1 };
+  return { unit: "u.", multiplier: 1 };
+}
+
 export function parseInventoryText(text: string): Array<{ name: string; quantity: number; unit: InventoryItem["unit"] }> {
   return text
     .split(/\n|,|\||\s+y\s+/i)
@@ -30,15 +54,17 @@ export function parseInventoryText(text: string): Array<{ name: string; quantity
     .map((part) => {
       const article = part.match(/^(un|una)\s+(.+)$/i);
       if (article) return { name: article[2].trim().toLowerCase(), quantity: 1, unit: "u." as const };
-      const match = part.match(/^(\d+(?:[.,]\d+)?)\s*(kg|g|gr|gramos|l|lt|ml|unidades?|u\.?)?\s*(?:de\s+)?(.+)$/i) || part.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(kg|g|gr|gramos|l|lt|ml|unidades?|u\.?)?$/i);
+      const match =
+        part.match(new RegExp(`^(\\d+(?:[.,]\\d+)?)\\s*(?:${UNIT_RE})?\\s*(?:de\\s+)?(.+)$`, "i")) ||
+        part.match(new RegExp(`^(.+?)\\s+(\\d+(?:[.,]\\d+)?)\\s*(?:${UNIT_RE})?$`, "i"));
       if (!match) return { name: part.toLowerCase(), quantity: 1, unit: "u." as const };
       const amountIndex = typeof match[1] === "string" && /\d/.test(match[1]) ? 1 : 2;
       const nameIndex = amountIndex === 1 ? 3 : 1;
       const unitIndex = amountIndex === 1 ? 2 : 3;
       const amount = Number(match[amountIndex].replace(",", "."));
       const rawUnit = (match[unitIndex] || defaultUnitForName(match[nameIndex])).toLowerCase();
-      const unit = rawUnit === "kg" ? "g" : rawUnit === "l" || rawUnit === "lt" ? "ml" : rawUnit.match(/g|gr|gramos/) ? "g" : rawUnit === "ml" ? "ml" : "u.";
-      return { name: match[nameIndex].trim().toLowerCase(), quantity: unit === "g" && rawUnit === "kg" ? amount * 1000 : unit === "ml" && rawUnit === "l" ? amount * 1000 : amount, unit };
+      const { unit, multiplier } = unitInfo(rawUnit);
+      return { name: match[nameIndex].trim().toLowerCase(), quantity: amount * multiplier, unit };
     });
 }
 

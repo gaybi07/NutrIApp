@@ -12,6 +12,9 @@ export function ShoppingLog({ addInventoryText }: { addInventoryText: (text: str
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // Lo que devolvió la IA, pendiente de que el usuario lo revise y confirme
+  // antes de que se descuente/sume de verdad al inventario.
+  const [aiResult, setAiResult] = useState<string[] | null>(null);
   const { supported: speechSupported, recording, toggle: toggleRecording } = useSpeechToText(
     (transcript) => setRaw((prev) => (prev ? `${prev}, ${transcript}` : transcript)),
     () => setStatus("No pude escucharte, probá de nuevo o escribilo a mano.")
@@ -74,12 +77,26 @@ export function ShoppingLog({ addInventoryText }: { addInventoryText: (text: str
         throw new Error(data.error || "No pude leer el ticket");
       }
 
-      addItems(data.items);
+      setAiResult(data.items);
+      setStatus(`Encontré ${data.items.length} productos — revisá y confirmá ↓`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "No pude leer el ticket.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const removeAiItem = (item: string) => setAiResult((prev) => (prev ? prev.filter((candidate) => candidate !== item) : prev));
+
+  const confirmAiResult = () => {
+    if (!aiResult || aiResult.length === 0) return;
+    addItems(aiResult);
+    setAiResult(null);
+  };
+
+  const discardAiResult = () => {
+    setAiResult(null);
+    setStatus("");
   };
 
   const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
@@ -96,74 +113,118 @@ export function ShoppingLog({ addInventoryText }: { addInventoryText: (text: str
 
   return (
     <Collapsible eyebrow="Compras" title="Agregar productos" info={SECTION_HELP.compras}>
-      <label className="mb-2 flex cursor-pointer items-center justify-center rounded-xl border border-border bg-surfaceAlt px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-text">
-        Subir foto del ticket
-        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-      </label>
-
-      {speechSupported && (
-        <button
-          type="button"
-          onClick={toggleRecording}
-          className={`mb-2 flex w-full items-center justify-center gap-2 rounded-xl border-2 p-2.5 font-sans text-[13px] font-bold uppercase tracking-wide transition-colors ${
-            recording ? "border-rust bg-rust/15 text-rust animate-pulse" : "border-gold bg-gold/15 text-gold"
-          }`}
-        >
-          <span className="text-lg leading-none">🎙️</span>
-          {recording ? "Grabando… tocá para parar" : "Cargar con audio"}
-        </button>
-      )}
-
-      <label className="mb-2 flex items-center font-mono text-[10px] uppercase tracking-[0.15em] text-textMuted">
-        Escribí, dictá o pegá el texto del ticket
-        <InfoHint text={FIELD_HELP.ticketTexto} />
-      </label>
-      <textarea
-        rows={4}
-        maxLength={MAX_TEXT_LENGTH}
-        value={raw}
-        onChange={(e) => setRaw(e.target.value)}
-        placeholder="Ej: 1 kg pollo, 2 tomates, queso 200g, arroz, yogurt"
-        className="mb-2"
-      />
-
-      {imagePreview && (
-        <div className="mb-3 overflow-hidden rounded-xl border border-border bg-bg/30">
-          <img src={imagePreview} alt="Ticket cargado" className="max-h-52 w-full object-cover" />
-        </div>
-      )}
-
-      {parsedItems.length > 0 && (
-        <div className="mb-3 rounded-xl border border-border bg-bg/40 p-2">
-          <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-textMuted mb-2">Vista previa</div>
-          <div className="flex flex-wrap gap-2">
-            {parsedItems.map((item) => (
-              <span
-                key={item}
-                className="rounded-full border border-border bg-surface px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
-              >
-                {item}
-              </span>
-            ))}
+      {aiResult ? (
+        <>
+          <div className="mb-3 rounded-xl border border-gold/40 bg-gold/10 p-2.5">
+            <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-gold mb-2">
+              Esto encontró la IA — sacá lo que no corresponda antes de confirmar
+            </div>
+            {aiResult.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {aiResult.map((item) => (
+                  <span
+                    key={item}
+                    className="flex items-center gap-1.5 rounded-full border border-border bg-surface px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
+                  >
+                    {item}
+                    <button type="button" onClick={() => removeAiItem(item)} className="text-rust" aria-label={`Quitar ${item}`}>
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <div className="text-[11px] text-textMuted">No queda ningún producto — descartá y probá de nuevo.</div>
+            )}
           </div>
-        </div>
-      )}
+          <div className="flex gap-2">
+            <button
+              onClick={confirmAiResult}
+              disabled={aiResult.length === 0}
+              className="flex-1 rounded-xl border border-gold/60 bg-gold px-3 py-2 font-sans font-bold text-[12px] text-bg disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Confirmar y agregar a la alacena
+            </button>
+            <button
+              onClick={discardAiResult}
+              className="rounded-xl border border-border bg-bg/60 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+            >
+              Descartar
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <label className="mb-2 flex cursor-pointer items-center justify-center rounded-xl border border-border bg-surfaceAlt px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-text">
+            Subir foto del ticket
+            <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+          </label>
 
-      <div className="flex gap-2">
-        <button
-          onClick={readTicket}
-          disabled={loading}
-          className="flex-1 rounded-xl border border-gold/60 bg-gold px-3 py-2 font-sans font-bold text-[12px] text-bg disabled:opacity-60"
-        >
-          {loading ? "Leyendo..." : "Leer con IA"}
-        </button>
-        <button
-          onClick={parseFromText}
-          className="flex-1 rounded-xl border border-border bg-bg/60 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
-        >
-          Agregar tal cual
-        </button>
-      </div>
+          {speechSupported && (
+            <button
+              type="button"
+              onClick={toggleRecording}
+              className={`mb-2 flex w-full items-center justify-center gap-2 rounded-xl border-2 p-2.5 font-sans text-[13px] font-bold uppercase tracking-wide transition-colors ${
+                recording ? "border-rust bg-rust/15 text-rust animate-pulse" : "border-gold bg-gold/15 text-gold"
+              }`}
+            >
+              <span className="text-lg leading-none">🎙️</span>
+              {recording ? "Grabando… tocá para parar" : "Cargar con audio"}
+            </button>
+          )}
+
+          <label className="mb-2 flex items-center font-mono text-[10px] uppercase tracking-[0.15em] text-textMuted">
+            Escribí, dictá o pegá el texto del ticket
+            <InfoHint text={FIELD_HELP.ticketTexto} />
+          </label>
+          <textarea
+            rows={4}
+            maxLength={MAX_TEXT_LENGTH}
+            value={raw}
+            onChange={(e) => setRaw(e.target.value)}
+            placeholder="Ej: 1 kg pollo, 2 tomates, queso 200g, arroz, yogurt"
+            className="mb-2"
+          />
+
+          {imagePreview && (
+            <div className="mb-3 overflow-hidden rounded-xl border border-border bg-bg/30">
+              <img src={imagePreview} alt="Ticket cargado" className="max-h-52 w-full object-cover" />
+            </div>
+          )}
+
+          {parsedItems.length > 0 && (
+            <div className="mb-3 rounded-xl border border-border bg-bg/40 p-2">
+              <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-textMuted mb-2">Vista previa</div>
+              <div className="flex flex-wrap gap-2">
+                {parsedItems.map((item) => (
+                  <span
+                    key={item}
+                    className="rounded-full border border-border bg-surface px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <button
+              onClick={readTicket}
+              disabled={loading}
+              className="flex-1 rounded-xl border border-gold/60 bg-gold px-3 py-2 font-sans font-bold text-[12px] text-bg disabled:opacity-60"
+            >
+              {loading ? "Leyendo..." : "Leer con IA"}
+            </button>
+            <button
+              onClick={parseFromText}
+              className="flex-1 rounded-xl border border-border bg-bg/60 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+            >
+              Agregar tal cual
+            </button>
+          </div>
+        </>
+      )}
 
       {status && <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-sage">{status}</div>}
     </Collapsible>
