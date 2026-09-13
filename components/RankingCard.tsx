@@ -94,6 +94,7 @@ function RankRow({ r, target }: { r: ReturnType<typeof rankDays>[number]; target
     { key: "alm", label: "Almuerzo", kcal: r.day.almK, protein: r.day.almP },
     { key: "mer", label: "Merienda", kcal: r.day.merK, protein: r.day.merP },
     { key: "cen", label: "Cena", kcal: r.day.cenK, protein: r.day.cenP },
+    { key: "col", label: "Colación", kcal: r.day.colK, protein: r.day.colP },
   ];
 
   const weakSegment = segments

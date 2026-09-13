@@ -10,7 +10,7 @@ import { InfoHint } from "@/components/InfoHint";
 
 const DOW_FULL = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-const MEAL_KEYS: MealKey[] = ["des", "alm", "mer", "cen"];
+const MEAL_KEYS: MealKey[] = ["des", "alm", "mer", "cen", "col"];
 const MAX_PICKER_SUGGESTIONS = 6;
 const MAX_PERSONAL_SUGGESTIONS = 4;
 

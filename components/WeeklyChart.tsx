@@ -5,7 +5,7 @@ import { DayEntry, TrainingSession, INTENSITY_STYLES } from "@/lib/types";
 import { dayGoal, estimateGasto, dayDeficit, getTrainingSessions } from "@/lib/calculations";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
-const COLORS = { des: "#E88D67", alm: "rgb(var(--color-accent))", mer: "#C9A227", cen: "#B5533C" };
+const COLORS = { des: "#E88D67", alm: "rgb(var(--color-accent))", mer: "#C9A227", cen: "#B5533C", col: "#8B5CF6" };
 
 type ChartRow = {
   dow: string;
@@ -13,6 +13,7 @@ type ChartRow = {
   alm: number;
   mer: number;
   cen: number;
+  col: number;
   pasos: number;
   sessions: TrainingSession[];
   goal: number;
@@ -65,13 +66,14 @@ export function WeeklyChart({
   const data: ChartRow[] = weekDates.map((fecha, i) => {
     const d = weekDays[i];
     const dow = DOW[new Date(`${fecha}T00:00:00`).getDay()];
-    if (!d) return { dow, des: 0, alm: 0, mer: 0, cen: 0, pasos: 0, sessions: [], goal, gasto: avgGasto, deficit: 0 };
+    if (!d) return { dow, des: 0, alm: 0, mer: 0, cen: 0, col: 0, pasos: 0, sessions: [], goal, gasto: avgGasto, deficit: 0 };
     return {
       dow,
       des: d.desK,
       alm: d.almK,
       mer: d.merK,
       cen: d.cenK,
+      col: d.colK || 0,
       pasos: d.pasos || 0,
       sessions: getTrainingSessions(d),
       goal: dayGoal(d, goal, avgGasto),
@@ -86,7 +88,7 @@ export function WeeklyChart({
   // del día (ej. con mucha actividad, el objetivo ajustado sube por encima
   // de lo que efectivamente se comió).
   const maxValue = Math.max(
-    ...data.map((row) => Math.max(row.des + row.alm + row.mer + row.cen, row.goal, row.gasto))
+    ...data.map((row) => Math.max(row.des + row.alm + row.mer + row.cen + row.col, row.goal, row.gasto))
   );
   const yDomain: [number, number] = [0, Math.ceil((maxValue * 1.1) / 100) * 100];
 
@@ -116,7 +118,8 @@ export function WeeklyChart({
           <Bar dataKey="des" name="Desayuno" stackId="a" fill={COLORS.des} className="chart-neon-a" />
           <Bar dataKey="alm" name="Almuerzo" stackId="a" fill={COLORS.alm} />
           <Bar dataKey="mer" name="Merienda" stackId="a" fill={COLORS.mer} className="chart-neon-b" />
-          <Bar dataKey="cen" name="Cena" stackId="a" fill={COLORS.cen} radius={[3, 3, 0, 0]} className="chart-neon-d" />
+          <Bar dataKey="cen" name="Cena" stackId="a" fill={COLORS.cen} className="chart-neon-d" />
+          <Bar dataKey="col" name="Colación" stackId="a" fill={COLORS.col} radius={[3, 3, 0, 0]} />
           <Line type="monotone" dataKey="goal" name="Objetivo diario" stroke="rgb(var(--color-text))" strokeWidth={2} dot={{ r: 2.5, fill: "rgb(var(--color-text))" }} strokeDasharray="4 3" />
           <Line type="monotone" dataKey="gasto" name="Gasto" stroke="#5FA8D3" strokeWidth={2} dot={{ r: 2.5, fill: "#5FA8D3" }} className="chart-neon-c" />
         </ComposedChart>
@@ -126,6 +129,7 @@ export function WeeklyChart({
         <span className="flex items-center gap-1"><i className="w-[7px] h-[7px] rounded-full inline-block" style={{ background: COLORS.alm }} />Almuerzo</span>
         <span className="flex items-center gap-1"><i className="chart-neon-b w-[7px] h-[7px] rounded-full inline-block" style={{ background: COLORS.mer }} />Merienda</span>
         <span className="flex items-center gap-1"><i className="chart-neon-d w-[7px] h-[7px] rounded-full inline-block" style={{ background: COLORS.cen }} />Cena</span>
+        <span className="flex items-center gap-1"><i className="w-[7px] h-[7px] rounded-full inline-block" style={{ background: COLORS.col }} />Colación</span>
         <span className="flex items-center gap-1"><i className="w-[10px] h-[2px] inline-block" style={{ background: "rgb(var(--color-text))" }} />Objetivo diario</span>
         <span className="flex items-center gap-1"><i className="chart-neon-c w-[10px] h-[2px] inline-block" style={{ background: "#5FA8D3" }} />Gasto</span>
       </div>

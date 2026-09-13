@@ -6,7 +6,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { SortableSection } from "@/components/SortableSection";
 import { useSectionOrder } from "@/lib/useSectionOrder";
 import { useLocalDays } from "@/lib/useLocalDays";
-import { isoMonday, addDays, fmtDate, summarizeWeek, proteinTargetForWeight, getMealItems, applyMealItems } from "@/lib/calculations";
+import { isoMonday, addDays, fmtDate, summarizeWeek, proteinTargetForWeight, getMealItems, applyMealItems, dayTotal } from "@/lib/calculations";
 import { TabBar, MainTab } from "@/components/TabBar";
 import { MacrosTab } from "@/components/MacrosTab";
 import { ActividadTab } from "@/components/ActividadTab";
@@ -103,7 +103,7 @@ export default function Home() {
     const todayFecha = fmtDate(new Date());
     return days.find((d) => d.fecha === todayFecha) || emptyDay(todayFecha);
   }, [days]);
-  const todayKcal = todayEntry.desK + todayEntry.almK + todayEntry.merK + todayEntry.cenK;
+  const todayKcal = dayTotal(todayEntry);
 
   const currentWeightKg = useMemo(() => {
     const lastDailyWeight = [...days].sort((a, b) => b.fecha.localeCompare(a.fecha)).find((d) => d.pesoKg)?.pesoKg;

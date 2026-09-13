@@ -12,7 +12,7 @@ const INTENSITIES: TrainingIntensity[] = ["leve", "moderado", "exigente", "fallo
 function sessionCalories(intensidad: TrainingIntensity, minutos: number, pesoKg?: number) {
   return estimateTrainingCalories({
     fecha: "",
-    desK: 0, desP: 0, almK: 0, almP: 0, merK: 0, merP: 0, cenK: 0, cenP: 0,
+    desK: 0, desP: 0, almK: 0, almP: 0, merK: 0, merP: 0, cenK: 0, cenP: 0, colK: 0, colP: 0,
     pasos: 0,
     entreno: true,
     pesoKg,

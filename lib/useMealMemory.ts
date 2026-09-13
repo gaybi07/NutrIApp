@@ -18,6 +18,9 @@ const MEAL_NAME_TO_KEY: Record<string, MealKey> = {
   almuerzo: "alm",
   merienda: "mer",
   cena: "cen",
+  colacion: "col",
+  colación: "col",
+  aperitivo: "col",
 };
 
 export interface MealMemoryEntry {

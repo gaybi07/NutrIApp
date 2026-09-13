@@ -5,7 +5,7 @@ import { DayEntry, MealKey, MealItem, MEAL_LABELS } from "@/lib/types";
 import { getMealItems, applyMealItems } from "@/lib/calculations";
 import { countDigits, MAX_DIGITS, normalizeNumberInput } from "@/lib/inputLimits";
 
-const MEAL_ORDER: MealKey[] = ["des", "alm", "mer", "cen"];
+const MEAL_ORDER: MealKey[] = ["des", "alm", "mer", "cen", "col"];
 
 /** ~4 kcal/g es un promedio razonable para una comida mixta (ni pura grasa
  * ni pura fibra) — sirve como estimación de partida para alimentos viejos

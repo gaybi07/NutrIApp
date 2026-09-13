@@ -1,4 +1,4 @@
-export type MealKey = "des" | "alm" | "mer" | "cen";
+export type MealKey = "des" | "alm" | "mer" | "cen" | "col";
 export type TrainingIntensity = "leve" | "moderado" | "exigente" | "fallo";
 export type GoalMode = "perder" | "recomponer" | "aumentar";
 
@@ -130,6 +130,11 @@ export interface DayEntry {
   cenC?: number;
   cenG?: number;
   cenF?: number;
+  colK: number; // colación / aperitivo — lo que no entra en las 4 comidas principales
+  colP: number;
+  colC?: number;
+  colG?: number;
+  colF?: number;
   pasos: number;
   entreno: boolean;
   pesoKg?: number;
@@ -143,6 +148,7 @@ export interface DayEntry {
   almItems?: MealItem[];
   merItems?: MealItem[];
   cenItems?: MealItem[];
+  colItems?: MealItem[];
 }
 
 export type WeekPlan = Record<string, Partial<Record<MealKey, string>>>; // fecha -> comida -> título de receta
@@ -284,6 +290,7 @@ export const MEAL_LABELS: Record<MealKey, string> = {
   alm: "Almuerzo",
   mer: "Merienda",
   cen: "Cena",
+  col: "Colación",
 };
 
 export const INTENSITY_STYLES: Record<
@@ -303,6 +310,7 @@ export const emptyDay = (fecha: string): DayEntry => ({
   almK: 0, almP: 0, almC: 0, almG: 0, almF: 0,
   merK: 0, merP: 0, merC: 0, merG: 0, merF: 0,
   cenK: 0, cenP: 0, cenC: 0, cenG: 0, cenF: 0,
+  colK: 0, colP: 0, colC: 0, colG: 0, colF: 0,
   pasos: 0,
   entreno: false,
 });

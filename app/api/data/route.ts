@@ -27,6 +27,15 @@ function toDay(row: Record<string, unknown>): DayEntry {
     cenC: row.cen_c != null ? Number(row.cen_c) : undefined,
     cenG: row.cen_g != null ? Number(row.cen_g) : undefined,
     cenF: row.cen_f != null ? Number(row.cen_f) : undefined,
+    // Con Number(...) directo (como el resto de las columnas requeridas de
+    // arriba) rompería todos los totales con NaN si esta lectura llega antes
+    // de correr la migración que agrega estas columnas — por eso, a
+    // diferencia de las otras, cae a 0 en vez de asumir que la columna existe.
+    colK: row.col_k != null ? Number(row.col_k) : 0,
+    colP: row.col_p != null ? Number(row.col_p) : 0,
+    colC: row.col_c != null ? Number(row.col_c) : undefined,
+    colG: row.col_g != null ? Number(row.col_g) : undefined,
+    colF: row.col_f != null ? Number(row.col_f) : undefined,
     pasos: Number(row.pasos),
     entreno: Boolean(row.entreno),
     pesoKg: row.peso_kg ? Number(row.peso_kg) : undefined,
@@ -40,6 +49,7 @@ function toDay(row: Record<string, unknown>): DayEntry {
     almItems: (row.alm_items as DayEntry["almItems"]) || undefined,
     merItems: (row.mer_items as DayEntry["merItems"]) || undefined,
     cenItems: (row.cen_items as DayEntry["cenItems"]) || undefined,
+    colItems: (row.col_items as DayEntry["colItems"]) || undefined,
   };
 }
 
@@ -71,6 +81,11 @@ function toDayRow(day: DayEntry, userId: string) {
     cen_c: day.cenC || 0,
     cen_g: day.cenG || 0,
     cen_f: day.cenF || 0,
+    col_k: day.colK,
+    col_p: day.colP,
+    col_c: day.colC || 0,
+    col_g: day.colG || 0,
+    col_f: day.colF || 0,
     pasos: day.pasos,
     entreno: day.entreno,
     peso_kg: day.pesoKg || null,
@@ -84,6 +99,7 @@ function toDayRow(day: DayEntry, userId: string) {
     alm_items: day.almItems || [],
     mer_items: day.merItems || [],
     cen_items: day.cenItems || [],
+    col_items: day.colItems || [],
   };
 }
 

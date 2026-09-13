@@ -6,7 +6,7 @@ import { MealKey, MEAL_LABELS } from "@/lib/types";
 import { Collapsible } from "@/components/Collapsible";
 import { SECTION_HELP } from "@/lib/helpText";
 
-const MEAL_KEYS: MealKey[] = ["des", "alm", "mer", "cen"];
+const MEAL_KEYS: MealKey[] = ["des", "alm", "mer", "cen", "col"];
 const MAX_PER_MEAL = 5;
 
 const TIER_STYLE: Record<ProteinQualityTier, { label: string; dot: string }> = {

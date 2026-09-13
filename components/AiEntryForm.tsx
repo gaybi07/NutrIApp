@@ -49,6 +49,14 @@ const DEFAULT_SUGGESTIONS: Record<MealKey, string[]> = {
     "Pescado con vegetales",
     "2 empanadas de carne",
   ],
+  col: [
+    "Puñado de frutos secos",
+    "Yogur individual",
+    "Fruta",
+    "Barrita de cereal",
+    "Alfajor",
+    "Gelatina",
+  ],
 };
 
 export function AiEntryForm({

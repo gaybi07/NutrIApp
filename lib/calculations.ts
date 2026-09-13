@@ -12,29 +12,29 @@ export function getTrainingSessions(d: DayEntry): TrainingSession[] {
   return [];
 }
 
-/** Total kcal consumidas en el día (suma de las 4 comidas). */
+/** Total kcal consumidas en el día (suma de las 5 comidas). */
 export function dayTotal(d: DayEntry): number {
-  return (d.desK || 0) + (d.almK || 0) + (d.merK || 0) + (d.cenK || 0);
+  return (d.desK || 0) + (d.almK || 0) + (d.merK || 0) + (d.cenK || 0) + (d.colK || 0);
 }
 
 /** Total de proteína (g) consumida en el día. */
 export function dayProt(d: DayEntry): number {
-  return (d.desP || 0) + (d.almP || 0) + (d.merP || 0) + (d.cenP || 0);
+  return (d.desP || 0) + (d.almP || 0) + (d.merP || 0) + (d.cenP || 0) + (d.colP || 0);
 }
 
 /** Total de carbohidratos (g) consumidos en el día. */
 export function dayCarbs(d: DayEntry): number {
-  return (d.desC || 0) + (d.almC || 0) + (d.merC || 0) + (d.cenC || 0);
+  return (d.desC || 0) + (d.almC || 0) + (d.merC || 0) + (d.cenC || 0) + (d.colC || 0);
 }
 
 /** Total de grasas (g) consumidas en el día. */
 export function dayFat(d: DayEntry): number {
-  return (d.desG || 0) + (d.almG || 0) + (d.merG || 0) + (d.cenG || 0);
+  return (d.desG || 0) + (d.almG || 0) + (d.merG || 0) + (d.cenG || 0) + (d.colG || 0);
 }
 
 /** Total de fibra (g) consumida en el día. */
 export function dayFiber(d: DayEntry): number {
-  return (d.desF || 0) + (d.almF || 0) + (d.merF || 0) + (d.cenF || 0);
+  return (d.desF || 0) + (d.almF || 0) + (d.merF || 0) + (d.cenF || 0) + (d.colF || 0);
 }
 
 /**
@@ -259,7 +259,7 @@ export interface RankedDay {
 
 /** Rankea días por densidad de proteína (g proteína / 100 kcal), de mejor a peor. */
 export function rankDays(days: DayEntry[]): RankedDay[] {
-  const mealKeys: MealKey[] = ["des", "alm", "mer", "cen"];
+  const mealKeys: MealKey[] = ["des", "alm", "mer", "cen", "col"];
   const complete = days.filter((d) => dayTotal(d) > 0);
 
   const scored: RankedDay[] = complete.map((d) => {
