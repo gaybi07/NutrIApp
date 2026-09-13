@@ -59,7 +59,7 @@ export function RecipePlanner({
   return (
     <Collapsible
       eyebrow="Recetas"
-      title="Planner de cocina"
+      title="Recetas"
       info={SECTION_HELP.recetas}
       badge={
         <div className="rounded-full border border-border bg-bg/70 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">

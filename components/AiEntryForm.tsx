@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { DayEntry, MealKey, MEAL_LABELS, MealItem, emptyDay } from "@/lib/types";
 import { countDigits, MAX_DIGITS, MAX_TEXT_LENGTH, normalizeNumberInput } from "@/lib/inputLimits";
 import { fmtDate, getMealItems, applyMealItems } from "@/lib/calculations";
@@ -8,6 +8,7 @@ import { FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 import { useMealMemory } from "@/lib/useMealMemory";
 import { parseInventoryText } from "@/lib/useInventory";
+import { useSpeechToText } from "@/lib/useSpeechToText";
 
 const MAX_SUGGESTIONS = 6;
 
@@ -50,24 +51,6 @@ const DEFAULT_SUGGESTIONS: Record<MealKey, string[]> = {
   ],
 };
 
-// SpeechRecognition no está tipado en TS DOM lib estándar.
-type SpeechRecognitionInstance = {
-  lang: string;
-  interimResults: boolean;
-  continuous: boolean;
-  maxAlternatives: number;
-  start: () => void;
-  stop: () => void;
-  onresult:
-    | ((event: {
-        resultIndex: number;
-        results: { length: number; [index: number]: { isFinal: boolean; [index: number]: { transcript: string } } };
-      }) => void)
-    | null;
-  onerror: (() => void) | null;
-  onend: (() => void) | null;
-};
-
 export function AiEntryForm({
   days,
   onUpsert,
@@ -94,54 +77,10 @@ export function AiEntryForm({
     items: Omit<MealItem, "id">[];
   } | null>(null);
   const { memory: mealMemory, remember, findMatch } = useMealMemory();
-  const [recording, setRecording] = useState(false);
-  const [speechSupported, setSpeechSupported] = useState(false);
-  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
-
-  useEffect(() => {
-    const SpeechRecognitionCtor =
-      (window as unknown as { SpeechRecognition?: new () => SpeechRecognitionInstance }).SpeechRecognition ||
-      (window as unknown as { webkitSpeechRecognition?: new () => SpeechRecognitionInstance }).webkitSpeechRecognition;
-    setSpeechSupported(Boolean(SpeechRecognitionCtor));
-  }, []);
-
-  const toggleRecording = () => {
-    if (recording) {
-      recognitionRef.current?.stop();
-      return;
-    }
-    const SpeechRecognitionCtor =
-      (window as unknown as { SpeechRecognition?: new () => SpeechRecognitionInstance }).SpeechRecognition ||
-      (window as unknown as { webkitSpeechRecognition?: new () => SpeechRecognitionInstance }).webkitSpeechRecognition;
-    if (!SpeechRecognitionCtor) return;
-
-    const recognition = new SpeechRecognitionCtor();
-    recognition.lang = "es-AR";
-    recognition.interimResults = false;
-    // "continuous" evita que el reconocimiento se corte solo apenas detecta
-    // un segundo de silencio — sigue escuchando (varias frases, con pausas
-    // para pensar) hasta que el usuario toca "parar" a propósito.
-    recognition.continuous = true;
-    recognition.maxAlternatives = 1;
-    recognition.onresult = (event) => {
-      let finalTranscript = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) finalTranscript += `${event.results[i][0].transcript} `;
-      }
-      finalTranscript = finalTranscript.trim();
-      if (finalTranscript) {
-        setText((prev) => (prev ? `${prev} ${finalTranscript}` : finalTranscript));
-      }
-    };
-    recognition.onerror = () => {
-      setRecording(false);
-      setStatus("No pude escucharte, probá de nuevo o escribilo a mano.");
-    };
-    recognition.onend = () => setRecording(false);
-    recognitionRef.current = recognition;
-    recognition.start();
-    setRecording(true);
-  };
+  const { supported: speechSupported, recording, toggle: toggleRecording } = useSpeechToText(
+    (transcript) => setText((prev) => (prev ? `${prev} ${transcript}` : transcript)),
+    () => setStatus("No pude escucharte, probá de nuevo o escribilo a mano.")
+  );
 
   const handleCalc = async (forceAi = false) => {
     if (!text.trim()) {

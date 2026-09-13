@@ -21,7 +21,6 @@ import { CommonMealsCard } from "@/components/CommonMealsCard";
 import { AlacenaCard } from "@/components/AlacenaCard";
 import { countPlannedMeals } from "@/components/WeekPlanner";
 import { ShoppingLog } from "@/components/ShoppingLog";
-import { TicketUpload } from "@/components/TicketUpload";
 
 const SUBTABS: { id: ComidasSubTab; label: string }[] = [
   { id: "alacena", label: "Alacena" },
@@ -114,7 +113,6 @@ export function ComidasTab({
                   </div>
                 </button>
               )}
-              {blockId === "ticket" && <TicketUpload addInventoryText={addInventoryText} />}
             </SortableSection>
           ))}
         </SortableContext>
