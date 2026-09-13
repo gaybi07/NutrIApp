@@ -12,6 +12,34 @@ export function getTrainingSessions(d: DayEntry): TrainingSession[] {
   return [];
 }
 
+const MEAL_SEQUENCE: MealKey[] = ["des", "alm", "mer", "cen"];
+
+function timeBasedMeal(hour: number): MealKey {
+  if (hour < 11) return "des";
+  if (hour < 15) return "alm";
+  if (hour < 19) return "mer";
+  return "cen";
+}
+
+/**
+ * Qué comida conviene sugerir por default al abrir "Registrar con IA": la
+ * que corresponde a la hora actual, salvo que esa ya esté cargada — en ese
+ * caso avanza a la siguiente de la secuencia (des→alm→mer→cen) que todavía
+ * no tenga nada. Si las 4 principales ya están cargadas, cae en Colación
+ * (que es justamente para lo que sobra de esas 4).
+ */
+export function suggestedMeal(entry: DayEntry | undefined, hour: number): MealKey {
+  const start = timeBasedMeal(hour);
+  if (!entry) return start;
+  const startIdx = MEAL_SEQUENCE.indexOf(start);
+  for (let i = 0; i < MEAL_SEQUENCE.length; i++) {
+    const key = MEAL_SEQUENCE[(startIdx + i) % MEAL_SEQUENCE.length];
+    const kcal = (entry[`${key}K` as keyof DayEntry] as number) || 0;
+    if (kcal <= 0) return key;
+  }
+  return "col";
+}
+
 /** Total kcal consumidas en el día (suma de las 5 comidas). */
 export function dayTotal(d: DayEntry): number {
   return (d.desK || 0) + (d.almK || 0) + (d.merK || 0) + (d.cenK || 0) + (d.colK || 0);

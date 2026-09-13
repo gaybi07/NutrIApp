@@ -1,14 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { DayEntry, MealKey, MEAL_LABELS, MealItem, emptyDay } from "@/lib/types";
+import { useEffect, useMemo, useState } from "react";
+import { DayEntry, InventoryItem, MealKey, MEAL_LABELS, MealItem, emptyDay } from "@/lib/types";
 import { countDigits, MAX_DIGITS, MAX_TEXT_LENGTH, normalizeNumberInput } from "@/lib/inputLimits";
-import { fmtDate, getMealItems, applyMealItems } from "@/lib/calculations";
+import { fmtDate, getMealItems, applyMealItems, suggestedMeal } from "@/lib/calculations";
 import { FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 import { useMealMemory } from "@/lib/useMealMemory";
 import { parseInventoryText } from "@/lib/useInventory";
 import { useSpeechToText } from "@/lib/useSpeechToText";
+import { MealFromAlacena } from "@/components/MealFromAlacena";
 
 const MAX_SUGGESTIONS = 6;
 
@@ -63,13 +64,18 @@ export function AiEntryForm({
   days,
   onUpsert,
   onConsumeInventory,
+  inventory,
+  consumeAmounts,
 }: {
   days: DayEntry[];
   onUpsert: (entry: DayEntry) => void;
   onConsumeInventory?: (text: string) => { consumed: string[]; missing: string[] } | void;
+  inventory: InventoryItem[];
+  consumeAmounts: (amounts: Array<{ id: string; quantity: number }>) => void;
 }) {
   const [fecha, setFecha] = useState(fmtDate(new Date()));
   const [meal, setMeal] = useState<MealKey>("des");
+  const [mode, setMode] = useState<"ia" | "alacena">("ia");
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
@@ -90,6 +96,15 @@ export function AiEntryForm({
     (transcript) => setText((prev) => (prev ? `${prev} ${transcript}` : transcript)),
     () => setStatus("No pude escucharte, probá de nuevo o escribilo a mano.")
   );
+
+  // Al abrir el form (o cambiar de fecha) sugiere la comida que corresponde
+  // según la hora, salteando las que ya estén cargadas ese día — no
+  // selecciona siempre Desayuno de entrada.
+  useEffect(() => {
+    const entry = days.find((d) => d.fecha === fecha);
+    setMeal(suggestedMeal(entry, new Date().getHours()));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fecha]);
 
   const handleCalc = async (forceAi = false) => {
     if (!text.trim()) {
@@ -185,6 +200,7 @@ export function AiEntryForm({
     setPreview(null);
     setStatus(`Sumado a ${MEAL_LABELS[meal]} del ${fecha} ✓`);
     setConsumeResult(result && (result.consumed.length > 0 || result.missing.length > 0) ? result : null);
+    setMeal(suggestedMeal(updated, new Date().getHours()));
     setTimeout(() => setStatus(""), 3500);
     setTimeout(() => setConsumeResult(null), 9000);
   };
@@ -204,7 +220,29 @@ export function AiEntryForm({
       className="rounded-xl p-4 border border-gold"
       style={{ background: "linear-gradient(135deg, rgb(var(--color-accent) / 0.08), rgb(var(--color-surface)))" }}
     >
-      <div className="font-display italic text-[15px] text-gold mb-2.5">✎ Registrar con IA</div>
+      <div className="font-display italic text-[15px] text-gold mb-2.5">✎ Cargar comida</div>
+
+      <div className="mb-2.5 flex gap-1 rounded-xl border border-border bg-bg/40 p-1">
+        <button
+          type="button"
+          onClick={() => setMode("ia")}
+          className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
+            mode === "ia" ? "bg-gold text-bg" : "text-textMuted"
+          }`}
+        >
+          Con IA
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("alacena")}
+          className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
+            mode === "alacena" ? "bg-gold text-bg" : "text-textMuted"
+          }`}
+        >
+          Desde Alacena
+        </button>
+      </div>
+
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label>Fecha</label>
@@ -219,6 +257,21 @@ export function AiEntryForm({
           </select>
         </div>
       </div>
+
+      {mode === "alacena" && (
+        <MealFromAlacena
+          items={inventory}
+          days={days}
+          fecha={fecha}
+          meal={meal}
+          onUpsert={onUpsert}
+          consumeAmounts={consumeAmounts}
+          onAdded={(updated) => setMeal(suggestedMeal(updated, new Date().getHours()))}
+        />
+      )}
+
+      {mode === "ia" && (
+      <>
       <div className="mt-2">
         <label className="mb-1 flex items-center">Contame qué comiste<InfoHint text={FIELD_HELP.comidaTexto} /></label>
         {speechSupported && (
@@ -389,6 +442,8 @@ export function AiEntryForm({
             </button>
           </div>
         </div>
+      )}
+      </>
       )}
     </div>
   );
