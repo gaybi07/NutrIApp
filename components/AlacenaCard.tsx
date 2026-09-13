@@ -10,6 +10,8 @@ const EMPTY_NUTRITION: InventoryNutrition = { kcal: 0, protein: 0, carbs: 0, fat
 const REVIEW_BATCH_SIZE = 12;
 const REVIEW_TIMEOUT_MS = 25000;
 
+type OffResult = { name: string; brand: string | null; quantity: string | null; nutritionPer100g: InventoryNutrition };
+
 type ReviewCorrection = {
   id: string;
   name: string;
@@ -41,6 +43,10 @@ export function AlacenaCard({
   const [labelImage, setLabelImage] = useState<string | null>(null);
   const [labelLoading, setLabelLoading] = useState(false);
   const [labelStatus, setLabelStatus] = useState("");
+  const [offQuery, setOffQuery] = useState("");
+  const [offResults, setOffResults] = useState<OffResult[]>([]);
+  const [offLoading, setOffLoading] = useState(false);
+  const [offStatus, setOffStatus] = useState("");
 
   const removeItem = (id: string) => replaceItems(items.filter((item) => item.id !== id));
   const clearAll = () => replaceItems([]);
@@ -61,6 +67,9 @@ export function AlacenaCard({
     setCategoryDraft(item.category || "otros");
     setLabelImage(null);
     setLabelStatus("");
+    setOffQuery(item.name);
+    setOffResults([]);
+    setOffStatus("");
   };
 
   const saveItem = () => {
@@ -103,6 +112,30 @@ export function AlacenaCard({
     } finally {
       setLabelLoading(false);
     }
+  };
+
+  const searchOff = async () => {
+    if (!offQuery.trim()) return;
+    setOffLoading(true);
+    setOffStatus("Buscando...");
+    setOffResults([]);
+    try {
+      const res = await fetch(`/api/search-off?q=${encodeURIComponent(offQuery.trim())}`);
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "No pude buscar en Open Food Facts");
+      setOffResults(data.results || []);
+      setOffStatus(data.results?.length ? "" : "No encontré nada con ese nombre — probá con otras palabras.");
+    } catch (error) {
+      setOffStatus(error instanceof Error ? error.message : "No pude buscar en Open Food Facts.");
+    } finally {
+      setOffLoading(false);
+    }
+  };
+
+  const applyOffResult = (result: OffResult) => {
+    setNutritionDraft(result.nutritionPer100g);
+    setOffResults([]);
+    setOffStatus(`Cargado desde Open Food Facts: ${result.name}${result.brand ? ` (${result.brand})` : ""} ✓`);
   };
 
   const reviewWithAi = async () => {
@@ -308,6 +341,51 @@ export function AlacenaCard({
                 </button>
               )}
               {labelStatus && <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-sage">{labelStatus}</div>}
+            </div>
+
+            <div className="mt-3 rounded-lg border border-dashed border-border bg-bg/40 p-2.5">
+              <label className="mb-2 flex items-center font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
+                🔍 Buscar en Open Food Facts
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={offQuery}
+                  onChange={(event) => setOffQuery(event.target.value)}
+                  onKeyDown={(event) => event.key === "Enter" && searchOff()}
+                  placeholder="ej: yogur ser natural"
+                  className="flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={searchOff}
+                  disabled={offLoading}
+                  className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg disabled:opacity-60"
+                >
+                  {offLoading ? "..." : "Buscar"}
+                </button>
+              </div>
+              {offResults.length > 0 && (
+                <div className="mt-2 flex max-h-48 flex-col gap-1.5 overflow-y-auto">
+                  {offResults.map((r, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => applyOffResult(r)}
+                      className="rounded-lg border border-border bg-bg/60 p-2 text-left text-[11px] hover:border-gold/60"
+                    >
+                      <div className="text-text">
+                        {r.name}
+                        {r.brand ? ` · ${r.brand}` : ""}
+                      </div>
+                      <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
+                        {r.nutritionPer100g.kcal} kcal /100g · {r.nutritionPer100g.protein}g prot {r.quantity ? `· ${r.quantity}` : ""}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {offStatus && <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-sage">{offStatus}</div>}
             </div>
 
             <label className="mt-3 block">Categoría</label>
