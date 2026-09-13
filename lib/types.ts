@@ -167,14 +167,15 @@ export const FONT_SIZE_OPTIONS: { value: FontSize; label: string; description: s
  * arrastrándolos (mantener apretado en cualquier parte del bloque, como
  * mover íconos en la pantalla de inicio del celular) — si no personalizó
  * nada todavía, se usa el orden por default de cada solapa. */
-export type InicioBlockId = "hoy" | "comidas" | "semanaNav" | "pesoSemana" | "indicadores" | "tablaSemana";
+export type InicioBlockId = "hoy" | "comidas" | "semanaNav" | "comidasSemana" | "pesoSemana" | "indicadores" | "tablaSemana";
 export const DEFAULT_INICIO_ORDER: InicioBlockId[] = [
-  "hoy", "comidas", "semanaNav", "pesoSemana", "indicadores", "tablaSemana",
+  "hoy", "comidas", "semanaNav", "comidasSemana", "pesoSemana", "indicadores", "tablaSemana",
 ];
 export const INICIO_BLOCK_LABELS: Record<InicioBlockId, string> = {
   hoy: "Hoy",
   comidas: "Editar comidas de hoy",
   semanaNav: "Semana del (fecha)",
+  comidasSemana: "Comidas por día de la semana",
   pesoSemana: "Peso de esta semana",
   indicadores: "Indicadores",
   tablaSemana: "Tabla de la semana",

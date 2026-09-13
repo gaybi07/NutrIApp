@@ -23,6 +23,7 @@ import { DataImport } from "@/components/DataImport";
 import { MealMemoryImport } from "@/components/MealMemoryImport";
 import { TodayCard } from "@/components/TodayCard";
 import { TodayMealsBreakdown } from "@/components/TodayMealsBreakdown";
+import { WeekMealsCard } from "@/components/WeekMealsCard";
 import { TrainingEntryForm } from "@/components/TrainingEntryForm";
 import { SleepEntryForm } from "@/components/SleepEntryForm";
 import { ThemeSettings, FontSizeSettings, TabsSettings, ToolsSettings, SectionsSettings } from "@/components/Preferences";
@@ -297,6 +298,9 @@ export default function Home() {
                         {monday.getDate()} {MONTHS[monday.getMonth()]} — {sunday.getDate()} {MONTHS[sunday.getMonth()]}
                       </div>
                     </div>
+                  )}
+                  {blockId === "comidasSemana" && (
+                    <WeekMealsCard weekDates={weekDates} weekDays={weekDays} onUpsert={upsertDay} />
                   )}
                   {blockId === "pesoSemana" && (
                     <WeeklyWeight
