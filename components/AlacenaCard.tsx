@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { ChangeEvent, useMemo, useState } from "react";
 import { InventoryCategory, InventoryItem, InventoryNutrition, INVENTORY_CATEGORIES, INVENTORY_CATEGORY_LABELS } from "@/lib/types";
 import { ProductMemoryApi } from "@/lib/useProductMemory";
 import { Collapsible } from "@/components/Collapsible";
@@ -36,6 +36,9 @@ export function AlacenaCard({
   const [categoryDraft, setCategoryDraft] = useState<InventoryCategory>("otros");
   const [reviewing, setReviewing] = useState(false);
   const [status, setStatus] = useState("");
+  const [labelImage, setLabelImage] = useState<string | null>(null);
+  const [labelLoading, setLabelLoading] = useState(false);
+  const [labelStatus, setLabelStatus] = useState("");
 
   const removeItem = (id: string) => replaceItems(items.filter((item) => item.id !== id));
   const clearAll = () => replaceItems([]);
@@ -54,6 +57,8 @@ export function AlacenaCard({
     setSelected(item);
     setNutritionDraft(item.nutritionPer100g || EMPTY_NUTRITION);
     setCategoryDraft(item.category || "otros");
+    setLabelImage(null);
+    setLabelStatus("");
   };
 
   const saveItem = () => {
@@ -61,6 +66,41 @@ export function AlacenaCard({
     updateItem(selected.id, { category: categoryDraft, nutritionPer100g: nutritionDraft, nutritionConfirmed: true });
     productMemory.remember({ name: selected.name, category: categoryDraft, nutritionPer100g: nutritionDraft });
     setSelected(null);
+  };
+
+  const handleLabelUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setLabelImage(String(reader.result));
+    reader.readAsDataURL(file);
+  };
+
+  const readLabel = async () => {
+    if (!selected || !labelImage) return;
+    setLabelLoading(true);
+    setLabelStatus("Leyendo etiqueta...");
+    try {
+      const res = await fetch("/api/parse-nutrition-label", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageDataUrl: labelImage, name: selected.name, unit: selected.unit }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "No pude leer la etiqueta");
+      setNutritionDraft({
+        kcal: data.kcal || 0,
+        protein: data.protein || 0,
+        carbs: data.carbs || 0,
+        fat: data.fat || 0,
+        fiber: data.fiber || 0,
+      });
+      setLabelStatus("Listo — revisá los valores y guardá ↓");
+    } catch (error) {
+      setLabelStatus(error instanceof Error ? error.message : "No pude leer la etiqueta.");
+    } finally {
+      setLabelLoading(false);
+    }
   };
 
   const reviewWithAi = async () => {
@@ -76,13 +116,13 @@ export function AlacenaCard({
       const data = await res.json();
       if (!res.ok || !Array.isArray(data.items)) throw new Error(data.error || "No pude revisar el inventario");
       const corrections = data.items.map(
-        (fix: { id: string; nombre: string; cantidad: number; unidad: InventoryItem["unit"]; categoria?: string; nutricion100g?: InventoryNutrition }) => ({
+        (fix: { id: string; nombre: string; cantidad: number; unidad: InventoryItem["unit"]; categoria?: string; nutricion100g?: InventoryNutrition | null }) => ({
           id: fix.id,
           name: fix.nombre,
           quantity: fix.cantidad,
           unit: fix.unidad,
           category: fix.categoria as InventoryCategory | undefined,
-          nutritionPer100g: fix.nutricion100g,
+          nutritionPer100g: fix.nutricion100g ?? undefined,
         })
       );
       applyReview(corrections);
@@ -191,6 +231,9 @@ export function AlacenaCard({
                   {INVENTORY_CATEGORY_LABELS[item.category || "otros"]}
                   {item.nutritionPer100g ? " · valor cargado" : ""}
                 </span>
+                {!item.nutritionPer100g && (
+                  <span className="font-mono text-[9px] uppercase tracking-wide text-rust">⚠ falta nutrición, tocá para cargarla</span>
+                )}
               </div>
             ))}
           </div>
@@ -209,7 +252,33 @@ export function AlacenaCard({
           >
             <div className="font-display text-xl text-text">{selected.name}</div>
             <div className="mt-1 text-[11px] text-textMuted">
-              Valor nutricional cada 100{selected.unit === "u." ? " unidad" : selected.unit} — la IA lo estima al cargar; corregilo acá si hace falta y queda fijo.
+              {selected.unit === "u."
+                ? "Valor nutricional por 1 unidad"
+                : `Valor nutricional cada 100 ${selected.unit}`}{" "}
+              — la IA lo estima al cargar; corregilo acá si hace falta (a mano o con una foto de la etiqueta) y queda fijo.
+            </div>
+
+            <div className="mt-3 rounded-lg border border-dashed border-border bg-bg/40 p-2.5">
+              <label className="mb-2 flex cursor-pointer items-center justify-center rounded-lg border border-border bg-surfaceAlt px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-text">
+                📷 Foto de la etiqueta nutricional
+                <input type="file" accept="image/*" className="hidden" onChange={handleLabelUpload} />
+              </label>
+              {labelImage && (
+                <div className="mb-2 overflow-hidden rounded-lg border border-border bg-bg/30">
+                  <img src={labelImage} alt="Etiqueta nutricional" className="max-h-40 w-full object-cover" />
+                </div>
+              )}
+              {labelImage && (
+                <button
+                  type="button"
+                  onClick={readLabel}
+                  disabled={labelLoading}
+                  className="w-full rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg disabled:opacity-60"
+                >
+                  {labelLoading ? "Leyendo..." : "Leer etiqueta con IA"}
+                </button>
+              )}
+              {labelStatus && <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-sage">{labelStatus}</div>}
             </div>
 
             <label className="mt-3 block">Categoría</label>

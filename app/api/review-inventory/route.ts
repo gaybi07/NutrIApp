@@ -13,10 +13,10 @@ Para CADA item de la lista de entrada (conservando su "id" tal cual), devolvé:
 - "nombre": corregido y limpio — simple, singular, sin cantidad, unidad ni envase pegado (ej. "milanesa de pollo", no "kilos de milanesa de pollo"; "leche", no "itro de leche"; "limón", no "imón"; "aceite", no "botella de aceite"). Si ya estaba bien, dejalo igual.
 - "cantidad" y "unidad": la cantidad real en gramos ("g"), mililitros ("ml") o unidades ("u.") — si el nombre/cantidad original indicaban "2 kilos", la cantidad correcta es 2000 con unidad "g"; si eran "3 litros", 3000 con unidad "ml"; si era un envase con cantidad "1 g"/"1 ml" sin sentido, corregilo al tamaño real típico de ese envase (ver arriba). Si ya estaba bien convertido, dejalo igual.
 - "categoria": la más apropiada de esta lista exacta (en minúscula, tal cual): ${CATEGORIES}.
-- "nutricion100g": valores típicos y realistas de ese alimento por cada 100g o 100ml (o por unidad si "unidad" es "u.", ej. 1 huevo) — punto medio del rango típico, gramos enteros: {"kcal": <int>, "protein": <int>, "carbs": <int>, "fat": <int>, "fiber": <int>}.
+- "nutricion100g": OJO con la base según "unidad" — si "unidad" es "g" o "ml", son los valores por cada 100 g o 100 ml (NUNCA por el total de "cantidad"); si "unidad" es "u.", son los valores por UNA sola unidad del producto (ej. 1 huevo, 1 alfajor — no por 100 unidades). Solo poné un valor si estás razonablemente seguro de ese producto puntual — si el nombre es demasiado genérico o dudoso para estimar bien, poné "nutricion100g": null en vez de inventar un número.
 
 Respondé SOLO con JSON válido, sin markdown, sin texto extra, con este formato exacto:
-{"items": [{"id": "<string>", "nombre": "<string>", "cantidad": <numero>, "unidad": "g"|"ml"|"u.", "categoria": "<string>", "nutricion100g": {"kcal": <int>, "protein": <int>, "carbs": <int>, "fat": <int>, "fiber": <int>}}]}`;
+{"items": [{"id": "<string>", "nombre": "<string>", "cantidad": <numero>, "unidad": "g"|"ml"|"u.", "categoria": "<string>", "nutricion100g": {"kcal": <int>, "protein": <int>, "carbs": <int>, "fat": <int>, "fiber": <int>} | null}]}`;
 
 type GeminiResponse = {
   candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
@@ -28,7 +28,7 @@ export type ReviewedInventoryItem = {
   cantidad: number;
   unidad: "g" | "ml" | "u.";
   categoria: string;
-  nutricion100g?: { kcal: number; protein: number; carbs: number; fat: number; fiber: number };
+  nutricion100g?: { kcal: number; protein: number; carbs: number; fat: number; fiber: number } | null;
 };
 
 function extractJson(text: string): { items: ReviewedInventoryItem[] } {

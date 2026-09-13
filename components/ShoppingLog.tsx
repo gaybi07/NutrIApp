@@ -151,7 +151,7 @@ export function ShoppingLog({
 
       const responseText = await res.text();
       let data: {
-        items?: Array<{ nombre: string; cantidad: number; unidad: InventoryItem["unit"]; categoria?: string; nutricion100g?: InventoryNutrition }>;
+        items?: Array<{ nombre: string; cantidad: number; unidad: InventoryItem["unit"]; categoria?: string; nutricion100g?: InventoryNutrition | null }>;
         error?: string;
       };
       try {
@@ -172,7 +172,7 @@ export function ShoppingLog({
             quantity: useMemory ? mem!.unitQuantity! : item.cantidad,
             unit: useMemory ? mem!.unit! : item.unidad,
             category: mem?.category ?? (item.categoria as InventoryCategory | undefined),
-            nutritionPer100g: mem?.nutritionPer100g ?? item.nutricion100g,
+            nutritionPer100g: mem?.nutritionPer100g ?? item.nutricion100g ?? undefined,
           };
         })
       );
