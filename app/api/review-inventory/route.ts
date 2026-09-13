@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { callGeminiJson, GeminiRateLimitError } from "@/lib/geminiClient";
 
 // Le pide a la plataforma más tiempo que el default (10s en Vercel Hobby)
 // para las tandas más lentas — no hace nada si el plan no lo permite, pero
@@ -23,10 +24,6 @@ Para CADA item de la lista de entrada (conservando su "id" tal cual), devolvé:
 Respondé SOLO con JSON válido, sin markdown, sin texto extra, con este formato exacto:
 {"items": [{"id": "<string>", "nombre": "<string>", "cantidad": <numero>, "unidad": "g"|"ml"|"u.", "categoria": "<string>", "nutricion100g": {"kcal": <int>, "protein": <int>, "carbs": <int>, "fat": <int>, "fiber": <int>} | null}]}`;
 
-type GeminiResponse = {
-  candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-};
-
 export type ReviewedInventoryItem = {
   id: string;
   nombre: string;
@@ -35,41 +32,6 @@ export type ReviewedInventoryItem = {
   categoria: string;
   nutricion100g?: { kcal: number; protein: number; carbs: number; fat: number; fiber: number } | null;
 };
-
-function extractJson(text: string): { items: ReviewedInventoryItem[] } {
-  const clean = text.replace(/```json|```/g, "").trim();
-  const start = clean.indexOf("{");
-  const end = clean.lastIndexOf("}");
-  if (start < 0 || end < start) throw new Error("La IA no devolvió un JSON válido");
-  const parsed = JSON.parse(clean.slice(start, end + 1));
-  if (!parsed || !Array.isArray(parsed.items)) {
-    throw new Error("La IA no devolvió una lista de items válida");
-  }
-  return parsed;
-}
-
-async function reviewWithGemini(items: Array<{ id: string; name: string; quantity: number; unit: string }>, apiKey: string) {
-  const model = process.env.GEMINI_MODEL || "gemini-3.6-flash";
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: [{ parts: [{ text: `Items: ${JSON.stringify(items)}` }] }],
-        generationConfig: { temperature: 0.2, responseMimeType: "application/json" },
-      }),
-    }
-  );
-
-  const data = (await response.json()) as GeminiResponse & { error?: { message?: string } };
-  if (!response.ok) throw new Error(data.error?.message || "Gemini rechazó la solicitud");
-
-  const result = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!result) throw new Error("Gemini no devolvió una respuesta");
-  return extractJson(result);
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -84,10 +46,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Falta GEMINI_API_KEY para revisar el inventario" }, { status: 503 });
     }
 
-    const reviewed = await reviewWithGemini(items, process.env.GEMINI_API_KEY);
+    const reviewed = (await callGeminiJson(SYSTEM_PROMPT, [{ text: `Items: ${JSON.stringify(items)}` }])) as { items?: ReviewedInventoryItem[] };
+    if (!reviewed || !Array.isArray(reviewed.items)) {
+      throw new Error("La IA no devolvió una lista de items válida");
+    }
     return NextResponse.json(reviewed);
   } catch (error) {
     console.error("Error revisando inventario:", error);
+    if (error instanceof GeminiRateLimitError) {
+      return NextResponse.json(
+        { error: "La IA está saturada — parece que hay mucha gente usándola a la vez. Esperá un minuto y probá de nuevo." },
+        { status: 429 }
+      );
+    }
     return NextResponse.json({ error: "No pude revisar el inventario. Probá de nuevo en un rato." }, { status: 500 });
   }
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { callGeminiJson, GeminiRateLimitError } from "@/lib/geminiClient";
 
 export const maxDuration = 30;
 
@@ -15,51 +16,6 @@ Respondé SOLO con JSON válido, sin markdown, sin texto extra, con este formato
 
 Si la foto no muestra una tabla de información nutricional legible, respondé exactamente: {"error": "No encontré una tabla de información nutricional legible en la foto"}`;
 
-type GeminiResponse = {
-  candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-};
-
-function extractJson(text: string) {
-  const clean = text.replace(/```json|```/g, "").trim();
-  const start = clean.indexOf("{");
-  const end = clean.lastIndexOf("}");
-  if (start < 0 || end < start) throw new Error("La IA no devolvió un JSON válido");
-  return JSON.parse(clean.slice(start, end + 1));
-}
-
-async function readLabelWithGemini(imageDataUrl: string, name: string, unit: string) {
-  const model = process.env.GEMINI_MODEL || "gemini-3.6-flash";
-  const match = imageDataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.*)$/);
-  if (!match) throw new Error("La imagen no tiene un formato válido");
-
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: [
-          {
-            parts: [
-              { text: `Producto: ${name || "(sin nombre)"}. Unidad del inventario: ${unit}.` },
-              { inline_data: { mime_type: match[1], data: match[2] } },
-            ],
-          },
-        ],
-        generationConfig: { temperature: 0.1, responseMimeType: "application/json" },
-      }),
-    }
-  );
-
-  const data = (await response.json()) as GeminiResponse & { error?: { message?: string } };
-  if (!response.ok) throw new Error(data.error?.message || "Gemini rechazó la solicitud");
-
-  const result = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!result) throw new Error("Gemini no devolvió una respuesta");
-  return extractJson(result);
-}
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -73,13 +29,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Falta GEMINI_API_KEY para leer etiquetas" }, { status: 503 });
     }
 
-    const parsed = await readLabelWithGemini(imageDataUrl, name || "", unit || "g");
+    const match = imageDataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.*)$/);
+    if (!match) throw new Error("La imagen no tiene un formato válido");
+
+    const parsed = (await callGeminiJson(
+      SYSTEM_PROMPT,
+      [
+        { text: `Producto: ${name || "(sin nombre)"}. Unidad del inventario: ${unit || "g"}.` },
+        { inline_data: { mime_type: match[1], data: match[2] } },
+      ],
+      0.1
+    )) as { error?: string; kcal?: number; protein?: number; carbs?: number; fat?: number; fiber?: number };
+
     if (parsed.error) {
       return NextResponse.json({ error: parsed.error }, { status: 422 });
     }
     return NextResponse.json(parsed);
   } catch (error) {
     console.error("Error leyendo etiqueta nutricional:", error);
+    if (error instanceof GeminiRateLimitError) {
+      return NextResponse.json(
+        { error: "La IA está saturada — parece que hay mucha gente usándola a la vez. Esperá un minuto y probá de nuevo." },
+        { status: 429 }
+      );
+    }
     return NextResponse.json({ error: "No pude leer la etiqueta. Probá con otra foto o cargalo a mano." }, { status: 500 });
   }
 }
