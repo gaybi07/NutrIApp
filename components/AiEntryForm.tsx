@@ -117,7 +117,11 @@ export function AiEntryForm({
 
     if (!forceAi) {
       const match = findMatch(text);
-      if (match) {
+      // Solo salteamos la IA si esa comida ya quedó guardada CON desglose
+      // completo (items + ingredientes) -- las guardadas antes de tener eso
+      // (o por algún otro motivo incompletas) no se saltean: se recalculan
+      // con IA esta vez, y al guardar quedan actualizadas para la próxima.
+      if (match && match.ingredientes && match.items && match.items.length > 0) {
         setPreview({
           kcal: match.kcal,
           protein: match.protein,
@@ -126,11 +130,8 @@ export function AiEntryForm({
           fiber: match.fiber,
           detalle: "",
           resumen: match.text,
-          ingredientes: match.ingredientes || "",
-          items:
-            match.items && match.items.length > 0
-              ? match.items
-              : [{ nombre: match.text, kcal: match.kcal, protein: match.protein, carbs: match.carbs, fat: match.fat, fiber: match.fiber, gramos: undefined }],
+          ingredientes: match.ingredientes,
+          items: match.items,
         });
         setStatus(`Encontrado en tu memoria: "${match.text}" — revisá y guardá, o recalculá con IA si cambió algo ↓`);
         return;
