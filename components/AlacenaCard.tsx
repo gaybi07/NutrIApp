@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { InventoryCategory, InventoryItem, InventoryNutrition, INVENTORY_CATEGORIES, INVENTORY_CATEGORY_LABELS } from "@/lib/types";
+import { ProductMemoryApi } from "@/lib/useProductMemory";
 import { Collapsible } from "@/components/Collapsible";
 import { SECTION_HELP } from "@/lib/helpText";
 
@@ -21,11 +22,13 @@ export function AlacenaCard({
   replaceItems,
   updateItem,
   applyReview,
+  productMemory,
 }: {
   items: InventoryItem[];
   replaceItems: (items: InventoryItem[]) => void;
   updateItem: (id: string, patch: Partial<InventoryItem>) => void;
   applyReview: (corrections: ReviewCorrection[]) => void;
+  productMemory: ProductMemoryApi;
 }) {
   const [filter, setFilter] = useState<InventoryCategory | "todas">("todas");
   const [selected, setSelected] = useState<InventoryItem | null>(null);
@@ -56,6 +59,7 @@ export function AlacenaCard({
   const saveItem = () => {
     if (!selected) return;
     updateItem(selected.id, { category: categoryDraft, nutritionPer100g: nutritionDraft, nutritionConfirmed: true });
+    productMemory.remember({ name: selected.name, category: categoryDraft, nutritionPer100g: nutritionDraft });
     setSelected(null);
   };
 
@@ -71,16 +75,22 @@ export function AlacenaCard({
       });
       const data = await res.json();
       if (!res.ok || !Array.isArray(data.items)) throw new Error(data.error || "No pude revisar el inventario");
-      applyReview(
-        data.items.map((fix: { id: string; nombre: string; cantidad: number; unidad: InventoryItem["unit"]; categoria?: string; nutricion100g?: InventoryNutrition }) => ({
+      const corrections = data.items.map(
+        (fix: { id: string; nombre: string; cantidad: number; unidad: InventoryItem["unit"]; categoria?: string; nutricion100g?: InventoryNutrition }) => ({
           id: fix.id,
           name: fix.nombre,
           quantity: fix.cantidad,
           unit: fix.unidad,
           category: fix.categoria as InventoryCategory | undefined,
           nutritionPer100g: fix.nutricion100g,
-        }))
+        })
       );
+      applyReview(corrections);
+      corrections.forEach((fix: ReviewCorrection) => {
+        if (fix.category || fix.nutritionPer100g) {
+          productMemory.remember({ name: fix.name, category: fix.category, nutritionPer100g: fix.nutritionPer100g });
+        }
+      });
       setStatus("Alacena revisada ✓");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "No pude revisar el inventario.");

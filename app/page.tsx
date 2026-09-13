@@ -32,6 +32,7 @@ import { TipPopup } from "@/components/TipPopup";
 import { isSupabaseConfigured } from "@/lib/supabase/browser";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 import { useInventory } from "@/lib/useInventory";
+import { useProductMemory } from "@/lib/useProductMemory";
 import { emptyDay, MealKey, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER, resolveOrder } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
@@ -42,7 +43,6 @@ export default function Home() {
   const { days, settings, loaded, syncError, upsertDay, saveDays, saveSettings } = useLocalDays();
   const {
     items: inventory,
-    addText,
     addStructuredItems,
     updateItem: updateInventoryItem,
     applyReview: applyInventoryReview,
@@ -51,6 +51,7 @@ export default function Home() {
     consumeAmounts,
     persist: replaceInventory,
   } = useInventory();
+  const productMemory = useProductMemory();
   const [weekOffset, setWeekOffset] = useState(0);
   const [activeTab, setActiveTab] = useState<MainTab>("inicio");
   const [panel, setPanel] = useState<
@@ -345,10 +346,10 @@ export default function Home() {
           consumedKcal={todayKcal}
           weekPlan={settings.weekPlan || {}}
           onOpenPlanificador={() => setPanel("planificador")}
-          addInventoryText={addText}
           addStructuredItems={addStructuredItems}
           updateInventoryItem={updateInventoryItem}
           applyInventoryReview={applyInventoryReview}
+          productMemory={productMemory}
           replaceItems={replaceInventory}
           order={settings.comidasOrder}
           onReorder={(comidasOrder) => saveSettings({ ...settings, comidasOrder })}

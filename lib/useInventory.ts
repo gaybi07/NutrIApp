@@ -75,7 +75,17 @@ function unitInfo(rawUnit: string): { unit: InventoryItem["unit"]; multiplier: n
   return { unit: "u.", multiplier: 1 };
 }
 
-export function parseInventoryText(text: string): Array<{ name: string; quantity: number; unit: InventoryItem["unit"] }> {
+export interface ParsedInventoryEntry {
+  name: string;
+  quantity: number;
+  unit: InventoryItem["unit"];
+  // Envase sin tamaño conocido (pote/paquete/lata/bolsa/sachet) — "quantity"
+  // acá es la cantidad de ENVASES (no el peso real), a la espera de que se
+  // resuelva contra la memoria de productos o preguntándole al usuario.
+  needsQuantity?: boolean;
+}
+
+export function parseInventoryText(text: string): ParsedInventoryEntry[] {
   return text
     .split(/\n|,|\||\s+y\s+/i)
     .map((part) => part.trim().replace(/^[-•*]\s*/, ""))
@@ -88,7 +98,7 @@ export function parseInventoryText(text: string): Array<{ name: string; quantity
         if (BOTTLE_LIKE.test(container[2].toLowerCase()) && defaultUnitForName(foodName) === "ml") {
           return { name: foodName, quantity: amount * BOTTLE_ML, unit: "ml" as const };
         }
-        return { name: foodName, quantity: amount, unit: "u." as const };
+        return { name: foodName, quantity: amount, unit: "u." as const, needsQuantity: true };
       }
       const article = part.match(/^(un|una)\s+(.+)$/i);
       if (article) return { name: article[2].trim().toLowerCase(), quantity: 1, unit: "u." as const };
@@ -144,22 +154,9 @@ export function useInventory() {
     localStorage.setItem(INVENTORY_KEY, JSON.stringify(clean));
   }, []);
 
-  const addText = useCallback((text: string) => {
-    const parsed = parseInventoryText(text);
-    setItems((previous) => {
-      const next = [...previous];
-      parsed.forEach(({ name, quantity, unit }) => {
-        const existing = next.find((item) => inventoryKey(item.name) === inventoryKey(name) && item.unit === unit);
-        if (existing) existing.quantity += quantity;
-        else next.push({ id: `${Date.now()}-${name}-${Math.random()}`, name, quantity, unit, category: defaultCategoryForName(name) });
-      });
-      localStorage.setItem(INVENTORY_KEY, JSON.stringify(next));
-      return next;
-    });
-  }, []);
-
-  /** Alta desde la IA (lectura de ticket): ya viene con categoría y
-   * nutrición por 100g estimadas, no hace falta re-derivarlas. */
+  /** Alta ya resuelta (lectura de ticket, "Agregar tal cual" de Compras ya
+   * cruzado contra la memoria de productos, o una respuesta manual del
+   * usuario) — si no trae categoría, cae a la heurística por palabra clave. */
   const addStructuredItems = useCallback(
     (entries: Array<{ name: string; quantity: number; unit: InventoryItem["unit"]; category?: InventoryCategory; nutritionPer100g?: InventoryNutrition }>) => {
       setItems((previous) => {
@@ -171,7 +168,7 @@ export function useInventory() {
             if (!existing.category && category) existing.category = category;
             if (!existing.nutritionConfirmed && nutritionPer100g) existing.nutritionPer100g = nutritionPer100g;
           } else {
-            next.push({ id: `${Date.now()}-${name}-${Math.random()}`, name, quantity, unit, category, nutritionPer100g });
+            next.push({ id: `${Date.now()}-${name}-${Math.random()}`, name, quantity, unit, category: category || defaultCategoryForName(name), nutritionPer100g });
           }
         });
         localStorage.setItem(INVENTORY_KEY, JSON.stringify(next));
@@ -266,5 +263,5 @@ export function useInventory() {
     });
   }, []);
 
-  return { items, loaded, addText, addStructuredItems, updateItem, applyReview, consumeByText, consumeItem, consumeAmounts, persist };
+  return { items, loaded, addStructuredItems, updateItem, applyReview, consumeByText, consumeItem, consumeAmounts, persist };
 }

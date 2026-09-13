@@ -7,15 +7,19 @@ import { SECTION_HELP, FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 import { useSpeechToText } from "@/lib/useSpeechToText";
 import { InventoryCategory, InventoryItem, InventoryNutrition, INVENTORY_CATEGORY_LABELS } from "@/lib/types";
+import { parseInventoryText } from "@/lib/useInventory";
+import { ProductMemoryApi } from "@/lib/useProductMemory";
 
 type AiShoppingItem = { name: string; quantity: number; unit: InventoryItem["unit"]; category?: InventoryCategory; nutritionPer100g?: InventoryNutrition };
+type PendingItem = { name: string; containerCount: number };
+type PendingDraft = { amount: string; unit: InventoryItem["unit"] };
 
 export function ShoppingLog({
-  addInventoryText,
   addStructuredItems,
+  productMemory,
 }: {
-  addInventoryText: (text: string) => void;
   addStructuredItems: (entries: AiShoppingItem[]) => void;
+  productMemory: ProductMemoryApi;
 }) {
   const [raw, setRaw] = useState("");
   const [loading, setLoading] = useState(false);
@@ -24,6 +28,13 @@ export function ShoppingLog({
   // Lo que devolvió la IA, pendiente de que el usuario lo revise y confirme
   // antes de que se descuente/sume de verdad al inventario.
   const [aiResult, setAiResult] = useState<AiShoppingItem[] | null>(null);
+  // Envases sin tamaño conocido (bolsa de premezcla, lata, pote...) del
+  // alta manual/dictada, esperando que el usuario diga cuánto trae cada
+  // uno antes de sumarlos — junto con lo que ya estaba resuelto (por
+  // memoria o porque venía con cantidad clara), listo para combinar.
+  const [pending, setPending] = useState<PendingItem[] | null>(null);
+  const [pendingReady, setPendingReady] = useState<AiShoppingItem[]>([]);
+  const [pendingDrafts, setPendingDrafts] = useState<Record<string, PendingDraft>>({});
   const { supported: speechSupported, recording, toggle: toggleRecording } = useSpeechToText(
     (transcript) => setRaw((prev) => (prev ? `${prev}, ${transcript}` : transcript)),
     () => setStatus("No pude escucharte, probá de nuevo o escribilo a mano.")
@@ -41,19 +52,75 @@ export function ShoppingLog({
     );
   }, [raw]);
 
-  const addItems = (source: string[]) => {
-    addInventoryText(source.join(", "));
-    setRaw("");
-    setImagePreview(null);
-    setStatus("Compra guardada ✓");
-  };
-
   const parseFromText = () => {
     if (!raw.trim()) {
       setStatus("Escribí o dictá los productos, o pegá el ticket primero.");
       return;
     }
-    addItems(parsedItems);
+
+    const parsed = parseInventoryText(raw);
+    const ready: AiShoppingItem[] = [];
+    const toAsk: PendingItem[] = [];
+
+    parsed.forEach((entry) => {
+      const mem = productMemory.lookup(entry.name);
+      if (entry.needsQuantity) {
+        if (mem?.unitQuantity && mem.unit) {
+          ready.push({
+            name: entry.name,
+            quantity: entry.quantity * mem.unitQuantity,
+            unit: mem.unit,
+            category: mem.category,
+            nutritionPer100g: mem.nutritionPer100g,
+          });
+        } else {
+          toAsk.push({ name: entry.name, containerCount: entry.quantity });
+        }
+      } else {
+        ready.push({ name: entry.name, quantity: entry.quantity, unit: entry.unit, category: mem?.category, nutritionPer100g: mem?.nutritionPer100g });
+      }
+    });
+
+    if (toAsk.length > 0) {
+      setPending(toAsk);
+      setPendingReady(ready);
+      const drafts: Record<string, PendingDraft> = {};
+      toAsk.forEach((item) => {
+        drafts[item.name] = { amount: "", unit: "g" };
+      });
+      setPendingDrafts(drafts);
+      setStatus("");
+      return;
+    }
+
+    addStructuredItems(ready);
+    setRaw("");
+    setStatus("Compra guardada ✓");
+  };
+
+  const pendingComplete = pending?.every((item) => Number(pendingDrafts[item.name]?.amount) > 0) ?? false;
+
+  const confirmPending = () => {
+    if (!pending || !pendingComplete) return;
+    const resolved: AiShoppingItem[] = [];
+    for (const item of pending) {
+      const draft = pendingDrafts[item.name];
+      const amount = Number(draft?.amount);
+      resolved.push({ name: item.name, quantity: item.containerCount * amount, unit: draft.unit });
+      productMemory.remember({ name: item.name, unitQuantity: amount, unit: draft.unit });
+    }
+    addStructuredItems([...pendingReady, ...resolved]);
+    setPending(null);
+    setPendingReady([]);
+    setPendingDrafts({});
+    setRaw("");
+    setStatus("Compra guardada ✓");
+  };
+
+  const discardPending = () => {
+    setPending(null);
+    setPendingReady([]);
+    setPendingDrafts({});
   };
 
   const readTicket = async () => {
@@ -90,13 +157,17 @@ export function ShoppingLog({
       }
 
       setAiResult(
-        data.items.map((item) => ({
-          name: item.nombre,
-          quantity: item.cantidad,
-          unit: item.unidad,
-          category: item.categoria as InventoryCategory | undefined,
-          nutritionPer100g: item.nutricion100g,
-        }))
+        data.items.map((item) => {
+          const mem = productMemory.lookup(item.nombre);
+          const useMemory = mem?.unitQuantity != null && mem.unit;
+          return {
+            name: item.nombre,
+            quantity: useMemory ? mem!.unitQuantity! : item.cantidad,
+            unit: useMemory ? mem!.unit! : item.unidad,
+            category: mem?.category ?? (item.categoria as InventoryCategory | undefined),
+            nutritionPer100g: mem?.nutritionPer100g ?? item.nutricion100g,
+          };
+        })
       );
       setStatus(`Encontré ${data.items.length} productos — revisá y confirmá ↓`);
     } catch (error) {
@@ -111,6 +182,11 @@ export function ShoppingLog({
   const confirmAiResult = () => {
     if (!aiResult || aiResult.length === 0) return;
     addStructuredItems(aiResult);
+    aiResult.forEach((item) => {
+      if (item.category || item.nutritionPer100g) {
+        productMemory.remember({ name: item.name, category: item.category, nutritionPer100g: item.nutritionPer100g });
+      }
+    });
     setRaw("");
     setImagePreview(null);
     setStatus("Compra guardada ✓");
@@ -136,7 +212,66 @@ export function ShoppingLog({
 
   return (
     <Collapsible eyebrow="Compras" title="Agregar productos" info={SECTION_HELP.compras}>
-      {aiResult ? (
+      {pending ? (
+        <>
+          <div className="mb-3 rounded-xl border border-gold/40 bg-gold/10 p-2.5">
+            <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-gold mb-2">
+              No sé cuánto trae cada envase — decime y lo recuerdo para la próxima
+            </div>
+            <div className="space-y-2">
+              {pending.map((item) => {
+                const draft = pendingDrafts[item.name] || { amount: "", unit: "g" as const };
+                return (
+                  <div key={item.name} className="rounded-lg border border-border bg-bg/40 p-2">
+                    <div className="mb-1.5 text-[12px] text-text">
+                      ¿Cuánto trae 1 {item.name}
+                      {item.containerCount > 1 ? ` (tenés ${item.containerCount})` : ""}?
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        inputMode="decimal"
+                        placeholder="cantidad"
+                        value={draft.amount}
+                        onChange={(event) =>
+                          setPendingDrafts((prev) => ({ ...prev, [item.name]: { ...draft, amount: event.target.value } }))
+                        }
+                        className="flex-1"
+                      />
+                      <select
+                        value={draft.unit}
+                        onChange={(event) =>
+                          setPendingDrafts((prev) => ({ ...prev, [item.name]: { ...draft, unit: event.target.value as InventoryItem["unit"] } }))
+                        }
+                      >
+                        <option value="g">g</option>
+                        <option value="ml">ml</option>
+                        <option value="u.">u.</option>
+                      </select>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={confirmPending}
+              disabled={!pendingComplete}
+              className="flex-1 rounded-xl border border-gold/60 bg-gold px-3 py-2 font-sans font-bold text-[12px] text-bg disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Guardar y agregar a la alacena
+            </button>
+            <button
+              onClick={discardPending}
+              className="rounded-xl border border-border bg-bg/60 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+            >
+              Cancelar
+            </button>
+          </div>
+        </>
+      ) : aiResult ? (
         <>
           <div className="mb-3 rounded-xl border border-gold/40 bg-gold/10 p-2.5">
             <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-gold mb-2">
