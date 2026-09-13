@@ -231,11 +231,12 @@ html[data-font-size="grande"] .text-\[15px\] { font-size: 19px; }
 }
 
 /* Los botones de intensidad de entreno (leve/moderado/exigente/al fallo)
-   vienen con su color inline (INTENSITY_STYLES, igual en los 3 temas por
-   pedido del usuario) — acá se invierten igual que el resto de los
-   botones sólidos, con !important porque un estilo inline siempre le
-   gana a una clase. Cada intensidad mantiene su propia identidad de
-   color, solo que ahora "prendida" en vez de rellena. */
+   vienen con su color inline (INTENSITY_STYLES; leve/moderado/exigente
+   iguales en los 3 temas por pedido del usuario, "al fallo" usa el verde
+   de acento de la app así queda igual que el resto) — acá se invierten
+   igual que el resto de los botones sólidos, con !important porque un
+   estilo inline siempre le gana a una clase. Cada intensidad mantiene su
+   propia identidad de color, solo que ahora "prendida" en vez de rellena. */
 [data-theme="neon"] .intensity-leve {
   background-color: rgb(var(--color-surface-alt)) !important;
   color: #4fd8ff !important;
@@ -259,10 +260,10 @@ html[data-font-size="grande"] .text-\[15px\] { font-size: 19px; }
 }
 [data-theme="neon"] .intensity-fallo {
   background-color: rgb(var(--color-surface-alt)) !important;
-  color: #c77dff !important;
-  border-color: #c77dff !important;
-  text-shadow: 0 0 6px rgba(199, 125, 255, 0.9), 0 0 16px rgba(199, 125, 255, 0.5);
-  box-shadow: 0 0 10px rgba(199, 125, 255, 0.35), inset 0 0 8px rgba(199, 125, 255, 0.12);
+  color: #39ff5a !important;
+  border-color: #39ff5a !important;
+  text-shadow: 0 0 6px rgba(57, 255, 90, 0.9), 0 0 16px rgba(57, 255, 90, 0.5);
+  box-shadow: 0 0 10px rgba(57, 255, 90, 0.35), inset 0 0 8px rgba(57, 255, 90, 0.12);
 }
 [data-theme="neon"] .intensity-ninguno {
   background-color: rgb(var(--color-surface-alt)) !important;

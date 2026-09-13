@@ -235,7 +235,7 @@ export const INTENSITY_STYLES: Record<
   leve: { label: "Leve", background: "#4F8CC9", color: "#FFFFFF", description: "Actividad suave, con esfuerzo cómodo." },
   moderado: { label: "Moderado", background: "#B5533C", color: "#FFFFFF", description: "Esfuerzo sostenido, pero controlado." },
   exigente: { label: "Exigente", background: "#C9A227", color: "#1C1B18", description: "Sesión intensa, con bastante esfuerzo." },
-  fallo: { label: "Al fallo", background: "#8A9A7C", color: "#1C1B18", description: "Series muy exigentes, cerca o al fallo muscular." },
+  fallo: { label: "Al fallo", background: "rgb(var(--color-accent))", color: "rgb(var(--color-bg))", description: "Series muy exigentes, cerca o al fallo muscular." },
 };
 
 export const emptyDay = (fecha: string): DayEntry => ({
