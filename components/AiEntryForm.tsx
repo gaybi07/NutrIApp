@@ -76,6 +76,7 @@ export function AiEntryForm({
     ingredientes: string;
     items: Omit<MealItem, "id">[];
   } | null>(null);
+  const [consumeResult, setConsumeResult] = useState<{ consumed: string[]; missing: string[] } | null>(null);
   const { memory: mealMemory, remember, findMatch } = useMealMemory();
   const { supported: speechSupported, recording, toggle: toggleRecording } = useSpeechToText(
     (transcript) => setText((prev) => (prev ? `${prev} ${transcript}` : transcript)),
@@ -89,6 +90,7 @@ export function AiEntryForm({
     }
     setStatus("");
     setPreview(null);
+    setConsumeResult(null);
 
     if (!forceAi) {
       const match = findMatch(text);
@@ -173,12 +175,10 @@ export function AiEntryForm({
     remember(preview.resumen || text, preview.kcal, preview.protein, preview.carbs, preview.fat, meal, preview.fiber, preview.ingredientes, preview.items);
     setText("");
     setPreview(null);
-    let message = `Sumado a ${MEAL_LABELS[meal]} del ${fecha} ✓`;
-    if (result?.missing.length) {
-      message += ` · Che, esto no lo tenías cargado en el inventario: ${result.missing.join(", ")}. Cargalo en Compras y la próxima te lo descontamos solo.`;
-    }
-    setStatus(message);
-    setTimeout(() => setStatus(""), result?.missing.length ? 7000 : 3500);
+    setStatus(`Sumado a ${MEAL_LABELS[meal]} del ${fecha} ✓`);
+    setConsumeResult(result && (result.consumed.length > 0 || result.missing.length > 0) ? result : null);
+    setTimeout(() => setStatus(""), 3500);
+    setTimeout(() => setConsumeResult(null), 9000);
   };
 
   const mealSuggestions = useMemo(() => {
@@ -355,6 +355,33 @@ export function AiEntryForm({
         </div>
       )}
       {status && <div className="text-center font-mono text-[11px] text-sage mt-2">{status}</div>}
+
+      {consumeResult && (
+        <div className="mt-2 rounded-lg border border-border bg-bg/40 p-2.5">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 space-y-1.5">
+              {consumeResult.consumed.length > 0 && (
+                <div className="text-[11px] text-sage">
+                  <span className="font-bold">✓ Descontado de tu alacena:</span> {consumeResult.consumed.join(", ")}
+                </div>
+              )}
+              {consumeResult.missing.length > 0 && (
+                <div className="text-[11px] text-rust">
+                  <span className="font-bold">⚠ No estaba cargado, no se descontó:</span> {consumeResult.missing.join(", ")}. Cargalo en Compras y la próxima te lo descontamos solo.
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setConsumeResult(null)}
+              className="shrink-0 font-mono text-[11px] text-textMuted"
+              aria-label="Cerrar aviso"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
