@@ -253,12 +253,13 @@ export default function Home() {
       )}
 
       {activeTab === "inicio" && (
-      <div className="mx-auto max-w-lg lg:max-w-6xl">
+      <div className="mx-auto max-w-lg lg:max-w-6xl 2xl:max-w-[1800px]">
         {/* En pantallas grandes los bloques se acomodan solos en columnas
             (como un dashboard) en vez de quedar en una sola tira angosta
             en el medio de la pantalla -- mismo orden/arrastre de siempre,
-            "columns" simplemente los reparte en el ancho disponible. */}
-        <div className="min-w-0 lg:columns-2 lg:gap-4 xl:columns-3">
+            "columns" simplemente los reparte en el ancho disponible. Suma
+            una columna más a medida que hay más ancho real para usar. */}
+        <div className="min-w-0 lg:columns-2 lg:gap-4 xl:columns-3 2xl:columns-4">
           <DndContext sensors={inicioDrag.sensors} collisionDetection={inicioDrag.collisionDetection} onDragStart={inicioDrag.handleDragStart} onDragEnd={inicioDrag.handleDragEnd} onDragCancel={inicioDrag.handleDragCancel}>
             <SortableContext items={inicioVisible} strategy={verticalListSortingStrategy}>
               {inicioVisible.map((blockId) => (
