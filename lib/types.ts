@@ -2,11 +2,20 @@ export type MealKey = "des" | "alm" | "mer" | "cen";
 export type TrainingIntensity = "leve" | "moderado" | "exigente" | "fallo";
 export type GoalMode = "perder" | "recomponer" | "aumentar";
 
-export type InventoryCategory = "carnes" | "lacteos" | "huevos" | "verduras" | "frutas" | "harinas" | "bebidas" | "condimentos" | "otros";
+export type InventoryCategory =
+  | "proteina_animal"
+  | "proteina_vegetal"
+  | "lacteos"
+  | "verduras"
+  | "frutas"
+  | "harinas"
+  | "bebidas"
+  | "condimentos"
+  | "otros";
 export const INVENTORY_CATEGORIES: { id: InventoryCategory; label: string }[] = [
-  { id: "carnes", label: "Carnes" },
+  { id: "proteina_animal", label: "Proteína animal" },
+  { id: "proteina_vegetal", label: "Proteína vegetal" },
   { id: "lacteos", label: "Lácteos" },
-  { id: "huevos", label: "Huevos" },
   { id: "verduras", label: "Verduras" },
   { id: "frutas", label: "Frutas" },
   { id: "harinas", label: "Harinas y cereales" },

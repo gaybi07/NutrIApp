@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const maxDuration = 30;
 
-const CATEGORIES = "carnes, lacteos, huevos, verduras, frutas, harinas, bebidas, condimentos, otros";
+const CATEGORIES = "proteina_animal, proteina_vegetal, lacteos, verduras, frutas, harinas, bebidas, condimentos, otros";
 
 const SYSTEM_PROMPT = `Sos un asistente que lee tickets de supermercado. Tu trabajo es extraer solo los productos/items comprados a partir de una imagen o texto del ticket, y clasificarlos para un inventario de alacena.
 
@@ -11,7 +11,7 @@ Reglas:
 - Formato exacto: {"items": [{"nombre": "<string>", "cantidad": <numero>, "unidad": "g"|"ml"|"u.", "categoria": "<una de: ${CATEGORIES}>", "nutricion100g": {"kcal": <int>, "protein": <int>, "carbs": <int>, "fat": <int>, "fiber": <int>} | null}]}
 - "nombre": limpio, simple, singular, sin cantidad ni unidad pegada (ej. "pollo", no "1 kg pollo" ni "kilo de pollo").
 - "cantidad" y "unidad": convertí SIEMPRE a gramos ("g"), mililitros ("ml") o unidades ("u.") — si el ticket dice "2 kg" son 2000 "g"; si dice "1 litro" o "1 lt" son 1000 "ml". Si el producto es un envase (caja/botella/frasco/pote/paquete/lata/bolsa/sachet) sin peso/volumen impreso, no pongas "1 g"/"1 ml" — usá el tamaño real típico de ESE producto en Argentina (ej: botella de aceite ≈ 900-1000 ml, caja/sachet de leche ≈ 1000 ml, pote de yogur ≈ 200 g, pote de dulce de leche ≈ 400 g, paquete de fideos/arroz/harina ≈ 500 g, lata de atún ≈ 170 g) y sacá la palabra del envase del "nombre". Si de verdad no hay forma de estimar cantidad, asumí 1 "u.".
-- "categoria": elegí la más apropiada de esta lista exacta (en minúscula, tal cual): ${CATEGORIES}.
+- "categoria": elegí la más apropiada de esta lista exacta (en minúscula, tal cual): ${CATEGORIES}. "proteina_animal" es carnes, pescado, huevos y fiambres; "proteina_vegetal" es legumbres (lentejas, garbanzos, porotos), tofu, seitan y soja.
 - "nutricion100g": OJO con la base según "unidad" — si "unidad" es "g" o "ml", son los valores por cada 100 g o 100 ml (NUNCA por el total de "cantidad"); si "unidad" es "u.", son los valores por UNA sola unidad del producto (ej. 1 huevo, 1 alfajor, 1 yogur individual — no por 100 unidades ni por el paquete entero). Dale prioridad a estimar: para la enorme mayoría de alimentos comunes (carnes, lácteos, verduras, frutas, harinas, fiambres, snacks típicos, etc.) podés dar un valor realista con tu conocimiento general aunque no sepas la marca exacta del ticket — usá "nutricion100g": null solo para productos realmente imposibles de estimar (una marca/producto muy de nicho, un nombre demasiado ambiguo para saber de qué se trata). Ante la duda, estimá; no dejes null por las dudas — para lo poco que de verdad no puedas, se le va a pedir al usuario que lo complete a mano o con una foto de la etiqueta.
 - Extrae nombres de productos, no precios, no subtotal, no total, no fechas ni datos del local.
 - Elimina duplicados (sumá cantidades si aparece repetido).

@@ -45,12 +45,12 @@ const BOTTLE_ML = 1000;
  * excepción, venga de donde venga. */
 function defaultCategoryForName(name: string): InventoryCategory {
   const key = inventoryKey(name);
-  if (/(pollo|carne|cerdo|vacuno|milanesa|pescado|atun|jamon|salchicha|chorizo|pechuga|bife|asado|hamburgues|panceta)/.test(key)) return "carnes";
+  if (/(pollo|carne|cerdo|vacuno|milanesa|pescado|atun|jamon|salchicha|chorizo|pechuga|bife|asado|hamburgues|panceta|huevo)/.test(key)) return "proteina_animal";
+  if (/(tofu|seitan|soja|lenteja|garbanzo|poroto|hummus)/.test(key)) return "proteina_vegetal";
   if (/(leche|yogur|yogurt|queso|manteca|crema|ricota)/.test(key)) return "lacteos";
-  if (/(huevo)/.test(key)) return "huevos";
   if (/(tomate|cebolla|papa|zanahoria|zapallo|lechuga|morron|repollo|brocoli|verdura|espinaca|ajo|choclo|berenjena|acelga)/.test(key)) return "verduras";
   if (/(banana|manzana|naranja|limon|frutilla|pera|uva|fruta|palta|mandarina|durazno|kiwi)/.test(key)) return "frutas";
-  if (/(harina|arroz|fideo|pasta|avena|pan|galletita|cereal|lenteja|garbanzo|poroto)/.test(key)) return "harinas";
+  if (/(harina|arroz|fideo|pasta|avena|pan|galletita|cereal)/.test(key)) return "harinas";
   if (/(agua|jugo|gaseosa|vino|cerveza|bebida|mate|cafe|te)/.test(key)) return "bebidas";
   if (/(sal|azucar|aceite|vinagre|salsa|mayonesa|mostaza|condimento|especia)/.test(key)) return "condimentos";
   return "otros";
