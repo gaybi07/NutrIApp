@@ -46,7 +46,7 @@ export function TodayCard({
       </div>
 
       <div className="mb-1 flex items-baseline justify-between gap-2">
-        <span className="font-display text-2xl leading-none text-text">{consumed.toLocaleString("es-AR")}</span>
+        <span className="font-sans font-bold text-2xl leading-none text-text">{consumed.toLocaleString("es-AR")}</span>
         <span className="font-mono text-[11px] text-textMuted">de {adjustedGoal.toLocaleString("es-AR")} kcal</span>
       </div>
       <div className="mb-3 h-2.5 w-full overflow-hidden rounded-full border border-border bg-bg/60">
@@ -59,17 +59,17 @@ export function TodayCard({
       <div className="mb-4 grid grid-cols-3 gap-2 text-center">
         <div>
           <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-textMuted">Restantes</div>
-          <div className={`font-display text-base leading-tight ${over ? "text-rust" : "text-sage"}`}>
+          <div className={`font-sans font-bold text-base leading-tight ${over ? "text-rust" : "text-sage"}`}>
             {remaining.toLocaleString("es-AR")}
           </div>
         </div>
         <div>
           <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-textMuted">Proteína</div>
-          <div className="font-display text-base leading-tight text-text">{protein.toLocaleString("es-AR")}g</div>
+          <div className="font-sans font-bold text-base leading-tight text-text">{protein.toLocaleString("es-AR")}g</div>
         </div>
         <div>
           <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-textMuted">Pasos</div>
-          <div className="font-display text-base leading-tight text-text">{(entry.pasos || 0).toLocaleString("es-AR")}</div>
+          <div className="font-sans font-bold text-base leading-tight text-text">{(entry.pasos || 0).toLocaleString("es-AR")}</div>
         </div>
       </div>
 

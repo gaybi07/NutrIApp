@@ -128,15 +128,15 @@ export function ActividadTab({
         <div className="mb-4 grid grid-cols-3 gap-2 text-center">
           <div>
             <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-textMuted">Pasos</div>
-            <div className="font-display text-base leading-tight text-text">{(entry.pasos || 0).toLocaleString("es-AR")}</div>
+            <div className="font-sans font-bold text-base leading-tight text-text">{(entry.pasos || 0).toLocaleString("es-AR")}</div>
           </div>
           <div>
             <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-textMuted">Quemadas entreno</div>
-            <div className="font-display text-base leading-tight text-text">{trainingKcal.toLocaleString("es-AR")}</div>
+            <div className="font-sans font-bold text-base leading-tight text-text">{trainingKcal.toLocaleString("es-AR")}</div>
           </div>
           <div>
             <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-textMuted">Sueño</div>
-            <div className="font-display text-base leading-tight text-text">{entry.suenoHoras ? `${entry.suenoHoras}h` : "—"}</div>
+            <div className="font-sans font-bold text-base leading-tight text-text">{entry.suenoHoras ? `${entry.suenoHoras}h` : "—"}</div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2">

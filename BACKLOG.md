@@ -1554,3 +1554,79 @@ algo puntual.
   "Apagada"; al tocarlo ahí vuelve a aparecer en Inicio con las 6
   manitos de siempre — sin errores de consola. `npx tsc --noEmit` y
   `npm run build` limpios.
+- **2026-09-12**: guía de diseño nueva y detallada (tipografía, colores
+  fijos por tema, estados semánticos) pasada por el usuario para
+  "dejar fijos" los temas Oscuro y Claro. Antes de tocar nada se
+  preguntaron 3 cosas para no pisar decisiones ya tomadas en sesiones
+  anteriores — se confirmaron los 3 defaults recomendados:
+  1. La guía nueva reemplaza la paleta cálida (café/dorado) de Oscuro
+     y Claro — **Neón queda intacto**, no se tocó ni un valor suyo.
+  2. Los 4 colores de los botones de intensidad de entreno
+     (Leve/Moderado/Exigente/Al fallo) **se mantienen como estaban**
+     — la guía sugería un solo naranja para "botón secundario", pero
+     eso no aplica a estos botones por pedido explícito de antes.
+  3. La fibra se mantiene en los gráficos, con el rosa que sugiere la
+     guía (#EC4899).
+  Cambios:
+  - **Tipografía**: `Quicksand` + `Nunito` → `Poppins` (títulos,
+    eyebrows de tarjeta en mayúscula, botones) + `Inter` (números de
+    impacto y cuerpo de texto). `tailwind.config.ts` remapea
+    `font-display`→Poppins, `font-sans`→Inter, `font-mono`→Poppins
+    (así los ~150 usos de `font-mono`, que son mayormente eyebrows de
+    tarjeta tipo "KCAL POR DÍA"/"MACROS", terminan en Poppins sin
+    tener que tocar cada uno).
+  - **Regla obligatoria de números**: `font-variant-numeric:
+    tabular-nums` agregado en `html, body` (`globals.css`) — todos
+    los dígitos ocupan el mismo ancho, ningún contador "baila" al
+    cambiar de valor.
+  - **Números de impacto → Inter Bold**: se revisaron a mano los ~35
+    usos de `font-display` en toda la app para separar títulos
+    (quedan en Poppins: fechas como "Sábado 12 Sep" — es un ejemplo
+    textual de la guía —, nombres de sección, preguntas del wizard)
+    de números reales (pasan a `font-sans font-bold`, o sea Inter
+    Bold): kcal consumidas/restantes, proteína, pasos, peso semanal,
+    valores de `SummaryCards`, gramos de macros en `MacroStat`.
+  - **Ejes y leyendas de gráficos → Inter**: nueva regla en
+    `globals.css` apuntando a `.recharts-cartesian-axis-tick text` /
+    `.recharts-legend-item-text` — sin esto heredarían Poppins del
+    contenedor.
+  - **Paleta de color fija** (`globals.css`, RGB en `:root` y
+    `[data-theme="oscuro"]`/`[data-theme="claro"]`, sin tocar
+    `[data-theme="neon"]`):
+    - Fondo/Superficie/Borde: Oscuro `#0F172A`/`#1E293B`/`#334155`,
+      Claro `#F9FAFB`/`#FFFFFF`/`#E5E7EB`.
+    - Texto principal/secundario: Oscuro `#F8FAFC`/`#9CA3AF`, Claro
+      `#111827`/`#6B7280`.
+    - Acento (botón primario, anillo de progreso): Oscuro `#34D399`,
+      Claro `#10B981`.
+    - `--color-sage` pasa a ser el color "Éxito" fijo `#10B981` (antes
+      un verde oliva cálido) y `--color-rust` el "Error" fijo
+      `#EF4444` (antes un rojo-marrón) — **iguales en Oscuro y
+      Claro**, a propósito, según la guía. Se confirmó primero
+      revisando los ~85 usos de `text-sage`/`text-rust` en toda la
+      app: son consistentemente "bueno/éxito" y "malo/error"
+      respectivamente, así que el remapeo no rompe ningún significado
+      existente.
+  - **Colores de macros fijos** (`components/MacrosTab.tsx`, iguales
+    en Oscuro y Claro): Proteína `#3B82F6` (azul), Grasas `#8B5CF6`
+    (morado), Fibra `#EC4899` (rosa) — todos hardcodeados. Carbohidratos
+    es la excepción: usa una variable nueva `--color-carbs` en vez de
+    un hex fijo, porque antes tomaba `--color-accent` directo y en
+    Neón eso lo pintaba del verde de acento (no de un color propio) —
+    hardcodearlo a `#F59E0B` le habría cambiado el color en Neón
+    también. `--color-carbs` es `#F59E0B` en Oscuro/Claro pero
+    `#39FF5A` (el mismo verde de acento de siempre) en
+    `[data-theme="neon"]`, así Neón no cambia ni un pixel.
+  Para probar el panel "Secciones" sin login real ya se había armado
+  un flag de test la vez pasada — no hizo falta esta vez porque este
+  cambio es solo visual, verificable con Playwright normal en las 4
+  solapas.
+  Probado con Playwright en los 3 temas (Oscuro/Claro/Neón), en
+  Inicio, Macros y Entreno: los números confirman
+  `font-family: Inter`, `font-weight: 700`,
+  `font-variant-numeric: tabular-nums` vía `getComputedStyle`; capturas
+  de pantalla confirman visualmente que Neón no cambió (carbohidratos
+  sigue verde neón, no ámbar) y que Oscuro/Claro muestran la paleta
+  slate+esmeralda nueva con Proteína azul/Carbohidratos ámbar/Grasas
+  morado/Fibra rosa en los gráficos de Macros — sin errores de
+  consola. `npx tsc --noEmit` y `npm run build` limpios.

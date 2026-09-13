@@ -112,7 +112,7 @@ export function WeeklyWeight({
   return (
     <section className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-bg/30 px-3 py-2">
       <div className="flex items-baseline gap-2">
-        <span className="font-display text-2xl leading-none text-text">{savedWeight.toFixed(1)}</span>
+        <span className="font-sans font-bold text-2xl leading-none text-text">{savedWeight.toFixed(1)}</span>
         <span className="font-mono text-[9.5px] uppercase tracking-wide text-textMuted">kg esta semana</span>
       </div>
       <div className="flex items-center gap-2.5">

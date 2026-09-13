@@ -15,7 +15,13 @@ import { RankingCard } from "@/components/RankingCard";
 import { Ledger } from "@/components/Ledger";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
-const COLORS = { protein: "#8A9A7C", carbs: "rgb(var(--color-accent))", fat: "#7C93A3", fiber: "#B5533C" };
+// Colores fijos de macros de la guía de diseño — iguales en Claro y Oscuro
+// (no usan tokens de tema) para que Proteína/Carbohidratos/Grasas/Fibra se
+// reconozcan siempre por el mismo color en cualquier gráfico de la app.
+// Carbohidratos usa la variable --color-carbs en vez de un hex fijo porque
+// en Neón necesita seguir siendo el verde de acento (como toda la vida),
+// no el ámbar nuevo de Oscuro/Claro — ver globals.css.
+const COLORS = { protein: "#3B82F6", carbs: "rgb(var(--color-carbs))", fat: "#8B5CF6", fiber: "#EC4899" };
 const FOOD_GROUPS_ORDER: FoodGroup[] = ["proteina_animal", "proteina_vegetal", "verdura", "fruta", "lacteo", "cereal", "grasa"];
 
 function MacroStat({ label, value, target, color, neonClass }: { label: string; value: number; target: number; color: string; neonClass?: string }) {
@@ -23,8 +29,8 @@ function MacroStat({ label, value, target, color, neonClass }: { label: string; 
   return (
     <div>
       <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-textMuted">{label}</div>
-      <div className="font-display text-base leading-tight text-text">
-        {value}g <span className="font-mono text-[10px] text-textMuted">/ {target}g</span>
+      <div className="font-sans font-bold text-base leading-tight text-text">
+        {value}g <span className="font-sans text-[10px] text-textMuted">/ {target}g</span>
       </div>
       <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full border border-border bg-bg/60">
         <div className={`h-full rounded-full transition-all ${neonClass || ""}`} style={{ width: `${pct}%`, background: color }} />

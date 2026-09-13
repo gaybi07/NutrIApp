@@ -1,45 +1,50 @@
-@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,600&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* Paleta oscura (default) — también sirve de red de seguridad antes de que
    se aplique el atributo data-theme, y cuando Settings.theme todavía no
-   está cargado. */
+   está cargado. Fijada según la guía de diseño (slate + verde esmeralda):
+   --color-sage hace de color "Éxito" y --color-rust de "Error", ambos fijos
+   entre temas — no cambian entre oscuro/claro a propósito. */
 :root {
-  --color-bg: 26 29 25;
-  --color-surface: 34 38 32;
-  --color-surface-alt: 43 47 40;
-  --color-text: 232 236 226;
-  --color-text-muted: 150 158 142;
-  --color-accent: 111 191 140;
-  --color-rust: 197 96 72;
-  --color-sage: 138 166 148;
-  --color-border: 56 61 52;
+  --color-bg: 15 23 42;
+  --color-surface: 30 41 59;
+  --color-surface-alt: 40 53 72;
+  --color-text: 248 250 252;
+  --color-text-muted: 156 163 175;
+  --color-accent: 52 211 153;
+  --color-rust: 239 68 68;
+  --color-sage: 16 185 129;
+  --color-border: 51 65 85;
+  --color-carbs: 245 158 11;
 }
 
 [data-theme="oscuro"] {
-  --color-bg: 26 29 25;
-  --color-surface: 34 38 32;
-  --color-surface-alt: 43 47 40;
-  --color-text: 232 236 226;
-  --color-text-muted: 150 158 142;
-  --color-accent: 111 191 140;
-  --color-rust: 197 96 72;
-  --color-sage: 138 166 148;
-  --color-border: 56 61 52;
+  --color-bg: 15 23 42;
+  --color-surface: 30 41 59;
+  --color-surface-alt: 40 53 72;
+  --color-text: 248 250 252;
+  --color-text-muted: 156 163 175;
+  --color-accent: 52 211 153;
+  --color-rust: 239 68 68;
+  --color-sage: 16 185 129;
+  --color-border: 51 65 85;
+  --color-carbs: 245 158 11;
 }
 
 [data-theme="claro"] {
-  --color-bg: 247 250 245;
+  --color-bg: 249 250 251;
   --color-surface: 255 255 255;
-  --color-surface-alt: 235 243 235;
-  --color-text: 26 34 28;
-  --color-text-muted: 96 108 98;
-  --color-accent: 39 138 84;
-  --color-rust: 178 61 45;
-  --color-sage: 76 122 90;
-  --color-border: 217 230 217;
+  --color-surface-alt: 243 244 246;
+  --color-text: 17 24 39;
+  --color-text-muted: 107 114 128;
+  --color-accent: 16 185 129;
+  --color-rust: 239 68 68;
+  --color-sage: 16 185 129;
+  --color-border: 229 231 235;
+  --color-carbs: 245 158 11;
 }
 
 /* Neón: la base (fondos, tarjetas, botones) es negro y gris — el color
@@ -55,6 +60,10 @@
   --color-rust: 255 224 0;
   --color-sage: 255 45 149;
   --color-border: 60 60 64;
+  /* Los carbohidratos usan el mismo verde de acento que siempre tuvieron
+     en Neón (antes tomaban --color-accent directo) — no se tocó Neón con
+     este cambio de paleta fija, solo Oscuro/Claro. */
+  --color-carbs: 57 255 90;
 }
 
 html, body {
@@ -63,6 +72,10 @@ html, body {
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
   max-width: 100vw;
+  /* Regla obligatoria de la guía de tipografía: los dígitos ocupan siempre
+     el mismo ancho, así los contadores (kcal, pasos) no bailan al cambiar
+     de número. */
+  font-variant-numeric: tabular-nums;
 }
 
 /* Tamaño de letra (Preferencias / onboarding): "chico" es la base de
@@ -80,7 +93,7 @@ input, select, textarea {
   border-radius: 8px;
   padding: 8px 10px;
   color: rgb(var(--color-text));
-  font-family: "Nunito", sans-serif;
+  font-family: "Inter", sans-serif;
   /* 16px en mobile evita que Safari/Chrome hagan zoom automático al enfocar
      un campo con letra chica (cualquier valor menor dispara el zoom). */
   font-size: 16px;
@@ -98,7 +111,7 @@ input:focus, select:focus, textarea:focus {
   outline-offset: 1px;
 }
 label {
-  font-family: "Nunito", sans-serif;
+  font-family: "Inter", sans-serif;
   font-weight: 700;
   font-size: 9px;
   text-transform: uppercase;
@@ -158,6 +171,15 @@ html[data-font-size="grande"] .text-\[11\.5px\] { font-size: 15.5px; }
 html[data-font-size="grande"] .text-\[12px\] { font-size: 16px; }
 html[data-font-size="grande"] .text-\[13px\] { font-size: 17px; }
 html[data-font-size="grande"] .text-\[15px\] { font-size: 19px; }
+
+/* Ejes y leyendas de los gráficos (Recharts): Inter, como pide la guía
+   para "etiquetas y ejes" — sin esto heredarían la fuente del contenedor
+   que los rodea, que puede ser Poppins (los eyebrows de la tarjeta). */
+.recharts-cartesian-axis-tick text,
+.recharts-polar-angle-axis-tick text,
+.recharts-legend-item-text {
+  font-family: "Inter", sans-serif;
+}
 
 [data-theme="neon"] input,
 [data-theme="neon"] select,

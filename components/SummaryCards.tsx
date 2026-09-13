@@ -79,7 +79,7 @@ export function SummaryCards({ summary, goal, weight }: { summary: WeekSummary; 
     >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/80 to-transparent" />
       <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-textMuted mb-2">{card.label}</div>
-      <div className={`font-display text-[1.9rem] leading-none font-semibold ${card.color}`}>{card.value}</div>
+      <div className={`font-sans text-[1.9rem] leading-none font-bold ${card.color}`}>{card.value}</div>
       <div className="text-[11px] text-textMuted mt-1.5">{card.sub}</div>
     </div>
   );

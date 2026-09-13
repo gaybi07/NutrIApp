@@ -16,9 +16,13 @@ const config: Config = {
         border: "rgb(var(--color-border) / <alpha-value>)",
       },
       fontFamily: {
-        display: ["Quicksand", "sans-serif"],
-        sans: ["Nunito", "sans-serif"],
-        mono: ["Nunito", "sans-serif"],
+        // Poppins: títulos (H1), eyebrows/títulos de tarjeta en mayúscula y
+        // botones. Inter: cuerpo de texto y — lo más importante — los
+        // números (kcal, gramos, pasos), donde tabular-nums necesita una
+        // fuente pensada para alinear dígitos en columna.
+        display: ["Poppins", "sans-serif"],
+        sans: ["Inter", "sans-serif"],
+        mono: ["Poppins", "sans-serif"],
       },
     },
   },
