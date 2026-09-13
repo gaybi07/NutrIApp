@@ -1,5 +1,8 @@
 // Cliente compartido para las 4 rutas que llaman a Gemini (parse-meal,
 // parse-shopping, review-inventory, parse-nutrition-label). Centraliza:
+// - Un cache compartido (Supabase, global entre usuarios) por hash de
+//   prompt+input -- si alguien ya pidió lo mismo antes, no se gasta cuota
+//   de la IA de nuevo.
 // - Soporte para VARIAS API keys gratuitas (GEMINI_API_KEY="key1,key2,key3")
 //   rotando a la siguiente si una está rate-limited (429) o sin cuota.
 // - Un reintento corto por key antes de pasar a la próxima (los 429 suelen
@@ -7,6 +10,8 @@
 // - Un error distinguible (GeminiRateLimitError) para que cada ruta pueda
 //   devolver un mensaje claro de "está saturada, probá en un rato" en vez
 //   de un error genérico -- o de quedarse esperando para siempre.
+
+import { cacheKeyFor, getCachedResponse, setCachedResponse } from "./aiCache";
 
 export class GeminiRateLimitError extends Error {
   constructor(message = "Gemini está saturado (demasiadas solicitudes)") {
@@ -46,6 +51,10 @@ function extractJsonText(text: string): string {
  * responda bien. Devuelve el JSON ya parseado de la respuesta.
  */
 export async function callGeminiJson(systemPrompt: string, userParts: GeminiPart[], temperature = 0.2): Promise<unknown> {
+  const cacheKey = cacheKeyFor(systemPrompt, userParts);
+  const cached = await getCachedResponse(cacheKey);
+  if (cached !== null) return cached;
+
   const keys = getApiKeys();
   if (keys.length === 0) throw new Error("Falta GEMINI_API_KEY");
   const model = process.env.GEMINI_MODEL || "gemini-3.6-flash";
@@ -88,7 +97,9 @@ export async function callGeminiJson(systemPrompt: string, userParts: GeminiPart
           break;
         }
 
-        return JSON.parse(extractJsonText(text));
+        const result = JSON.parse(extractJsonText(text));
+        await setCachedResponse(cacheKey, result);
+        return result;
       } catch (error) {
         lastError = error;
         break;
