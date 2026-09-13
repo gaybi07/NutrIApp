@@ -18,9 +18,21 @@ function inventoryKey(name: string) {
 function defaultUnitForName(name: string): InventoryItem["unit"] {
   const key = inventoryKey(name);
   if (/(huevo|palta|banana|manzana|yogur|yogurt|tomate|cebolla|papa|morron|limon)/.test(key)) return "u.";
-  if (/(leche|agua|aceite|salsa|jugo)/.test(key)) return "ml";
+  if (/(leche|agua|aceite|salsa|jugo|vinagre|vino|cerveza|gaseosa)/.test(key)) return "ml";
   return "g";
 }
+
+// Envases sin cantidad explícita ("una botella de aceite", "cajas de
+// leche", "un pote de yogur") — se guardaban con el nombre del envase
+// pegado y "1" tal cual, como si fuera 1 gramo/ml. Caja/botella/frasco de
+// algo líquido se estima en 1 litro (lo más común: tetra brik, botella de
+// aceite/agua); el resto de los envases (pote, paquete, lata, bolsa,
+// sachet — demasiado variables en tamaño para adivinar bien) quedan como
+// "N u." con el nombre limpio, listos para ajustar a mano o con "Revisar
+// con IA".
+const CONTAINER_RE = /^(?:(\d+(?:[.,]\d+)?)|una?)?\s*(cajas?|botellas?|frascos?|potes?|paquetes?|latas?|bolsas?|sachets?)\s+de\s+(.+)$/i;
+const BOTTLE_LIKE = /^(caja|cajas|botella|botellas|frasco|frascos)$/;
+const BOTTLE_ML = 1000;
 
 /** Categoría por defecto para lo que se carga a mano/dictado (sin pasar por
  * la IA, que ya clasifica ella misma) — heurística simple por palabras
@@ -69,6 +81,15 @@ export function parseInventoryText(text: string): Array<{ name: string; quantity
     .map((part) => part.trim().replace(/^[-•*]\s*/, ""))
     .filter(Boolean)
     .map((part) => {
+      const container = part.match(CONTAINER_RE);
+      if (container) {
+        const amount = container[1] ? Number(container[1].replace(",", ".")) : 1;
+        const foodName = container[3].trim().toLowerCase();
+        if (BOTTLE_LIKE.test(container[2].toLowerCase()) && defaultUnitForName(foodName) === "ml") {
+          return { name: foodName, quantity: amount * BOTTLE_ML, unit: "ml" as const };
+        }
+        return { name: foodName, quantity: amount, unit: "u." as const };
+      }
       const article = part.match(/^(un|una)\s+(.+)$/i);
       if (article) return { name: article[2].trim().toLowerCase(), quantity: 1, unit: "u." as const };
       const match =

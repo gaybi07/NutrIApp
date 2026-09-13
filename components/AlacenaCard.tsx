@@ -103,6 +103,25 @@ export function AlacenaCard({
     >
       {items.length > 0 ? (
         <>
+          <div className="mb-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={reviewWithAi}
+              disabled={reviewing}
+              className="rounded-xl border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg disabled:opacity-60"
+            >
+              {reviewing ? "Revisando..." : "Revisar con IA"}
+            </button>
+            <button
+              type="button"
+              onClick={clearAll}
+              className="rounded-xl border border-border bg-bg/60 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+            >
+              Vaciar alacena
+            </button>
+          </div>
+          {status && <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] text-sage">{status}</div>}
+
           {presentCategories.length > 1 && (
             <div className="mb-3 flex flex-wrap gap-1.5">
               <button
@@ -167,25 +186,6 @@ export function AlacenaCard({
               </div>
             ))}
           </div>
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={reviewWithAi}
-              disabled={reviewing}
-              className="rounded-xl border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg disabled:opacity-60"
-            >
-              {reviewing ? "Revisando..." : "Revisar con IA"}
-            </button>
-            <button
-              type="button"
-              onClick={clearAll}
-              className="rounded-xl border border-border bg-bg/60 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
-            >
-              Vaciar alacena
-            </button>
-          </div>
-          {status && <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-sage">{status}</div>}
         </>
       ) : (
         <div className="rounded-xl border border-dashed border-border p-3 text-[11px] text-textMuted">

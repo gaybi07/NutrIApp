@@ -8,7 +8,7 @@ Reglas:
 - Respondé SOLO con JSON válido, sin markdown, sin texto extra.
 - Formato exacto: {"items": [{"nombre": "<string>", "cantidad": <numero>, "unidad": "g"|"ml"|"u.", "categoria": "<una de: ${CATEGORIES}>", "nutricion100g": {"kcal": <int>, "protein": <int>, "carbs": <int>, "fat": <int>, "fiber": <int>}}]}
 - "nombre": limpio, simple, singular, sin cantidad ni unidad pegada (ej. "pollo", no "1 kg pollo" ni "kilo de pollo").
-- "cantidad" y "unidad": convertí SIEMPRE a gramos ("g"), mililitros ("ml") o unidades ("u.") — si el ticket dice "2 kg" son 2000 "g"; si dice "1 litro" o "1 lt" son 1000 "ml"; si no hay cantidad clara, asumí 1 "u.".
+- "cantidad" y "unidad": convertí SIEMPRE a gramos ("g"), mililitros ("ml") o unidades ("u.") — si el ticket dice "2 kg" son 2000 "g"; si dice "1 litro" o "1 lt" son 1000 "ml". Si el producto es un envase (caja/botella/frasco/pote/paquete/lata/bolsa/sachet) sin peso/volumen impreso, no pongas "1 g"/"1 ml" — usá el tamaño real típico de ESE producto en Argentina (ej: botella de aceite ≈ 900-1000 ml, caja/sachet de leche ≈ 1000 ml, pote de yogur ≈ 200 g, pote de dulce de leche ≈ 400 g, paquete de fideos/arroz/harina ≈ 500 g, lata de atún ≈ 170 g) y sacá la palabra del envase del "nombre". Si de verdad no hay forma de estimar cantidad, asumí 1 "u.".
 - "categoria": elegí la más apropiada de esta lista exacta (en minúscula, tal cual): ${CATEGORIES}.
 - "nutricion100g": valores típicos y realistas de ese alimento por cada 100g o 100ml (o por unidad si "unidad" es "u.", ej. 1 huevo) — punto medio del rango típico, gramos enteros.
 - Extrae nombres de productos, no precios, no subtotal, no total, no fechas ni datos del local.
