@@ -259,5 +259,61 @@ export function useMealMemory() {
     [remember]
   );
 
-  return { memory, remember, findMatch, importCsv };
+  /** Todo lo guardado, tal cual, para pasarle a una IA (esta u otra) y
+   * pedirle que complete "ingredientes"/"items" de las comidas que todavía
+   * no lo tienen — ver importJson para traer el resultado de vuelta. */
+  const exportJson = useCallback((): string => JSON.stringify(memory, null, 2), [memory]);
+
+  /**
+   * Trae de vuelta un JSON con el mismo formato de exportJson (una lista de
+   * comidas, o un objeto con esa lista en "comidas") — tolerante a que le
+   * falten campos o tenga alguno de más, así sirve tanto si lo tocó una IA
+   * como si se editó a mano. Solo actualiza los campos presentes en cada
+   * entrada; conservar el resto es cosa de "remember", que ya fusiona con
+   * lo existente en vez de pisarlo entero.
+   */
+  const importJson = useCallback(
+    (jsonText: string): { imported: number; skipped: number } => {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(jsonText);
+      } catch {
+        throw new Error("El archivo no es un JSON válido.");
+      }
+      const list = Array.isArray(parsed) ? parsed : (parsed as { comidas?: unknown[] } | null)?.comidas;
+      if (!Array.isArray(list)) {
+        throw new Error('El JSON tiene que ser una lista de comidas, o un objeto con esa lista en "comidas".');
+      }
+
+      let imported = 0;
+      let skipped = 0;
+      for (const raw of list) {
+        if (!raw || typeof raw !== "object") {
+          skipped++;
+          continue;
+        }
+        const entry = raw as Record<string, unknown>;
+        const text = String(entry.text ?? entry.texto ?? "").trim();
+        const kcal = Number(entry.kcal);
+        if (!text || !kcal) {
+          skipped++;
+          continue;
+        }
+        const protein = Number(entry.protein ?? entry.proteina ?? 0) || 0;
+        const carbs = Number(entry.carbs ?? entry.carbohidratos ?? 0) || 0;
+        const fat = Number(entry.fat ?? entry.grasas ?? 0) || 0;
+        const fiber = Number(entry.fiber ?? entry.fibra ?? 0) || 0;
+        const mealRaw = String(entry.meal ?? entry.comida ?? "").trim().toLowerCase();
+        const meal = (["des", "alm", "mer", "cen", "col"].includes(mealRaw) ? mealRaw : MEAL_NAME_TO_KEY[mealRaw]) as MealKey | undefined;
+        const ingredientes = typeof entry.ingredientes === "string" && entry.ingredientes.trim() ? entry.ingredientes : undefined;
+        const items = Array.isArray(entry.items) && entry.items.length > 0 ? (entry.items as Omit<MealItem, "id">[]) : undefined;
+        remember(text, kcal, protein, carbs, fat, meal, fiber, ingredientes, items);
+        imported++;
+      }
+      return { imported, skipped };
+    },
+    [remember]
+  );
+
+  return { memory, remember, findMatch, importCsv, exportJson, importJson };
 }
