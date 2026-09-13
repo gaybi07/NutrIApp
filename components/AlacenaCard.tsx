@@ -87,9 +87,7 @@ export function AlacenaCard({
       );
       applyReview(corrections);
       corrections.forEach((fix: ReviewCorrection) => {
-        if (fix.category || fix.nutritionPer100g) {
-          productMemory.remember({ name: fix.name, category: fix.category, nutritionPer100g: fix.nutritionPer100g });
-        }
+        productMemory.remember({ name: fix.name, unit: fix.unit, category: fix.category, nutritionPer100g: fix.nutritionPer100g });
       });
       setStatus("Alacena revisada ✓");
     } catch (error) {

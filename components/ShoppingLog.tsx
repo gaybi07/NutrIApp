@@ -77,7 +77,14 @@ export function ShoppingLog({
           toAsk.push({ name: entry.name, containerCount: entry.quantity });
         }
       } else {
-        ready.push({ name: entry.name, quantity: entry.quantity, unit: entry.unit, category: mem?.category, nutritionPer100g: mem?.nutritionPer100g });
+        // Si la unidad salió de adivinar (no vino explícita en el texto,
+        // ej. "2 alfajor" sin "u."/"g") y ya sabemos por otra carga previa
+        // cuál es la unidad real de este producto, usamos esa en vez de
+        // la adivinanza — así un fallo de la heurística (todo lo
+        // desconocido cae a "g") se autocorrige una vez que la IA lo
+        // clasificó bien alguna vez.
+        const unit = !entry.unitExplicit && mem?.unit ? mem.unit : entry.unit;
+        ready.push({ name: entry.name, quantity: entry.quantity, unit, category: mem?.category, nutritionPer100g: mem?.nutritionPer100g });
       }
     });
 
@@ -183,9 +190,7 @@ export function ShoppingLog({
     if (!aiResult || aiResult.length === 0) return;
     addStructuredItems(aiResult);
     aiResult.forEach((item) => {
-      if (item.category || item.nutritionPer100g) {
-        productMemory.remember({ name: item.name, category: item.category, nutritionPer100g: item.nutritionPer100g });
-      }
+      productMemory.remember({ name: item.name, unit: item.unit, category: item.category, nutritionPer100g: item.nutritionPer100g });
     });
     setRaw("");
     setImagePreview(null);

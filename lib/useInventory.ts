@@ -17,7 +17,12 @@ function inventoryKey(name: string) {
 
 function defaultUnitForName(name: string): InventoryItem["unit"] {
   const key = inventoryKey(name);
-  if (/(huevo|palta|banana|manzana|yogur|yogurt|tomate|cebolla|papa|morron|limon)/.test(key)) return "u.";
+  if (
+    /(huevo|palta|banana|manzana|yogur|yogurt|tomate|cebolla|papa|morron|limon|alfajor|medialuna|factura|empanada|sandwich|sanguche|barrita|pancho|hamburgues|salchicha)/.test(
+      key
+    )
+  )
+    return "u.";
   if (/(leche|agua|aceite|salsa|jugo|vinagre|vino|cerveza|gaseosa)/.test(key)) return "ml";
   return "g";
 }
@@ -83,6 +88,11 @@ export interface ParsedInventoryEntry {
   // acá es la cantidad de ENVASES (no el peso real), a la espera de que se
   // resuelva contra la memoria de productos o preguntándole al usuario.
   needsQuantity?: boolean;
+  // false cuando "unit" salió de adivinar (defaultUnitForName) en vez de
+  // venir explícito en el texto ("2 alfajor" sin unidad vs "500g harina")
+  // — así se sabe cuándo es seguro dejar que la memoria de productos
+  // pise la adivinanza con la unidad real que ya se le conoció antes.
+  unitExplicit?: boolean;
 }
 
 export function parseInventoryText(text: string): ParsedInventoryEntry[] {
@@ -110,9 +120,10 @@ export function parseInventoryText(text: string): ParsedInventoryEntry[] {
       const nameIndex = amountIndex === 1 ? 3 : 1;
       const unitIndex = amountIndex === 1 ? 2 : 3;
       const amount = Number(match[amountIndex].replace(",", "."));
+      const unitExplicit = Boolean(match[unitIndex]);
       const rawUnit = (match[unitIndex] || defaultUnitForName(match[nameIndex])).toLowerCase();
       const { unit, multiplier } = unitInfo(rawUnit);
-      return { name: match[nameIndex].trim().toLowerCase(), quantity: amount * multiplier, unit };
+      return { name: match[nameIndex].trim().toLowerCase(), quantity: amount * multiplier, unit, unitExplicit };
     });
 }
 
