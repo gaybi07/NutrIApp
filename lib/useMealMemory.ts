@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { MealKey } from "@/lib/types";
+import { MealItem, MealKey } from "@/lib/types";
 
 const KEY = "registro:mealMemory:v1";
 const LEGACY_KEY = "registro:mealHistory:v1"; // versión vieja: solo texto + count, sin kcal/proteína
@@ -30,6 +30,8 @@ export interface MealMemoryEntry {
   count: number;
   updatedAt: number;
   meal?: MealKey; // última comida (desayuno/almuerzo/...) en la que se registró — para no sugerir cosas de otro momento del día
+  ingredientes?: string; // listado para descontar del inventario, tal cual lo devolvió la IA la última vez
+  items?: Omit<MealItem, "id">[]; // desglose en alimentos, tal cual lo devolvió la IA la última vez
 }
 
 function normalize(text: string): string {
@@ -157,7 +159,17 @@ export function useMealMemory() {
   }, []);
 
   const remember = useCallback(
-    (text: string, kcal: number, protein: number, carbs = 0, fat = 0, meal?: MealKey, fiber = 0) => {
+    (
+      text: string,
+      kcal: number,
+      protein: number,
+      carbs = 0,
+      fat = 0,
+      meal?: MealKey,
+      fiber = 0,
+      ingredientes?: string,
+      items?: Omit<MealItem, "id">[]
+    ) => {
       const trimmedText = text.trim();
       if (!trimmedText) return;
       setMemory((prev) => {
@@ -167,10 +179,22 @@ export function useMealMemory() {
           existingIndex >= 0
             ? prev.map((e, i) =>
                 i === existingIndex
-                  ? { text: trimmedText, kcal, protein, carbs, fat, fiber, meal: meal ?? e.meal, count: e.count + 1, updatedAt: Date.now() }
+                  ? {
+                      text: trimmedText,
+                      kcal,
+                      protein,
+                      carbs,
+                      fat,
+                      fiber,
+                      meal: meal ?? e.meal,
+                      count: e.count + 1,
+                      updatedAt: Date.now(),
+                      ingredientes: ingredientes ?? e.ingredientes,
+                      items: items ?? e.items,
+                    }
                   : e
               )
-            : [...prev, { text: trimmedText, kcal, protein, carbs, fat, fiber, meal, count: 1, updatedAt: Date.now() }];
+            : [...prev, { text: trimmedText, kcal, protein, carbs, fat, fiber, meal, count: 1, updatedAt: Date.now(), ingredientes, items }];
         return persist(next);
       });
     },

@@ -162,8 +162,11 @@ export function AiEntryForm({
           fiber: match.fiber,
           detalle: "",
           resumen: match.text,
-          ingredientes: "",
-          items: [{ nombre: match.text, kcal: match.kcal, protein: match.protein, carbs: match.carbs, fat: match.fat, fiber: match.fiber, gramos: undefined }],
+          ingredientes: match.ingredientes || "",
+          items:
+            match.items && match.items.length > 0
+              ? match.items
+              : [{ nombre: match.text, kcal: match.kcal, protein: match.protein, carbs: match.carbs, fat: match.fat, fiber: match.fiber, gramos: undefined }],
         });
         setStatus(`Encontrado en tu memoria: "${match.text}" — revisá y guardá, o recalculá con IA si cambió algo ↓`);
         return;
@@ -228,7 +231,7 @@ export function AiEntryForm({
     const updated = { ...applyMealItems(existing, meal, [...itemsActuales, ...nuevosItems]), alimentos: alimentosDelDia };
     onUpsert(updated);
     const result = onConsumeInventory?.(preview.ingredientes || text);
-    remember(preview.resumen || text, preview.kcal, preview.protein, preview.carbs, preview.fat, meal, preview.fiber);
+    remember(preview.resumen || text, preview.kcal, preview.protein, preview.carbs, preview.fat, meal, preview.fiber, preview.ingredientes, preview.items);
     setText("");
     setPreview(null);
     let message = `Sumado a ${MEAL_LABELS[meal]} del ${fecha} ✓`;
