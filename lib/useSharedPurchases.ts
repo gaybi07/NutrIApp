@@ -45,6 +45,21 @@ export function useSharedPurchases(householdId: string | null) {
     refetch();
   }, [refetch]);
 
+  // Respaldo del realtime: si volvés a la pestaña/app después de un rato,
+  // refresca igual aunque el canal realtime se haya cortado o tardado.
+  useEffect(() => {
+    if (!householdId) return;
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refetch();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+  }, [householdId, refetch]);
+
   useEffect(() => {
     if (!supabase || !householdId) return;
     const client = supabase;

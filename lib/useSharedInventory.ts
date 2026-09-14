@@ -56,6 +56,22 @@ export function useSharedInventory(householdId: string | null) {
     refetch();
   }, [refetch]);
 
+  // Respaldo del realtime: si volvés a la pestaña/app después de un rato
+  // (el otro integrante pudo haber cambiado algo mientras tanto), refresca
+  // igual aunque el canal realtime se haya cortado o tardado en avisar.
+  useEffect(() => {
+    if (!householdId) return;
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refetch();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+  }, [householdId, refetch]);
+
   useEffect(() => {
     if (!supabase || !householdId) return;
     const client = supabase;
