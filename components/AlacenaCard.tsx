@@ -5,6 +5,7 @@ import { InventoryCategory, InventoryItem, InventoryNutrition, INVENTORY_CATEGOR
 import { ProductMemoryApi } from "@/lib/useProductMemory";
 import { Collapsible } from "@/components/Collapsible";
 import { SECTION_HELP } from "@/lib/helpText";
+import { QuickAddProducts, AiShoppingItem } from "@/components/QuickAddProducts";
 
 const EMPTY_NUTRITION: InventoryNutrition = { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 const REVIEW_BATCH_SIZE = 12;
@@ -27,14 +28,17 @@ export function AlacenaCard({
   updateItem,
   applyReview,
   productMemory,
+  addStructuredItems,
 }: {
   items: InventoryItem[];
   replaceItems: (items: InventoryItem[]) => void;
   updateItem: (id: string, patch: Partial<InventoryItem>) => void;
   applyReview: (corrections: ReviewCorrection[]) => void;
   productMemory: ProductMemoryApi;
+  addStructuredItems: (entries: AiShoppingItem[]) => void;
 }) {
   const [filter, setFilter] = useState<InventoryCategory | "todas">("todas");
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [selected, setSelected] = useState<InventoryItem | null>(null);
   const [nutritionDraft, setNutritionDraft] = useState<InventoryNutrition>(EMPTY_NUTRITION);
   const [categoryDraft, setCategoryDraft] = useState<InventoryCategory>("otros");
@@ -211,9 +215,18 @@ export function AlacenaCard({
         </div>
       }
     >
-      {items.length > 0 ? (
-        <>
-          <div className="mb-3 flex flex-wrap gap-2">
+      <div className="mb-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setShowQuickAdd((prev) => !prev)}
+          className={`flex items-center gap-1 rounded-xl border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] ${
+            showQuickAdd ? "border-gold bg-gold text-bg" : "border-sage/60 bg-sage/10 text-sage"
+          }`}
+        >
+          <span className="text-[13px] leading-none">+</span> Agregar productos
+        </button>
+        {items.length > 0 && (
+          <>
             <button
               type="button"
               onClick={reviewWithAi}
@@ -229,8 +242,19 @@ export function AlacenaCard({
             >
               Vaciar alacena
             </button>
-          </div>
-          {status && <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] text-sage">{status}</div>}
+          </>
+        )}
+      </div>
+      {status && <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] text-sage">{status}</div>}
+
+      {showQuickAdd && (
+        <div className="mb-3 rounded-xl border border-sage/40 bg-sage/5 p-2.5">
+          <QuickAddProducts addStructuredItems={addStructuredItems} productMemory={productMemory} compact autoFocus />
+        </div>
+      )}
+
+      {items.length > 0 ? (
+        <>
 
           {presentCategories.length > 1 && (
             <div className="mb-3 flex flex-wrap gap-1.5">
@@ -302,7 +326,7 @@ export function AlacenaCard({
         </>
       ) : (
         <div className="rounded-xl border border-dashed border-border p-3 text-[11px] text-textMuted">
-          Todavía no cargaste nada. Sumá productos desde Compras, más abajo.
+          Todavía no cargaste nada. Tocá &quot;+ Agregar productos&quot; arriba, o subí una foto del ticket / dictá por audio más abajo en Compras.
         </div>
       )}
 
