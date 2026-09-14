@@ -254,12 +254,15 @@ export default function Home() {
 
       {activeTab === "inicio" && (
       <div className="mx-auto max-w-lg lg:max-w-6xl 2xl:max-w-[1800px]">
-        {/* En pantallas grandes los bloques se acomodan solos en columnas
-            (como un dashboard) en vez de quedar en una sola tira angosta
-            en el medio de la pantalla -- mismo orden/arrastre de siempre,
-            "columns" simplemente los reparte en el ancho disponible. Suma
-            una columna más a medida que hay más ancho real para usar. */}
-        <div className="min-w-0 lg:columns-2 lg:gap-4 xl:columns-3 2xl:columns-4">
+        {/* En pantallas grandes los bloques se acomodan solos en una grilla
+            (como un dashboard) en vez de quedar en una sola tira angosta en
+            el medio de la pantalla -- mismo orden/arrastre de siempre. Grid
+            (en vez de "columns", que reparte por altura estimada y con pocos
+            bloques de altura pareja deja una columna larga con scroll y
+            otras con hueco) acomoda de a filas, tantas columnas de ~360px
+            como entren en el ancho real. items-start evita que una tarjeta
+            se estire para igualar la altura de su fila. */}
+        <div className="min-w-0 lg:grid lg:grid-cols-[repeat(auto-fill,minmax(360px,1fr))] lg:items-start lg:gap-x-4">
           <DndContext sensors={inicioDrag.sensors} collisionDetection={inicioDrag.collisionDetection} onDragStart={inicioDrag.handleDragStart} onDragEnd={inicioDrag.handleDragEnd} onDragCancel={inicioDrag.handleDragCancel}>
             <SortableContext items={inicioVisible} strategy={verticalListSortingStrategy}>
               {inicioVisible.map((blockId) => (
