@@ -58,9 +58,12 @@ export function ExerciseLogCard({
   return (
     <div className="mb-4 rounded-xl border border-border bg-surface p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="flex items-center font-mono text-[10px] uppercase tracking-[0.15em] text-gold">
-          Ejercicios de hoy
-          <InfoHint text={SECTION_HELP.ejerciciosHoy} label="Qué es Ejercicios de hoy" />
+        <div>
+          <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-textMuted">Fuerza</div>
+          <div className="flex items-center font-mono text-[10px] uppercase tracking-[0.15em] text-gold">
+            Ejercicios de hoy
+            <InfoHint text={SECTION_HELP.ejerciciosHoy} label="Qué es Ejercicios de hoy" />
+          </div>
         </div>
         {ejercicios.length > 0 && (
           <div className="font-mono text-[10px] text-textMuted">Vol. {totalVolume(ejercicios).toLocaleString("es-AR")} kg</div>

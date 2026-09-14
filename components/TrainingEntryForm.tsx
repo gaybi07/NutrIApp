@@ -1,13 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { DayEntry, TrainingIntensity, TrainingSession, INTENSITY_STYLES } from "@/lib/types";
+import { DayEntry, TrainingIntensity, TrainingSession, TrainingType, INTENSITY_STYLES, AEROBIC_DISCIPLINE_SUGGESTIONS } from "@/lib/types";
 import { estimateTrainingCalories, getTrainingSessions } from "@/lib/calculations";
 import { clampNumber, countDigits, MAX_MINUTES_DIGITS } from "@/lib/inputLimits";
 import { FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 
 const INTENSITIES: TrainingIntensity[] = ["leve", "moderado", "exigente", "fallo"];
+const TYPES: { id: TrainingType; label: string }[] = [
+  { id: "fuerza", label: "Fuerza" },
+  { id: "aerobico", label: "Aeróbico" },
+];
 
 function sessionCalories(intensidad: TrainingIntensity, minutos: number, pesoKg?: number) {
   return estimateTrainingCalories({
@@ -23,11 +27,18 @@ function sessionCalories(intensidad: TrainingIntensity, minutos: number, pesoKg?
 export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: (entry: DayEntry) => void }) {
   const [pasos, setPasos] = useState(entry.pasos ? String(entry.pasos) : "");
   const [sessions, setSessions] = useState<TrainingSession[]>(getTrainingSessions(entry));
+  const [nuevoTipo, setNuevoTipo] = useState<TrainingType>("fuerza");
+  const [nuevaDisciplina, setNuevaDisciplina] = useState("");
   const [nuevaIntensidad, setNuevaIntensidad] = useState<TrainingIntensity>("moderado");
   const [nuevosMinutos, setNuevosMinutos] = useState("60");
 
   const addSession = () => {
-    setSessions((prev) => [...prev, { intensidad: nuevaIntensidad, minutos: clampNumber(Number(nuevosMinutos) || 60, 9999) }]);
+    const disciplina = nuevoTipo === "aerobico" ? nuevaDisciplina.trim() || undefined : undefined;
+    setSessions((prev) => [
+      ...prev,
+      { intensidad: nuevaIntensidad, minutos: clampNumber(Number(nuevosMinutos) || 60, 9999), tipo: nuevoTipo, disciplina },
+    ]);
+    setNuevaDisciplina("");
   };
 
   const removeSession = (index: number) => {
@@ -84,7 +95,8 @@ export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: 
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: style.background }} />
                     <span className="font-mono text-[11px] text-text">
-                      {style.label} · {session.minutos} min · +{sessionCalories(session.intensidad, session.minutos, entry.pesoKg)} kcal
+                      {session.tipo === "aerobico" ? session.disciplina || "Aeróbico" : "Fuerza"} · {style.label} · {session.minutos} min · +
+                      {sessionCalories(session.intensidad, session.minutos, entry.pesoKg)} kcal
                     </span>
                   </div>
                   <button
@@ -103,6 +115,49 @@ export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: 
 
         <div className="rounded-lg border border-dashed border-border bg-bg/20 p-2.5">
           <div className="mb-1.5 font-mono text-[9px] uppercase tracking-wide text-textMuted">Agregar entrenamiento</div>
+
+          <div className="mb-2 flex gap-1.5">
+            {TYPES.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setNuevoTipo(t.id)}
+                className={`flex-1 rounded-lg border px-2 py-1.5 font-mono text-[10px] uppercase tracking-wide ${
+                  nuevoTipo === t.id ? "border-gold bg-gold text-bg" : "border-border bg-bg/40 text-textMuted"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {nuevoTipo === "aerobico" && (
+            <div className="mb-2">
+              <div className="mb-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">Disciplina</div>
+              <div className="mb-1.5 flex flex-wrap gap-1.5">
+                {AEROBIC_DISCIPLINE_SUGGESTIONS.map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setNuevaDisciplina(d)}
+                    className={`rounded-full border px-2 py-1 font-mono text-[9px] uppercase tracking-wide ${
+                      nuevaDisciplina === d ? "border-gold bg-gold text-bg" : "border-border bg-bg/40 text-textMuted"
+                    }`}
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="text"
+                value={nuevaDisciplina}
+                onChange={(event) => setNuevaDisciplina(event.target.value)}
+                placeholder="Otra disciplina (ej: Escalada)"
+                className="w-full"
+              />
+            </div>
+          )}
+
           <div className="flex flex-wrap gap-1.5">
             {INTENSITIES.map((value) => {
                 const style = INTENSITY_STYLES[value];

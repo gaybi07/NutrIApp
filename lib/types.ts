@@ -57,10 +57,27 @@ export interface CalculatorProfile {
   modo: GoalMode;
 }
 
+/** "fuerza" es el default implícito de las sesiones viejas (sin este campo,
+ * de antes de que existiera la distinción) -- ver getTrainingSessions(). */
+export type TrainingType = "fuerza" | "aerobico";
+
 export interface TrainingSession {
   intensidad: TrainingIntensity;
   minutos: number;
+  tipo?: TrainingType;
+  /** Solo tiene sentido con tipo "aerobico" (yoga, fútbol, básquet, etc.) —
+   * lista libre con sugerencias, no un enum cerrado, porque puede haber
+   * cualquier deporte/práctica. No cambia el cálculo de kcal (eso sigue
+   * siendo por intensidad+minutos+peso, igual para cualquier disciplina). */
+  disciplina?: string;
 }
+
+/** Sugerencias para el selector de disciplina aeróbica — no es una lista
+ * cerrada, el usuario puede escribir cualquier otra. */
+export const AEROBIC_DISCIPLINE_SUGGESTIONS = [
+  "Running", "Caminata", "Bici", "Natación", "Yoga", "Pilates",
+  "Fútbol", "Básquet", "Handball", "Tenis", "Pádel", "Vóley",
+];
 
 /** Lun-Dom, en ese orden — usado por la rutina semanal (`TrainingSchedule`). */
 export type Weekday = "lunes" | "martes" | "miercoles" | "jueves" | "viernes" | "sabado" | "domingo";
