@@ -311,13 +311,17 @@ export default function Home() {
             arriba (la fila entera mide lo que mide el bloque más alto). En vez
             de eso, en pantallas grandes se arma un layout fijo de dos
             columnas -- barra angosta (Hoy + Comidas apiladas) y contenido
-            ancho (Semana) -- cada una con su propia altura independiente, sin
-            que ninguna dependa de la otra. En mobile (sin "lg:") es la misma
-            tira vertical de siempre. */}
-        <div className="min-w-0 lg:flex lg:items-start lg:gap-4">
+            ancho (Semana). Es CSS Grid de una sola fila con "stretch" (el
+            default): las dos columnas son paneles con su propio borde/fondo
+            que siempre terminan a la misma altura -- si un panel tiene menos
+            contenido (algo colapsado), le queda de aire abajo en vez de un
+            hueco raro, y eso se re-acomoda solo cada vez que abrís/cerrás
+            algo, sin volver a calcular nada a mano. En mobile (sin "lg:") es
+            la misma tira vertical de siempre, sin paneles. */}
+        <div className="min-w-0 lg:grid lg:grid-cols-[340px_1fr] lg:items-stretch lg:gap-4 xl:grid-cols-[380px_1fr]">
           <DndContext sensors={inicioDrag.sensors} collisionDetection={inicioDrag.collisionDetection} onDragStart={inicioDrag.handleDragStart} onDragEnd={inicioDrag.handleDragEnd} onDragCancel={inicioDrag.handleDragCancel}>
             <SortableContext items={inicioVisible} strategy={verticalListSortingStrategy}>
-              <div className="flex flex-col gap-4 lg:w-[340px] lg:shrink-0 xl:w-[380px]">
+              <div className="flex flex-col gap-4 lg:rounded-2xl lg:border lg:border-border/60 lg:bg-surface/20 lg:p-3">
                 {inicioVisible
                   .filter((blockId) => blockId !== "semana")
                   .map((blockId) => (
@@ -337,9 +341,9 @@ export default function Home() {
               </div>
 
               {inicioVisible.includes("semana") && (
-                <div className="mt-4 min-w-0 flex-1 lg:mt-0">
+                <div className="mt-4 min-w-0 lg:mt-0">
                   <SortableSection id="semana" onHide={() => hideInicioBlock("semana")}>
-                    <div className="rounded-2xl border border-border/80 bg-surface/40 p-3">
+                    <div className="rounded-2xl border border-border/80 bg-surface/40 p-3 lg:h-full">
                       <div className="mb-3 flex items-center font-mono text-[10px] uppercase tracking-[0.22em] text-gold">
                         Semana
                         <InfoHint text={SECTION_HELP.semana} label="Qué es la sección Semana" />
