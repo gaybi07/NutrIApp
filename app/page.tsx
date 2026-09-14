@@ -305,34 +305,40 @@ export default function Home() {
 
       {activeTab === "inicio" && (
       <div className="mx-auto max-w-lg lg:max-w-6xl 2xl:max-w-[1800px]">
-        {/* En pantallas grandes los bloques se acomodan solos en una grilla
-            (como un dashboard) en vez de quedar en una sola tira angosta en
-            el medio de la pantalla -- mismo orden/arrastre de siempre.
-            Columnas fijas por breakpoint (no "auto-fill/minmax": con eso
-            terminaba armando 2 columnas gigantes con huecos en vez de
-            repartir parejo). items-start evita que una tarjeta se estire
-            para igualar la altura de su fila. */}
-        <div className="min-w-0 lg:grid lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 lg:items-start lg:gap-4">
+        {/* Con solo 3 bloques (Hoy, Comidas, Semana) y "Semana" mucho más alto
+            que los otros dos, una grilla genérica de columnas fuerza toda la
+            fila a la altura de "Semana" y deja "Comidas" con un hueco enorme
+            arriba (la fila entera mide lo que mide el bloque más alto). En vez
+            de eso, en pantallas grandes se arma un layout fijo de dos
+            columnas -- barra angosta (Hoy + Comidas apiladas) y contenido
+            ancho (Semana) -- cada una con su propia altura independiente, sin
+            que ninguna dependa de la otra. En mobile (sin "lg:") es la misma
+            tira vertical de siempre. */}
+        <div className="min-w-0 lg:flex lg:items-start lg:gap-4">
           <DndContext sensors={inicioDrag.sensors} collisionDetection={inicioDrag.collisionDetection} onDragStart={inicioDrag.handleDragStart} onDragEnd={inicioDrag.handleDragEnd} onDragCancel={inicioDrag.handleDragCancel}>
             <SortableContext items={inicioVisible} strategy={verticalListSortingStrategy}>
-              {inicioVisible.map((blockId) => (
-                <SortableSection
-                  key={blockId}
-                  id={blockId}
-                  onHide={() => hideInicioBlock(blockId)}
-                  className={blockId === "semana" ? "xl:col-span-2 2xl:col-span-3" : undefined}
-                >
-                  {blockId === "hoy" && (
-                    <TodayCard
-                      entry={todayEntry}
-                      goal={settings.goal}
-                      tdeeFallback={settings.tdeeFallback}
-                      onLogMeal={() => setPanel("ai")}
-                      onLogTraining={() => setPanel("entreno")}
-                    />
-                  )}
-                  {blockId === "comidas" && <TodayMealsBreakdown entry={todayEntry} onUpsert={upsertDay} />}
-                  {blockId === "semana" && (
+              <div className="flex flex-col gap-4 lg:w-[340px] lg:shrink-0 xl:w-[380px]">
+                {inicioVisible
+                  .filter((blockId) => blockId !== "semana")
+                  .map((blockId) => (
+                    <SortableSection key={blockId} id={blockId} onHide={() => hideInicioBlock(blockId)}>
+                      {blockId === "hoy" && (
+                        <TodayCard
+                          entry={todayEntry}
+                          goal={settings.goal}
+                          tdeeFallback={settings.tdeeFallback}
+                          onLogMeal={() => setPanel("ai")}
+                          onLogTraining={() => setPanel("entreno")}
+                        />
+                      )}
+                      {blockId === "comidas" && <TodayMealsBreakdown entry={todayEntry} onUpsert={upsertDay} />}
+                    </SortableSection>
+                  ))}
+              </div>
+
+              {inicioVisible.includes("semana") && (
+                <div className="mt-4 min-w-0 flex-1 lg:mt-0">
+                  <SortableSection id="semana" onHide={() => hideInicioBlock("semana")}>
                     <div className="rounded-2xl border border-border/80 bg-surface/40 p-3">
                       <div className="mb-3 flex items-center font-mono text-[10px] uppercase tracking-[0.22em] text-gold">
                         Semana
@@ -370,9 +376,9 @@ export default function Home() {
                         variant="actividad"
                       />
                     </div>
-                  )}
-                </SortableSection>
-              ))}
+                  </SortableSection>
+                </div>
+              )}
             </SortableContext>
           </DndContext>
         </div>
