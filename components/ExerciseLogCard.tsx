@@ -5,7 +5,7 @@ import { DayEntry, ExerciseEntry, Routine, TrainingSchedule } from "@/lib/types"
 import { weekdayOf, totalVolume } from "@/lib/calculations";
 import { clampNumber } from "@/lib/inputLimits";
 import { SECTION_HELP } from "@/lib/helpText";
-import { InfoHint } from "@/components/InfoHint";
+import { Collapsible } from "@/components/Collapsible";
 
 function emptyExercise(): ExerciseEntry {
   return { nombre: "", series: 4, repeticiones: 10, peso: undefined };
@@ -56,19 +56,17 @@ export function ExerciseLogCard({
   };
 
   return (
-    <div className="mb-4 rounded-xl border border-border bg-surface p-3">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <div>
-          <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-textMuted">Fuerza</div>
-          <div className="flex items-center font-mono text-[10px] uppercase tracking-[0.15em] text-gold">
-            Ejercicios de hoy
-            <InfoHint text={SECTION_HELP.ejerciciosHoy} label="Qué es Ejercicios de hoy" />
-          </div>
-        </div>
-        {ejercicios.length > 0 && (
+    <Collapsible
+      eyebrow="Fuerza"
+      title="Ejercicios de hoy"
+      info={SECTION_HELP.ejerciciosHoy}
+      defaultOpen
+      badge={
+        ejercicios.length > 0 ? (
           <div className="font-mono text-[10px] text-textMuted">Vol. {totalVolume(ejercicios).toLocaleString("es-AR")} kg</div>
-        )}
-      </div>
+        ) : undefined
+      }
+    >
       {scheduledRoutine && preFilled && (
         <div className="mb-2 rounded-lg border border-gold/30 bg-gold/10 px-2.5 py-1.5 text-[11px] text-textMuted">
           Precargado desde tu rutina de hoy ({scheduledRoutine.nombre}) — ajustá lo que realmente hiciste.
@@ -147,6 +145,6 @@ export function ExerciseLogCard({
         Guardar
       </button>
       {status && <div className="mt-2 text-center font-mono text-[11px] text-sage">{status}</div>}
-    </div>
+    </Collapsible>
   );
 }

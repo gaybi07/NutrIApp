@@ -10,9 +10,9 @@ import { classifyIngredient, FOOD_GROUP_LABELS, FoodGroup } from "@/lib/foodGrou
 import { useSectionOrder } from "@/lib/useSectionOrder";
 import { SortableSection } from "@/components/SortableSection";
 import { SECTION_HELP } from "@/lib/helpText";
-import { InfoHint } from "@/components/InfoHint";
 import { RankingCard } from "@/components/RankingCard";
 import { Ledger } from "@/components/Ledger";
+import { Collapsible } from "@/components/Collapsible";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 // Colores fijos de macros de la guía de diseño — iguales en Claro y Oscuro
@@ -119,11 +119,7 @@ export function MacrosTab({
   }
 
   const resumenBlock = (
-      <section className="mb-4 rounded-2xl border border-gold/40 bg-surface p-3">
-        <div className="mb-3 flex items-center font-mono text-[10px] uppercase tracking-[0.18em] text-gold">
-          Hoy · Macros
-          <InfoHint text={SECTION_HELP.macros} label="Qué es la sección Macros" />
-        </div>
+      <Collapsible eyebrow="Hoy" title="Macros" info={SECTION_HELP.macros} defaultOpen>
         <div className="mb-3 grid grid-cols-2 gap-3">
           <MacroStat label="Proteína" value={protein} target={targets.proteinG} color={COLORS.protein} neonClass="chart-neon-a" />
           <MacroStat label="Carbohidratos" value={carbs} target={targets.carbsG} color={COLORS.carbs} />
@@ -140,14 +136,13 @@ export function MacrosTab({
         >
           + Cargar comida
         </button>
-      </section>
+      </Collapsible>
   );
 
   const rankingBlock = <RankingCard days={days} weightKg={weightKg} />;
 
   const repartoBlock = (
-      <div className="mb-4 rounded-xl border border-border bg-surface p-4">
-        <div className="mb-3 font-mono text-[10px] uppercase tracking-wide text-textMuted">Reparto de macros de hoy</div>
+      <Collapsible eyebrow="Hoy" title="Reparto de macros">
         {pieData.length > 0 ? (
           <ResponsiveContainer width="100%" height={180}>
             <PieChart>
@@ -173,15 +168,15 @@ export function MacrosTab({
           <span className="flex items-center gap-1"><i className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.carbs }} />Carbohidratos</span>
           <span className="flex items-center gap-1"><i className="chart-neon-c inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.fat }} />Grasas</span>
         </div>
-      </div>
+      </Collapsible>
   );
 
   const semanaBlock = (
-      <div className="mb-4 rounded-xl border border-border bg-surface p-4">
-        <div className="mb-3 flex justify-between font-mono text-[10px] uppercase tracking-wide text-textMuted">
-          <span>Macros de la semana</span>
-          <span>objetivo {goal.toLocaleString("es-AR")} kcal</span>
-        </div>
+      <Collapsible
+        eyebrow="Semana"
+        title="Macros de la semana"
+        badge={<span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">objetivo {goal.toLocaleString("es-AR")} kcal</span>}
+      >
         <ResponsiveContainer width="100%" height={180}>
           <BarChart data={weekMacroData} margin={{ left: -20, right: 0, top: 5, bottom: 0 }}>
             <XAxis dataKey="dow" tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "rgb(var(--color-border))" }} tickLine={false} />
@@ -198,12 +193,11 @@ export function MacrosTab({
           <span className="flex items-center gap-1"><i className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.carbs }} />Carbohidratos</span>
           <span className="flex items-center gap-1"><i className="chart-neon-c inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.fat }} />Grasas</span>
         </div>
-      </div>
+      </Collapsible>
   );
 
   const proteinaBlock = (
-      <div className="mb-4 rounded-xl border border-border bg-surface p-4">
-        <div className="mb-3 font-mono text-[10px] uppercase tracking-wide text-textMuted">Proteína vs objetivo</div>
+      <Collapsible eyebrow="Semana" title="Proteína vs objetivo">
         <ResponsiveContainer width="100%" height={160}>
           <BarChart data={proteinWeekData} margin={{ left: -20, right: 0, top: 5, bottom: 0 }}>
             <XAxis dataKey="dow" tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "rgb(var(--color-border))" }} tickLine={false} />
@@ -213,12 +207,11 @@ export function MacrosTab({
             <Bar dataKey="protein" fill={COLORS.protein} radius={[3, 3, 0, 0]} className="chart-neon-a" />
           </BarChart>
         </ResponsiveContainer>
-      </div>
+      </Collapsible>
   );
 
   const fibraBlock = (
-      <div className="mb-4 rounded-xl border border-border bg-surface p-4">
-        <div className="mb-3 font-mono text-[10px] uppercase tracking-wide text-textMuted">Fibra de la semana</div>
+      <Collapsible eyebrow="Semana" title="Fibra de la semana">
         <ResponsiveContainer width="100%" height={160}>
           <BarChart data={fiberWeekData} margin={{ left: -20, right: 0, top: 5, bottom: 0 }}>
             <XAxis dataKey="dow" tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "rgb(var(--color-border))" }} tickLine={false} />
@@ -228,12 +221,11 @@ export function MacrosTab({
             <Bar dataKey="fiber" fill={COLORS.fiber} radius={[3, 3, 0, 0]} className="chart-neon-d" />
           </BarChart>
         </ResponsiveContainer>
-      </div>
+      </Collapsible>
   );
 
   const diversidadBlock = (
-      <div className="mb-4 rounded-xl border border-border bg-surface p-4">
-        <div className="mb-1 font-mono text-[10px] uppercase tracking-wide text-textMuted">Diversidad de esta semana</div>
+      <Collapsible eyebrow="Semana" title="Diversidad">
         <div className="mb-3 text-[11px] text-textMuted">Cuántos alimentos distintos comiste de cada grupo — variar suma, no solo repetir lo mismo.</div>
         <div className="space-y-2.5">
           {FOOD_GROUPS_ORDER.map((group) => {
@@ -259,7 +251,7 @@ export function MacrosTab({
             );
           })}
         </div>
-      </div>
+      </Collapsible>
   );
 
   const tablaBlock = (

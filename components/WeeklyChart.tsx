@@ -3,6 +3,7 @@
 import { ComposedChart, Bar, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { DayEntry, TrainingSession, INTENSITY_STYLES } from "@/lib/types";
 import { dayGoal, estimateGasto, dayDeficit, getTrainingSessions } from "@/lib/calculations";
+import { Collapsible } from "@/components/Collapsible";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 const COLORS = { des: "#E88D67", alm: "rgb(var(--color-accent))", mer: "#C9A227", cen: "#B5533C", col: "#8B5CF6" };
@@ -93,13 +94,15 @@ export function WeeklyChart({
   const yDomain: [number, number] = [0, Math.ceil((maxValue * 1.1) / 100) * 100];
 
   return (
-    <div className="bg-surface border border-border rounded-xl p-4 mb-4">
-      <div className="flex justify-between font-mono text-[10px] uppercase tracking-wide text-textMuted mb-3">
-        <span>Kcal por día</span>
-        <span>
-          base {goal.toLocaleString("es-AR")} / objetivo prom. {avgGoal.toLocaleString("es-AR")}
+    <Collapsible
+      eyebrow="Semana"
+      title="Kcal por día"
+      badge={
+        <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
+          base {goal.toLocaleString("es-AR")} / obj. prom. {avgGoal.toLocaleString("es-AR")}
         </span>
-      </div>
+      }
+    >
       <ResponsiveContainer width="100%" height={180}>
         <ComposedChart data={data} margin={{ left: -20, right: 0, top: 5, bottom: 0 }}>
           <XAxis
@@ -133,6 +136,6 @@ export function WeeklyChart({
         <span className="flex items-center gap-1"><i className="w-[10px] h-[2px] inline-block" style={{ background: "rgb(var(--color-text))" }} />Objetivo diario</span>
         <span className="flex items-center gap-1"><i className="chart-neon-c w-[10px] h-[2px] inline-block" style={{ background: "#5FA8D3" }} />Gasto</span>
       </div>
-    </div>
+    </Collapsible>
   );
 }

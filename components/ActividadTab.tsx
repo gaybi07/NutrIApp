@@ -9,10 +9,10 @@ import { estimateTrainingCalories, getTrainingSessions, totalVolume } from "@/li
 import { useSectionOrder } from "@/lib/useSectionOrder";
 import { SortableSection } from "@/components/SortableSection";
 import { SECTION_HELP } from "@/lib/helpText";
-import { InfoHint } from "@/components/InfoHint";
 import { ExerciseLogCard } from "@/components/ExerciseLogCard";
 import { RoutineManager } from "@/components/RoutineManager";
 import { DailySteps } from "@/components/DailySteps";
+import { Collapsible } from "@/components/Collapsible";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 const STEPS_COLOR = "#8A9A7C";
@@ -44,8 +44,7 @@ function WeekBarChart({
   neonClass?: string;
 }) {
   return (
-    <div className="mb-4 rounded-xl border border-border bg-surface p-4">
-      <div className="mb-3 font-mono text-[10px] uppercase tracking-wide text-textMuted">{title}</div>
+    <Collapsible eyebrow="Semana" title={title}>
       <ResponsiveContainer width="100%" height={160}>
         <BarChart data={data} margin={{ left: -20, right: 0, top: 5, bottom: 0 }}>
           <XAxis dataKey="dow" tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "rgb(var(--color-border))" }} tickLine={false} />
@@ -68,7 +67,7 @@ function WeekBarChart({
           <Bar dataKey="value" fill={color} radius={[3, 3, 0, 0]} className={neonClass} />
         </BarChart>
       </ResponsiveContainer>
-    </div>
+    </Collapsible>
   );
 }
 
@@ -120,11 +119,7 @@ export function ActividadTab({
 
   const blocks: Record<ActividadBlockId, ReactNode> = {
     resumen: (
-      <section className="mb-4 rounded-2xl border border-gold/40 bg-surface p-3">
-        <div className="mb-3 flex items-center font-mono text-[10px] uppercase tracking-[0.18em] text-gold">
-          Hoy · Actividad
-          <InfoHint text={SECTION_HELP.actividad} label="Qué es la sección Actividad" />
-        </div>
+      <Collapsible eyebrow="Hoy" title="Actividad" info={SECTION_HELP.actividad} defaultOpen>
         <div className="mb-4 grid grid-cols-3 gap-2 text-center">
           <div>
             <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-textMuted">Pasos</div>
@@ -161,7 +156,7 @@ export function ActividadTab({
             {entry.suenoHoras ? `${entry.suenoHoras}h dormidas` : "+ Sueño"}
           </button>
         </div>
-      </section>
+      </Collapsible>
     ),
     ejercicios: <ExerciseLogCard entry={entry} routines={routines} schedule={schedule} onSave={onUpsert} />,
     pasosEditar: <DailySteps weekDates={weekDates} weekDays={weekDays} onUpsert={onUpsert} />,

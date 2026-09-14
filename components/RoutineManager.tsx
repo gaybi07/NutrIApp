@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ExerciseEntry, Routine, TrainingSchedule, Weekday, WEEKDAY_LABELS } from "@/lib/types";
 import { clampNumber } from "@/lib/inputLimits";
 import { SECTION_HELP } from "@/lib/helpText";
-import { InfoHint } from "@/components/InfoHint";
+import { Collapsible } from "@/components/Collapsible";
 
 const ORDERED_WEEKDAYS: Weekday[] = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
 
@@ -86,11 +86,7 @@ export function RoutineManager({
 
   return (
     <div>
-      <div className="mb-4 rounded-xl border border-border bg-surface p-3">
-        <div className="mb-2 flex items-center font-mono text-[10px] uppercase tracking-[0.15em] text-gold">
-          Tu rutina semanal
-          <InfoHint text={SECTION_HELP.rutinaSemanal} label="Qué es la rutina semanal" />
-        </div>
+      <Collapsible eyebrow="Fuerza" title="Tu rutina semanal" info={SECTION_HELP.rutinaSemanal}>
         <div className="space-y-1.5">
           {ORDERED_WEEKDAYS.map((day) => {
             const routineId = schedule[day];
@@ -110,22 +106,25 @@ export function RoutineManager({
             );
           })}
         </div>
-      </div>
+      </Collapsible>
 
-      <div className="rounded-xl border border-border bg-surface p-3">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <div className="flex items-center font-mono text-[10px] uppercase tracking-[0.15em] text-gold">
-            Tus rutinas
-            <InfoHint text={SECTION_HELP.rutinas} label="Qué son las rutinas" />
-          </div>
+      <Collapsible
+        eyebrow="Fuerza"
+        title="Tus rutinas"
+        info={SECTION_HELP.rutinas}
+        badge={
           <button
             type="button"
-            onClick={startNewRoutine}
+            onClick={(event) => {
+              event.stopPropagation();
+              startNewRoutine();
+            }}
             className="rounded-full border border-gold/60 bg-gold px-2.5 py-1 font-mono text-[9px] uppercase tracking-wide text-bg"
           >
             + Nueva rutina
           </button>
-        </div>
+        }
+      >
         {routines.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">
             Todavía no armaste ninguna rutina.
@@ -165,7 +164,7 @@ export function RoutineManager({
             ))}
           </div>
         )}
-      </div>
+      </Collapsible>
 
       {pickerDay && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPickerDay(null)}>

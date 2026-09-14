@@ -3,7 +3,7 @@
 import { DayEntry, INTENSITY_STYLES } from "@/lib/types";
 import { dayTotal, dayProt, dayGoal, getTrainingSessions } from "@/lib/calculations";
 import { SECTION_HELP } from "@/lib/helpText";
-import { InfoHint } from "@/components/InfoHint";
+import { Collapsible } from "@/components/Collapsible";
 
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const DOW = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
@@ -22,6 +22,8 @@ export function TodayCard({
   onLogTraining: () => void;
 }) {
   const today = new Date(`${entry.fecha}T00:00:00`);
+  const dowLabel = DOW[today.getDay()];
+  const dowCapitalized = dowLabel.charAt(0).toUpperCase() + dowLabel.slice(1);
   const consumed = dayTotal(entry);
   const adjustedGoal = dayGoal(entry, goal, tdeeFallback);
   const remaining = Math.max(0, adjustedGoal - consumed);
@@ -34,17 +36,12 @@ export function TodayCard({
   const trainingLabel = sessions.length > 1 ? `${sessions.length} entrenamientos` : trainingStyle.label;
 
   return (
-    <section className="mb-4 rounded-2xl border border-gold/40 bg-surface p-3">
-      <div className="mb-3">
-        <div className="flex items-center font-mono text-[10px] uppercase tracking-[0.18em] text-gold">
-          Hoy
-          <InfoHint text={SECTION_HELP.hoy} label="Qué es la sección Hoy" />
-        </div>
-        <h2 className="font-display text-xl leading-none capitalize">
-          {DOW[today.getDay()]} {today.getDate()} {MONTHS[today.getMonth()]}
-        </h2>
-      </div>
-
+    <Collapsible
+      eyebrow="Hoy"
+      title={`${dowCapitalized} ${today.getDate()} ${MONTHS[today.getMonth()]}`}
+      info={SECTION_HELP.hoy}
+      defaultOpen
+    >
       <div className="mb-1 flex items-baseline justify-between gap-2">
         <span className="font-sans font-bold text-2xl leading-none text-text">{consumed.toLocaleString("es-AR")}</span>
         <span className="font-mono text-[11px] text-textMuted">de {adjustedGoal.toLocaleString("es-AR")} kcal</span>
@@ -93,6 +90,6 @@ export function TodayCard({
           {sessions.length > 0 ? trainingLabel : "+ Entrenamiento"}
         </button>
       </div>
-    </section>
+    </Collapsible>
   );
 }
