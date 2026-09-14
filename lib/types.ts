@@ -191,22 +191,38 @@ export const INICIO_BLOCK_LABELS: Record<InicioBlockId, string> = {
  * "Alacena" (inventario + cómo llenarlo, incluyendo el ticket + qué
  * cocinar con lo que hay) y "Planificado" (planificador semanal). Cada
  * bloque pertenece a una sola sub-solapa, ver COMIDAS_SUBTAB_BLOCKS. */
-export type ComidasBlockId = "hogar" | "alacena" | "sugerencias" | "comunes" | "compras" | "planificador";
-export const DEFAULT_COMIDAS_ORDER: ComidasBlockId[] = ["hogar", "alacena", "sugerencias", "comunes", "compras", "planificador"];
+export type ComidasBlockId = "hogar" | "alacena" | "sugerencias" | "comunes" | "compras" | "historial" | "planificador";
+export const DEFAULT_COMIDAS_ORDER: ComidasBlockId[] = ["hogar", "alacena", "sugerencias", "comunes", "compras", "historial", "planificador"];
 export const COMIDAS_BLOCK_LABELS: Record<ComidasBlockId, string> = {
   hogar: "Grupo compartido",
   alacena: "Alacena",
   sugerencias: "Sugerencias de recetas",
   comunes: "Comidas más comunes",
   compras: "Registro de compras",
+  historial: "Historial de compras",
   planificador: "Planificador semanal",
 };
 
 export type ComidasSubTab = "alacena" | "planificado";
 export const COMIDAS_SUBTAB_BLOCKS: Record<ComidasSubTab, ComidasBlockId[]> = {
-  alacena: ["hogar", "alacena", "sugerencias", "comunes", "compras"],
+  alacena: ["hogar", "alacena", "sugerencias", "comunes", "compras", "historial"],
   planificado: ["planificador"],
 };
+
+/** Un renglón de lo que se compró de verdad (marca, precio) -- separado del
+ * inventario porque la Alacena guarda STOCK actual, no historial; esto es
+ * un registro fechado que se arma solo al leer un ticket con IA (no al
+ * agregar productos a mano, que no trae precio/marca). */
+export interface PurchaseRecord {
+  id: string;
+  fecha: string; // YYYY-MM-DD
+  name: string;
+  quantity: number;
+  unit: "g" | "ml" | "u.";
+  brand?: string;
+  price?: number;
+  category?: InventoryCategory;
+}
 
 export type MacrosBlockId = "resumen" | "ranking" | "reparto" | "semana" | "proteina" | "fibra" | "diversidad" | "tabla";
 export const DEFAULT_MACROS_ORDER: MacrosBlockId[] = [

@@ -6,19 +6,30 @@ import { MAX_TEXT_LENGTH } from "@/lib/inputLimits";
 import { SECTION_HELP, FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 import { useSpeechToText } from "@/lib/useSpeechToText";
-import { InventoryCategory, InventoryItem, InventoryNutrition, INVENTORY_CATEGORY_LABELS } from "@/lib/types";
+import { InventoryCategory, InventoryItem, InventoryNutrition, PurchaseRecord, INVENTORY_CATEGORY_LABELS } from "@/lib/types";
 import { parseInventoryText } from "@/lib/useInventory";
 import { ProductMemoryApi } from "@/lib/useProductMemory";
 
-type AiShoppingItem = { name: string; quantity: number; unit: InventoryItem["unit"]; category?: InventoryCategory; nutritionPer100g?: InventoryNutrition };
+type AiShoppingItem = {
+  name: string;
+  quantity: number;
+  unit: InventoryItem["unit"];
+  category?: InventoryCategory;
+  nutritionPer100g?: InventoryNutrition;
+  // Solo vienen de leer un ticket con IA -- el alta manual no tiene de dónde sacarlos.
+  brand?: string;
+  price?: number;
+};
 type PendingItem = { name: string; containerCount: number };
 type PendingDraft = { amount: string; unit: InventoryItem["unit"] };
 
 export function ShoppingLog({
   addStructuredItems,
+  addPurchases,
   productMemory,
 }: {
   addStructuredItems: (entries: AiShoppingItem[]) => void;
+  addPurchases: (entries: Array<Omit<PurchaseRecord, "id">>) => void;
   productMemory: ProductMemoryApi;
 }) {
   const [raw, setRaw] = useState("");
@@ -151,7 +162,15 @@ export function ShoppingLog({
 
       const responseText = await res.text();
       let data: {
-        items?: Array<{ nombre: string; cantidad: number; unidad: InventoryItem["unit"]; categoria?: string; nutricion100g?: InventoryNutrition | null }>;
+        items?: Array<{
+          nombre: string;
+          cantidad: number;
+          unidad: InventoryItem["unit"];
+          categoria?: string;
+          nutricion100g?: InventoryNutrition | null;
+          marca?: string | null;
+          precio?: number | null;
+        }>;
         error?: string;
       };
       try {
@@ -173,6 +192,8 @@ export function ShoppingLog({
             unit: useMemory ? mem!.unit! : item.unidad,
             category: mem?.category ?? (item.categoria as InventoryCategory | undefined),
             nutritionPer100g: mem?.nutritionPer100g ?? item.nutricion100g ?? undefined,
+            brand: item.marca || undefined,
+            price: item.precio ?? undefined,
           };
         })
       );
@@ -189,6 +210,17 @@ export function ShoppingLog({
   const confirmAiResult = () => {
     if (!aiResult || aiResult.length === 0) return;
     addStructuredItems(aiResult);
+    addPurchases(
+      aiResult.map((item) => ({
+        fecha: new Date().toISOString().slice(0, 10),
+        name: item.name,
+        quantity: item.quantity,
+        unit: item.unit,
+        brand: item.brand,
+        price: item.price,
+        category: item.category,
+      }))
+    );
     aiResult.forEach((item) => {
       productMemory.remember({ name: item.name, unit: item.unit, category: item.category, nutritionPer100g: item.nutritionPer100g });
     });
@@ -291,6 +323,8 @@ export function ShoppingLog({
                   >
                     {item.name} × {item.quantity} {item.unit}
                     {item.category && <span className="text-textMuted">· {INVENTORY_CATEGORY_LABELS[item.category]}</span>}
+                    {item.brand && <span className="text-textMuted">· {item.brand}</span>}
+                    {item.price != null && <span className="text-gold">· ${item.price.toLocaleString("es-AR")}</span>}
                     <button type="button" onClick={() => removeAiItem(index)} className="text-rust" aria-label={`Quitar ${item.name}`}>
                       ×
                     </button>

@@ -34,6 +34,8 @@ import { isSupabaseConfigured } from "@/lib/supabase/browser";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 import { useInventory } from "@/lib/useInventory";
 import { useSharedInventory } from "@/lib/useSharedInventory";
+import { usePurchaseHistory } from "@/lib/usePurchaseHistory";
+import { useSharedPurchases } from "@/lib/useSharedPurchases";
 import { useHousehold } from "@/lib/useHousehold";
 import { useProductMemory } from "@/lib/useProductMemory";
 import { emptyDay, MealKey, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER, resolveOrder } from "@/lib/types";
@@ -64,6 +66,11 @@ export default function Home() {
     consumeAmounts,
     persist: replaceInventory,
   } = household.household ? sharedInventory : localInventory;
+
+  const localPurchases = usePurchaseHistory();
+  const sharedPurchases = useSharedPurchases(household.household?.id ?? null);
+  const { purchases, addPurchases, removePurchase } = household.household ? sharedPurchases : localPurchases;
+
   const productMemory = useProductMemory();
   const [weekOffset, setWeekOffset] = useState(0);
   const [activeTab, setActiveTab] = useState<MainTab>("inicio");
@@ -388,6 +395,9 @@ export default function Home() {
           joinHousehold={household.join}
           leaveHousehold={household.leave}
           getInviteCode={household.getInviteCode}
+          purchases={purchases}
+          addPurchases={addPurchases}
+          removePurchase={removePurchase}
         />
       )}
 
