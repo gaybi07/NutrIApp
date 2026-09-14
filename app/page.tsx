@@ -232,6 +232,38 @@ export default function Home() {
 
       <TabBar active={activeTab} onChange={setActiveTab} enabledTabs={enabledTabs} />
 
+      {/* Selector de semana global -- afecta a Inicio/Macros/Actividad por
+          igual (las tres leen weekDates/weekDays), así que vive acá arriba
+          en vez de adentro del bloque "Semana" de Inicio, donde antes solo
+          se podía cambiar la semana estando en esa solapa puntual. Comidas
+          y Gastos no dependen de la semana, así que no lo muestran. */}
+      {(activeTab === "inicio" || activeTab === "macros" || activeTab === "actividad") && (
+        <div className="mb-4 flex items-center justify-between gap-2 rounded-xl border border-border bg-surface/70 px-2 py-1.5 lg:px-3">
+          <button
+            type="button"
+            onClick={() => setWeekOffset((w) => w - 1)}
+            aria-label="Semana anterior"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-surfaceAlt text-text hover:border-gold/60"
+          >
+            ‹
+          </button>
+          <div className="text-center">
+            <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-textMuted">Semana</div>
+            <div className="font-sans text-sm font-semibold leading-none text-text">
+              {monday.getDate()} {MONTHS[monday.getMonth()]} – {sunday.getDate()} {MONTHS[sunday.getMonth()]}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setWeekOffset((w) => w + 1)}
+            aria-label="Semana siguiente"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-surfaceAlt text-text hover:border-gold/60"
+          >
+            ›
+          </button>
+        </div>
+      )}
+
       {activeTab === "macros" && (
         <MacrosTab
           entry={todayEntry}
@@ -303,33 +335,9 @@ export default function Home() {
                   {blockId === "comidas" && <TodayMealsBreakdown entry={todayEntry} onUpsert={upsertDay} />}
                   {blockId === "semana" && (
                     <div className="rounded-2xl border border-border/80 bg-surface/40 p-3">
-                      <div className="mb-3">
-                        <div className="mb-1.5 flex items-center font-mono text-[10px] uppercase tracking-[0.22em] text-gold">
-                          Semana del
-                          <InfoHint text={SECTION_HELP.semana} label="Qué es la sección Semana" />
-                        </div>
-                        <div className="flex items-center justify-between gap-3">
-                          <h1 className="font-display font-semibold text-3xl leading-none -tracking-[0.04em]">
-                            {monday.getDate()} {MONTHS[monday.getMonth()]}
-                          </h1>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => setWeekOffset((w) => w - 1)}
-                              className="bg-surfaceAlt border border-border rounded-xl w-9 h-9 text-lg text-text hover:border-gold/60 transition-colors"
-                            >
-                              ‹
-                            </button>
-                            <button
-                              onClick={() => setWeekOffset((w) => w + 1)}
-                              className="bg-surfaceAlt border border-border rounded-xl w-9 h-9 text-lg text-text hover:border-gold/60 transition-colors"
-                            >
-                              ›
-                            </button>
-                          </div>
-                        </div>
-                        <div className="mt-2 font-mono text-[11px] tracking-[0.12em] uppercase text-textMuted">
-                          {monday.getDate()} {MONTHS[monday.getMonth()]} — {sunday.getDate()} {MONTHS[sunday.getMonth()]}
-                        </div>
+                      <div className="mb-3 flex items-center font-mono text-[10px] uppercase tracking-[0.22em] text-gold">
+                        Semana
+                        <InfoHint text={SECTION_HELP.semana} label="Qué es la sección Semana" />
                       </div>
 
                       {/* Orden fijo a propósito -- estas sub-secciones son parte
