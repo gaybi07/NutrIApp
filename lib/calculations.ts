@@ -352,8 +352,11 @@ export function calcGoalDeficit(
   const kcalObjetivoSugerido = Math.round(gastoReferencia - deficitDiarioNecesario);
   const pctDelGasto = (deficitDiarioNecesario / gastoReferencia) * 100;
   const kgPorSemana = kgABajar / (diasRestantes / 7);
-  const pctPesoPorSemana = (kgPorSemana / pesoActual) * 100;
-  const esAgresivo = pctDelGasto > 30 || pctPesoPorSemana > 1;
+  // Tope acordado: no más de 1kg por semana, punto -- un % del gasto o
+  // del peso corporal castigaba de más a alguien con más peso/gasto
+  // (ej. 0.72kg/semana se bloqueaba igual por pasar el 30% del gasto,
+  // aunque el ritmo en sí fuera seguro).
+  const esAgresivo = kgPorSemana > 1;
 
   return { diasRestantes, kgABajar, deficitDiarioNecesario, kcalObjetivoSugerido, pctDelGasto, kgPorSemana, esAgresivo };
 }
