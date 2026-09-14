@@ -73,20 +73,20 @@ grant execute on function public.my_household_ids() to authenticated;
 
 create policy "members can view their households"
   on public.households for select
-  using (id in (select household_id from public.my_household_ids()));
+  using (id in (select * from public.my_household_ids()));
 
 create policy "members can view co-members of their households"
   on public.household_members for select
-  using (household_id in (select household_id from public.my_household_ids()));
+  using (household_id in (select * from public.my_household_ids()));
 
 create policy "members can view invite codes of their households"
   on public.household_invites for select
-  using (household_id in (select household_id from public.my_household_ids()));
+  using (household_id in (select * from public.my_household_ids()));
 
 create policy "members can manage their shared inventory"
   on public.inventory_items for all
-  using (household_id in (select household_id from public.my_household_ids()))
-  with check (household_id in (select household_id from public.my_household_ids()));
+  using (household_id in (select * from public.my_household_ids()))
+  with check (household_id in (select * from public.my_household_ids()));
 
 -- Crea el grupo, te suma como owner y (opcional) importa tu alacena local
 -- actual como alacena inicial del grupo -- todo en un solo paso atómico.
