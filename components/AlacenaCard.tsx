@@ -6,6 +6,7 @@ import { ProductMemoryApi } from "@/lib/useProductMemory";
 import { Collapsible } from "@/components/Collapsible";
 import { SECTION_HELP } from "@/lib/helpText";
 import { QuickAddProducts, AiShoppingItem } from "@/components/QuickAddProducts";
+import { ExtraConsumption } from "@/components/ExtraConsumption";
 
 const EMPTY_NUTRITION: InventoryNutrition = { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 const REVIEW_BATCH_SIZE = 12;
@@ -29,6 +30,7 @@ export function AlacenaCard({
   applyReview,
   productMemory,
   addStructuredItems,
+  consumeAmounts,
 }: {
   items: InventoryItem[];
   replaceItems: (items: InventoryItem[]) => void;
@@ -36,9 +38,11 @@ export function AlacenaCard({
   applyReview: (corrections: ReviewCorrection[]) => void;
   productMemory: ProductMemoryApi;
   addStructuredItems: (entries: AiShoppingItem[]) => void;
+  consumeAmounts: (amounts: Array<{ id: string; quantity: number }>) => void;
 }) {
   const [filter, setFilter] = useState<InventoryCategory | "todas">("todas");
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [showExtraConsumption, setShowExtraConsumption] = useState(false);
   const [selected, setSelected] = useState<InventoryItem | null>(null);
   const [nutritionDraft, setNutritionDraft] = useState<InventoryNutrition>(EMPTY_NUTRITION);
   const [categoryDraft, setCategoryDraft] = useState<InventoryCategory>("otros");
@@ -226,6 +230,17 @@ export function AlacenaCard({
           <span className="text-[13px] leading-none">+</span> Agregar productos
         </button>
         {items.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowExtraConsumption((prev) => !prev)}
+            className={`flex items-center gap-1 rounded-xl border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] ${
+              showExtraConsumption ? "border-rust bg-rust text-bg" : "border-rust/60 bg-rust/10 text-rust"
+            }`}
+          >
+            <span className="text-[13px] leading-none">−</span> Uso extra / invitados
+          </button>
+        )}
+        {items.length > 0 && (
           <>
             <button
               type="button"
@@ -250,6 +265,12 @@ export function AlacenaCard({
       {showQuickAdd && (
         <div className="mb-3 rounded-xl border border-sage/40 bg-sage/5 p-2.5">
           <QuickAddProducts addStructuredItems={addStructuredItems} productMemory={productMemory} compact autoFocus />
+        </div>
+      )}
+
+      {showExtraConsumption && (
+        <div className="mb-3 rounded-xl border border-rust/40 bg-rust/5 p-2.5">
+          <ExtraConsumption items={items} consumeAmounts={consumeAmounts} />
         </div>
       )}
 

@@ -103,6 +103,7 @@ export function ComidasTab({
                   applyReview={applyInventoryReview}
                   productMemory={productMemory}
                   addStructuredItems={addStructuredItems}
+                  consumeAmounts={consumeAmounts}
                 />
               )}
               {blockId === "sugerencias" && (
