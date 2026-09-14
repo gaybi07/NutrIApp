@@ -5,6 +5,8 @@ import { ExerciseEntry, Routine, TrainingSchedule, Weekday, WEEKDAY_LABELS } fro
 import { clampNumber } from "@/lib/inputLimits";
 import { SECTION_HELP } from "@/lib/helpText";
 import { Collapsible } from "@/components/Collapsible";
+import { ExercisePicker } from "@/components/ExercisePicker";
+import { LibraryExercise } from "@/lib/exerciseLibrary";
 
 const ORDERED_WEEKDAYS: Weekday[] = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
 
@@ -29,6 +31,9 @@ export function RoutineManager({
 }) {
   const [pickerDay, setPickerDay] = useState<Weekday | null>(null);
   const [editing, setEditing] = useState<Routine | null>(null);
+  // -1 = agregar un ejercicio nuevo elegido de la biblioteca; un índice
+  // puntual = reemplazar el nombre de esa fila por uno de la biblioteca.
+  const [libraryTarget, setLibraryTarget] = useState<number | null>(null);
 
   const assignDay = (day: Weekday, routineId: string | null) => {
     const next = { ...schedule };
@@ -82,6 +87,16 @@ export function RoutineManager({
   const removeExercise = (index: number) => {
     if (!editing) return;
     setEditing({ ...editing, ejercicios: editing.ejercicios.filter((_, i) => i !== index) });
+  };
+
+  const pickFromLibrary = (exercise: LibraryExercise) => {
+    if (!editing || libraryTarget === null) return;
+    if (libraryTarget === -1) {
+      setEditing({ ...editing, ejercicios: [...editing.ejercicios, { ...emptyExercise(), nombre: exercise.name }] });
+    } else {
+      updateExercise(libraryTarget, { nombre: exercise.name });
+    }
+    setLibraryTarget(null);
   };
 
   return (
@@ -232,7 +247,15 @@ export function RoutineManager({
                       onChange={(event) => updateExercise(i, { nombre: event.target.value })}
                       className="flex-1"
                     />
-                    <button type="button" onClick={() => removeExercise(i)} className="ml-2 shrink-0 font-mono text-[11px] text-rust" aria-label="Quitar ejercicio">
+                    <button
+                      type="button"
+                      onClick={() => setLibraryTarget(i)}
+                      className="ml-2 shrink-0 rounded-md border border-border px-1.5 py-1 text-[12px]"
+                      aria-label="Buscar en la biblioteca de ejercicios"
+                    >
+                      🔍
+                    </button>
+                    <button type="button" onClick={() => removeExercise(i)} className="ml-1 shrink-0 font-mono text-[11px] text-rust" aria-label="Quitar ejercicio">
                       ×
                     </button>
                   </div>
@@ -275,13 +298,22 @@ export function RoutineManager({
                 </div>
               ))}
             </div>
-            <button
-              type="button"
-              onClick={addExercise}
-              className="mt-2 w-full rounded-lg border border-dashed border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted"
-            >
-              + Agregar ejercicio
-            </button>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={addExercise}
+                className="rounded-lg border border-dashed border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted"
+              >
+                + Agregar ejercicio
+              </button>
+              <button
+                type="button"
+                onClick={() => setLibraryTarget(-1)}
+                className="rounded-lg border border-dashed border-gold/50 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold"
+              >
+                🔍 Desde biblioteca
+              </button>
+            </div>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -301,6 +333,8 @@ export function RoutineManager({
           </div>
         </div>
       )}
+
+      {libraryTarget !== null && <ExercisePicker onSelect={pickFromLibrary} onClose={() => setLibraryTarget(null)} />}
     </div>
   );
 }
