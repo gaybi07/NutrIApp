@@ -265,7 +265,12 @@ export default function Home() {
           <DndContext sensors={inicioDrag.sensors} collisionDetection={inicioDrag.collisionDetection} onDragStart={inicioDrag.handleDragStart} onDragEnd={inicioDrag.handleDragEnd} onDragCancel={inicioDrag.handleDragCancel}>
             <SortableContext items={inicioVisible} strategy={verticalListSortingStrategy}>
               {inicioVisible.map((blockId) => (
-                <SortableSection key={blockId} id={blockId} onHide={() => hideInicioBlock(blockId)}>
+                <SortableSection
+                  key={blockId}
+                  id={blockId}
+                  onHide={() => hideInicioBlock(blockId)}
+                  className={blockId === "semana" ? "xl:col-span-2 2xl:col-span-3" : undefined}
+                >
                   {blockId === "hoy" && (
                     <TodayCard
                       entry={todayEntry}
@@ -276,49 +281,47 @@ export default function Home() {
                     />
                   )}
                   {blockId === "comidas" && <TodayMealsBreakdown entry={todayEntry} onUpsert={upsertDay} />}
-                  {blockId === "semanaNav" && (
-                    <div className="mb-4 rounded-2xl border border-border/80 bg-surface/70 px-3 py-2.5 shadow-[0_0_0_1px_rgba(58,54,47,0.4)]">
-                      <div className="mb-1.5 flex items-center font-mono text-[10px] uppercase tracking-[0.22em] text-gold">
-                        Semana del
-                        <InfoHint text={SECTION_HELP.semana} label="Qué es la sección Semana" />
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <h1 className="font-display font-semibold text-3xl leading-none -tracking-[0.04em]">
-                          {monday.getDate()} {MONTHS[monday.getMonth()]}
-                        </h1>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => setWeekOffset((w) => w - 1)}
-                            className="bg-surfaceAlt border border-border rounded-xl w-9 h-9 text-lg text-text hover:border-gold/60 transition-colors"
-                          >
-                            ‹
-                          </button>
-                          <button
-                            onClick={() => setWeekOffset((w) => w + 1)}
-                            className="bg-surfaceAlt border border-border rounded-xl w-9 h-9 text-lg text-text hover:border-gold/60 transition-colors"
-                          >
-                            ›
-                          </button>
+                  {blockId === "semana" && (
+                    <div className="rounded-2xl border border-border/80 bg-surface/40 p-3">
+                      <div className="mb-3">
+                        <div className="mb-1.5 flex items-center font-mono text-[10px] uppercase tracking-[0.22em] text-gold">
+                          Semana del
+                          <InfoHint text={SECTION_HELP.semana} label="Qué es la sección Semana" />
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <h1 className="font-display font-semibold text-3xl leading-none -tracking-[0.04em]">
+                            {monday.getDate()} {MONTHS[monday.getMonth()]}
+                          </h1>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setWeekOffset((w) => w - 1)}
+                              className="bg-surfaceAlt border border-border rounded-xl w-9 h-9 text-lg text-text hover:border-gold/60 transition-colors"
+                            >
+                              ‹
+                            </button>
+                            <button
+                              onClick={() => setWeekOffset((w) => w + 1)}
+                              className="bg-surfaceAlt border border-border rounded-xl w-9 h-9 text-lg text-text hover:border-gold/60 transition-colors"
+                            >
+                              ›
+                            </button>
+                          </div>
+                        </div>
+                        <div className="mt-2 font-mono text-[11px] tracking-[0.12em] uppercase text-textMuted">
+                          {monday.getDate()} {MONTHS[monday.getMonth()]} — {sunday.getDate()} {MONTHS[sunday.getMonth()]}
                         </div>
                       </div>
-                      <div className="mt-2 mb-3 font-mono text-[11px] tracking-[0.12em] uppercase text-textMuted">
-                        {monday.getDate()} {MONTHS[monday.getMonth()]} — {sunday.getDate()} {MONTHS[sunday.getMonth()]}
-                      </div>
-                    </div>
-                  )}
-                  {blockId === "comidasSemana" && (
-                    <WeekMealsCard weekDates={weekDates} weekDays={weekDays} onUpsert={upsertDay} />
-                  )}
-                  {blockId === "pesoSemana" && (
-                    <WeeklyWeight
-                      weekKey={fmtDate(monday)}
-                      weights={settings.weeklyWeights || {}}
-                      goalMode={settings.calculatorProfile?.modo}
-                      onSave={saveWeeklyWeight}
-                    />
-                  )}
-                  {blockId === "indicadores" && (
-                    <>
+
+                      {/* Orden fijo a propósito -- estas sub-secciones son parte
+                          de "Semana", no bloques sueltos: no se pueden arrastrar
+                          por separado ni sacar del grupo. */}
+                      <WeeklyWeight
+                        weekKey={fmtDate(monday)}
+                        weights={settings.weeklyWeights || {}}
+                        goalMode={settings.calculatorProfile?.modo}
+                        onSave={saveWeeklyWeight}
+                      />
+
                       <SummaryCards summary={summary} goal={summary.avgGoal || settings.goal} weight={settings.weeklyWeights?.[fmtDate(monday)]} />
 
                       <WeeklyChart
@@ -328,17 +331,18 @@ export default function Home() {
                         avgGoal={summary.avgGoal || settings.goal}
                         avgGasto={settings.tdeeFallback}
                       />
-                    </>
-                  )}
-                  {blockId === "tablaSemana" && (
-                    <Ledger
-                      weekDates={weekDates}
-                      weekDays={weekDays}
-                      goal={summary.avgGoal || settings.goal}
-                      tdeeFallback={settings.tdeeFallback}
-                      onUpsert={upsertDay}
-                      variant="actividad"
-                    />
+
+                      <WeekMealsCard weekDates={weekDates} weekDays={weekDays} onUpsert={upsertDay} />
+
+                      <Ledger
+                        weekDates={weekDates}
+                        weekDays={weekDays}
+                        goal={summary.avgGoal || settings.goal}
+                        tdeeFallback={settings.tdeeFallback}
+                        onUpsert={upsertDay}
+                        variant="actividad"
+                      />
+                    </div>
                   )}
                 </SortableSection>
               ))}

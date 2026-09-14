@@ -23,7 +23,19 @@ import { CSS } from "@dnd-kit/utilities";
  * sección que no interesa — desaparece de la pantalla y se puede
  * volver a prender desde Preferencias > Secciones.
  */
-export function SortableSection({ id, onHide, children }: { id: string; onHide?: () => void; children: ReactNode }) {
+export function SortableSection({
+  id,
+  onHide,
+  children,
+  className,
+}: {
+  id: string;
+  onHide?: () => void;
+  children: ReactNode;
+  /** Clases extra para el wrapper -- ej. hacer que un bloque ocupe más
+   * columnas de la grilla de Inicio en PC (col-span-N). */
+  className?: string;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
   const style = {
@@ -36,7 +48,7 @@ export function SortableSection({ id, onHide, children }: { id: string; onHide?:
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="relative break-inside-avoid">
+    <div ref={setNodeRef} style={style} className={`relative break-inside-avoid ${className || ""}`}>
       <div className="absolute -top-1.5 -right-1.5 z-10 flex items-center gap-1">
         {onHide && (
           <button

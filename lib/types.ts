@@ -173,18 +173,18 @@ export const FONT_SIZE_OPTIONS: { value: FontSize; label: string; description: s
  * arrastrándolos (mantener apretado en cualquier parte del bloque, como
  * mover íconos en la pantalla de inicio del celular) — si no personalizó
  * nada todavía, se usa el orden por default de cada solapa. */
-export type InicioBlockId = "hoy" | "comidas" | "semanaNav" | "comidasSemana" | "pesoSemana" | "indicadores" | "tablaSemana";
-export const DEFAULT_INICIO_ORDER: InicioBlockId[] = [
-  "hoy", "comidas", "semanaNav", "comidasSemana", "pesoSemana", "indicadores", "tablaSemana",
-];
+// "semana" agrupa fecha/navegación, peso, indicadores, comidas por día y la
+// tabla en un solo bloque fijo -- antes eran 5 bloques sueltos, pero se podían
+// arrastrar y mezclar libremente con Hoy/Editar comidas, cosa que no tenía
+// mucho sentido (son todos parte de "la semana"). Quedan agrupados y en
+// orden fijo entre sí; el grupo entero sí se puede mover/ocultar como una
+// unidad, igual que Hoy o Editar comidas.
+export type InicioBlockId = "hoy" | "comidas" | "semana";
+export const DEFAULT_INICIO_ORDER: InicioBlockId[] = ["hoy", "comidas", "semana"];
 export const INICIO_BLOCK_LABELS: Record<InicioBlockId, string> = {
   hoy: "Hoy",
   comidas: "Editar comidas de hoy",
-  semanaNav: "Semana del (fecha)",
-  comidasSemana: "Comidas por día de la semana",
-  pesoSemana: "Peso de esta semana",
-  indicadores: "Indicadores",
-  tablaSemana: "Tabla de la semana",
+  semana: "Semana (peso, indicadores, comidas por día y tabla)",
 };
 
 /** La solapa Comidas tiene, a su vez, dos sub-solapas (ver ComidasSubTab):
