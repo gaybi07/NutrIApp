@@ -46,7 +46,6 @@ export function MacrosTab({
   weekDates,
   weekDays,
   onLogMeal,
-  days,
   weightKg,
   tdeeFallback,
   onUpsert,
@@ -61,7 +60,6 @@ export function MacrosTab({
   weekDates: string[];
   weekDays: (DayEntry | null)[];
   onLogMeal: () => void;
-  days: DayEntry[];
   weightKg: number;
   tdeeFallback: number;
   onUpsert: (entry: DayEntry) => void;
@@ -139,7 +137,12 @@ export function MacrosTab({
       </Collapsible>
   );
 
-  const rankingBlock = <RankingCard days={days} weightKg={weightKg} />;
+  // RankingCard dice "Semana" en su eyebrow -- tiene que rankear los días
+  // de la semana seleccionada (weekDays), no el historial completo (days)
+  // como pasaba antes, que hacía que cambiar de semana con el selector no
+  // tuviera ningún efecto visible en esta tarjeta.
+  const weekDaysPresent = weekDays.filter((d): d is DayEntry => d !== null);
+  const rankingBlock = <RankingCard days={weekDaysPresent} weightKg={weightKg} />;
 
   const repartoBlock = (
       <Collapsible eyebrow="Hoy" title="Reparto de macros">

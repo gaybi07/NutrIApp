@@ -272,7 +272,6 @@ export default function Home() {
           weekDates={weekDates}
           weekDays={weekDays}
           onLogMeal={() => setPanel("ai")}
-          days={days}
           weightKg={currentWeightKg}
           tdeeFallback={settings.tdeeFallback}
           onUpsert={upsertDay}
