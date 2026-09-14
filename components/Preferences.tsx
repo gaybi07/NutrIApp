@@ -30,6 +30,7 @@ const TAB_LABELS: Record<MainTab, string> = {
   comidas: "Comidas",
   macros: "Macros",
   actividad: "Entrenamientos",
+  gastos: "Gastos",
 };
 
 /** Elegir el tema (oscuro/claro/neón) — separado del resto de Preferencias

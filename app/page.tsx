@@ -23,6 +23,7 @@ import { DataImport } from "@/components/DataImport";
 import { MealMemoryImport } from "@/components/MealMemoryImport";
 import { TodayCard } from "@/components/TodayCard";
 import { TodayMealsBreakdown } from "@/components/TodayMealsBreakdown";
+import { PurchaseHistoryCard } from "@/components/PurchaseHistoryCard";
 import { WeekMealsCard } from "@/components/WeekMealsCard";
 import { TrainingEntryForm } from "@/components/TrainingEntryForm";
 import { SleepEntryForm } from "@/components/SleepEntryForm";
@@ -269,6 +270,8 @@ export default function Home() {
         />
       )}
 
+      {activeTab === "gastos" && <PurchaseHistoryCard purchases={purchases} removePurchase={removePurchase} />}
+
       {activeTab === "inicio" && (
       <div className="mx-auto max-w-lg lg:max-w-6xl 2xl:max-w-[1800px]">
         {/* En pantallas grandes los bloques se acomodan solos en una grilla
@@ -395,9 +398,7 @@ export default function Home() {
           joinHousehold={household.join}
           leaveHousehold={household.leave}
           getInviteCode={household.getInviteCode}
-          purchases={purchases}
           addPurchases={addPurchases}
-          removePurchase={removePurchase}
         />
       )}
 

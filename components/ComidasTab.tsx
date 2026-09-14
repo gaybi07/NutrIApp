@@ -25,7 +25,6 @@ import { RecipePlanner } from "@/components/RecipePlanner";
 import { CommonMealsCard } from "@/components/CommonMealsCard";
 import { AlacenaCard } from "@/components/AlacenaCard";
 import { HouseholdCard } from "@/components/HouseholdCard";
-import { PurchaseHistoryCard } from "@/components/PurchaseHistoryCard";
 import { countPlannedMeals } from "@/components/WeekPlanner";
 import { ShoppingLog } from "@/components/ShoppingLog";
 
@@ -59,9 +58,7 @@ export function ComidasTab({
   joinHousehold,
   leaveHousehold,
   getInviteCode,
-  purchases,
   addPurchases,
-  removePurchase,
 }: {
   items: InventoryItem[];
   consumeAmounts: (amounts: Array<{ id: string; quantity: number }>) => void;
@@ -87,9 +84,7 @@ export function ComidasTab({
   joinHousehold: (code: string) => Promise<void>;
   leaveHousehold: () => Promise<void>;
   getInviteCode: () => Promise<string | null>;
-  purchases: PurchaseRecord[];
   addPurchases: (entries: Array<Omit<PurchaseRecord, "id">>) => void;
-  removePurchase: (id: string) => void;
 }) {
   const [subTab, setSubTab] = useState<ComidasSubTab>("alacena");
   const blockOrder = resolveOrder(order, DEFAULT_COMIDAS_ORDER);
@@ -158,7 +153,6 @@ export function ComidasTab({
               {blockId === "compras" && (
                 <ShoppingLog addStructuredItems={addStructuredItems} addPurchases={addPurchases} productMemory={productMemory} />
               )}
-              {blockId === "historial" && <PurchaseHistoryCard purchases={purchases} removePurchase={removePurchase} />}
               {blockId === "planificador" && (
                 <button
                   type="button"

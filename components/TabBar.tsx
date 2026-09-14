@@ -9,6 +9,7 @@ const TABS: { id: MainTab; label: string }[] = [
   { id: "comidas", label: "Comidas" },
   { id: "macros", label: "Macros" },
   { id: "actividad", label: "Entreno" },
+  { id: "gastos", label: "Gastos" },
 ];
 
 export function TabBar({

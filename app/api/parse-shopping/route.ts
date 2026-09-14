@@ -32,6 +32,42 @@ export type ParsedShoppingItem = {
   precio?: number | null;
 };
 
+function extractJson(text: string) {
+  const clean = text.replace(/```json|```/g, "").trim();
+  const start = clean.indexOf("{");
+  const end = clean.lastIndexOf("}");
+  if (start < 0 || end < start) throw new Error("La IA no devolvió un JSON válido");
+  return JSON.parse(clean.slice(start, end + 1));
+}
+
+/** Mismo ticket (texto y/o foto), pero contra Claude en vez de Gemini —
+ * respaldo cuando Gemini está saturado. Un ticket real puede traer 20-30
+ * líneas, por eso max_tokens bastante más alto que en parse-meal (que
+ * describe una sola comida). */
+async function parseWithAnthropic(text: string | undefined, imageDataUrl: string | undefined, apiKey: string) {
+  const { default: Anthropic } = await import("@anthropic-ai/sdk");
+  const anthropic = new Anthropic({ apiKey });
+
+  const content: Array<{ type: "text"; text: string } | { type: "image"; source: { type: "base64"; media_type: "image/jpeg" | "image/png" | "image/gif" | "image/webp"; data: string } }> = [];
+  if (imageDataUrl) {
+    const match = imageDataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.*)$/);
+    if (!match) throw new Error("La imagen no tiene un formato válido");
+    content.push({ type: "image", source: { type: "base64", media_type: match[1] as "image/jpeg" | "image/png" | "image/gif" | "image/webp", data: match[2] } });
+  }
+  content.push({ type: "text", text: text ? `Texto del ticket: ${text}` : "Leé el ticket y extraé solo los productos comprados." });
+
+  const msg = await anthropic.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 4096,
+    system: SYSTEM_PROMPT,
+    messages: [{ role: "user", content }],
+  });
+
+  const textBlock = msg.content.find((b) => b.type === "text");
+  if (!textBlock || textBlock.type !== "text") throw new Error("Respuesta vacía del modelo");
+  return extractJson(textBlock.text);
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -41,21 +77,43 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No hay datos del ticket para leer" }, { status: 400 });
     }
 
-    if (!process.env.GEMINI_API_KEY) {
-      return NextResponse.json({ error: "Falta GEMINI_API_KEY para reconocer tickets" }, { status: 503 });
+    let parsed: { items?: ParsedShoppingItem[] } | null = null;
+
+    // Gemini primero (gratis); si está saturado o falla y hay una key de
+    // Anthropic configurada, cae ahí en vez de fallar directo -- dos
+    // proveedores distintos como respaldo mutuo (mismo patrón que parse-meal).
+    if (process.env.GEMINI_API_KEY) {
+      try {
+        const parts: Array<{ text?: string; inline_data?: { mime_type: string; data: string } }> = [
+          { text: text ? `Texto del ticket: ${text}` : "Leé el ticket y extraé solo los productos comprados." },
+        ];
+        if (imageDataUrl) {
+          const match = imageDataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.*)$/);
+          if (!match) throw new Error("La imagen no tiene un formato válido");
+          parts.push({ inline_data: { mime_type: match[1], data: match[2] } });
+        }
+        parsed = (await callGeminiJson(SYSTEM_PROMPT, parts)) as { items?: ParsedShoppingItem[] };
+      } catch (geminiError) {
+        if (!process.env.ANTHROPIC_API_KEY) {
+          if (geminiError instanceof GeminiRateLimitError) {
+            return NextResponse.json(
+              { error: "La IA está saturada — parece que hay mucha gente usándola a la vez. Esperá un minuto y probá de nuevo." },
+              { status: 429 }
+            );
+          }
+          throw geminiError;
+        }
+        console.error("Gemini falló leyendo el ticket, cayendo a Anthropic:", geminiError);
+      }
     }
 
-    const parts: Array<{ text?: string; inline_data?: { mime_type: string; data: string } }> = [
-      { text: text ? `Texto del ticket: ${text}` : "Leé el ticket y extraé solo los productos comprados." },
-    ];
-
-    if (imageDataUrl) {
-      const match = imageDataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.*)$/);
-      if (!match) throw new Error("La imagen no tiene un formato válido");
-      parts.push({ inline_data: { mime_type: match[1], data: match[2] } });
+    if (!parsed) {
+      if (!process.env.ANTHROPIC_API_KEY) {
+        return NextResponse.json({ error: "Configurá GEMINI_API_KEY o ANTHROPIC_API_KEY en .env.local" }, { status: 503 });
+      }
+      parsed = (await parseWithAnthropic(text, imageDataUrl, process.env.ANTHROPIC_API_KEY)) as { items?: ParsedShoppingItem[] };
     }
 
-    const parsed = (await callGeminiJson(SYSTEM_PROMPT, parts)) as { items?: ParsedShoppingItem[] };
     if (!parsed || !Array.isArray(parsed.items)) {
       throw new Error("La IA no devolvió una lista de items válida");
     }

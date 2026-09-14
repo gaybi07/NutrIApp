@@ -153,11 +153,11 @@ export interface DayEntry {
 
 export type WeekPlan = Record<string, Partial<Record<MealKey, string>>>; // fecha -> comida -> título de receta
 
-/** Las 3 solapas de arriba que se pueden prender/apagar desde Preferencias — "inicio" no está acá porque siempre está fija. */
-export type MainTab = "inicio" | "comidas" | "macros" | "actividad";
+/** Las solapas de arriba que se pueden prender/apagar desde Preferencias — "inicio" no está acá porque siempre está fija. */
+export type MainTab = "inicio" | "comidas" | "macros" | "actividad" | "gastos";
 
-export const OPTIONAL_TABS: MainTab[] = ["macros", "comidas", "actividad"];
-export const DEFAULT_ENABLED_TABS: MainTab[] = ["inicio", "comidas", "macros", "actividad"];
+export const OPTIONAL_TABS: MainTab[] = ["macros", "comidas", "actividad", "gastos"];
+export const DEFAULT_ENABLED_TABS: MainTab[] = ["inicio", "comidas", "macros", "actividad", "gastos"];
 
 export type ThemeMode = "claro" | "oscuro" | "neon";
 
@@ -191,21 +191,20 @@ export const INICIO_BLOCK_LABELS: Record<InicioBlockId, string> = {
  * "Alacena" (inventario + cómo llenarlo, incluyendo el ticket + qué
  * cocinar con lo que hay) y "Planificado" (planificador semanal). Cada
  * bloque pertenece a una sola sub-solapa, ver COMIDAS_SUBTAB_BLOCKS. */
-export type ComidasBlockId = "hogar" | "alacena" | "sugerencias" | "comunes" | "compras" | "historial" | "planificador";
-export const DEFAULT_COMIDAS_ORDER: ComidasBlockId[] = ["hogar", "alacena", "sugerencias", "comunes", "compras", "historial", "planificador"];
+export type ComidasBlockId = "hogar" | "alacena" | "sugerencias" | "comunes" | "compras" | "planificador";
+export const DEFAULT_COMIDAS_ORDER: ComidasBlockId[] = ["hogar", "alacena", "sugerencias", "comunes", "compras", "planificador"];
 export const COMIDAS_BLOCK_LABELS: Record<ComidasBlockId, string> = {
   hogar: "Grupo compartido",
   alacena: "Alacena",
   sugerencias: "Sugerencias de recetas",
   comunes: "Comidas más comunes",
   compras: "Registro de compras",
-  historial: "Historial de compras",
   planificador: "Planificador semanal",
 };
 
 export type ComidasSubTab = "alacena" | "planificado";
 export const COMIDAS_SUBTAB_BLOCKS: Record<ComidasSubTab, ComidasBlockId[]> = {
-  alacena: ["hogar", "alacena", "sugerencias", "comunes", "compras", "historial"],
+  alacena: ["hogar", "alacena", "sugerencias", "comunes", "compras"],
   planificado: ["planificador"],
 };
 
