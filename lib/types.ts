@@ -191,9 +191,10 @@ export const INICIO_BLOCK_LABELS: Record<InicioBlockId, string> = {
  * "Alacena" (inventario + cómo llenarlo, incluyendo el ticket + qué
  * cocinar con lo que hay) y "Planificado" (planificador semanal). Cada
  * bloque pertenece a una sola sub-solapa, ver COMIDAS_SUBTAB_BLOCKS. */
-export type ComidasBlockId = "alacena" | "sugerencias" | "comunes" | "compras" | "planificador";
-export const DEFAULT_COMIDAS_ORDER: ComidasBlockId[] = ["alacena", "sugerencias", "comunes", "compras", "planificador"];
+export type ComidasBlockId = "hogar" | "alacena" | "sugerencias" | "comunes" | "compras" | "planificador";
+export const DEFAULT_COMIDAS_ORDER: ComidasBlockId[] = ["hogar", "alacena", "sugerencias", "comunes", "compras", "planificador"];
 export const COMIDAS_BLOCK_LABELS: Record<ComidasBlockId, string> = {
+  hogar: "Grupo compartido",
   alacena: "Alacena",
   sugerencias: "Sugerencias de recetas",
   comunes: "Comidas más comunes",
@@ -203,7 +204,7 @@ export const COMIDAS_BLOCK_LABELS: Record<ComidasBlockId, string> = {
 
 export type ComidasSubTab = "alacena" | "planificado";
 export const COMIDAS_SUBTAB_BLOCKS: Record<ComidasSubTab, ComidasBlockId[]> = {
-  alacena: ["alacena", "sugerencias", "comunes", "compras"],
+  alacena: ["hogar", "alacena", "sugerencias", "comunes", "compras"],
   planificado: ["planificador"],
 };
 

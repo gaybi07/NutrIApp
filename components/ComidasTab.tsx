@@ -17,11 +17,13 @@ import {
   mergeGroupOrder,
 } from "@/lib/types";
 import { ProductMemoryApi } from "@/lib/useProductMemory";
+import { HouseholdInfo } from "@/lib/useHousehold";
 import { useSectionOrder } from "@/lib/useSectionOrder";
 import { SortableSection } from "@/components/SortableSection";
 import { RecipePlanner } from "@/components/RecipePlanner";
 import { CommonMealsCard } from "@/components/CommonMealsCard";
 import { AlacenaCard } from "@/components/AlacenaCard";
+import { HouseholdCard } from "@/components/HouseholdCard";
 import { countPlannedMeals } from "@/components/WeekPlanner";
 import { ShoppingLog } from "@/components/ShoppingLog";
 
@@ -47,6 +49,14 @@ export function ComidasTab({
   onReorder,
   hidden,
   onHide,
+  household,
+  householdLoaded,
+  householdStatus,
+  householdBusy,
+  createHousehold,
+  joinHousehold,
+  leaveHousehold,
+  getInviteCode,
 }: {
   items: InventoryItem[];
   consumeAmounts: (amounts: Array<{ id: string; quantity: number }>) => void;
@@ -64,6 +74,14 @@ export function ComidasTab({
   onReorder: (next: ComidasBlockId[]) => void;
   hidden?: ComidasBlockId[];
   onHide: (id: ComidasBlockId) => void;
+  household: HouseholdInfo | null;
+  householdLoaded: boolean;
+  householdStatus: string;
+  householdBusy: boolean;
+  createHousehold: (name: string, importItems: InventoryItem[]) => Promise<void>;
+  joinHousehold: (code: string) => Promise<void>;
+  leaveHousehold: () => Promise<void>;
+  getInviteCode: () => Promise<string | null>;
 }) {
   const [subTab, setSubTab] = useState<ComidasSubTab>("alacena");
   const blockOrder = resolveOrder(order, DEFAULT_COMIDAS_ORDER);
@@ -95,6 +113,19 @@ export function ComidasTab({
         <SortableContext items={visibleOrder} strategy={verticalListSortingStrategy}>
           {visibleOrder.map((blockId) => (
             <SortableSection key={blockId} id={blockId} onHide={() => onHide(blockId)}>
+              {blockId === "hogar" && (
+                <HouseholdCard
+                  household={household}
+                  loaded={householdLoaded}
+                  status={householdStatus}
+                  busy={householdBusy}
+                  localItems={items}
+                  create={createHousehold}
+                  join={joinHousehold}
+                  leave={leaveHousehold}
+                  getInviteCode={getInviteCode}
+                />
+              )}
               {blockId === "alacena" && (
                 <AlacenaCard
                   items={items}

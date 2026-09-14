@@ -33,6 +33,8 @@ import { TipPopup } from "@/components/TipPopup";
 import { isSupabaseConfigured } from "@/lib/supabase/browser";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 import { useInventory } from "@/lib/useInventory";
+import { useSharedInventory } from "@/lib/useSharedInventory";
+import { useHousehold } from "@/lib/useHousehold";
 import { useProductMemory } from "@/lib/useProductMemory";
 import { emptyDay, MealKey, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER, resolveOrder } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
@@ -42,6 +44,16 @@ const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "
 
 export default function Home() {
   const { days, settings, loaded, syncError, upsertDay, saveDays, saveSettings } = useLocalDays();
+  const [authenticated, setAuthenticated] = useState(!isSupabaseConfigured);
+  const handleAuthChange = useCallback((value: boolean) => setAuthenticated(value), []);
+
+  const localInventory = useInventory();
+  const household = useHousehold(authenticated);
+  const sharedInventory = useSharedInventory(household.household?.id ?? null);
+  // La alacena "de verdad" es la local hasta que te sumás a un grupo -- a
+  // partir de ahí, toda la app (Alacena, Compras, Desde Alacena, etc.) lee
+  // y escribe la compartida en su lugar, sin que esos componentes sepan
+  // cuál de las dos es.
   const {
     items: inventory,
     addStructuredItems,
@@ -51,7 +63,7 @@ export default function Home() {
     consumeItem,
     consumeAmounts,
     persist: replaceInventory,
-  } = useInventory();
+  } = household.household ? sharedInventory : localInventory;
   const productMemory = useProductMemory();
   const [weekOffset, setWeekOffset] = useState(0);
   const [activeTab, setActiveTab] = useState<MainTab>("inicio");
@@ -60,8 +72,6 @@ export default function Home() {
     | "tema" | "tamano-letra" | "solapas" | "herramientas" | "secciones"
     | null
   >(null);
-  const [authenticated, setAuthenticated] = useState(!isSupabaseConfigured);
-  const handleAuthChange = useCallback((value: boolean) => setAuthenticated(value), []);
   useEscapeKey(() => setPanel(null), panel !== null);
 
   useEffect(() => {
@@ -370,6 +380,14 @@ export default function Home() {
           onReorder={(comidasOrder) => saveSettings({ ...settings, comidasOrder })}
           hidden={settings.comidasHidden}
           onHide={(id) => saveSettings({ ...settings, comidasHidden: [...(settings.comidasHidden || []), id] })}
+          household={household.household}
+          householdLoaded={household.loaded}
+          householdStatus={household.status}
+          householdBusy={household.busy}
+          createHousehold={household.create}
+          joinHousehold={household.join}
+          leaveHousehold={household.leave}
+          getInviteCode={household.getInviteCode}
         />
       )}
 

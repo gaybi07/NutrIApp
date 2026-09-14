@@ -5,7 +5,7 @@ import { InventoryCategory, InventoryItem, InventoryNutrition } from "./types";
 
 const INVENTORY_KEY = "registro:inventory:v1";
 
-function inventoryKey(name: string) {
+export function inventoryKey(name: string) {
   const normalized = name
     .toLowerCase()
     .normalize("NFD")
@@ -43,7 +43,7 @@ const BOTTLE_ML = 1000;
  * la IA, que ya clasifica ella misma) — heurística simple por palabras
  * clave, así todo lo de la alacena queda filtrable por categoría sin
  * excepción, venga de donde venga. */
-function defaultCategoryForName(name: string): InventoryCategory {
+export function defaultCategoryForName(name: string): InventoryCategory {
   const key = inventoryKey(name);
   if (/(pollo|carne|cerdo|vacuno|milanesa|pescado|atun|jamon|salchicha|chorizo|pechuga|bife|asado|hamburgues|panceta|huevo)/.test(key)) return "proteina_animal";
   if (/(tofu|seitan|soja|lenteja|garbanzo|poroto|hummus)/.test(key)) return "proteina_vegetal";
