@@ -212,6 +212,61 @@ html[data-font-size="grande"] .text-\[15px\] { font-size: 19px; }
   letter-spacing: 0.03em;
 }
 
+/* Adornos de Olimpo: un laurel chico antes del eyebrow y una línea fina
+   bajo el título de cada tarjeta (Collapsible, que usa casi toda la app --
+   así el adorno aparece en todos lados de una sola vez). A propósito no
+   se toca Oscuro/Claro, que quedan simples como están. */
+[data-theme="olimpo"] .collapsible-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+[data-theme="olimpo"] .collapsible-eyebrow::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  flex: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3c3 2 4 5 3 9-1 4-4 6-3 9' fill='none' stroke='%239c6b1f' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M12 3c-3 2-4 5-3 9 1 4 4 6 3 9' fill='none' stroke='%239c6b1f' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+[data-theme="olimpo"] .collapsible-title-text {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 3px;
+}
+[data-theme="olimpo"] .collapsible-title-text::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: -6px;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, rgb(var(--color-accent)), transparent 75%);
+}
+
+/* Adornos de Neón: puntito brillante antes del eyebrow, con el parpadeo
+   sutil de un cartel de neón -- también solo en Collapsible, y solo acá. */
+[data-theme="neon"] .collapsible-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+[data-theme="neon"] .collapsible-eyebrow::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 4px currentColor, 0 0 10px currentColor;
+  animation: neon-flicker 3.2s ease-in-out infinite;
+}
+@keyframes neon-flicker {
+  0%, 18%, 22%, 62%, 66%, 100% { opacity: 1; }
+  20%, 64% { opacity: 0.55; }
+}
+
 [data-theme="neon"] input,
 [data-theme="neon"] select,
 [data-theme="neon"] textarea {

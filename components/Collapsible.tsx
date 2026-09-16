@@ -59,9 +59,9 @@ export function Collapsible({
         className="flex w-full cursor-pointer items-center justify-between gap-2 p-3 text-left"
       >
         <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">{eyebrow}</div>
+          <div className="collapsible-eyebrow font-mono text-[10px] uppercase tracking-[0.18em] text-gold">{eyebrow}</div>
           <div className="flex items-center font-display text-xl leading-none -tracking-[0.04em]">
-            {title}
+            <span className="collapsible-title-text">{title}</span>
             {info && <InfoHint text={info} label={`Qué es ${title}`} />}
           </div>
         </div>
