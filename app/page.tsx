@@ -420,6 +420,8 @@ export default function Home() {
           onReorder={(comidasOrder) => saveSettings({ ...settings, comidasOrder })}
           hidden={settings.comidasHidden}
           onHide={(id) => saveSettings({ ...settings, comidasHidden: [...(settings.comidasHidden || []), id] })}
+          aiReviewLockedUntil={settings.aiReviewLockedUntil}
+          onAiReviewLockedUntilChange={(aiReviewLockedUntil) => saveSettings({ ...settings, aiReviewLockedUntil })}
           household={household.household}
           householdLoaded={household.loaded}
           householdStatus={household.status}

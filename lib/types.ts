@@ -322,6 +322,7 @@ export interface Settings {
   comidasHidden?: ComidasBlockId[]; // ídem, solapa Comidas
   macrosHidden?: MacrosBlockId[]; // ídem, solapa Macros
   actividadHidden?: ActividadBlockId[]; // ídem, solapa Entrenamientos
+  aiReviewLockedUntil?: number; // timestamp (ms) hasta el que "Revisar con IA" de la Alacena queda bloqueado, para no recargar la API de IA
 }
 
 export const MEAL_LABELS: Record<MealKey, string> = {

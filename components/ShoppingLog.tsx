@@ -9,6 +9,7 @@ import { useSpeechToText } from "@/lib/useSpeechToText";
 import { InventoryCategory, InventoryItem, InventoryNutrition, PurchaseRecord, INVENTORY_CATEGORY_LABELS } from "@/lib/types";
 import { parseInventoryText } from "@/lib/useInventory";
 import { ProductMemoryApi } from "@/lib/useProductMemory";
+import { estimateNutritionFromOff } from "@/lib/offAverage";
 
 type AiShoppingItem = {
   name: string;
@@ -34,6 +35,7 @@ export function ShoppingLog({
 }) {
   const [raw, setRaw] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resolving, setResolving] = useState(false);
   const [status, setStatus] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   // Lo que devolvió la IA, pendiente de que el usuario lo revise y confirme
@@ -63,7 +65,7 @@ export function ShoppingLog({
     );
   }, [raw]);
 
-  const parseFromText = () => {
+  const parseFromText = async () => {
     if (!raw.trim()) {
       setStatus("Escribí o dictá los productos, o pegá el ticket primero.");
       return;
@@ -98,6 +100,23 @@ export function ShoppingLog({
         ready.push({ name: entry.name, quantity: entry.quantity, unit, category: mem?.category, nutritionPer100g: mem?.nutritionPer100g });
       }
     });
+
+    // Igual que en el "+" rápido de Alacena: lo que no tiene nutrición
+    // todavía, probamos resolverlo solo promediando Open Food Facts antes
+    // de sumarlo (ver lib/offAverage.ts). Si no hay acuerdo, queda sin
+    // cargar como hasta ahora.
+    const sinNutricion = ready.filter((item) => !item.nutritionPer100g);
+    if (sinNutricion.length > 0) {
+      setResolving(true);
+      const estimaciones = await Promise.all(sinNutricion.map((item) => estimateNutritionFromOff(item.name)));
+      sinNutricion.forEach((item, i) => {
+        const estimada = estimaciones[i];
+        if (!estimada) return;
+        item.nutritionPer100g = estimada;
+        productMemory.remember({ name: item.name, category: item.category, nutritionPer100g: estimada });
+      });
+      setResolving(false);
+    }
 
     if (toAsk.length > 0) {
       setPending(toAsk);
@@ -416,9 +435,10 @@ export function ShoppingLog({
             </button>
             <button
               onClick={parseFromText}
-              className="flex-1 rounded-xl border border-border bg-bg/60 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+              disabled={resolving}
+              className="flex-1 rounded-xl border border-border bg-bg/60 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted disabled:opacity-60"
             >
-              Agregar tal cual
+              {resolving ? "Buscando nutrición..." : "Agregar tal cual"}
             </button>
           </div>
         </>

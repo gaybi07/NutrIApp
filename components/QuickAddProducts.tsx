@@ -4,6 +4,7 @@ import { useState } from "react";
 import { InventoryCategory, InventoryItem, InventoryNutrition } from "@/lib/types";
 import { parseInventoryText } from "@/lib/useInventory";
 import { ProductMemoryApi } from "@/lib/useProductMemory";
+import { estimateNutritionFromOff } from "@/lib/offAverage";
 
 export type AiShoppingItem = {
   name: string;
@@ -35,6 +36,7 @@ export function QuickAddProducts({
 }) {
   const [raw, setRaw] = useState("");
   const [status, setStatus] = useState("");
+  const [resolving, setResolving] = useState(false);
   // Envases sin tamaño conocido (bolsa de premezcla, lata, pote...),
   // esperando que el usuario diga cuánto trae cada uno antes de sumarlos —
   // junto con lo que ya estaba resuelto (por memoria o cantidad clara).
@@ -42,7 +44,7 @@ export function QuickAddProducts({
   const [pendingReady, setPendingReady] = useState<AiShoppingItem[]>([]);
   const [pendingDrafts, setPendingDrafts] = useState<Record<string, PendingDraft>>({});
 
-  const parseFromText = () => {
+  const parseFromText = async () => {
     if (!raw.trim()) {
       setStatus("Escribí o dictá los productos primero.");
       return;
@@ -75,6 +77,24 @@ export function QuickAddProducts({
         ready.push({ name: entry.name, quantity: entry.quantity, unit, category: mem?.category, nutritionPer100g: mem?.nutritionPer100g });
       }
     });
+
+    // Para lo que todavía no tiene nutrición (ni de memoria ni recién
+    // cargado), probamos resolverla sola promediando Open Food Facts antes
+    // de sumarlo — así no queda "falta nutrición" por algo tan común como
+    // fruta/verdura suelta. Si no hay suficiente acuerdo entre resultados,
+    // sigue quedando sin cargar (rojo) como hasta ahora.
+    const sinNutricion = ready.filter((item) => !item.nutritionPer100g);
+    if (sinNutricion.length > 0) {
+      setResolving(true);
+      const estimaciones = await Promise.all(sinNutricion.map((item) => estimateNutritionFromOff(item.name)));
+      sinNutricion.forEach((item, i) => {
+        const estimada = estimaciones[i];
+        if (!estimada) return;
+        item.nutritionPer100g = estimada;
+        productMemory.remember({ name: item.name, category: item.category, nutritionPer100g: estimada });
+      });
+      setResolving(false);
+    }
 
     if (toAsk.length > 0) {
       setPending(toAsk);
@@ -196,9 +216,10 @@ export function QuickAddProducts({
           <button
             type="button"
             onClick={parseFromText}
-            className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg"
+            disabled={resolving}
+            className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg disabled:opacity-60"
           >
-            Agregar
+            {resolving ? "..." : "Agregar"}
           </button>
         </div>
         {status && <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-sage">{status}</div>}
@@ -216,10 +237,11 @@ export function QuickAddProducts({
         className="mb-2"
       />
       <button
+        disabled={resolving}
         onClick={parseFromText}
-        className="w-full rounded-xl border border-gold/60 bg-gold px-3 py-2 font-sans font-bold text-[12px] text-bg"
+        className="w-full rounded-xl border border-gold/60 bg-gold px-3 py-2 font-sans font-bold text-[12px] text-bg disabled:opacity-60"
       >
-        Agregar a la alacena
+        {resolving ? "Buscando información nutricional..." : "Agregar a la alacena"}
       </button>
       {status && <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-sage">{status}</div>}
     </div>

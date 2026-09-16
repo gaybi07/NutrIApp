@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { InventoryCategory, InventoryItem, InventoryNutrition, INVENTORY_CATEGORIES, INVENTORY_CATEGORY_LABELS } from "@/lib/types";
 import { ProductMemoryApi } from "@/lib/useProductMemory";
 import { Collapsible } from "@/components/Collapsible";
@@ -11,6 +11,11 @@ import { ExtraConsumption } from "@/components/ExtraConsumption";
 const EMPTY_NUTRITION: InventoryNutrition = { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 const REVIEW_BATCH_SIZE = 12;
 const REVIEW_TIMEOUT_MS = 25000;
+// "Revisar con IA" gasta una llamada a la API de IA por tanda -- para no
+// recargarla, cada toque revisa como mucho estos ítems (priorizando los que
+// más lo necesitan) y después el botón queda bloqueado un rato.
+const REVIEW_MAX_ITEMS_PER_RUN = 5;
+const REVIEW_LOCK_MS = 60 * 60 * 1000;
 
 type OffResult = { name: string; brand: string | null; quantity: string | null; nutritionPer100g: InventoryNutrition };
 
@@ -31,6 +36,8 @@ export function AlacenaCard({
   productMemory,
   addStructuredItems,
   consumeAmounts,
+  aiReviewLockedUntil,
+  onAiReviewLockedUntilChange,
 }: {
   items: InventoryItem[];
   replaceItems: (items: InventoryItem[]) => void;
@@ -39,6 +46,8 @@ export function AlacenaCard({
   productMemory: ProductMemoryApi;
   addStructuredItems: (entries: AiShoppingItem[]) => void;
   consumeAmounts: (amounts: Array<{ id: string; quantity: number }>) => void;
+  aiReviewLockedUntil?: number;
+  onAiReviewLockedUntilChange: (until: number) => void;
 }) {
   const [filter, setFilter] = useState<InventoryCategory | "todas">("todas");
   const [showQuickAdd, setShowQuickAdd] = useState(false);
@@ -55,6 +64,24 @@ export function AlacenaCard({
   const [offResults, setOffResults] = useState<OffResult[]>([]);
   const [offLoading, setOffLoading] = useState(false);
   const [offStatus, setOffStatus] = useState("");
+  const [now, setNow] = useState(() => Date.now());
+
+  // Solo para que la cuenta regresiva del bloqueo de "Revisar con IA" se
+  // actualice sola en pantalla -- no dispara ningún pedido de red.
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  const reviewLockMsLeft = Math.max(0, (aiReviewLockedUntil || 0) - now);
+  const reviewLocked = reviewLockMsLeft > 0;
+  const reviewLockLabel = (() => {
+    if (!reviewLocked) return "";
+    const totalMin = Math.ceil(reviewLockMsLeft / 60000);
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return h > 0 ? `${h} h ${m} min` : `${m} min`;
+  })();
 
   const removeItem = (id: string) => replaceItems(items.filter((item) => item.id !== id));
   const clearAll = () => replaceItems([]);
@@ -147,16 +174,24 @@ export function AlacenaCard({
   };
 
   const reviewWithAi = async () => {
-    if (items.length === 0) return;
+    if (items.length === 0 || reviewLocked) return;
     setReviewing(true);
-    // Con la alacena entera en un solo pedido, un inventario grande puede
-    // tardar más que el límite de la función serverless y el fetch se
-    // queda esperando una respuesta que nunca llega — se manda en tandas
-    // chicas (con timeout propio) y se van aplicando las correcciones a
-    // medida que vuelven, así una tanda que falla no tira abajo las que
-    // ya se resolvieron bien.
+    // Tope de items por toque (ver REVIEW_MAX_ITEMS_PER_RUN) para no
+    // recargar la API de IA -- prioriza lo que más lo necesita: primero lo
+    // que ni siquiera tiene nutrición cargada, después lo que la tiene pero
+    // sin confirmar, recién al final (si sobra lugar) lo ya confirmado.
+    const priority = (item: InventoryItem) => (!item.nutritionPer100g ? 0 : !item.nutritionConfirmed ? 1 : 2);
+    const toReview = [...items].sort((a, b) => priority(a) - priority(b)).slice(0, REVIEW_MAX_ITEMS_PER_RUN);
+
+    // Con muchos items en un solo pedido, un inventario grande puede tardar
+    // más que el límite de la función serverless y el fetch se queda
+    // esperando una respuesta que nunca llega — se manda en tandas chicas
+    // (con timeout propio) y se van aplicando las correcciones a medida que
+    // vuelven, así una tanda que falla no tira abajo las que ya se
+    // resolvieron bien. Con el tope de arriba, en la práctica casi siempre
+    // es una sola tanda.
     const batches: InventoryItem[][] = [];
-    for (let i = 0; i < items.length; i += REVIEW_BATCH_SIZE) batches.push(items.slice(i, i + REVIEW_BATCH_SIZE));
+    for (let i = 0; i < toReview.length; i += REVIEW_BATCH_SIZE) batches.push(toReview.slice(i, i + REVIEW_BATCH_SIZE));
 
     let done = 0;
     try {
@@ -192,19 +227,27 @@ export function AlacenaCard({
         }
         done += 1;
       }
-      setStatus("Alacena revisada ✓");
+      const restantes = items.length - toReview.length;
+      setStatus(
+        restantes > 0
+          ? `Revisados ${toReview.length} de ${items.length} ✓ — quedan ${restantes}, disponible de nuevo en 1 hora.`
+          : "Alacena revisada ✓"
+      );
     } catch (error) {
       const timedOut = error instanceof DOMException && error.name === "AbortError";
       setStatus(
         timedOut
-          ? `Tardó demasiado y lo corté — ya quedaron aplicadas ${done} de ${batches.length} tandas. Tocá "Revisar con IA" de nuevo para el resto.`
+          ? `Tardó demasiado y lo corté — ya quedaron aplicadas ${done} de ${batches.length} tandas.`
           : error instanceof Error
             ? error.message
             : "No pude revisar el inventario."
       );
     } finally {
       setReviewing(false);
-      setTimeout(() => setStatus(""), 6000);
+      // El bloqueo se aplica siempre, haya salido bien o no -- un intento
+      // fallido igual gastó una llamada a la API.
+      onAiReviewLockedUntilChange(Date.now() + REVIEW_LOCK_MS);
+      setTimeout(() => setStatus(""), 8000);
     }
   };
 
@@ -245,10 +288,11 @@ export function AlacenaCard({
             <button
               type="button"
               onClick={reviewWithAi}
-              disabled={reviewing}
+              disabled={reviewing || reviewLocked}
+              title={reviewLocked ? `Disponible de nuevo en ${reviewLockLabel} — revisa hasta ${REVIEW_MAX_ITEMS_PER_RUN} ítems por vez para no recargar la IA` : undefined}
               className="rounded-xl border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg disabled:opacity-60"
             >
-              {reviewing ? "Revisando..." : "Revisar con IA"}
+              {reviewing ? "Revisando..." : reviewLocked ? `Disponible en ${reviewLockLabel}` : "Revisar con IA"}
             </button>
             <button
               type="button"

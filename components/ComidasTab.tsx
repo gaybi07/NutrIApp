@@ -50,6 +50,8 @@ export function ComidasTab({
   onReorder,
   hidden,
   onHide,
+  aiReviewLockedUntil,
+  onAiReviewLockedUntilChange,
   household,
   householdLoaded,
   householdStatus,
@@ -76,6 +78,8 @@ export function ComidasTab({
   onReorder: (next: ComidasBlockId[]) => void;
   hidden?: ComidasBlockId[];
   onHide: (id: ComidasBlockId) => void;
+  aiReviewLockedUntil?: number;
+  onAiReviewLockedUntilChange: (until: number) => void;
   household: HouseholdInfo | null;
   householdLoaded: boolean;
   householdStatus: string;
@@ -138,6 +142,8 @@ export function ComidasTab({
                   productMemory={productMemory}
                   addStructuredItems={addStructuredItems}
                   consumeAmounts={consumeAmounts}
+                  aiReviewLockedUntil={aiReviewLockedUntil}
+                  onAiReviewLockedUntilChange={onAiReviewLockedUntilChange}
                 />
               )}
               {blockId === "sugerencias" && (
