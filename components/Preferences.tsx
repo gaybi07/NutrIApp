@@ -23,6 +23,7 @@ const THEME_OPTIONS: { value: ThemeMode; label: string; description: string }[] 
   { value: "oscuro", label: "Oscuro", description: "Fondo oscuro, como está ahora." },
   { value: "claro", label: "Claro", description: "Fondo blanco, look más liviano." },
   { value: "neon", label: "Neón", description: "Todo en negros y grises, con detalles de letras, botones y gráficos en verde, rosa y amarillo flúor." },
+  { value: "olimpo", label: "Olimpo", description: "Mármol, oro y bronce, con tipografía clásica romana. Un look, no cambia ningún texto de la app." },
 ];
 
 const TAB_LABELS: Record<MainTab, string> = {

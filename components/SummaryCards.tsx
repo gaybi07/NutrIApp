@@ -2,12 +2,22 @@ import { WeekSummary } from "@/lib/calculations";
 import { Collapsible } from "@/components/Collapsible";
 import { SECTION_HELP } from "@/lib/helpText";
 
-export function SummaryCards({ summary, goal, weight }: { summary: WeekSummary; goal: number; weight?: number }) {
+export function SummaryCards({
+  summary,
+  goal,
+  weight,
+  openOnDesktop,
+}: {
+  summary: WeekSummary;
+  goal: number;
+  weight?: number;
+  openOnDesktop?: boolean;
+}) {
   const cards = [
     {
       label: "Energía consumida",
       value: summary.totalDays ? summary.avgKcal.toLocaleString("es-AR") : "–",
-      color: summary.avgKcal > goal ? "text-rust" : "text-text",
+      color: summary.avgKcal > goal ? "text-rust" : "text-[#f5f1e8]",
       sub: `prom. kcal/día · objetivo prom. ${goal.toLocaleString("es-AR")}`,
       tone: "gold",
     },
@@ -35,14 +45,18 @@ export function SummaryCards({ summary, goal, weight }: { summary: WeekSummary; 
     {
       label: "Gasto estimado",
       value: summary.totalDays ? summary.avgGasto.toLocaleString("es-AR") : "–",
-      color: "text-text",
+      // Fijo (no usa --color-text): el fondo de esta tarjeta es siempre
+      // oscuro a propósito, en cualquier tema -- con el color de texto del
+      // tema, en Claro/Olimpo (donde --color-text es oscuro) el número
+      // quedaba invisible sobre un fondo también oscuro.
+      color: "text-[#f5f1e8]",
       sub: "prom. kcal/día",
       tone: "neutral",
     },
     {
       label: "Pasos promedio",
       value: summary.totalDays ? summary.avgSteps.toLocaleString("es-AR") : "–",
-      color: "text-text",
+      color: "text-[#f5f1e8]",
       sub: `${summary.trainedDays}/${summary.totalDays} entrenos`,
       tone: "neutral",
     },
@@ -78,14 +92,16 @@ export function SummaryCards({ summary, goal, weight }: { summary: WeekSummary; 
       className={`relative overflow-hidden rounded-2xl border p-3 shadow-[0_0_0_1px_rgba(58,54,47,0.5)] ${toneClasses[card.tone]}`}
     >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/80 to-transparent" />
-      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-textMuted mb-2">{card.label}</div>
+      {/* Label y sub fijos (no --color-text-muted): mismo motivo que
+          card.color arriba -- el fondo de la tarjeta es siempre oscuro. */}
+      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#f5f1e8]/70 mb-2">{card.label}</div>
       <div className={`font-sans text-[1.9rem] leading-none font-bold ${card.color}`}>{card.value}</div>
-      <div className="text-[11px] text-textMuted mt-1.5">{card.sub}</div>
+      <div className="text-[11px] text-[#f5f1e8]/50 mt-1.5">{card.sub}</div>
     </div>
   );
 
   return (
-    <Collapsible eyebrow="Semana" title="Indicadores" info={SECTION_HELP.semana} scrollable={false}>
+    <Collapsible eyebrow="Semana" title="Indicadores" info={SECTION_HELP.semana} scrollable={false} openOnDesktop={openOnDesktop}>
       <div className="grid grid-cols-2 gap-2.5">
         {cards.map((card) => renderCard(card))}
         <div className="col-span-2 grid grid-cols-2 gap-2.5">

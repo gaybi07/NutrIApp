@@ -91,10 +91,11 @@ export function RoutineManager({
 
   const pickFromLibrary = (exercise: LibraryExercise) => {
     if (!editing || libraryTarget === null) return;
+    const nombre = exercise.nameEs || exercise.name;
     if (libraryTarget === -1) {
-      setEditing({ ...editing, ejercicios: [...editing.ejercicios, { ...emptyExercise(), nombre: exercise.name }] });
+      setEditing({ ...editing, ejercicios: [...editing.ejercicios, { ...emptyExercise(), nombre }] });
     } else {
-      updateExercise(libraryTarget, { nombre: exercise.name });
+      updateExercise(libraryTarget, { nombre });
     }
     setLibraryTarget(null);
   };

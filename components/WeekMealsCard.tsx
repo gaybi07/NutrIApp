@@ -16,10 +16,12 @@ export function WeekMealsCard({
   weekDates,
   weekDays,
   onUpsert,
+  openOnDesktop,
 }: {
   weekDates: string[];
   weekDays: Array<DayEntry | null>;
   onUpsert: (entry: DayEntry) => void;
+  openOnDesktop?: boolean;
 }) {
   const todayIso = fmtDate(new Date());
   const [selectedIndex, setSelectedIndex] = useState(() => Math.max(0, weekDates.indexOf(todayIso)));
@@ -29,7 +31,7 @@ export function WeekMealsCard({
   const selectedDay = new Date(`${selectedDate}T00:00:00`);
 
   return (
-    <Collapsible eyebrow="Semana" title="Comidas por día" info={SECTION_HELP.comidasSemana}>
+    <Collapsible eyebrow="Semana" title="Comidas por día" info={SECTION_HELP.comidasSemana} openOnDesktop={openOnDesktop}>
       <div className="mb-3 grid grid-cols-7 gap-1">
         {weekDates.map((fecha, i) => {
           const date = new Date(`${fecha}T00:00:00`);

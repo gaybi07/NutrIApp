@@ -176,7 +176,7 @@ export type MainTab = "inicio" | "comidas" | "macros" | "actividad" | "gastos";
 export const OPTIONAL_TABS: MainTab[] = ["macros", "comidas", "actividad", "gastos"];
 export const DEFAULT_ENABLED_TABS: MainTab[] = ["inicio", "comidas", "macros", "actividad", "gastos"];
 
-export type ThemeMode = "claro" | "oscuro" | "neon";
+export type ThemeMode = "claro" | "oscuro" | "neon" | "olimpo";
 
 export type FontSize = "chico" | "mediano" | "grande";
 
@@ -190,18 +190,24 @@ export const FONT_SIZE_OPTIONS: { value: FontSize; label: string; description: s
  * arrastrándolos (mantener apretado en cualquier parte del bloque, como
  * mover íconos en la pantalla de inicio del celular) — si no personalizó
  * nada todavía, se usa el orden por default de cada solapa. */
-// "semana" agrupa fecha/navegación, peso, indicadores, comidas por día y la
-// tabla en un solo bloque fijo -- antes eran 5 bloques sueltos, pero se podían
-// arrastrar y mezclar libremente con Hoy/Editar comidas, cosa que no tenía
-// mucho sentido (son todos parte de "la semana"). Quedan agrupados y en
-// orden fijo entre sí; el grupo entero sí se puede mover/ocultar como una
-// unidad, igual que Hoy o Editar comidas.
-export type InicioBlockId = "hoy" | "comidas" | "semana";
-export const DEFAULT_INICIO_ORDER: InicioBlockId[] = ["hoy", "comidas", "semana"];
+export type InicioBlockId = "hoy" | "comidas" | "peso" | "indicadores" | "kcal" | "comidasSemana" | "tabla";
+export const DEFAULT_INICIO_ORDER: InicioBlockId[] = [
+  "hoy",
+  "comidas",
+  "peso",
+  "indicadores",
+  "kcal",
+  "comidasSemana",
+  "tabla",
+];
 export const INICIO_BLOCK_LABELS: Record<InicioBlockId, string> = {
   hoy: "Hoy",
   comidas: "Editar comidas de hoy",
-  semana: "Semana (peso, indicadores, comidas por día y tabla)",
+  peso: "Peso de esta semana",
+  indicadores: "Indicadores",
+  kcal: "Kcal por día",
+  comidasSemana: "Comidas por día",
+  tabla: "Tabla de la semana",
 };
 
 /** La solapa Comidas tiene, a su vez, dos sub-solapas (ver ComidasSubTab):
@@ -305,7 +311,7 @@ export interface Settings {
   weekPlan?: WeekPlan; // planificador de comidas por día, se sincroniza entre dispositivos
   routines?: Routine[]; // rutinas de entrenamiento reusables
   trainingSchedule?: TrainingSchedule; // qué rutina toca cada día de la semana
-  theme?: ThemeMode; // claro / oscuro / neon, elegido desde Preferencias
+  theme?: ThemeMode; // claro / oscuro / neon / olimpo, elegido desde Preferencias
   enabledTabs?: MainTab[]; // qué solapas de arriba se muestran además de Inicio (que siempre está)
   fontSize?: FontSize; // chico / mediano / grande, elegido en el onboarding o desde Preferencias
   inicioOrder?: InicioBlockId[]; // orden de los bloques de Inicio, elegido arrastrándolos

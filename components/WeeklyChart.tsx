@@ -57,12 +57,14 @@ export function WeeklyChart({
   goal,
   avgGoal,
   avgGasto,
+  openOnDesktop,
 }: {
   weekDates: string[];
   weekDays: (DayEntry | null)[];
   goal: number;
   avgGoal: number;
   avgGasto: number;
+  openOnDesktop?: boolean;
 }) {
   const data: ChartRow[] = weekDates.map((fecha, i) => {
     const d = weekDays[i];
@@ -102,6 +104,7 @@ export function WeeklyChart({
           base {goal.toLocaleString("es-AR")} / obj. prom. {avgGoal.toLocaleString("es-AR")}
         </span>
       }
+      openOnDesktop={openOnDesktop}
     >
       <ResponsiveContainer width="100%" height={180}>
         <ComposedChart data={data} margin={{ left: -20, right: 0, top: 5, bottom: 0 }}>

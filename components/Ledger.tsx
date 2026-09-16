@@ -24,6 +24,7 @@ export function Ledger({
   tdeeFallback,
   onUpsert,
   variant = "actividad",
+  openOnDesktop,
 }: {
   weekDates: string[];
   weekDays: (DayEntry | null)[];
@@ -31,6 +32,7 @@ export function Ledger({
   tdeeFallback: number;
   onUpsert: (entry: DayEntry) => void;
   variant?: LedgerVariant;
+  openOnDesktop?: boolean;
 }) {
   const anyData = weekDays.some((d) => d);
   const [activeDate, setActiveDate] = useState<string | null>(null);
@@ -65,7 +67,7 @@ export function Ledger({
   const info = isNutricion ? SECTION_HELP.tablaNutricion : SECTION_HELP.tabla;
 
   return (
-    <Collapsible eyebrow="Detalle diario" title={title} info={info}>
+    <Collapsible eyebrow="Detalle diario" title={title} info={info} openOnDesktop={openOnDesktop}>
     <div className="bg-surface border border-border rounded-xl overflow-hidden">
       <div className={`grid ${gridCols} px-3 py-2 font-mono text-[8.5px] uppercase tracking-wide text-textMuted border-b border-border`}>
         {isNutricion ? (

@@ -44,7 +44,11 @@ export function ExercisePicker({ onSelect, onClose }: { onSelect: (exercise: Lib
     const q = query.trim().toLowerCase();
     if (!q && muscle === "todos") return [];
     return exercises
-      .filter((e) => (muscle === "todos" || e.primaryMuscles.includes(muscle)) && (!q || e.name.toLowerCase().includes(q)))
+      .filter(
+        (e) =>
+          (muscle === "todos" || e.primaryMuscles.includes(muscle)) &&
+          (!q || e.name.toLowerCase().includes(q) || e.nameEs?.toLowerCase().includes(q))
+      )
       .slice(0, RESULTS_LIMIT);
   }, [exercises, query, muscle]);
 
@@ -65,9 +69,9 @@ export function ExercisePicker({ onSelect, onClose }: { onSelect: (exercise: Lib
               ‹ Volver a la búsqueda
             </button>
             {detail.images[0] && (
-              <img src={exerciseImageUrl(detail.images[0])} alt={detail.name} className="mb-3 w-full rounded-xl border border-border object-cover" />
+              <img src={exerciseImageUrl(detail.images[0])} alt={detail.nameEs || detail.name} className="mb-3 w-full rounded-xl border border-border object-cover" />
             )}
-            <div className="font-display text-xl text-text">{detail.name}</div>
+            <div className="font-display text-xl text-text">{detail.nameEs || detail.name}</div>
             <div className="mb-3 flex flex-wrap gap-1.5">
               {detail.category && (
                 <span className="rounded-full border border-border bg-bg/60 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wide text-textMuted">
@@ -87,9 +91,11 @@ export function ExercisePicker({ onSelect, onClose }: { onSelect: (exercise: Lib
             </div>
             {detail.instructions.length > 0 && (
               <div className="mb-3 rounded-xl border border-dashed border-border bg-bg/40 p-2.5">
-                <div className="mb-1.5 font-mono text-[9px] uppercase tracking-wide text-textMuted">Cómo hacerlo (en inglés — la foto ayuda igual)</div>
+                <div className="mb-1.5 font-mono text-[9px] uppercase tracking-wide text-textMuted">
+                  {detail.instructionsEs ? "Cómo hacerlo" : "Cómo hacerlo (en inglés — la foto ayuda igual)"}
+                </div>
                 <ol className="list-decimal space-y-1 pl-4 text-[12px] text-textMuted">
-                  {detail.instructions.map((step, i) => (
+                  {(detail.instructionsEs || detail.instructions).map((step, i) => (
                     <li key={i}>{step}</li>
                   ))}
                 </ol>
@@ -112,7 +118,7 @@ export function ExercisePicker({ onSelect, onClose }: { onSelect: (exercise: Lib
                 type="text"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Ej: bench press, squat, curl..."
+                placeholder="Ej: press banca, sentadilla, curl..."
                 className="mb-2 w-full"
                 autoFocus
               />
@@ -143,10 +149,10 @@ export function ExercisePicker({ onSelect, onClose }: { onSelect: (exercise: Lib
                     className="flex flex-col overflow-hidden rounded-xl border border-border bg-bg/40 text-left hover:border-gold/60"
                   >
                     {exercise.images[0] && (
-                      <img src={exerciseImageUrl(exercise.images[0])} alt={exercise.name} className="h-24 w-full object-cover" loading="lazy" />
+                      <img src={exerciseImageUrl(exercise.images[0])} alt={exercise.nameEs || exercise.name} className="h-24 w-full object-cover" loading="lazy" />
                     )}
                     <div className="p-1.5">
-                      <div className="line-clamp-2 text-[11px] text-text">{exercise.name}</div>
+                      <div className="line-clamp-2 text-[11px] text-text">{exercise.nameEs || exercise.name}</div>
                       <div className="font-mono text-[8.5px] uppercase tracking-wide text-textMuted">
                         {exercise.primaryMuscles.map((m) => MUSCLE_LABELS[m] || m).join(", ")}
                       </div>

@@ -28,6 +28,7 @@ export function SortableSection({
   onHide,
   children,
   className,
+  dragDisabledOnDesktop,
 }: {
   id: string;
   onHide?: () => void;
@@ -35,6 +36,12 @@ export function SortableSection({
   /** Clases extra para el wrapper -- ej. hacer que un bloque ocupe más
    * columnas de la grilla de Inicio en PC (col-span-N). */
   className?: string;
+  /** Oculta la manito (✋) en pantallas grandes (PC, >=1024px) -- ahí el
+   * bloque no se puede arrastrar (solo apagar con el foquito), pero en
+   * mobile se sigue pudiendo reordenar como siempre. Pensado para Inicio,
+   * donde en PC el orden lo define un layout de columnas que se autoacomoda
+   * solo, y arrastrar ahí no tendría sentido. */
+  dragDisabledOnDesktop?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
@@ -66,8 +73,8 @@ export function SortableSection({
           {...attributes}
           {...listeners}
           className={`flex h-6 w-6 touch-none select-none items-center justify-center rounded-full border text-[11px] leading-none opacity-60 shadow-sm transition-all active:bg-border/80 active:opacity-100 ${
-            isDragging ? "cursor-grabbing bg-border border-gold opacity-100" : "cursor-grab bg-surface border-border"
-          }`}
+            dragDisabledOnDesktop ? "lg:hidden" : ""
+          } ${isDragging ? "cursor-grabbing bg-border border-gold opacity-100" : "cursor-grab bg-surface border-border"}`}
         >
           ✋
         </button>

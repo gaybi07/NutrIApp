@@ -1,12 +1,14 @@
 export interface LibraryExercise {
   id: string;
   name: string;
+  nameEs?: string;
   category: string;
   equipment: string | null;
   level: string;
   primaryMuscles: string[];
   secondaryMuscles: string[];
   instructions: string[];
+  instructionsEs?: string[];
   images: string[];
 }
 
@@ -19,10 +21,9 @@ export function exerciseImageUrl(relativePath: string) {
   return `${IMAGE_BASE}${relativePath}`;
 }
 
-// El dataset está en inglés (nombres e instrucciones) -- traducir 876
-// instrucciones no es viable a mano, pero los nombres y filtros sí, para
-// que al menos el "chrome" de la búsqueda esté en español. Instrucciones
-// quedan en inglés (con la foto al lado, que no necesita traducción).
+// El dataset original está en inglés. nameEs/instructionsEs (generados con
+// IA, ver scripts/translate-exercises) traen la traducción al español; si
+// faltan para algún ejercicio puntual, la UI cae al texto en inglés.
 export const CATEGORY_LABELS: Record<string, string> = {
   strength: "Fuerza",
   cardio: "Cardio",

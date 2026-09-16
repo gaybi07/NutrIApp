@@ -41,7 +41,6 @@ import { useHousehold } from "@/lib/useHousehold";
 import { useProductMemory } from "@/lib/useProductMemory";
 import { emptyDay, MealKey, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER, resolveOrder } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
-import { InfoHint } from "@/components/InfoHint";
 
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
@@ -305,87 +304,101 @@ export default function Home() {
 
       {activeTab === "inicio" && (
       <div className="mx-auto max-w-lg lg:max-w-6xl 2xl:max-w-[1800px]">
-        {/* Con solo 3 bloques (Hoy, Comidas, Semana) y "Semana" mucho más alto
-            que los otros dos, una grilla genérica de columnas fuerza toda la
-            fila a la altura de "Semana" y deja "Comidas" con un hueco enorme
-            arriba (la fila entera mide lo que mide el bloque más alto). En vez
-            de eso, en pantallas grandes se arma un layout fijo de dos
-            columnas -- barra angosta (Hoy + Comidas apiladas) y contenido
-            ancho (Semana). Es CSS Grid de una sola fila con "stretch" (el
-            default): las dos columnas son paneles con su propio borde/fondo
-            que siempre terminan a la misma altura -- si un panel tiene menos
-            contenido (algo colapsado), le queda de aire abajo en vez de un
-            hueco raro, y eso se re-acomoda solo cada vez que abrís/cerrás
-            algo, sin volver a calcular nada a mano. En mobile (sin "lg:") es
-            la misma tira vertical de siempre, sin paneles. */}
-        <div className="min-w-0 lg:grid lg:grid-cols-[340px_1fr] lg:items-stretch lg:gap-4 xl:grid-cols-[380px_1fr]">
-          <DndContext sensors={inicioDrag.sensors} collisionDetection={inicioDrag.collisionDetection} onDragStart={inicioDrag.handleDragStart} onDragEnd={inicioDrag.handleDragEnd} onDragCancel={inicioDrag.handleDragCancel}>
-            <SortableContext items={inicioVisible} strategy={verticalListSortingStrategy}>
-              <div className="flex flex-col gap-4 lg:rounded-2xl lg:border lg:border-border/60 lg:bg-surface/20 lg:p-3">
-                {inicioVisible
-                  .filter((blockId) => blockId !== "semana")
-                  .map((blockId) => (
-                    <SortableSection key={blockId} id={blockId} onHide={() => hideInicioBlock(blockId)}>
-                      {blockId === "hoy" && (
-                        <TodayCard
-                          entry={todayEntry}
-                          goal={settings.goal}
-                          tdeeFallback={settings.tdeeFallback}
-                          onLogMeal={() => setPanel("ai")}
-                          onLogTraining={() => setPanel("entreno")}
-                        />
-                      )}
-                      {blockId === "comidas" && <TodayMealsBreakdown entry={todayEntry} onUpsert={upsertDay} />}
+        {/* En PC (>=1024px) los bloques se acomodan solos en columnas tipo
+            mosaico ("newspaper flow": llenan la columna 1 de arriba a abajo,
+            después la 2, etc.) en vez del layout fijo de antes -- así, al
+            apagar un bloque con el foquito o volver a prenderlo desde
+            Preferencias > Secciones, el resto se reacomoda solo sin dejar
+            huecos. El arrastre (la "manito") se oculta en PC porque no tiene
+            sentido con este layout (el orden real en pantalla lo decide el
+            navegador acomodando alturas, no el orden de la lista); en mobile
+            sigue siendo una sola tira vertical con arrastre como siempre. */}
+        <DndContext sensors={inicioDrag.sensors} collisionDetection={inicioDrag.collisionDetection} onDragStart={inicioDrag.handleDragStart} onDragEnd={inicioDrag.handleDragEnd} onDragCancel={inicioDrag.handleDragCancel}>
+          <SortableContext items={inicioVisible} strategy={verticalListSortingStrategy}>
+            <div className="min-w-0 space-y-4 lg:columns-2 lg:gap-4 lg:space-y-0 xl:columns-3">
+              {inicioVisible.map((blockId) => {
+                if (blockId === "hoy") {
+                  return (
+                    <SortableSection key="hoy" id="hoy" onHide={() => hideInicioBlock("hoy")} dragDisabledOnDesktop>
+                      <TodayCard
+                        entry={todayEntry}
+                        goal={settings.goal}
+                        tdeeFallback={settings.tdeeFallback}
+                        onLogMeal={() => setPanel("ai")}
+                        onLogTraining={() => setPanel("entreno")}
+                      />
                     </SortableSection>
-                  ))}
-              </div>
-
-              {inicioVisible.includes("semana") && (
-                <div className="mt-4 min-w-0 lg:mt-0">
-                  <SortableSection id="semana" onHide={() => hideInicioBlock("semana")}>
-                    <div className="rounded-2xl border border-border/80 bg-surface/40 p-3 lg:h-full">
-                      <div className="mb-3 flex items-center font-mono text-[10px] uppercase tracking-[0.22em] text-gold">
-                        Semana
-                        <InfoHint text={SECTION_HELP.semana} label="Qué es la sección Semana" />
-                      </div>
-
-                      {/* Orden fijo a propósito -- estas sub-secciones son parte
-                          de "Semana", no bloques sueltos: no se pueden arrastrar
-                          por separado ni sacar del grupo. */}
+                  );
+                }
+                if (blockId === "comidas") {
+                  return (
+                    <SortableSection key="comidas" id="comidas" onHide={() => hideInicioBlock("comidas")} dragDisabledOnDesktop>
+                      <TodayMealsBreakdown entry={todayEntry} onUpsert={upsertDay} openOnDesktop />
+                    </SortableSection>
+                  );
+                }
+                if (blockId === "peso") {
+                  return (
+                    <SortableSection key="peso" id="peso" onHide={() => hideInicioBlock("peso")} dragDisabledOnDesktop>
                       <WeeklyWeight
                         weekKey={fmtDate(monday)}
                         weights={settings.weeklyWeights || {}}
                         goalMode={settings.calculatorProfile?.modo}
                         onSave={saveWeeklyWeight}
                       />
-
-                      <SummaryCards summary={summary} goal={summary.avgGoal || settings.goal} weight={settings.weeklyWeights?.[fmtDate(monday)]} />
-
+                    </SortableSection>
+                  );
+                }
+                if (blockId === "indicadores") {
+                  return (
+                    <SortableSection key="indicadores" id="indicadores" onHide={() => hideInicioBlock("indicadores")} dragDisabledOnDesktop>
+                      <SummaryCards
+                        summary={summary}
+                        goal={summary.avgGoal || settings.goal}
+                        weight={settings.weeklyWeights?.[fmtDate(monday)]}
+                        openOnDesktop
+                      />
+                    </SortableSection>
+                  );
+                }
+                if (blockId === "kcal") {
+                  return (
+                    <SortableSection key="kcal" id="kcal" onHide={() => hideInicioBlock("kcal")} dragDisabledOnDesktop>
                       <WeeklyChart
                         weekDates={weekDates}
                         weekDays={weekDays}
                         goal={settings.goal}
                         avgGoal={summary.avgGoal || settings.goal}
                         avgGasto={settings.tdeeFallback}
+                        openOnDesktop
                       />
-
-                      <WeekMealsCard weekDates={weekDates} weekDays={weekDays} onUpsert={upsertDay} />
-
-                      <Ledger
-                        weekDates={weekDates}
-                        weekDays={weekDays}
-                        goal={summary.avgGoal || settings.goal}
-                        tdeeFallback={settings.tdeeFallback}
-                        onUpsert={upsertDay}
-                        variant="actividad"
-                      />
-                    </div>
+                    </SortableSection>
+                  );
+                }
+                if (blockId === "comidasSemana") {
+                  return (
+                    <SortableSection key="comidasSemana" id="comidasSemana" onHide={() => hideInicioBlock("comidasSemana")} dragDisabledOnDesktop>
+                      <WeekMealsCard weekDates={weekDates} weekDays={weekDays} onUpsert={upsertDay} openOnDesktop />
+                    </SortableSection>
+                  );
+                }
+                return (
+                  <SortableSection key="tabla" id="tabla" onHide={() => hideInicioBlock("tabla")} dragDisabledOnDesktop>
+                    <Ledger
+                      weekDates={weekDates}
+                      weekDays={weekDays}
+                      goal={summary.avgGoal || settings.goal}
+                      tdeeFallback={settings.tdeeFallback}
+                      onUpsert={upsertDay}
+                      variant="actividad"
+                      openOnDesktop
+                    />
                   </SortableSection>
-                </div>
-              )}
-            </SortableContext>
-          </DndContext>
-        </div>
+                );
+              })}
+            </div>
+          </SortableContext>
+        </DndContext>
       </div>
       )}
 

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,600&family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -64,6 +64,23 @@
      en Neón (antes tomaban --color-accent directo) — no se tocó Neón con
      este cambio de paleta fija, solo Oscuro/Claro. */
   --color-carbs: 57 255 90;
+}
+
+/* Olimpo: mármol, oro y bronce -- solo paleta + tipografía clásica, ningún
+   texto de la app cambia con este tema (ver ThemeSettings). --color-sage y
+   --color-rust quedan fijos en la guía general, pero acá sí se retocan para
+   que "éxito"/"error" no desentonen en tono cálido con el resto. */
+[data-theme="olimpo"] {
+  --color-bg: 243 234 212;
+  --color-surface: 251 246 234;
+  --color-surface-alt: 237 225 198;
+  --color-text: 43 33 24;
+  --color-text-muted: 122 106 78;
+  --color-accent: 183 134 43;
+  --color-rust: 181 67 47;
+  --color-sage: 63 143 131;
+  --color-border: 140 100 50;
+  --color-carbs: 245 158 11;
 }
 
 html, body {
@@ -179,6 +196,20 @@ html[data-font-size="grande"] .text-\[15px\] { font-size: 19px; }
 .recharts-polar-angle-axis-tick text,
 .recharts-legend-item-text {
   font-family: "Inter", sans-serif;
+}
+
+/* Tipografía clásica de Olimpo: títulos y eyebrows (mayúsculas) pasan a
+   Cinzel (letras romanas grabadas), el resto del cuerpo a Cormorant
+   Garamond. Los números (.font-sans) quedan en Inter a propósito -- son
+   los que necesitan dígitos tabulares alineados en tablas/contadores, y
+   Cormorant no lo garantiza. */
+[data-theme="olimpo"] body {
+  font-family: "Cormorant Garamond", Georgia, serif;
+}
+[data-theme="olimpo"] .font-display,
+[data-theme="olimpo"] .font-mono {
+  font-family: "Cinzel", Georgia, serif;
+  letter-spacing: 0.03em;
 }
 
 [data-theme="neon"] input,

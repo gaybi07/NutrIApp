@@ -1,6 +1,6 @@
 "use client";
 
-import { KeyboardEvent, ReactNode, useState } from "react";
+import { KeyboardEvent, ReactNode, useEffect, useState } from "react";
 import { InfoHint } from "@/components/InfoHint";
 
 export function Collapsible({
@@ -9,6 +9,7 @@ export function Collapsible({
   badge,
   info,
   defaultOpen = false,
+  openOnDesktop = false,
   scrollable = true,
   children,
 }: {
@@ -18,6 +19,10 @@ export function Collapsible({
   /** Texto de ayuda permanente — se muestra con un ícono "?" junto al título. */
   info?: string;
   defaultOpen?: boolean;
+  /** Fuerza el bloque abierto al montar en pantallas grandes (PC, >=1024px)
+   * sin tocar el estado inicial en mobile -- para Inicio, donde en PC hay
+   * lugar de sobra y no tiene sentido arrancar todo colapsado. */
+  openOnDesktop?: boolean;
   /** Si es true (default), el contenido abierto se limita en altura y scrollea
    * adentro en vez de empujar el resto de la página. Poné false para
    * contenido con elementos que no deben recortarse (ej. tooltips absolutos). */
@@ -25,6 +30,17 @@ export function Collapsible({
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+
+  useEffect(() => {
+    if (!openOnDesktop) return;
+    const mql = window.matchMedia("(min-width: 1024px)");
+    if (mql.matches) setOpen(true);
+    const handleChange = (event: MediaQueryListEvent) => {
+      if (event.matches) setOpen(true);
+    };
+    mql.addEventListener("change", handleChange);
+    return () => mql.removeEventListener("change", handleChange);
+  }, [openOnDesktop]);
   const toggle = () => setOpen((current) => !current);
   const onHeaderKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Enter" || event.key === " ") {
