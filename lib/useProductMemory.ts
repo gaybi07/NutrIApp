@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { InventoryCategory, InventoryItem, InventoryNutrition } from "./types";
+import { inventoryKey } from "./useInventory";
 
 const KEY = "registro:productMemory:v1";
 
@@ -19,14 +20,11 @@ export interface ProductMemoryEntry {
   updatedAt: number;
 }
 
-function normalize(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
+// Misma clave que el inventario (lib/useInventory.ts) -- así "mandarina" y
+// "mandarinas" (plural, como se compran la mayoría de las veces) matchean
+// el mismo producto acá también, en vez de quedar como dos entradas
+// separadas que nunca se encuentran entre sí.
+const normalize = inventoryKey;
 
 /**
  * Memoria de productos por nombre — separada de la alacena en sí (que se
