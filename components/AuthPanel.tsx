@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { ReactNode, FormEvent, useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase/browser";
 
 export function AuthPanel({
@@ -10,6 +10,7 @@ export function AuthPanel({
   onOpenTabs,
   onOpenSections,
   onOpenTools,
+  centerContent,
 }: {
   onAuthChange?: (authenticated: boolean) => void;
   onOpenTheme?: () => void;
@@ -17,6 +18,9 @@ export function AuthPanel({
   onOpenTabs?: () => void;
   onOpenSections?: () => void;
   onOpenTools?: () => void;
+  /** Contenido opcional entre tu nombre y el botón de ajustes (⚙), a la
+   * misma altura -- pensado para el resumen de semana/peso. */
+  centerContent?: ReactNode;
 }) {
   const [email, setEmail] = useState("");
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -87,11 +91,12 @@ export function AuthPanel({
   if (userEmail) {
     const displayName = userName || userEmail;
     return (
-      <div className="relative -mx-3 mb-3 flex items-center justify-between gap-2 border-b border-border bg-surface px-3 py-2.5 lg:mx-0 lg:rounded-xl lg:border">
-        <div className="flex min-w-0 items-center gap-1.5">
+      <div className="relative -mx-3 mb-3 flex items-center gap-2 border-b border-border bg-surface px-3 py-2.5 lg:mx-0 lg:rounded-xl lg:border">
+        <div className="flex min-w-0 shrink items-center gap-1.5">
           <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sage" />
           <span className="truncate font-sans text-[13px] font-bold text-text">{displayName}</span>
         </div>
+        <div className="flex min-w-0 flex-1 items-center justify-center">{centerContent}</div>
         <button
           type="button"
           onClick={() => setMenuOpen((open) => !open)}

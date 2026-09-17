@@ -244,6 +244,26 @@ export default function Home() {
           onOpenTabs={() => setPanel("solapas")}
           onOpenSections={() => setPanel("secciones")}
           onOpenTools={() => setPanel("herramientas")}
+          centerContent={
+            (activeTab === "inicio" || activeTab === "macros" || activeTab === "actividad") && (
+              <div className="flex min-w-0 items-center gap-1.5 font-mono text-[11px] leading-none">
+                <span className="shrink-0 text-textMuted">
+                  {monday.getDate()}/{monday.getMonth() + 1}–{sunday.getDate()}/{sunday.getMonth() + 1}
+                </span>
+                {weightThisWeek != null ? (
+                  <span className="shrink-0 font-sans font-bold text-text">{weightThisWeek.toFixed(1)}kg</span>
+                ) : (
+                  <span className="shrink-0 text-rust">peso pend.</span>
+                )}
+                {weightTrend != null && weightTrend !== 0 && (
+                  <span className={`shrink-0 ${weightTrendGood == null ? "text-textMuted" : weightTrendGood ? "text-sage" : "text-rust"}`}>
+                    {weightTrend > 0 ? "▲" : "▼"}
+                  </span>
+                )}
+                {weightStreakCount >= 2 && <span className="shrink-0 text-gold">🔥{weightStreakCount}</span>}
+              </div>
+            )
+          }
         />
         <TabBar active={activeTab} onChange={setActiveTab} enabledTabs={enabledTabs} />
 
@@ -280,21 +300,6 @@ export default function Home() {
               >
                 ›
               </button>
-            </div>
-            <div className="mt-1.5 flex items-center justify-center gap-3 border-t border-border/60 pt-1.5">
-              {weightThisWeek != null ? (
-                <>
-                  <span className="font-sans text-sm font-bold leading-none text-text">{weightThisWeek.toFixed(1)} kg</span>
-                  {weightTrend != null && weightTrend !== 0 && (
-                    <span className={`font-mono text-[11px] ${weightTrendGood == null ? "text-textMuted" : weightTrendGood ? "text-sage" : "text-rust"}`}>
-                      {weightTrend > 0 ? "▲" : "▼"} {Math.abs(weightTrend).toFixed(1)} kg
-                    </span>
-                  )}
-                </>
-              ) : (
-                <span className="font-mono text-[11px] uppercase tracking-wide text-rust">Peso pendiente</span>
-              )}
-              {weightStreakCount >= 2 && <span className="font-mono text-[11px] text-gold">🔥 {weightStreakCount}</span>}
             </div>
           </div>
         )}
