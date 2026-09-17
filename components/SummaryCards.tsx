@@ -89,7 +89,7 @@ export function SummaryCards({
   const renderCard = (card: { label: string; value: string; color: string; sub: string; tone: keyof typeof toneClasses }) => (
     <div
       key={card.label}
-      className={`relative overflow-hidden rounded-2xl border p-3 shadow-[0_0_0_1px_rgba(58,54,47,0.5)] ${toneClasses[card.tone]}`}
+      className={`indicator-tile relative overflow-hidden rounded-2xl border p-3 shadow-[0_0_0_1px_rgba(58,54,47,0.5)] ${toneClasses[card.tone]}`}
     >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/80 to-transparent" />
       {/* Label y sub fijos (no --color-text-muted): mismo motivo que

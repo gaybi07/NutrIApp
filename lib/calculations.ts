@@ -505,3 +505,19 @@ export function addDays(d: Date, n: number): Date {
   nd.setDate(nd.getDate() + n);
   return nd;
 }
+
+/**
+ * Cuántas semanas SEGUIDAS (contando hacia atrás desde weekKey) tenés peso
+ * cargado -- compartida por la tarjeta de peso semanal y cualquier resumen
+ * compacto (ej. la franja fija de arriba), para que ambos muestren siempre
+ * la misma racha.
+ */
+export function weightStreak(weights: Record<string, number>, weekKey: string): number {
+  let streak = 0;
+  let cursor = weekKey;
+  while (weights[cursor] != null) {
+    streak += 1;
+    cursor = fmtDate(addDays(new Date(`${cursor}T00:00:00`), -7));
+  }
+  return streak;
+}

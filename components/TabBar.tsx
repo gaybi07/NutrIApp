@@ -25,7 +25,7 @@ export function TabBar({
   const tabs = TABS.filter((tab) => tab.id === "inicio" || !enabledTabs || enabledTabs.includes(tab.id));
 
   return (
-    <div className="sticky top-0 z-30 mb-4 -mx-3 flex gap-1 border-b border-border bg-bg/95 px-3 py-2 backdrop-blur lg:mx-0 lg:rounded-xl lg:border lg:bg-surface/70 lg:px-2">
+    <div className="-mx-3 flex gap-1 border-b border-border bg-bg/95 px-3 py-2 backdrop-blur lg:mx-0 lg:rounded-xl lg:border lg:bg-surface/70 lg:px-2">
       {tabs.map((tab) => (
         <button
           key={tab.id}

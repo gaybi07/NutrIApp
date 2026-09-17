@@ -1,22 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { addDays, fmtDate } from "@/lib/calculations";
+import { addDays, fmtDate, weightStreak } from "@/lib/calculations";
 import { GoalMode } from "@/lib/types";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 import { clampNumber } from "@/lib/inputLimits";
 import { FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
-
-function computeStreak(weights: Record<string, number>, weekKey: string): number {
-  let streak = 0;
-  let cursor = weekKey;
-  while (weights[cursor] != null) {
-    streak += 1;
-    cursor = fmtDate(addDays(new Date(`${cursor}T00:00:00`), -7));
-  }
-  return streak;
-}
 
 export function WeeklyWeight({
   weekKey,
@@ -46,7 +36,7 @@ export function WeeklyWeight({
   const prevWeekKey = fmtDate(addDays(new Date(`${weekKey}T00:00:00`), -7));
   const prevWeight = weights[prevWeekKey];
   const delta = savedWeight && prevWeight ? Math.round((savedWeight - prevWeight) * 10) / 10 : null;
-  const streak = computeStreak(weights, weekKey);
+  const streak = weightStreak(weights, weekKey);
 
   const wantsDown = goalMode === "perder";
   const wantsUp = goalMode === "aumentar";
