@@ -422,6 +422,8 @@ export default function Home() {
           onHide={(id) => saveSettings({ ...settings, comidasHidden: [...(settings.comidasHidden || []), id] })}
           aiReviewLockedUntil={settings.aiReviewLockedUntil}
           onAiReviewLockedUntilChange={(aiReviewLockedUntil) => saveSettings({ ...settings, aiReviewLockedUntil })}
+          todayEntry={todayEntry}
+          onUpsertDay={upsertDay}
           household={household.household}
           householdLoaded={household.loaded}
           householdStatus={household.status}

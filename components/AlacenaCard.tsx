@@ -1,12 +1,16 @@
 "use client";
 
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
-import { InventoryCategory, InventoryItem, InventoryNutrition, INVENTORY_CATEGORIES, INVENTORY_CATEGORY_LABELS } from "@/lib/types";
+import { DayEntry, InventoryCategory, InventoryItem, InventoryNutrition, MealItem, MEAL_LABELS, INVENTORY_CATEGORIES, INVENTORY_CATEGORY_LABELS } from "@/lib/types";
 import { ProductMemoryApi } from "@/lib/useProductMemory";
 import { Collapsible } from "@/components/Collapsible";
 import { SECTION_HELP } from "@/lib/helpText";
 import { QuickAddProducts, AiShoppingItem } from "@/components/QuickAddProducts";
 import { ExtraConsumption } from "@/components/ExtraConsumption";
+import { ProductScanner } from "@/components/ProductScanner";
+import { inventoryKey } from "@/lib/useInventory";
+import { getMealItems, applyMealItems, suggestedMeal, nutritionForAmount } from "@/lib/calculations";
+import { generateProductQrDataUrl } from "@/lib/generateProductQr";
 
 const EMPTY_NUTRITION: InventoryNutrition = { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 const REVIEW_BATCH_SIZE = 12;
@@ -38,6 +42,8 @@ export function AlacenaCard({
   consumeAmounts,
   aiReviewLockedUntil,
   onAiReviewLockedUntilChange,
+  todayEntry,
+  onUpsertDay,
 }: {
   items: InventoryItem[];
   replaceItems: (items: InventoryItem[]) => void;
@@ -48,6 +54,10 @@ export function AlacenaCard({
   consumeAmounts: (amounts: Array<{ id: string; quantity: number }>) => void;
   aiReviewLockedUntil?: number;
   onAiReviewLockedUntilChange: (until: number) => void;
+  /** Para el escáner: al consumir un producto escaneado, se suma directo a
+   * la comida que corresponda por horario (ver suggestedMeal). */
+  todayEntry: DayEntry;
+  onUpsertDay: (entry: DayEntry) => void;
 }) {
   const [filter, setFilter] = useState<InventoryCategory | "todas">("todas");
   const [showQuickAdd, setShowQuickAdd] = useState(false);
@@ -65,6 +75,13 @@ export function AlacenaCard({
   const [offLoading, setOffLoading] = useState(false);
   const [offStatus, setOffStatus] = useState("");
   const [now, setNow] = useState(() => Date.now());
+  const [showScanner, setShowScanner] = useState(false);
+  const [scannedItem, setScannedItem] = useState<InventoryItem | null>(null);
+  const [consumeAmount, setConsumeAmount] = useState("");
+  const [consumeUnit, setConsumeUnit] = useState<InventoryItem["unit"]>("g");
+  const [scanPrefill, setScanPrefill] = useState<string | undefined>(undefined);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
 
   // Solo para que la cuenta regresiva del bloqueo de "Revisar con IA" se
   // actualice sola en pantalla -- no dispara ningún pedido de red.
@@ -105,6 +122,62 @@ export function AlacenaCard({
     setOffQuery(item.name);
     setOffResults([]);
     setOffStatus("");
+    setQrDataUrl(null);
+  };
+
+  const generateQr = async () => {
+    if (!selected) return;
+    setQrLoading(true);
+    try {
+      setQrDataUrl(await generateProductQrDataUrl(selected.name));
+    } finally {
+      setQrLoading(false);
+    }
+  };
+
+  // Al escanear el código de un producto ya generado, si coincide con algo
+  // que ya tenés en la Alacena lo tratamos como "vengo a consumirlo"; si no
+  // coincide con nada, lo tratamos como "es nuevo, vengo a agregarlo" y se
+  // precarga el mismo flujo de siempre (con el promedio de Open Food Facts
+  // incluido) en vez de duplicar esa lógica acá.
+  const handleScan = (decodedText: string) => {
+    setShowScanner(false);
+    const key = inventoryKey(decodedText);
+    const match = items.find((item) => inventoryKey(item.name) === key);
+    if (match) {
+      setScannedItem(match);
+      setConsumeUnit(match.unit);
+      setConsumeAmount(match.unit === "u." ? "1" : "100");
+    } else {
+      setShowQuickAdd(true);
+      setScanPrefill(decodedText);
+    }
+  };
+
+  const confirmConsume = () => {
+    if (!scannedItem) return;
+    const amount = Number(consumeAmount);
+    if (!amount || amount <= 0) return;
+    const meal = suggestedMeal(todayEntry, new Date().getHours());
+    const nutricion = nutritionForAmount(scannedItem, amount);
+    if (nutricion) {
+      const nuevoItem: MealItem = {
+        id: `${Date.now()}-scan-${Math.random().toString(36).slice(2, 7)}`,
+        nombre: scannedItem.name,
+        ...nutricion,
+        gramos: scannedItem.unit !== "u." ? amount : undefined,
+      };
+      const itemsActuales = getMealItems(todayEntry, meal);
+      onUpsertDay(applyMealItems(todayEntry, meal, [...itemsActuales, nuevoItem]));
+    }
+    consumeAmounts([{ id: scannedItem.id, quantity: amount }]);
+    setStatus(
+      nutricion
+        ? `Descontado ${amount} ${scannedItem.unit} de ${scannedItem.name} y sumado a ${MEAL_LABELS[meal]} ✓`
+        : `Descontado ${amount} ${scannedItem.unit} de ${scannedItem.name} (sin nutrición cargada, no se sumó a ninguna comida) ✓`
+    );
+    setScannedItem(null);
+    setTimeout(() => setStatus(""), 6000);
   };
 
   const saveItem = () => {
@@ -265,12 +338,22 @@ export function AlacenaCard({
       <div className="mb-3 flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={() => setShowQuickAdd((prev) => !prev)}
+          onClick={() => {
+            setShowQuickAdd((prev) => !prev);
+            setScanPrefill(undefined);
+          }}
           className={`flex items-center gap-1 rounded-xl border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] ${
             showQuickAdd ? "border-gold bg-gold text-bg" : "border-sage/60 bg-sage/10 text-sage"
           }`}
         >
           <span className="text-[13px] leading-none">+</span> Agregar productos
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowScanner(true)}
+          className="flex items-center gap-1 rounded-xl border border-gold/60 bg-gold/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-gold"
+        >
+          📷 Escanear
         </button>
         {items.length > 0 && (
           <button
@@ -308,13 +391,68 @@ export function AlacenaCard({
 
       {showQuickAdd && (
         <div className="mb-3 rounded-xl border border-sage/40 bg-sage/5 p-2.5">
-          <QuickAddProducts addStructuredItems={addStructuredItems} productMemory={productMemory} compact autoFocus />
+          <QuickAddProducts
+            addStructuredItems={addStructuredItems}
+            productMemory={productMemory}
+            compact
+            autoFocus={!scanPrefill}
+            prefillText={scanPrefill}
+          />
         </div>
       )}
 
       {showExtraConsumption && (
         <div className="mb-3 rounded-xl border border-rust/40 bg-rust/5 p-2.5">
           <ExtraConsumption items={items} consumeAmounts={consumeAmounts} />
+        </div>
+      )}
+
+      {showScanner && <ProductScanner onDecode={handleScan} onClose={() => setShowScanner(false)} />}
+
+      {scannedItem && (
+        <div className="fixed inset-0 z-[75] flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setScannedItem(null)}>
+          <div
+            className="w-full max-w-sm rounded-2xl border border-border bg-surface p-4 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="font-display text-xl text-text">{scannedItem.name}</div>
+            <div className="mt-1 text-[11px] text-textMuted">
+              Tenés {scannedItem.quantity} {scannedItem.unit} en la Alacena. ¿Cuánto vas a consumir?
+            </div>
+            <div className="mt-3 flex gap-2">
+              <input
+                type="number"
+                min="0"
+                inputMode="decimal"
+                value={consumeAmount}
+                onChange={(event) => setConsumeAmount(event.target.value)}
+                className="flex-1"
+                autoFocus
+              />
+              <span className="flex items-center font-mono text-[11px] uppercase text-textMuted">{consumeUnit}</span>
+            </div>
+            {!scannedItem.nutritionPer100g && (
+              <div className="mt-2 rounded-lg border border-dashed border-rust/40 bg-rust/10 p-2 text-[11px] text-rust">
+                Este producto no tiene nutrición cargada — se va a descontar de la Alacena, pero no se va a sumar a ninguna comida.
+              </div>
+            )}
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setScannedItem(null)}
+                className="rounded-lg border border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmConsume}
+                className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg"
+              >
+                Consumir
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -475,6 +613,29 @@ export function AlacenaCard({
                 </div>
               )}
               {offStatus && <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-sage">{offStatus}</div>}
+            </div>
+
+            <div className="mt-3 rounded-lg border border-dashed border-border bg-bg/40 p-2.5">
+              <label className="mb-2 flex items-center font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
+                🏷️ Código para escanear
+              </label>
+              {qrDataUrl ? (
+                <div className="flex flex-col items-center gap-2">
+                  <img src={qrDataUrl} alt={`Código de ${selected.name}`} className="h-40 w-40 rounded-lg border border-border bg-white p-1" />
+                  <div className="text-center text-[10px] text-textMuted">
+                    Sacale una foto o imprimila y pegala en el producto — al escanearla la próxima vez, la reconoce sola.
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={generateQr}
+                  disabled={qrLoading}
+                  className="w-full rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg disabled:opacity-60"
+                >
+                  {qrLoading ? "Generando..." : "Generar código QR"}
+                </button>
+              )}
             </div>
 
             <label className="mt-3 block">Categoría</label>

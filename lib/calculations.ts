@@ -1,4 +1,4 @@
-import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, TrainingSession, GoalMode, ExerciseEntry, Weekday, WEEKDAYS, MealItem } from "./types";
+import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, TrainingSession, GoalMode, ExerciseEntry, Weekday, WEEKDAYS, MealItem, InventoryNutrition } from "./types";
 
 /**
  * Sesiones de entrenamiento del día. Si ya tiene el formato nuevo
@@ -94,6 +94,29 @@ export function getMealItems(entry: DayEntry, meal: MealKey): MealItem[] {
       fiber: (entry[fKey] as number) || 0,
     },
   ];
+}
+
+/**
+ * Nutrición real de una cantidad de un producto de alacena, a partir de su
+ * valor "por 100g/100ml" (o "por unidad" si se mide en "u."). Compartida por
+ * todo lo que descuenta de la alacena y lo suma a una comida a la vez
+ * (MealFromAlacena, el escáner de productos) — una sola fórmula, no una
+ * copia por pantalla.
+ */
+export function nutritionForAmount(
+  item: { unit: "g" | "ml" | "u."; nutritionPer100g?: InventoryNutrition },
+  amount: number
+): InventoryNutrition | null {
+  if (!item.nutritionPer100g) return null;
+  const factor = item.unit === "u." ? amount : amount / 100;
+  const n = item.nutritionPer100g;
+  return {
+    kcal: Math.round(n.kcal * factor),
+    protein: Math.round(n.protein * factor),
+    carbs: Math.round((n.carbs || 0) * factor),
+    fat: Math.round((n.fat || 0) * factor),
+    fiber: Math.round((n.fiber || 0) * factor),
+  };
 }
 
 /** Suma kcal/proteína/carbohidratos/grasas/fibra de una lista de items. */

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc --noEmit -p .)",
+      "Bash(curl -sf http://localhost:*)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push origin main)"
+    ]
+  }
+}

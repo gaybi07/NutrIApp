@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { DayEntry, MealKey, MealItem, MEAL_LABELS } from "@/lib/types";
 import { getMealItems, applyMealItems } from "@/lib/calculations";
 import { countDigits, MAX_DIGITS, normalizeNumberInput } from "@/lib/inputLimits";
@@ -29,6 +29,13 @@ export function MealsEditor({
   emptyMessage?: string;
 }) {
   const mealsWithItems = getMealsWithItems(entry);
+  // Colapsado por comida (Desayuno/Almuerzo/...), tipo acordeón -- si no, con
+  // las 5 comidas del día abiertas a la vez queda todo "despegado" en una
+  // lista larguísima. Arranca todo cerrado; al abrir una comida se cierra
+  // cualquier otra que estuviera abierta, así el bloque nunca crece más de
+  // una comida por vez.
+  const [openMeal, setOpenMeal] = useState<MealKey | null>(null);
+  const toggleMeal = (meal: MealKey) => setOpenMeal((prev) => (prev === meal ? null : meal));
 
   // Los alimentos cargados antes de que existiera el campo "gramos" (o que la
   // IA no haya podido estimar) se completan solos con una estimación a
@@ -92,11 +99,35 @@ export function MealsEditor({
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      {mealsWithItems.map(({ meal, items }) => (
-        <div key={meal}>
-          <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.14em] text-textMuted">{MEAL_LABELS[meal]}</div>
-          <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
+      {mealsWithItems.map(({ meal, items }) => {
+        const open = openMeal === meal;
+        return (
+        <div key={meal} className="rounded-lg border border-border/60 bg-bg/30">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => toggleMeal(meal)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                toggleMeal(meal);
+              }
+            }}
+            className="flex cursor-pointer items-center justify-between gap-2 px-2.5 py-2"
+          >
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-textMuted">
+              {MEAL_LABELS[meal]} <span className="text-text/70">· {items.length}</span>
+            </span>
+            <span
+              className="font-mono text-[10px] text-textMuted transition-transform"
+              style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+            >
+              ▾
+            </span>
+          </div>
+          {open && (
+          <div className="flex flex-col gap-1.5 px-2.5 pb-2.5">
             {items.map((item) => (
               <div key={item.id} className="rounded-lg border border-border bg-bg/50 px-2 py-2">
                 <div className="mb-1.5 flex items-center gap-1.5">
@@ -152,8 +183,10 @@ export function MealsEditor({
               </div>
             ))}
           </div>
+          )}
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

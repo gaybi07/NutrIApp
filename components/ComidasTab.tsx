@@ -4,6 +4,7 @@ import { useState } from "react";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import {
+  DayEntry,
   InventoryCategory,
   InventoryItem,
   InventoryNutrition,
@@ -52,6 +53,8 @@ export function ComidasTab({
   onHide,
   aiReviewLockedUntil,
   onAiReviewLockedUntilChange,
+  todayEntry,
+  onUpsertDay,
   household,
   householdLoaded,
   householdStatus,
@@ -80,6 +83,8 @@ export function ComidasTab({
   onHide: (id: ComidasBlockId) => void;
   aiReviewLockedUntil?: number;
   onAiReviewLockedUntilChange: (until: number) => void;
+  todayEntry: DayEntry;
+  onUpsertDay: (entry: DayEntry) => void;
   household: HouseholdInfo | null;
   householdLoaded: boolean;
   householdStatus: string;
@@ -144,6 +149,8 @@ export function ComidasTab({
                   consumeAmounts={consumeAmounts}
                   aiReviewLockedUntil={aiReviewLockedUntil}
                   onAiReviewLockedUntilChange={onAiReviewLockedUntilChange}
+                  todayEntry={todayEntry}
+                  onUpsertDay={onUpsertDay}
                 />
               )}
               {blockId === "sugerencias" && (

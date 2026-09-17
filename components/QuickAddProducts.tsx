@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { InventoryCategory, InventoryItem, InventoryNutrition } from "@/lib/types";
 import { parseInventoryText } from "@/lib/useInventory";
 import { ProductMemoryApi } from "@/lib/useProductMemory";
@@ -28,15 +28,25 @@ export function QuickAddProducts({
   productMemory,
   compact = false,
   autoFocus = false,
+  prefillText,
 }: {
   addStructuredItems: (entries: AiShoppingItem[]) => void;
   productMemory: ProductMemoryApi;
   compact?: boolean;
   autoFocus?: boolean;
+  /** Para completar el renglón desde afuera (ej. el escáner de productos)
+   * en vez de que el usuario lo escriba -- cada valor nuevo reemplaza el
+   * texto actual. */
+  prefillText?: string;
 }) {
   const [raw, setRaw] = useState("");
   const [status, setStatus] = useState("");
   const [resolving, setResolving] = useState(false);
+
+  useEffect(() => {
+    if (prefillText) setRaw(prefillText);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefillText]);
   // Envases sin tamaño conocido (bolsa de premezcla, lata, pote...),
   // esperando que el usuario diga cuánto trae cada uno antes de sumarlos —
   // junto con lo que ya estaba resuelto (por memoria o cantidad clara).

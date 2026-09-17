@@ -12,22 +12,9 @@ import {
   INVENTORY_CATEGORY_LABELS,
   emptyDay,
 } from "@/lib/types";
-import { getMealItems, applyMealItems } from "@/lib/calculations";
+import { getMealItems, applyMealItems, nutritionForAmount } from "@/lib/calculations";
 
 type BasketEntry = { itemId: string; amount: number };
-
-function nutritionForAmount(item: InventoryItem, amount: number) {
-  if (!item.nutritionPer100g) return null;
-  const factor = item.unit === "u." ? amount : amount / 100;
-  const n = item.nutritionPer100g;
-  return {
-    kcal: Math.round(n.kcal * factor),
-    protein: Math.round(n.protein * factor),
-    carbs: Math.round((n.carbs || 0) * factor),
-    fat: Math.round((n.fat || 0) * factor),
-    fiber: Math.round((n.fiber || 0) * factor),
-  };
-}
 
 /**
  * Cargar una comida picoteando directo de la alacena en vez de describirla
