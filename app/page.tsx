@@ -212,15 +212,6 @@ export default function Home() {
 
   return (
     <main>
-      <AuthPanel
-        onAuthChange={handleAuthChange}
-        onOpenTheme={() => setPanel("tema")}
-        onOpenFontSize={() => setPanel("tamano-letra")}
-        onOpenTabs={() => setPanel("solapas")}
-        onOpenSections={() => setPanel("secciones")}
-        onOpenTools={() => setPanel("herramientas")}
-      />
-
       {syncError && (
         <div className="mb-4 rounded-xl border border-rust/40 bg-rust/10 px-3 py-2 text-[11px] text-rust">
           ⚠ {syncError}
@@ -246,6 +237,14 @@ export default function Home() {
           contenedor sticky para que se queden pegados juntos como una sola
           unidad sin tener que calcular a mano la altura de cada fila. */}
       <div className="sticky top-0 z-30 mb-4">
+        <AuthPanel
+          onAuthChange={handleAuthChange}
+          onOpenTheme={() => setPanel("tema")}
+          onOpenFontSize={() => setPanel("tamano-letra")}
+          onOpenTabs={() => setPanel("solapas")}
+          onOpenSections={() => setPanel("secciones")}
+          onOpenTools={() => setPanel("herramientas")}
+        />
         <TabBar active={activeTab} onChange={setActiveTab} enabledTabs={enabledTabs} />
 
         {/* Selector de semana global -- afecta a Inicio/Macros/Actividad por

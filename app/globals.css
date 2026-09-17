@@ -253,8 +253,23 @@ html[data-font-size="grande"] .text-\[15px\] { font-size: 19px; }
    claro fijo (ver SummaryCards.tsx), así que sigue leyéndose bien arriba
    de este fondo también oscuro, solo que ahora con tono cálido. */
 [data-theme="olimpo"] .indicator-tile {
-  background: linear-gradient(165deg, rgba(154, 108, 58, 0.9), rgba(58, 39, 18, 0.97)) !important;
-  border-color: rgba(183, 134, 43, 0.45) !important;
+  background: linear-gradient(165deg, #e6cb95, #c9a869) !important;
+  border-color: rgba(140, 100, 50, 0.4) !important;
+}
+/* El bronce quedó claro a propósito -- el texto fijo pensado para fondo
+   oscuro (label/sub en crema, valor en gold/sage/rust, colores que en un
+   fondo bronce claro se pierden por poco contraste, sobre todo "gold" que
+   es casi el mismo tono) pasa a tinta oscura fija acá, ganándole a esos
+   colores con !important. Se pierde el color semántico (bueno/malo) en
+   estos números puntuales, a cambio de que se puedan leer. */
+[data-theme="olimpo"] .indicator-label {
+  color: rgba(43, 33, 24, 0.65) !important;
+}
+[data-theme="olimpo"] .indicator-value {
+  color: #2b2118 !important;
+}
+[data-theme="olimpo"] .indicator-sub {
+  color: rgba(43, 33, 24, 0.55) !important;
 }
 [data-theme="olimpo"] .indicator-tile::after {
   content: "";
@@ -263,8 +278,8 @@ html[data-font-size="grande"] .text-\[15px\] { font-size: 19px; }
   bottom: -10px;
   width: 56px;
   height: 56px;
-  opacity: 0.16;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3c3 2 4 5 3 9-1 4-4 6-3 9' fill='none' stroke='%23f5ead2' stroke-width='1.6'/%3E%3Cpath d='M12 3c-3 2-4 5-3 9 1 4 4 6 3 9' fill='none' stroke='%23f5ead2' stroke-width='1.6'/%3E%3C/svg%3E");
+  opacity: 0.22;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3c3 2 4 5 3 9-1 4-4 6-3 9' fill='none' stroke='%232b2118' stroke-width='1.6'/%3E%3Cpath d='M12 3c-3 2-4 5-3 9 1 4 4 6 3 9' fill='none' stroke='%232b2118' stroke-width='1.6'/%3E%3C/svg%3E");
   background-size: contain;
   background-repeat: no-repeat;
   pointer-events: none;
