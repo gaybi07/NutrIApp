@@ -89,22 +89,22 @@ export function SummaryCards({
   const renderCard = (card: { label: string; value: string; color: string; sub: string; tone: keyof typeof toneClasses }) => (
     <div
       key={card.label}
-      className={`indicator-tile relative overflow-hidden rounded-2xl border p-3 shadow-[0_0_0_1px_rgba(58,54,47,0.5)] ${toneClasses[card.tone]}`}
+      className={`indicator-tile relative overflow-hidden rounded-xl border p-2 shadow-[0_0_0_1px_rgba(58,54,47,0.5)] ${toneClasses[card.tone]}`}
     >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/80 to-transparent" />
       {/* Label y sub fijos (no --color-text-muted): mismo motivo que
           card.color arriba -- el fondo de la tarjeta es siempre oscuro. */}
-      <div className="indicator-label font-mono text-[10px] uppercase tracking-[0.18em] text-[#f5f1e8]/70 mb-2">{card.label}</div>
-      <div className={`indicator-value font-sans text-[1.4rem] leading-none font-bold ${card.color}`}>{card.value}</div>
-      <div className="indicator-sub text-[11px] text-[#f5f1e8]/50 mt-1.5">{card.sub}</div>
+      <div className="indicator-label font-mono text-[9px] uppercase tracking-[0.14em] text-[#f5f1e8]/70 mb-1 leading-tight">{card.label}</div>
+      <div className={`indicator-value font-sans text-[1.05rem] leading-none font-bold ${card.color}`}>{card.value}</div>
+      <div className="indicator-sub text-[10px] text-[#f5f1e8]/50 mt-1 leading-tight">{card.sub}</div>
     </div>
   );
 
   return (
     <Collapsible eyebrow="Semana" title="Indicadores" info={SECTION_HELP.semana} scrollable={false} openOnDesktop={openOnDesktop}>
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-2 gap-2">
         {cards.map((card) => renderCard(card))}
-        <div className="col-span-2 grid grid-cols-2 gap-2.5">
+        <div className="col-span-2 grid grid-cols-2 gap-2">
           {deficitCards.map((card) => renderCard(card))}
         </div>
       </div>

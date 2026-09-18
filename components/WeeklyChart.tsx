@@ -26,12 +26,23 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
   if (!active || !payload || payload.length === 0) return null;
   const row = payload[0].payload;
   const deficitPositive = row.deficit >= 0;
+  const totalKcal = row.des + row.alm + row.mer + row.cen + row.col;
+  const mealEntries = payload.filter((entry) => ["des", "alm", "mer", "cen", "col"].includes(entry.dataKey || ""));
+  const lineEntries = payload.filter((entry) => ["goal", "gasto"].includes(entry.dataKey || ""));
 
   return (
     <div style={{ background: "rgb(var(--color-surface))", border: "1px solid rgb(var(--color-border))", borderRadius: 8, padding: "8px 10px", minWidth: 150 }}>
       <div style={{ color: "rgb(var(--color-text))", fontSize: 12, fontWeight: 600, marginBottom: 4 }}>{label}</div>
-      {payload.map((entry) => (
+      {mealEntries.map((entry) => (
         <div key={entry.dataKey} style={{ color: entry.color, fontSize: 12 }}>
+          {entry.name}: {Math.round(entry.value || 0).toLocaleString("es-AR")}
+        </div>
+      ))}
+      <div style={{ marginTop: 4, paddingTop: 4, borderTop: "1px solid rgb(var(--color-border))", fontSize: 12, fontWeight: 700, color: "rgb(var(--color-text))" }}>
+        Total: {Math.round(totalKcal).toLocaleString("es-AR")} kcal
+      </div>
+      {lineEntries.map((entry) => (
+        <div key={entry.dataKey} style={{ color: entry.color, fontSize: 12, marginTop: 2 }}>
           {entry.name}: {Math.round(entry.value || 0).toLocaleString("es-AR")}
         </div>
       ))}
