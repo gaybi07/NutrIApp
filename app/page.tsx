@@ -28,6 +28,7 @@ import { WeekMealsCard } from "@/components/WeekMealsCard";
 import { TrainingEntryForm } from "@/components/TrainingEntryForm";
 import { SleepEntryForm } from "@/components/SleepEntryForm";
 import { ThemeSettings, FontSizeSettings, TabsSettings, ToolsSettings, SectionsSettings } from "@/components/Preferences";
+import { TrainerPanel } from "@/components/TrainerPanel";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
 import { AppTour } from "@/components/AppTour";
 import { TipPopup } from "@/components/TipPopup";
@@ -76,9 +77,10 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<MainTab>("inicio");
   const [panel, setPanel] = useState<
     | "calc" | "ai" | "entreno" | "sueno" | "datos" | "planificador"
-    | "tema" | "tamano-letra" | "solapas" | "herramientas" | "secciones"
+    | "tema" | "tamano-letra" | "solapas" | "herramientas" | "secciones" | "entrenador"
     | null
   >(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   useEscapeKey(() => setPanel(null), panel !== null);
 
   useEffect(() => {
@@ -92,9 +94,15 @@ export default function Home() {
   const inicioOrder = resolveOrder(settings.inicioOrder, DEFAULT_INICIO_ORDER);
   const inicioDrag = useSectionOrder(inicioOrder, (next) => saveSettings({ ...settings, inicioOrder: next }));
   const inicioHidden = settings.inicioHidden || [];
-  const inicioVisible = inicioOrder.filter((id) => !inicioHidden.includes(id));
-  const hideInicioBlock = (id: (typeof inicioOrder)[number]) =>
+  // "hoy" nunca se puede apagar -- es el bloque más importante de Inicio y ya
+  // pasó que alguien lo apagó sin querer y no encontraba cómo volver a
+  // prenderlo. Se ignora si quedó en inicioHidden de antes (arreglo
+  // retroactivo) y no se le pasa onHide más abajo (así ni aparece el foquito).
+  const inicioVisible = inicioOrder.filter((id) => id === "hoy" || !inicioHidden.includes(id));
+  const hideInicioBlock = (id: (typeof inicioOrder)[number]) => {
+    if (id === "hoy") return;
     saveSettings({ ...settings, inicioHidden: [...inicioHidden, id] });
+  };
 
   const enabledTabs = resolveOrder(settings.enabledTabs, DEFAULT_ENABLED_TABS);
   useEffect(() => {
@@ -239,11 +247,13 @@ export default function Home() {
       <div className="sticky top-0 z-30 mb-4">
         <AuthPanel
           onAuthChange={handleAuthChange}
+          onUserEmailChange={setUserEmail}
           onOpenTheme={() => setPanel("tema")}
           onOpenFontSize={() => setPanel("tamano-letra")}
           onOpenTabs={() => setPanel("solapas")}
           onOpenSections={() => setPanel("secciones")}
           onOpenTools={() => setPanel("herramientas")}
+          onOpenTrainer={() => setPanel("entrenador")}
           centerContent={
             (activeTab === "inicio" || activeTab === "macros" || activeTab === "actividad") && (
               <div className="flex min-w-0 items-center gap-1.5 font-mono text-[11px] leading-none">
@@ -365,7 +375,7 @@ export default function Home() {
               {inicioVisible.map((blockId) => {
                 if (blockId === "hoy") {
                   return (
-                    <SortableSection key="hoy" id="hoy" onHide={() => hideInicioBlock("hoy")} dragDisabledOnDesktop>
+                    <SortableSection key="hoy" id="hoy" dragDisabledOnDesktop>
                       <TodayCard
                         entry={todayEntry}
                         goal={settings.goal}
@@ -695,6 +705,23 @@ export default function Home() {
               Cerrar
             </button>
             <SectionsSettings settings={settings} onSave={saveSettings} />
+          </div>
+        </div>
+      )}
+
+      {panel === "entrenador" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>
+          <div
+            className="relative my-4 max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-3 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              onClick={() => setPanel(null)}
+              className="absolute right-3 top-3 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+            >
+              Cerrar
+            </button>
+            <TrainerPanel authenticated={authenticated} userEmail={userEmail} />
           </div>
         </div>
       )}

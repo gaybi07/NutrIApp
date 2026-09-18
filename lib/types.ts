@@ -123,6 +123,21 @@ export interface Routine {
 /** Qué rutina corresponde a cada día de la semana — se repite todas las semanas hasta que se cambie. */
 export type TrainingSchedule = Partial<Record<Weekday, string>>; // weekday -> Routine.id
 
+/** Estado de la postulación para ser entrenador certificado dentro de la app --
+ * "ninguno" es el implícito (todavía no se postuló, no hay fila en la tabla). */
+export type TrainerStatus = "pendiente" | "aprobado" | "rechazado";
+
+export interface TrainerApplication {
+  id: string;
+  userId: string;
+  userEmail: string;
+  certificatePath: string;
+  status: TrainerStatus;
+  createdAt: string;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+}
+
 /** Sugerencia para la próxima vez que se entrena este ejercicio dentro de esta rutina,
  * generada automáticamente al cerrar un entrenamiento en vivo (comparando lo hecho contra
  * lo planificado). Se guarda por `routineId + nombre` para poder mostrarla la semana que

@@ -229,8 +229,12 @@ export function SectionsSettings({ settings, onSave }: { settings: Settings; onS
         pantalla. Volvé a prenderlas acá.
       </div>
       <div className="flex flex-col gap-4">
-        {renderGroup("Inicio", DEFAULT_INICIO_ORDER, INICIO_BLOCK_LABELS, settings.inicioHidden, (id) =>
-          onSave({ ...settings, inicioHidden: toggleHidden(settings.inicioHidden, id) })
+        {renderGroup(
+          "Inicio",
+          DEFAULT_INICIO_ORDER.filter((id) => id !== "hoy"), // "hoy" nunca se apaga -- ver comentario en page.tsx
+          INICIO_BLOCK_LABELS,
+          settings.inicioHidden,
+          (id) => onSave({ ...settings, inicioHidden: toggleHidden(settings.inicioHidden, id) })
         )}
         {renderGroup("Comidas", DEFAULT_COMIDAS_ORDER, COMIDAS_BLOCK_LABELS, settings.comidasHidden, (id) =>
           onSave({ ...settings, comidasHidden: toggleHidden(settings.comidasHidden, id) })

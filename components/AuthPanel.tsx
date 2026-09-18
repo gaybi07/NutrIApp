@@ -5,19 +5,25 @@ import { isSupabaseConfigured, supabase } from "@/lib/supabase/browser";
 
 export function AuthPanel({
   onAuthChange,
+  onUserEmailChange,
   onOpenTheme,
   onOpenFontSize,
   onOpenTabs,
   onOpenSections,
   onOpenTools,
+  onOpenTrainer,
   centerContent,
 }: {
   onAuthChange?: (authenticated: boolean) => void;
+  /** Email de la cuenta logueada (null si no hay sesión) -- lo necesita la
+   * página para saber si sos el admin de la certificación de entrenadores. */
+  onUserEmailChange?: (email: string | null) => void;
   onOpenTheme?: () => void;
   onOpenFontSize?: () => void;
   onOpenTabs?: () => void;
   onOpenSections?: () => void;
   onOpenTools?: () => void;
+  onOpenTrainer?: () => void;
   /** Contenido opcional entre tu nombre y el botón de ajustes (⚙), a la
    * misma altura -- pensado para el resumen de semana/peso. */
   centerContent?: ReactNode;
@@ -42,14 +48,17 @@ export function AuthPanel({
       setUserEmail(email);
       setUserName((metadata?.full_name as string) || (metadata?.name as string) || null);
       onAuthChange?.(Boolean(email));
+      onUserEmailChange?.(email);
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       const metadata = session?.user?.user_metadata as Record<string, unknown> | undefined;
       setUserEmail(session?.user?.email ?? null);
       setUserName((metadata?.full_name as string) || (metadata?.name as string) || null);
       onAuthChange?.(Boolean(session?.user));
+      onUserEmailChange?.(session?.user?.email ?? null);
     });
     return () => listener.subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onAuthChange]);
 
   if (!isSupabaseConfigured) {
@@ -158,6 +167,16 @@ export function AuthPanel({
                 className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
               >
                 Herramientas
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onOpenTrainer?.();
+                }}
+                className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
+              >
+                Ser entrenador
               </button>
               <button
                 type="button"
