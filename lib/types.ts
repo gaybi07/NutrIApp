@@ -272,11 +272,12 @@ export const FONT_SIZE_OPTIONS: { value: FontSize; label: string; description: s
  * arrastrándolos (mantener apretado en cualquier parte del bloque, como
  * mover íconos en la pantalla de inicio del celular) — si no personalizó
  * nada todavía, se usa el orden por default de cada solapa. */
-export type InicioBlockId = "hoy" | "comidas" | "peso" | "indicadores" | "kcal" | "comidasSemana" | "tabla";
+export type InicioBlockId = "hoy" | "comidas" | "peso" | "objetivo" | "indicadores" | "kcal" | "comidasSemana" | "tabla";
 export const DEFAULT_INICIO_ORDER: InicioBlockId[] = [
   "hoy",
   "comidas",
   "peso",
+  "objetivo",
   "indicadores",
   "comidasSemana",
   "kcal",
@@ -286,6 +287,7 @@ export const INICIO_BLOCK_LABELS: Record<InicioBlockId, string> = {
   hoy: "Hoy",
   comidas: "Editar comidas de hoy",
   peso: "Peso de esta semana",
+  objetivo: "Tu objetivo",
   indicadores: "Indicadores",
   kcal: "Kcal por día",
   comidasSemana: "Comidas por día",
@@ -344,12 +346,13 @@ export const MACROS_BLOCK_LABELS: Record<MacrosBlockId, string> = {
 };
 
 export type ActividadBlockId =
-  | "resumen" | "pasosEditar" | "pasosChart" | "entrenoChart" | "suenoChart" | "volumenChart" | "rutinas";
+  | "resumen" | "indicadoresEntreno" | "pasosEditar" | "pasosChart" | "entrenoChart" | "suenoChart" | "volumenChart" | "rutinas";
 export const DEFAULT_ACTIVIDAD_ORDER: ActividadBlockId[] = [
-  "resumen", "pasosEditar", "pasosChart", "entrenoChart", "suenoChart", "volumenChart", "rutinas",
+  "resumen", "indicadoresEntreno", "pasosEditar", "pasosChart", "entrenoChart", "suenoChart", "volumenChart", "rutinas",
 ];
 export const ACTIVIDAD_BLOCK_LABELS: Record<ActividadBlockId, string> = {
   resumen: "Hoy · Entrenamiento",
+  indicadoresEntreno: "Indicadores de entrenamiento",
   pasosEditar: "Pasos (editar)",
   pasosChart: "Gráfico de pasos",
   entrenoChart: "Gráfico de entrenamiento",

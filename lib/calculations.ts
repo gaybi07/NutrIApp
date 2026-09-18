@@ -430,6 +430,65 @@ export function calcGoalDeficit(
   return { diasRestantes, kgABajar, deficitDiarioNecesario, kcalObjetivoSugerido, pctDelGasto, kgPorSemana, esAgresivo };
 }
 
+export interface GoalProgressInfo {
+  metaKg: number;
+  modo: "perder" | "aumentar";
+  fechaObjetivo: string;
+  diasRestantes: number; // negativo si la fecha ya pasó
+  kgTotalPlan: number; // lo que había que bajar/subir en total, desde que se armó el objetivo
+  kgYaLogrados: number; // progreso real hecho hasta ahora (puede ser negativo si fue para el otro lado)
+  kgRestantes: number; // lo que falta desde el peso actual
+  kgPorSemanaNecesario: number | null; // ritmo necesario desde HOY para llegar a tiempo (null si ya no hay margen)
+  ritmoRealSemanal: number | null; // kg ganados/perdidos en la dirección correcta esta semana (null si falta el dato)
+  yaLlego: boolean;
+}
+
+/**
+ * Progreso real hacia el objetivo de peso cargado en la calculadora,
+ * contrastado con el ritmo que hacía falta -- para el resumen motivacional
+ * de Inicio. A diferencia de calcGoalDeficit (que es una herramienta de
+ * validación puntual), esto se recalcula todos los días con el peso actual.
+ * "recomponer" no tiene una dirección de peso clara, así que no aplica acá.
+ */
+export function computeGoalProgress(
+  profile: { actual: string; meta: string; fecha: string; modo: GoalMode },
+  currentWeightKg: number,
+  weightTrendKg: number | null
+): GoalProgressInfo | null {
+  if (profile.modo !== "perder" && profile.modo !== "aumentar") return null;
+  const actual = Number(profile.actual);
+  const meta = Number(profile.meta);
+  if (!actual || !meta || actual === meta) return null;
+
+  const modo = profile.modo;
+  const signo = modo === "perder" ? -1 : 1; // hacia dónde tiene que moverse el peso para ir bien
+  const kgTotalPlan = Math.abs(meta - actual);
+  const kgYaLogrados = (currentWeightKg - actual) * signo;
+  const kgRestantes = Math.max(0, (currentWeightKg - meta) * -signo);
+  const yaLlego = modo === "perder" ? currentWeightKg <= meta : currentWeightKg >= meta;
+
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const objetivo = new Date(`${profile.fecha}T00:00:00`);
+  const diasRestantes = Math.round((objetivo.getTime() - hoy.getTime()) / 86400000);
+
+  const kgPorSemanaNecesario = !yaLlego && diasRestantes > 0 ? kgRestantes / (diasRestantes / 7) : null;
+  const ritmoRealSemanal = weightTrendKg == null ? null : weightTrendKg * signo;
+
+  return {
+    metaKg: meta,
+    modo,
+    fechaObjetivo: profile.fecha,
+    diasRestantes,
+    kgTotalPlan,
+    kgYaLogrados,
+    kgRestantes,
+    kgPorSemanaNecesario,
+    ritmoRealSemanal,
+    yaLlego,
+  };
+}
+
 export interface BmiInfo {
   bmi: number;
   categoria: "bajo peso" | "normal" | "sobrepeso" | "obesidad";

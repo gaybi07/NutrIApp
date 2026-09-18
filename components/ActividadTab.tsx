@@ -10,6 +10,7 @@ import { useSectionOrder } from "@/lib/useSectionOrder";
 import { SortableSection } from "@/components/SortableSection";
 import { SECTION_HELP } from "@/lib/helpText";
 import { RoutineManager } from "@/components/RoutineManager";
+import { TrainingIndicators } from "@/components/TrainingIndicators";
 import { DailySteps } from "@/components/DailySteps";
 import { Collapsible } from "@/components/Collapsible";
 import { LiveWorkout } from "@/components/LiveWorkout";
@@ -179,6 +180,7 @@ export function ActividadTab({
         />
       </Collapsible>
     ),
+    indicadoresEntreno: <TrainingIndicators routines={routines} workoutSuggestions={workoutSuggestions} />,
     pasosEditar: <DailySteps weekDates={weekDates} weekDays={weekDays} onUpsert={onUpsert} />,
     pasosChart: <WeekBarChart title="Pasos de la semana" data={stepsData} color={STEPS_COLOR} unit="pasos" neonClass="chart-neon-a" />,
     entrenoChart: <WeekBarChart title="Calorías quemadas entrenando" data={trainingData} color={TRAINING_COLOR} unit="kcal" neonClass="chart-neon-b" />,

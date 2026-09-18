@@ -6,7 +6,8 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { SortableSection } from "@/components/SortableSection";
 import { useSectionOrder } from "@/lib/useSectionOrder";
 import { useLocalDays } from "@/lib/useLocalDays";
-import { isoMonday, addDays, fmtDate, summarizeWeek, proteinTargetForWeight, getMealItems, applyMealItems, dayTotal, weightStreak } from "@/lib/calculations";
+import { isoMonday, addDays, fmtDate, summarizeWeek, proteinTargetForWeight, getMealItems, applyMealItems, dayTotal, weightStreak, computeGoalProgress } from "@/lib/calculations";
+import { GoalProgress } from "@/components/GoalProgress";
 import { TabBar, MainTab } from "@/components/TabBar";
 import { MacrosTab } from "@/components/MacrosTab";
 import { ActividadTab } from "@/components/ActividadTab";
@@ -153,6 +154,11 @@ export default function Home() {
     if (currentWeight == null || previousWeight == null) return null;
     return currentWeight - previousWeight;
   }, [settings.weeklyWeights, monday]);
+
+  const goalProgress = useMemo(() => {
+    if (!settings.calculatorProfile) return null;
+    return computeGoalProgress(settings.calculatorProfile, currentWeightKg, weightTrend);
+  }, [settings.calculatorProfile, currentWeightKg, weightTrend]);
 
   // Para la franja fija de arriba (TabBar + selector de semana): mismo peso,
   // racha y criterio de "¿la tendencia va bien?" que ya muestra la tarjeta
@@ -406,6 +412,14 @@ export default function Home() {
                         goalMode={settings.calculatorProfile?.modo}
                         onSave={saveWeeklyWeight}
                       />
+                    </SortableSection>
+                  );
+                }
+                if (blockId === "objetivo") {
+                  if (!goalProgress) return null;
+                  return (
+                    <SortableSection key="objetivo" id="objetivo" onHide={() => hideInicioBlock("objetivo")} dragDisabledOnDesktop>
+                      <GoalProgress progress={goalProgress} openOnDesktop />
                     </SortableSection>
                   );
                 }
