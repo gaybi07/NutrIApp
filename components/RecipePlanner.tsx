@@ -59,6 +59,7 @@ export function RecipePlanner({
   const [cuisineFilter, setCuisineFilter] = useState<Cuisine | "todas">("todas");
   const [view, setView] = useState<"alacena" | "ideas">("alacena");
   const [selectedRecipe, setSelectedRecipe] = useState<(typeof RECIPES)[number] | null>(null);
+  const [infoRecipe, setInfoRecipe] = useState<(typeof RECIPES)[number] | null>(null);
   const [selectedMeal, setSelectedMeal] = useState<MealKey | null>(null);
   const [pantryOffset, setPantryOffset] = useState(0);
   const [ideasOffset, setIdeasOffset] = useState(0);
@@ -110,7 +111,19 @@ export function RecipePlanner({
   };
 
   const renderRecipeCard = (recipe: (typeof RECIPES)[number]) => (
-    <div key={recipe.title} className="rounded-xl border border-border bg-bg/40 p-2.5">
+    <div
+      key={recipe.title}
+      role="button"
+      tabIndex={0}
+      onClick={() => setInfoRecipe(recipe)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          setInfoRecipe(recipe);
+        }
+      }}
+      className="cursor-pointer rounded-xl border border-border bg-bg/40 p-2.5 text-left"
+    >
       <div className="flex items-center justify-between gap-2">
         <div className="font-semibold text-sm">{recipe.title}</div>
         <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-gold">{recipe.time}</div>
@@ -129,7 +142,10 @@ export function RecipePlanner({
       <div className="mt-2 text-[12px] text-textMuted">{recipe.summary}</div>
       <button
         type="button"
-        onClick={() => setSelectedRecipe(recipe)}
+        onClick={(event) => {
+          event.stopPropagation();
+          setSelectedRecipe(recipe);
+        }}
         className="mt-2 rounded-lg border border-sage/50 bg-sage/10 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-sage"
       >
         Ver consumo y preparar
@@ -268,6 +284,40 @@ export function RecipePlanner({
         </div>
       ) : (
         <div className="rounded-xl border border-dashed border-border p-3 text-[12px] text-textMuted">Elegí primero desayuno, almuerzo, merienda o cena para ver sugerencias.</div>
+      )}
+      {infoRecipe && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setInfoRecipe(null)}>
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-surface p-4 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="font-display text-xl text-text">{infoRecipe.title}</div>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {infoRecipe.tags.map((tag) => (
+                <span key={tag} className="rounded-full border border-border bg-surface px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.10em] text-textMuted">
+                  {tag}
+                </span>
+              ))}
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg border border-gold/20 bg-gold/10 p-2">
+              <div><div className="font-mono text-[9px] uppercase text-textMuted">Aporte energético</div><div className="font-mono text-sm text-gold">{infoRecipe.kcal} kcal</div></div>
+              <div><div className="font-mono text-[9px] uppercase text-textMuted">Proteína</div><div className="font-mono text-sm text-sage">{infoRecipe.protein} g</div></div>
+            </div>
+            <div className="mt-3 text-[13px] text-text">{infoRecipe.summary}</div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => setInfoRecipe(null)} className="rounded-lg border border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted">
+                Cerrar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedRecipe(infoRecipe);
+                  setInfoRecipe(null);
+                }}
+                className="rounded-lg border border-sage/50 bg-sage/10 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-sage"
+              >
+                Ver consumo y preparar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
       {selectedRecipe && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setSelectedRecipe(null)}>
