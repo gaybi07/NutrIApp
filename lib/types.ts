@@ -95,12 +95,22 @@ export const WEEKDAY_LABELS: Record<Weekday, string> = {
   domingo: "Domingo",
 };
 
-/** Una serie de un ejercicio: series uniformes (mismo peso/reps para todas). */
+/** Una serie individual, cargada en vivo durante un entrenamiento (peso/reps/cómo se sintió, por serie). */
+export interface ExerciseSetEntry {
+  repeticiones: number;
+  peso?: number; // kg, opcional (ej. ejercicios con peso corporal)
+  intensidad: TrainingIntensity;
+}
+
+/** Un ejercicio registrado. `sets` (opcional) es el detalle real serie por serie, cargado
+ * desde el entrenamiento en vivo -- si está, series/repeticiones/peso de acá abajo son un
+ * resumen derivado de `sets` (para que lo viejo que solo lee esos 3 campos siga andando). */
 export interface ExerciseEntry {
   nombre: string;
   series: number;
   repeticiones: number;
   peso?: number; // kg, opcional (ej. ejercicios con peso corporal)
+  sets?: ExerciseSetEntry[];
 }
 
 /** Rutina reusable (ej. "Día A: Pecho/Tríceps") — plantilla de ejercicios, no un registro de un día puntual. */
@@ -112,6 +122,16 @@ export interface Routine {
 
 /** Qué rutina corresponde a cada día de la semana — se repite todas las semanas hasta que se cambie. */
 export type TrainingSchedule = Partial<Record<Weekday, string>>; // weekday -> Routine.id
+
+/** Sugerencia para la próxima vez que se entrena este ejercicio dentro de esta rutina,
+ * generada automáticamente al cerrar un entrenamiento en vivo (comparando lo hecho contra
+ * lo planificado). Se guarda por `routineId + nombre` para poder mostrarla la semana que
+ * viene, el mismo día, cuando se vuelva a entrenar ese ejercicio. */
+export interface WorkoutSuggestion {
+  nota: string; // ej. "Te resultó liviano — probá +2.5kg"
+  pesoSugerido?: number;
+  generatedAt: number; // epoch ms
+}
 
 /** Un alimento/plato individual dentro de una comida (ej. "Puré de papas" adentro de la Cena) — editable y borrable por separado. */
 export interface MealItem {
@@ -262,12 +282,13 @@ export const MACROS_BLOCK_LABELS: Record<MacrosBlockId, string> = {
 };
 
 export type ActividadBlockId =
-  | "resumen" | "ejercicios" | "pasosEditar" | "pasosChart" | "entrenoChart" | "suenoChart" | "volumenChart" | "rutinas";
+  | "resumen" | "entrenoEnVivo" | "ejercicios" | "pasosEditar" | "pasosChart" | "entrenoChart" | "suenoChart" | "volumenChart" | "rutinas";
 export const DEFAULT_ACTIVIDAD_ORDER: ActividadBlockId[] = [
-  "resumen", "ejercicios", "pasosEditar", "pasosChart", "entrenoChart", "suenoChart", "volumenChart", "rutinas",
+  "resumen", "entrenoEnVivo", "ejercicios", "pasosEditar", "pasosChart", "entrenoChart", "suenoChart", "volumenChart", "rutinas",
 ];
 export const ACTIVIDAD_BLOCK_LABELS: Record<ActividadBlockId, string> = {
   resumen: "Hoy · Actividad",
+  entrenoEnVivo: "Entrenamiento en vivo",
   ejercicios: "Ejercicios",
   pasosEditar: "Pasos (editar)",
   pasosChart: "Gráfico de pasos",
@@ -323,6 +344,7 @@ export interface Settings {
   macrosHidden?: MacrosBlockId[]; // ídem, solapa Macros
   actividadHidden?: ActividadBlockId[]; // ídem, solapa Entrenamientos
   aiReviewLockedUntil?: number; // timestamp (ms) hasta el que "Revisar con IA" de la Alacena queda bloqueado, para no recargar la API de IA
+  workoutSuggestions?: Record<string, WorkoutSuggestion>; // clave `${routineId}::${nombre del ejercicio}`
 }
 
 export const MEAL_LABELS: Record<MealKey, string> = {

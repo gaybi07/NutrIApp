@@ -339,6 +339,10 @@ export default function Home() {
           onReorder={(actividadOrder) => saveSettings({ ...settings, actividadOrder })}
           hidden={settings.actividadHidden}
           onHide={(id) => saveSettings({ ...settings, actividadHidden: [...(settings.actividadHidden || []), id] })}
+          workoutSuggestions={settings.workoutSuggestions || {}}
+          onSaveWorkoutSuggestions={(updates) =>
+            saveSettings({ ...settings, workoutSuggestions: { ...(settings.workoutSuggestions || {}), ...updates } })
+          }
         />
       )}
 

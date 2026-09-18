@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { BarChart, Bar, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip } from "recharts";
-import { DayEntry, INTENSITY_STYLES, Routine, TrainingSchedule, ActividadBlockId, DEFAULT_ACTIVIDAD_ORDER, resolveOrder } from "@/lib/types";
+import { DayEntry, INTENSITY_STYLES, Routine, TrainingSchedule, ActividadBlockId, DEFAULT_ACTIVIDAD_ORDER, resolveOrder, WorkoutSuggestion } from "@/lib/types";
 import { estimateTrainingCalories, getTrainingSessions, totalVolume } from "@/lib/calculations";
 import { useSectionOrder } from "@/lib/useSectionOrder";
 import { SortableSection } from "@/components/SortableSection";
@@ -13,6 +13,7 @@ import { ExerciseLogCard } from "@/components/ExerciseLogCard";
 import { RoutineManager } from "@/components/RoutineManager";
 import { DailySteps } from "@/components/DailySteps";
 import { Collapsible } from "@/components/Collapsible";
+import { LiveWorkout } from "@/components/LiveWorkout";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 const STEPS_COLOR = "#8A9A7C";
@@ -86,6 +87,8 @@ export function ActividadTab({
   onReorder,
   hidden,
   onHide,
+  workoutSuggestions,
+  onSaveWorkoutSuggestions,
 }: {
   entry: DayEntry;
   weekDates: string[];
@@ -101,6 +104,8 @@ export function ActividadTab({
   onReorder: (next: ActividadBlockId[]) => void;
   hidden?: ActividadBlockId[];
   onHide: (id: ActividadBlockId) => void;
+  workoutSuggestions: Record<string, WorkoutSuggestion>;
+  onSaveWorkoutSuggestions: (updates: Record<string, WorkoutSuggestion>) => void;
 }) {
   const blockOrder = resolveOrder(order, DEFAULT_ACTIVIDAD_ORDER);
   const drag = useSectionOrder(blockOrder, onReorder);
@@ -157,6 +162,16 @@ export function ActividadTab({
           </button>
         </div>
       </Collapsible>
+    ),
+    entrenoEnVivo: (
+      <LiveWorkout
+        entry={entry}
+        routines={routines}
+        schedule={schedule}
+        onFinish={onUpsert}
+        suggestions={workoutSuggestions}
+        onSaveSuggestions={onSaveWorkoutSuggestions}
+      />
     ),
     ejercicios: <ExerciseLogCard entry={entry} routines={routines} schedule={schedule} onSave={onUpsert} />,
     pasosEditar: <DailySteps weekDates={weekDates} weekDays={weekDays} onUpsert={onUpsert} />,

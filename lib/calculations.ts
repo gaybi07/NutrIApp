@@ -1,4 +1,4 @@
-import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, TrainingSession, GoalMode, ExerciseEntry, Weekday, WEEKDAYS, MealItem, InventoryNutrition } from "./types";
+import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, TrainingSession, GoalMode, ExerciseEntry, ExerciseSetEntry, Weekday, WEEKDAYS, MealItem, InventoryNutrition } from "./types";
 
 /**
  * Sesiones de entrenamiento del día. Si ya tiene el formato nuevo
@@ -213,7 +213,55 @@ export function estimateTrainingCalories(d: DayEntry): number {
 /** Volumen total entrenado (series × repeticiones × peso, sumado entre ejercicios). Ejercicios sin peso (corporal) suman igual con peso 1, para que sigan contando en la tendencia. */
 export function totalVolume(ejercicios: ExerciseEntry[] | undefined): number {
   if (!ejercicios || ejercicios.length === 0) return 0;
-  return ejercicios.reduce((total, e) => total + e.series * e.repeticiones * (e.peso || 1), 0);
+  return ejercicios.reduce((total, e) => {
+    if (e.sets && e.sets.length > 0) return total + e.sets.reduce((s, set) => s + set.repeticiones * (set.peso || 1), 0);
+    return total + e.series * e.repeticiones * (e.peso || 1);
+  }, 0);
+}
+
+/** Cómo salió un ejercicio del entrenamiento en vivo comparado contra lo planificado en la
+ * rutina: si el volumen real (según las series cargadas) superó, empató o quedó por debajo
+ * del volumen planificado (series x reps x peso de la plantilla). */
+export type WorkoutVerdict = "mejor" | "similar" | "peor";
+
+export function compareExerciseVolume(planned: ExerciseEntry, sets: ExerciseSetEntry[]): WorkoutVerdict {
+  const plannedVolume = planned.series * planned.repeticiones * (planned.peso || 1);
+  const actualVolume = sets.reduce((s, set) => s + set.repeticiones * (set.peso || 1), 0);
+  if (plannedVolume <= 0) return "similar";
+  const ratio = actualVolume / plannedVolume;
+  if (ratio > 1.05) return "mejor";
+  if (ratio < 0.95) return "peor";
+  return "similar";
+}
+
+/** Sugerencia de peso/nota para la próxima vez que se entrene este ejercicio, en base a
+ * cómo se sintieron las series completadas ahora (mayoría de intensidad reportada). */
+export function suggestNextSession(sets: ExerciseSetEntry[]): { nota: string; pesoSugerido?: number } {
+  const done = sets.filter((s) => s.repeticiones > 0);
+  if (done.length === 0) return { nota: "No se completaron series — probá de nuevo la próxima." };
+  const counts: Record<TrainingIntensity, number> = { leve: 0, moderado: 0, exigente: 0, fallo: 0 };
+  let pesoRef: number | undefined;
+  for (const s of done) {
+    counts[s.intensidad]++;
+    if (s.peso != null) pesoRef = pesoRef == null ? s.peso : Math.max(pesoRef, s.peso);
+  }
+  const mayoria = (Object.entries(counts) as [TrainingIntensity, number][]).sort((a, b) => b[1] - a[1])[0][0];
+  if (mayoria === "leve") {
+    return {
+      nota: "Te resultó liviano — para la próxima probá con más peso.",
+      pesoSugerido: pesoRef != null ? Math.round((pesoRef + 2.5) * 2) / 2 : undefined,
+    };
+  }
+  if (mayoria === "fallo") {
+    return {
+      nota: "Llegaste al fallo — la próxima mantené el peso o bajalo un poco.",
+      pesoSugerido: pesoRef != null ? Math.round((pesoRef - 2.5) * 2) / 2 : undefined,
+    };
+  }
+  if (mayoria === "exigente") {
+    return { nota: "Estuvo exigente — mantené el peso y sumá reps si podés.", pesoSugerido: pesoRef };
+  }
+  return { nota: "Buen nivel, controlado — mantené el peso.", pesoSugerido: pesoRef };
 }
 
 /** Día de la semana (`Weekday`) de una fecha YYYY-MM-DD, en huso horario local. */
