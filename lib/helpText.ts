@@ -9,6 +9,8 @@ export const SECTION_HELP = {
   semana: "Navegá entre semanas con las flechas. Acá está el control de tu peso semanal, los indicadores agregados de la semana (colapsados, tocá para abrir) y el gráfico de kcal por día.",
   objetivo: "Cuánto te falta para tu objetivo de peso (armado en la calculadora), el ritmo que necesitás desde hoy para llegar a tiempo, y cómo viniste esta semana en la práctica.",
   indicadoresEntreno: "Por cada ejercicio de tus rutinas, la última sugerencia generada al cerrar un entrenamiento en vivo -- si te resultó liviano, en el punto justo o exigente, y cuánto peso probar la próxima vez.",
+  objetivoEntreno: "Cuántos días por semana planificaste entrenar (según tu rutina semanal) contra cuántos entrenaste de verdad esta semana.",
+  cruceComidaEntreno: "Compara cuánta proteína y kcal comés en promedio los días que entrenás contra los días de descanso, a lo largo de todo lo que cargaste -- para ver si te estás quedando corto de comida para lo que entrenás. Se desbloquea con unas semanas de datos para que la comparación no sea ruido de una sola semana atípica.",
   ranking: "Clasifica los días de la semana que estés mirando (cambiala con el selector de arriba) según si llegaste a tu objetivo real de proteína diaria (1.3g por cada kilo de tu peso — el piso para no perder masa muscular). Tocá un día para ver el detalle por comida.",
   herramientas: "Volvé a abrir la calculadora si cambia tu peso o tu meta, cargá una comida contándole a la IA qué comiste, o importá/exportá un respaldo de todos tus datos.",
   tabla: "El detalle día por día de la semana: kcal, pasos, entrenamiento y su duración. Tocá el círculo de color de un día para cambiar la intensidad de entrenamiento de ese día puntual.",

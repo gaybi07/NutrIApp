@@ -5,12 +5,13 @@ import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { BarChart, Bar, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip } from "recharts";
 import { DayEntry, INTENSITY_STYLES, Routine, TrainingSchedule, Weekday, ActividadBlockId, DEFAULT_ACTIVIDAD_ORDER, resolveOrder, WorkoutSuggestion } from "@/lib/types";
-import { estimateTrainingCalories, getTrainingSessions, totalVolume } from "@/lib/calculations";
+import { estimateTrainingCalories, getTrainingSessions, totalVolume, computeTrainingGoal } from "@/lib/calculations";
 import { useSectionOrder } from "@/lib/useSectionOrder";
 import { SortableSection } from "@/components/SortableSection";
 import { SECTION_HELP } from "@/lib/helpText";
 import { RoutineManager } from "@/components/RoutineManager";
 import { TrainingIndicators } from "@/components/TrainingIndicators";
+import { TrainingGoal } from "@/components/TrainingGoal";
 import { DailySteps } from "@/components/DailySteps";
 import { Collapsible } from "@/components/Collapsible";
 import { LiveWorkout } from "@/components/LiveWorkout";
@@ -115,8 +116,13 @@ export function ActividadTab({
 }) {
   const blockOrder = resolveOrder(order, DEFAULT_ACTIVIDAD_ORDER);
   const drag = useSectionOrder(blockOrder, onReorder);
+  const trainingGoalPreview = computeTrainingGoal(schedule, weekDays);
   // "resumen" (Hoy) nunca se apaga -- mismo criterio que "hoy" en Inicio.
-  const visibleOrder = blockOrder.filter((id) => id === "resumen" || !(hidden || []).includes(id));
+  // "objetivoEntreno" solo se muestra si ya asignaste al menos un día en tu
+  // rutina semanal (sin eso no hay objetivo que calcular).
+  const visibleOrder = blockOrder.filter(
+    (id) => (id === "resumen" || !(hidden || []).includes(id)) && !(id === "objetivoEntreno" && !trainingGoalPreview)
+  );
 
   const sessions = getTrainingSessions(entry);
   const trainingKcal = estimateTrainingCalories(entry);
@@ -180,6 +186,7 @@ export function ActividadTab({
         />
       </Collapsible>
     ),
+    objetivoEntreno: trainingGoalPreview ? <TrainingGoal goal={trainingGoalPreview} openOnDesktop /> : null,
     indicadoresEntreno: <TrainingIndicators routines={routines} workoutSuggestions={workoutSuggestions} />,
     pasosEditar: <DailySteps weekDates={weekDates} weekDays={weekDays} onUpsert={onUpsert} />,
     pasosChart: <WeekBarChart title="Pasos de la semana" data={stepsData} color={STEPS_COLOR} unit="pasos" neonClass="chart-neon-a" />,

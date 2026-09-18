@@ -6,7 +6,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { SortableSection } from "@/components/SortableSection";
 import { useSectionOrder } from "@/lib/useSectionOrder";
 import { useLocalDays } from "@/lib/useLocalDays";
-import { isoMonday, addDays, fmtDate, summarizeWeek, proteinTargetForWeight, getMealItems, applyMealItems, dayTotal, weightStreak, computeGoalProgress } from "@/lib/calculations";
+import { isoMonday, addDays, fmtDate, summarizeWeek, proteinTargetForWeight, getMealItems, applyMealItems, dayTotal, weightStreak, computeGoalProgress, computeFoodTrainingInsight } from "@/lib/calculations";
 import { GoalProgress } from "@/components/GoalProgress";
 import { TabBar, MainTab } from "@/components/TabBar";
 import { MacrosTab } from "@/components/MacrosTab";
@@ -159,6 +159,11 @@ export default function Home() {
     if (!settings.calculatorProfile) return null;
     return computeGoalProgress(settings.calculatorProfile, currentWeightKg, weightTrend);
   }, [settings.calculatorProfile, currentWeightKg, weightTrend]);
+
+  const foodTrainingInsight = useMemo(
+    () => computeFoodTrainingInsight(days, settings.weeklyWeights),
+    [days, settings.weeklyWeights]
+  );
 
   // Para la franja fija de arriba (TabBar + selector de semana): mismo peso,
   // racha y criterio de "¿la tendencia va bien?" que ya muestra la tarjeta
@@ -324,6 +329,7 @@ export default function Home() {
           onReorder={(macrosOrder) => saveSettings({ ...settings, macrosOrder })}
           hidden={settings.macrosHidden}
           onHide={(id) => saveSettings({ ...settings, macrosHidden: [...(settings.macrosHidden || []), id] })}
+          foodTrainingInsight={foodTrainingInsight}
         />
       )}
 

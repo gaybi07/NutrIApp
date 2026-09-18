@@ -1,4 +1,4 @@
-import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, TrainingSession, GoalMode, ExerciseEntry, ExerciseSetEntry, Weekday, WEEKDAYS, MealItem, InventoryNutrition, WorkoutVerdict } from "./types";
+import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, TrainingSession, GoalMode, ExerciseEntry, ExerciseSetEntry, Weekday, WEEKDAYS, MealItem, InventoryNutrition, WorkoutVerdict, TrainingSchedule } from "./types";
 
 /**
  * Sesiones de entrenamiento del día. Si ya tiene el formato nuevo
@@ -486,6 +486,79 @@ export function computeGoalProgress(
     kgPorSemanaNecesario,
     ritmoRealSemanal,
     yaLlego,
+  };
+}
+
+export interface TrainingGoalInfo {
+  scheduledDays: number; // días de la semana con rutina asignada (el "objetivo" sale solo de tu propia planificación)
+  trainedDaysThisWeek: number;
+  onTrack: boolean;
+}
+
+/** Objetivo de entrenamiento = tu propia planificación semanal (cuántos días
+ * tenés rutina asignada) contra lo que de verdad entrenaste esta semana.
+ * No hace falta configurar nada nuevo -- se deriva de trainingSchedule. */
+export function computeTrainingGoal(schedule: TrainingSchedule, weekDays: (DayEntry | null)[]): TrainingGoalInfo | null {
+  const scheduledDays = Object.keys(schedule).length;
+  if (scheduledDays === 0) return null;
+  const trainedDaysThisWeek = weekDays.filter((d) => d && getTrainingSessions(d).length > 0).length;
+  return { scheduledDays, trainedDaysThisWeek, onTrack: trainedDaysThisWeek >= scheduledDays };
+}
+
+/** Cuántas semanas hacen falta cargadas (peso semanal) para que el cruce
+ * comida-entrenamiento deje de ser ruido estadístico. */
+export const MIN_WEEKS_FOR_FOOD_TRAINING_INSIGHT = 3;
+
+export interface FoodTrainingInsight {
+  weeksLoaded: number;
+  weeksNeeded: number;
+  unlocked: boolean;
+  trainedDaysCount: number;
+  restDaysCount: number;
+  avgProteinTrained: number | null;
+  avgProteinRest: number | null;
+  avgKcalTrained: number | null;
+  avgKcalRest: number | null;
+}
+
+/**
+ * Compara, a lo largo de TODO lo cargado (no solo la semana en curso),
+ * cuánta proteína/kcal comés en promedio los días que entrenás vs. los
+ * días de descanso -- para ver si te estás quedando corto de comida para
+ * lo que entrenás. Se "desbloquea" recién con unas cuantas semanas de
+ * datos (MIN_WEEKS_FOR_FOOD_TRAINING_INSIGHT) para que la comparación no
+ * sea ruido de una sola semana atípica.
+ */
+export function computeFoodTrainingInsight(days: DayEntry[], weeklyWeights: Record<string, number> | undefined): FoodTrainingInsight {
+  const weeksLoaded = Object.keys(weeklyWeights || {}).length;
+  const unlocked = weeksLoaded >= MIN_WEEKS_FOR_FOOD_TRAINING_INSIGHT;
+  const base: FoodTrainingInsight = {
+    weeksLoaded,
+    weeksNeeded: MIN_WEEKS_FOR_FOOD_TRAINING_INSIGHT,
+    unlocked,
+    trainedDaysCount: 0,
+    restDaysCount: 0,
+    avgProteinTrained: null,
+    avgProteinRest: null,
+    avgKcalTrained: null,
+    avgKcalRest: null,
+  };
+  if (!unlocked) return base;
+
+  const withFood = days.filter((d) => dayTotal(d) > 0);
+  const trained = withFood.filter((d) => getTrainingSessions(d).length > 0);
+  const rest = withFood.filter((d) => getTrainingSessions(d).length === 0);
+  const avg = (arr: DayEntry[], fn: (d: DayEntry) => number) =>
+    arr.length ? Math.round(arr.reduce((sum, d) => sum + fn(d), 0) / arr.length) : null;
+
+  return {
+    ...base,
+    trainedDaysCount: trained.length,
+    restDaysCount: rest.length,
+    avgProteinTrained: avg(trained, dayProt),
+    avgProteinRest: avg(rest, dayProt),
+    avgKcalTrained: avg(trained, dayTotal),
+    avgKcalRest: avg(rest, dayTotal),
   };
 }
 

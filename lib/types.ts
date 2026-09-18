@@ -345,9 +345,9 @@ export interface PurchaseRecord {
   category?: InventoryCategory;
 }
 
-export type MacrosBlockId = "resumen" | "ranking" | "reparto" | "semana" | "proteina" | "fibra" | "diversidad" | "tabla";
+export type MacrosBlockId = "resumen" | "ranking" | "reparto" | "semana" | "proteina" | "cruceEntreno" | "fibra" | "diversidad" | "tabla";
 export const DEFAULT_MACROS_ORDER: MacrosBlockId[] = [
-  "resumen", "ranking", "reparto", "semana", "proteina", "fibra", "diversidad", "tabla",
+  "resumen", "ranking", "reparto", "semana", "proteina", "cruceEntreno", "fibra", "diversidad", "tabla",
 ];
 export const MACROS_BLOCK_LABELS: Record<MacrosBlockId, string> = {
   resumen: "Hoy · Macros",
@@ -355,18 +355,20 @@ export const MACROS_BLOCK_LABELS: Record<MacrosBlockId, string> = {
   reparto: "Reparto de macros de hoy",
   semana: "Macros de la semana",
   proteina: "Proteína vs objetivo",
+  cruceEntreno: "Comida vs. entrenamiento",
   fibra: "Fibra de la semana",
   diversidad: "Diversidad de esta semana",
   tabla: "Tabla nutricional de la semana",
 };
 
 export type ActividadBlockId =
-  | "resumen" | "indicadoresEntreno" | "pasosEditar" | "pasosChart" | "entrenoChart" | "suenoChart" | "volumenChart" | "rutinas";
+  | "resumen" | "objetivoEntreno" | "indicadoresEntreno" | "pasosEditar" | "pasosChart" | "entrenoChart" | "suenoChart" | "volumenChart" | "rutinas";
 export const DEFAULT_ACTIVIDAD_ORDER: ActividadBlockId[] = [
-  "resumen", "indicadoresEntreno", "pasosEditar", "pasosChart", "entrenoChart", "suenoChart", "volumenChart", "rutinas",
+  "resumen", "objetivoEntreno", "indicadoresEntreno", "pasosEditar", "pasosChart", "entrenoChart", "suenoChart", "volumenChart", "rutinas",
 ];
 export const ACTIVIDAD_BLOCK_LABELS: Record<ActividadBlockId, string> = {
   resumen: "Hoy · Entrenamiento",
+  objetivoEntreno: "Objetivo de entrenamiento",
   indicadoresEntreno: "Indicadores de entrenamiento",
   pasosEditar: "Pasos (editar)",
   pasosChart: "Gráfico de pasos",

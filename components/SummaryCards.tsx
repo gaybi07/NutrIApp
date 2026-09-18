@@ -95,7 +95,7 @@ export function SummaryCards({
       {/* Label y sub fijos (no --color-text-muted): mismo motivo que
           card.color arriba -- el fondo de la tarjeta es siempre oscuro. */}
       <div className="indicator-label font-mono text-[10px] uppercase tracking-[0.18em] text-[#f5f1e8]/70 mb-2">{card.label}</div>
-      <div className={`indicator-value font-sans text-[1.9rem] leading-none font-bold ${card.color}`}>{card.value}</div>
+      <div className={`indicator-value font-sans text-[1.4rem] leading-none font-bold ${card.color}`}>{card.value}</div>
       <div className="indicator-sub text-[11px] text-[#f5f1e8]/50 mt-1.5">{card.sub}</div>
     </div>
   );

@@ -5,7 +5,8 @@ import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { BarChart, Bar, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip, PieChart, Pie, Cell } from "recharts";
 import { DayEntry, MacrosBlockId, DEFAULT_MACROS_ORDER, resolveOrder } from "@/lib/types";
-import { dayTotal, dayProt, dayCarbs, dayFat, dayFiber, macroTargets } from "@/lib/calculations";
+import { dayTotal, dayProt, dayCarbs, dayFat, dayFiber, macroTargets, FoodTrainingInsight } from "@/lib/calculations";
+import { FoodTrainingInsights } from "@/components/FoodTrainingInsights";
 import { classifyIngredient, FOOD_GROUP_LABELS, FoodGroup } from "@/lib/foodGroups";
 import { useSectionOrder } from "@/lib/useSectionOrder";
 import { SortableSection } from "@/components/SortableSection";
@@ -53,6 +54,7 @@ export function MacrosTab({
   onReorder,
   hidden,
   onHide,
+  foodTrainingInsight,
 }: {
   entry: DayEntry;
   goal: number;
@@ -67,6 +69,7 @@ export function MacrosTab({
   onReorder: (next: MacrosBlockId[]) => void;
   hidden?: MacrosBlockId[];
   onHide: (id: MacrosBlockId) => void;
+  foodTrainingInsight: FoodTrainingInsight;
 }) {
   const blockOrder = resolveOrder(order, DEFAULT_MACROS_ORDER);
   const drag = useSectionOrder(blockOrder, onReorder);
@@ -267,6 +270,7 @@ export function MacrosTab({
     reparto: repartoBlock,
     semana: semanaBlock,
     proteina: proteinaBlock,
+    cruceEntreno: <FoodTrainingInsights insight={foodTrainingInsight} openOnDesktop />,
     fibra: fibraBlock,
     diversidad: diversidadBlock,
     tabla: tablaBlock,
