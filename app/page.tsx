@@ -487,6 +487,7 @@ export default function Home() {
           items={inventory}
           consumeAmounts={consumeAmounts}
           onUseRecipe={useRecipeAsMeal}
+          goalMode={settings.calculatorProfile?.modo}
           dailyGoal={settings.goal}
           consumedKcal={todayKcal}
           weekPlan={settings.weekPlan || {}}

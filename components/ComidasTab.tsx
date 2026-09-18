@@ -11,6 +11,7 @@ import {
   PurchaseRecord,
   MealKey,
   WeekPlan,
+  GoalMode,
   ComidasBlockId,
   ComidasSubTab,
   COMIDAS_SUBTAB_BLOCKS,
@@ -64,12 +65,14 @@ export function ComidasTab({
   leaveHousehold,
   getInviteCode,
   addPurchases,
+  goalMode,
 }: {
   items: InventoryItem[];
   consumeAmounts: (amounts: Array<{ id: string; quantity: number }>) => void;
   onUseRecipe: (recipe: { kcal: number; protein: number }, meal: MealKey) => void;
   dailyGoal: number;
   consumedKcal: number;
+  goalMode?: GoalMode;
   weekPlan: WeekPlan;
   onOpenPlanificador: () => void;
   addStructuredItems: (entries: Array<{ name: string; quantity: number; unit: InventoryItem["unit"]; category?: InventoryCategory; nutritionPer100g?: InventoryNutrition }>) => void;
@@ -166,6 +169,7 @@ export function ComidasTab({
                   onUseRecipe={onUseRecipe}
                   dailyGoal={dailyGoal}
                   consumedKcal={consumedKcal}
+                  goalMode={goalMode}
                 />
               )}
               {blockId === "comunes" && <CommonMealsCard />}
