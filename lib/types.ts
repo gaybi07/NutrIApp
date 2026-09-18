@@ -259,8 +259,8 @@ export const DEFAULT_INICIO_ORDER: InicioBlockId[] = [
   "comidas",
   "peso",
   "indicadores",
-  "kcal",
   "comidasSemana",
+  "kcal",
   "tabla",
 ];
 export const INICIO_BLOCK_LABELS: Record<InicioBlockId, string> = {

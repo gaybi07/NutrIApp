@@ -97,11 +97,6 @@ export default function Home() {
   const inicioOrder = resolveOrder(settings.inicioOrder, DEFAULT_INICIO_ORDER);
   const inicioDrag = useSectionOrder(inicioOrder, (next) => saveSettings({ ...settings, inicioOrder: next }));
   const inicioHidden = settings.inicioHidden || [];
-  // "hoy" nunca se puede apagar -- es el bloque más importante de Inicio y ya
-  // pasó que alguien lo apagó sin querer y no encontraba cómo volver a
-  // prenderlo. Se ignora si quedó en inicioHidden de antes (arreglo
-  // retroactivo) y no se le pasa onHide más abajo (así ni aparece el foquito).
-  const inicioVisible = inicioOrder.filter((id) => id === "hoy" || !inicioHidden.includes(id));
   const hideInicioBlock = (id: (typeof inicioOrder)[number]) => {
     if (id === "hoy") return;
     saveSettings({ ...settings, inicioHidden: [...inicioHidden, id] });
@@ -119,6 +114,17 @@ export default function Home() {
         : isoMonday(fmtDate(new Date()));
     return addDays(base, weekOffset * 7);
   }, [days, weekOffset]);
+
+  // "hoy" nunca se puede apagar -- es el bloque más importante de Inicio y ya
+  // pasó que alguien lo apagó sin querer y no encontraba cómo volver a
+  // prenderlo. Se ignora si quedó en inicioHidden de antes (arreglo
+  // retroactivo) y no se le pasa onHide más abajo (así ni aparece el foquito).
+  // "peso" además desaparece del todo (no solo se achica) una vez cargado el
+  // peso de la semana que se está viendo -- reaparece la semana siguiente.
+  const pesoCargadoEstaSemana = settings.weeklyWeights?.[fmtDate(monday)] != null;
+  const inicioVisible = inicioOrder.filter(
+    (id) => (id === "hoy" || !inicioHidden.includes(id)) && !(id === "peso" && pesoCargadoEstaSemana)
+  );
 
   const weekDates = useMemo(() => [...Array(7)].map((_, i) => fmtDate(addDays(monday, i))), [monday]);
   const weekDays = useMemo(() => weekDates.map((f) => days.find((d) => d.fecha === f) || null), [weekDates, days]);
@@ -408,6 +414,11 @@ export default function Home() {
                   );
                 }
                 if (blockId === "peso") {
+                  // Una vez cargado el peso de la semana que se está viendo, todo
+                  // el bloque desaparece (no solo se achica) hasta la semana que
+                  // viene -- pedido explícito: no tiene sentido seguir mostrando
+                  // un "cargar peso" ya resuelto.
+                  if (settings.weeklyWeights?.[fmtDate(monday)] != null) return null;
                   return (
                     <SortableSection key="peso" id="peso" onHide={() => hideInicioBlock("peso")} dragDisabledOnDesktop>
                       <WeeklyWeight

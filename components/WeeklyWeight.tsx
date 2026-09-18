@@ -76,13 +76,15 @@ export function WeeklyWeight({
 
   if (!savedWeight) {
     return (
-      <section className="mb-4 rounded-xl border border-border bg-surface p-3">
+      <section className="mb-4 rounded-xl border-2 border-rust/50 bg-surface p-3 shadow-[0_0_24px_-6px_rgba(239,68,68,0.45)]">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-gold">Control semanal</div>
             <h2 className="font-display text-lg text-text">Peso de esta semana</h2>
           </div>
-          <div className="text-[11px] text-rust">Pendiente</div>
+          <div className="shrink-0 rounded-full border border-rust/50 bg-rust/15 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide text-rust">
+            Pendiente
+          </div>
         </div>
         <div className="mt-2 rounded-lg border border-gold/30 bg-gold/10 px-3 py-2 text-[11px] text-textMuted">
           Todavía no cargaste el peso de esta semana. Registralo para seguir tu evolución.

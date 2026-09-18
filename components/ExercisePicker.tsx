@@ -142,22 +142,40 @@ export function ExercisePicker({ onSelect, onClose }: { onSelect: (exercise: Lib
               )}
               <div className="grid grid-cols-2 gap-2">
                 {filtered.map((exercise) => (
-                  <button
+                  <div
                     key={exercise.id}
-                    type="button"
-                    onClick={() => setDetail(exercise)}
-                    className="flex flex-col overflow-hidden rounded-xl border border-border bg-bg/40 text-left hover:border-gold/60"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => pick(exercise)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        pick(exercise);
+                      }
+                    }}
+                    className="relative flex cursor-pointer flex-col overflow-hidden rounded-xl border border-border bg-bg/40 text-left hover:border-gold/60"
                   >
                     {exercise.images[0] && (
                       <img src={exerciseImageUrl(exercise.images[0])} alt={exercise.nameEs || exercise.name} className="h-24 w-full object-cover" loading="lazy" />
                     )}
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setDetail(exercise);
+                      }}
+                      aria-label={`Ver info de ${exercise.nameEs || exercise.name}`}
+                      className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-bg/80 text-[11px] text-textMuted backdrop-blur-sm"
+                    >
+                      ℹ️
+                    </button>
                     <div className="p-1.5">
                       <div className="line-clamp-2 text-[11px] text-text">{exercise.nameEs || exercise.name}</div>
                       <div className="font-mono text-[8.5px] uppercase tracking-wide text-textMuted">
                         {exercise.primaryMuscles.map((m) => MUSCLE_LABELS[m] || m).join(", ")}
                       </div>
                     </div>
-                  </button>
+                  </div>
                 ))}
               </div>
               {filtered.length === RESULTS_LIMIT && (
