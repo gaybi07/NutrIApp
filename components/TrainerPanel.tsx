@@ -2,13 +2,25 @@
 
 import { useRef, useState } from "react";
 import { useTrainerApplication, useTrainerAdmin } from "@/lib/useTrainerApplication";
-import { TrainerApplication, TrainerStatus } from "@/lib/types";
+import { useTrainerLink, useTrainerStudents, useTrainerRoutines, useTrainerRoutinesForStudent } from "@/lib/useTrainerLink";
+import { TrainerApplication, TrainerStatus, TrainerRoutine, ExerciseEntry, Routine } from "@/lib/types";
+import { clampNumber } from "@/lib/inputLimits";
+import { ExercisePicker } from "@/components/ExercisePicker";
+import { LibraryExercise } from "@/lib/exerciseLibrary";
 
 const STATUS_STYLE: Record<TrainerStatus, { label: string; color: string }> = {
   pendiente: { label: "Pendiente de revisión", color: "text-gold" },
   aprobado: { label: "Aprobado ✓", color: "text-sage" },
   rechazado: { label: "Rechazado", color: "text-rust" },
 };
+
+function newId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function emptyExercise(): ExerciseEntry {
+  return { nombre: "", series: 4, repeticiones: 10, peso: undefined };
+}
 
 function AdminRow({
   app,
@@ -66,10 +78,325 @@ function AdminRow({
   );
 }
 
-export function TrainerPanel({ authenticated, userEmail }: { authenticated: boolean; userEmail: string | null }) {
+function RoutineEditorModal({
+  initial,
+  onSave,
+  onClose,
+}: {
+  initial: TrainerRoutine | null;
+  onSave: (routine: { id?: string; nombre: string; ejercicios: ExerciseEntry[] }) => void;
+  onClose: () => void;
+}) {
+  const [nombre, setNombre] = useState(initial?.nombre || "");
+  const [ejercicios, setEjercicios] = useState<ExerciseEntry[]>(initial?.ejercicios.map((e) => ({ ...e })) || [emptyExercise()]);
+  const [libraryTarget, setLibraryTarget] = useState<number | null>(null);
+
+  const updateExercise = (index: number, patch: Partial<ExerciseEntry>) =>
+    setEjercicios((prev) => prev.map((e, i) => (i === index ? { ...e, ...patch } : e)));
+  const addExercise = () => setEjercicios((prev) => [...prev, emptyExercise()]);
+  const removeExercise = (index: number) => setEjercicios((prev) => prev.filter((_, i) => i !== index));
+
+  const pickFromLibrary = (exercise: LibraryExercise) => {
+    if (libraryTarget === null) return;
+    const nombreEjercicio = exercise.nameEs || exercise.name;
+    if (libraryTarget === -1) setEjercicios((prev) => [...prev, { ...emptyExercise(), nombre: nombreEjercicio }]);
+    else updateExercise(libraryTarget, { nombre: nombreEjercicio });
+    setLibraryTarget(null);
+  };
+
+  const handleSave = () => {
+    const clean = ejercicios.filter((e) => e.nombre.trim());
+    if (!nombre.trim() || clean.length === 0) return;
+    onSave({ id: initial?.id, nombre: nombre.trim(), ejercicios: clean });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-surface p-4 shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <label>Nombre de la rutina</label>
+        <input
+          type="text"
+          placeholder="Ej: Día A: Pecho/Tríceps"
+          value={nombre}
+          onChange={(event) => setNombre(event.target.value)}
+          className="w-full"
+        />
+        <div className="mt-3 space-y-2">
+          {ejercicios.map((ex, i) => (
+            <div key={i} className="rounded-lg border border-border bg-bg/40 p-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <input
+                  type="text"
+                  placeholder="Ej: Press banca"
+                  value={ex.nombre}
+                  onChange={(event) => updateExercise(i, { nombre: event.target.value })}
+                  className="flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={() => setLibraryTarget(i)}
+                  className="ml-2 shrink-0 rounded-md border border-border px-1.5 py-1 text-[12px]"
+                  aria-label="Buscar en la biblioteca de ejercicios"
+                >
+                  🔍
+                </button>
+                <button type="button" onClick={() => removeExercise(i)} className="ml-1 shrink-0 font-mono text-[11px] text-rust" aria-label="Quitar ejercicio">
+                  ×
+                </button>
+              </div>
+              <div className="mt-1.5 grid grid-cols-3 gap-1.5">
+                <div>
+                  <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">Series</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="99"
+                    value={ex.series}
+                    onChange={(event) => updateExercise(i, { series: clampNumber(Number(event.target.value), 99) })}
+                  />
+                </div>
+                <div>
+                  <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">Reps</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="999"
+                    value={ex.repeticiones}
+                    onChange={(event) => updateExercise(i, { repeticiones: clampNumber(Number(event.target.value), 999) })}
+                  />
+                </div>
+                <div>
+                  <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">Peso (kg)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="999"
+                    step="0.5"
+                    value={ex.peso ?? ""}
+                    placeholder="—"
+                    onChange={(event) => updateExercise(i, { peso: event.target.value ? clampNumber(Number(event.target.value), 999) : undefined })}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <button type="button" onClick={addExercise} className="rounded-lg border border-dashed border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted">
+            + Agregar ejercicio
+          </button>
+          <button type="button" onClick={() => setLibraryTarget(-1)} className="rounded-lg border border-dashed border-gold/50 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold">
+            🔍 Desde biblioteca
+          </button>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button type="button" onClick={onClose} className="rounded-lg border border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted">
+            Cancelar
+          </button>
+          <button type="button" onClick={handleSave} className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg">
+            Guardar rutina
+          </button>
+        </div>
+      </div>
+      {libraryTarget !== null && <ExercisePicker onSelect={pickFromLibrary} onClose={() => setLibraryTarget(null)} />}
+    </div>
+  );
+}
+
+function TrainerStudentsAndRoutines({ authenticated }: { authenticated: boolean }) {
+  const studentsHook = useTrainerStudents(authenticated, true);
+  const routinesHook = useTrainerRoutines(authenticated, true);
+  const [editing, setEditing] = useState<TrainerRoutine | "new" | null>(null);
+
+  return (
+    <div className="mt-5 border-t border-border pt-3">
+      <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Tus alumnos</div>
+      <button
+        type="button"
+        onClick={studentsHook.getInviteCode}
+        disabled={studentsHook.busy}
+        className="mb-2 w-full rounded-lg border border-gold/60 bg-gold/10 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold disabled:opacity-50"
+      >
+        {studentsHook.inviteCode ? `Código: ${studentsHook.inviteCode}` : "Generar código de invitación"}
+      </button>
+      {studentsHook.status && <div className="mb-2 text-[11px] text-rust">{studentsHook.status}</div>}
+      {!studentsHook.loaded ? (
+        <div className="text-[12px] text-textMuted">Cargando...</div>
+      ) : studentsHook.students.length === 0 ? (
+        <div className="mb-3 rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">Todavía no tenés alumnos vinculados.</div>
+      ) : (
+        <div className="mb-3 space-y-1.5">
+          {studentsHook.students.map((s) => (
+            <div key={s.studentId} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-bg/40 px-2.5 py-2">
+              <span className="font-mono text-[11px] text-text">{s.studentEmail}</span>
+              <button type="button" onClick={() => studentsHook.removeStudent(s.studentId)} className="font-mono text-[10px] text-rust">
+                Quitar
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="mb-2 mt-4 flex items-center justify-between">
+        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Tus rutinas para alumnos</div>
+        <button type="button" onClick={() => setEditing("new")} className="rounded-full border border-gold/60 bg-gold px-2.5 py-1 font-mono text-[9px] uppercase tracking-wide text-bg">
+          + Nueva
+        </button>
+      </div>
+      {!routinesHook.loaded ? (
+        <div className="text-[12px] text-textMuted">Cargando...</div>
+      ) : routinesHook.routines.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">Todavía no armaste ninguna rutina para alumnos.</div>
+      ) : (
+        <div className="space-y-2">
+          {routinesHook.routines.map((r) => (
+            <div key={r.id} className="rounded-lg border border-border bg-bg/40 p-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-sm font-semibold text-text">{r.nombre}</div>
+                <div className="flex gap-1.5">
+                  <button type="button" onClick={() => setEditing(r)} className="rounded-full border border-border px-2 py-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => routinesHook.remove(r.id)}
+                    className="rounded-full border border-rust/50 px-2 py-1 font-mono text-[9px] uppercase tracking-wide text-rust"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+              <div className="mt-1.5 space-y-0.5">
+                {r.ejercicios.map((e, i) => (
+                  <div key={i} className="font-mono text-[10px] text-textMuted">
+                    {e.nombre} · {e.series}x{e.repeticiones}
+                    {e.peso ? ` · ${e.peso}kg` : ""}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {editing && (
+        <RoutineEditorModal
+          initial={editing === "new" ? null : editing}
+          onSave={(routine) => routinesHook.save(routine)}
+          onClose={() => setEditing(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function StudentLinkSection({
+  authenticated,
+  routines,
+  onSaveRoutines,
+}: {
+  authenticated: boolean;
+  routines: Routine[];
+  onSaveRoutines: (routines: Routine[]) => void;
+}) {
+  const linkHook = useTrainerLink(authenticated);
+  const trainerRoutines = useTrainerRoutinesForStudent(authenticated, Boolean(linkHook.link));
+  const [code, setCode] = useState("");
+  const [adoptedIds, setAdoptedIds] = useState<string[]>([]);
+
+  const adopt = (routine: TrainerRoutine) => {
+    onSaveRoutines([...routines, { id: newId(), nombre: routine.nombre, ejercicios: routine.ejercicios.map((e) => ({ ...e })) }]);
+    setAdoptedIds((prev) => [...prev, routine.id]);
+  };
+
+  return (
+    <div className="mt-5 border-t border-border pt-3">
+      <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Tu entrenador</div>
+      {!linkHook.loaded ? (
+        <div className="text-[12px] text-textMuted">Cargando...</div>
+      ) : linkHook.link ? (
+        <>
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-border bg-bg/40 px-2.5 py-2">
+            <span className="font-mono text-[11px] text-text">{linkHook.link.trainerEmail}</span>
+            <button type="button" onClick={linkHook.leave} className="font-mono text-[10px] text-rust">
+              Desvincularme
+            </button>
+          </div>
+          {!trainerRoutines.loaded ? (
+            <div className="text-[12px] text-textMuted">Cargando rutinas...</div>
+          ) : trainerRoutines.routines.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">Tu entrenador todavía no armó rutinas.</div>
+          ) : (
+            <div className="space-y-2">
+              {trainerRoutines.routines.map((r) => {
+                const adopted = adoptedIds.includes(r.id);
+                return (
+                  <div key={r.id} className="rounded-lg border border-border bg-bg/40 p-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-sm font-semibold text-text">{r.nombre}</div>
+                      <button
+                        type="button"
+                        onClick={() => adopt(r)}
+                        disabled={adopted}
+                        className="rounded-full border border-gold/60 bg-gold px-2.5 py-1 font-mono text-[9px] uppercase tracking-wide text-bg disabled:opacity-50"
+                      >
+                        {adopted ? "Adoptada ✓" : "Adoptar"}
+                      </button>
+                    </div>
+                    <div className="mt-1.5 space-y-0.5">
+                      {r.ejercicios.map((e, i) => (
+                        <div key={i} className="font-mono text-[10px] text-textMuted">
+                          {e.nombre} · {e.series}x{e.repeticiones}
+                          {e.peso ? ` · ${e.peso}kg` : ""}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
+      ) : (
+        <div>
+          <div className="mb-2 text-[11px] text-textMuted">Pedile el código a tu entrenador para vincularte.</div>
+          <div className="flex gap-2">
+            <input type="text" placeholder="Código" value={code} onChange={(event) => setCode(event.target.value)} className="min-w-0 flex-1" />
+            <button
+              type="button"
+              onClick={() => linkHook.join(code)}
+              disabled={linkHook.busy || !code.trim()}
+              className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg disabled:opacity-50"
+            >
+              Vincularme
+            </button>
+          </div>
+        </div>
+      )}
+      {linkHook.status && <div className="mt-2 text-center font-mono text-[11px] text-sage">{linkHook.status}</div>}
+    </div>
+  );
+}
+
+export function TrainerPanel({
+  authenticated,
+  userEmail,
+  routines,
+  onSaveRoutines,
+}: {
+  authenticated: boolean;
+  userEmail: string | null;
+  routines: Routine[];
+  onSaveRoutines: (routines: Routine[]) => void;
+}) {
   const own = useTrainerApplication(authenticated, userEmail);
   const admin = useTrainerAdmin(authenticated, userEmail);
   const fileRef = useRef<HTMLInputElement>(null);
+  const isApprovedTrainer = own.application?.status === "aprobado";
 
   const handlePick = () => fileRef.current?.click();
   const handleFile = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,7 +420,7 @@ export function TrainerPanel({ authenticated, userEmail }: { authenticated: bool
       <div className="font-display italic text-lg text-gold mb-1">Ser entrenador</div>
       <div className="mb-3 text-xs text-textMuted">
         Subí un PDF o una foto de tu título/curso como comprobante. Lo revisamos a mano y, una vez aprobado, vas a poder armar
-        rutinas para que tus alumnos las adopten (esto último todavía no está activo).
+        rutinas para que tus alumnos las adopten.
       </div>
 
       {!own.loaded ? (
@@ -130,6 +457,10 @@ export function TrainerPanel({ authenticated, userEmail }: { authenticated: bool
           {own.status && <div className="mt-2 text-center font-mono text-[11px] text-sage">{own.status}</div>}
         </>
       )}
+
+      {isApprovedTrainer && <TrainerStudentsAndRoutines authenticated={authenticated} />}
+
+      <StudentLinkSection authenticated={authenticated} routines={routines} onSaveRoutines={onSaveRoutines} />
 
       {admin.isAdmin && (
         <div className="mt-5 border-t border-border pt-3">

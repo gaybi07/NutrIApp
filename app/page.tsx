@@ -721,7 +721,12 @@ export default function Home() {
             >
               Cerrar
             </button>
-            <TrainerPanel authenticated={authenticated} userEmail={userEmail} />
+            <TrainerPanel
+              authenticated={authenticated}
+              userEmail={userEmail}
+              routines={settings.routines || []}
+              onSaveRoutines={(routines) => saveSettings({ ...settings, routines })}
+            />
           </div>
         </div>
       )}

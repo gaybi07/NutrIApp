@@ -138,6 +138,34 @@ export interface TrainerApplication {
   reviewNote: string | null;
 }
 
+/** Vínculo entre un alumno y su entrenador (a lo sumo uno por alumno, igual
+ * que el "hogar" de la alacena) -- lo que ve el lado ALUMNO. */
+export interface TrainerLink {
+  trainerId: string;
+  trainerEmail: string;
+  createdAt: string;
+}
+
+/** Lo que ve el lado ENTRENADOR de un vínculo: uno de sus alumnos. */
+export interface TrainerStudent {
+  studentId: string;
+  studentEmail: string;
+  createdAt: string;
+}
+
+/** Rutina armada por un entrenador para sus alumnos -- vive en su propia tabla
+ * (no en Settings.routines) porque la tienen que poder leer los alumnos
+ * vinculados, no solo el dueño. Adoptarla copia sus ejercicios a una Routine
+ * normal en el Settings del alumno. */
+export interface TrainerRoutine {
+  id: string;
+  trainerId: string;
+  nombre: string;
+  ejercicios: ExerciseEntry[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 /** Sugerencia para la próxima vez que se entrena este ejercicio dentro de esta rutina,
  * generada automáticamente al cerrar un entrenamiento en vivo (comparando lo hecho contra
  * lo planificado). Se guarda por `routineId + nombre` para poder mostrarla la semana que
