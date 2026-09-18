@@ -39,6 +39,7 @@ import { useSharedInventory } from "@/lib/useSharedInventory";
 import { usePurchaseHistory } from "@/lib/usePurchaseHistory";
 import { useSharedPurchases } from "@/lib/useSharedPurchases";
 import { useHousehold } from "@/lib/useHousehold";
+import { useTrainerApplication } from "@/lib/useTrainerApplication";
 import { useProductMemory } from "@/lib/useProductMemory";
 import { emptyDay, MealKey, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER, resolveOrder } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
@@ -81,6 +82,8 @@ export default function Home() {
     | null
   >(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const trainerApplication = useTrainerApplication(authenticated, userEmail);
+  const isApprovedTrainer = trainerApplication.application?.status === "aprobado";
   useEscapeKey(() => setPanel(null), panel !== null);
 
   useEffect(() => {
@@ -353,6 +356,7 @@ export default function Home() {
           onSaveWorkoutSuggestions={(updates) =>
             saveSettings({ ...settings, workoutSuggestions: { ...(settings.workoutSuggestions || {}), ...updates } })
           }
+          isApprovedTrainer={isApprovedTrainer}
         />
       )}
 

@@ -89,6 +89,7 @@ export function ActividadTab({
   onHide,
   workoutSuggestions,
   onSaveWorkoutSuggestions,
+  isApprovedTrainer,
 }: {
   entry: DayEntry;
   weekDates: string[];
@@ -106,6 +107,9 @@ export function ActividadTab({
   onHide: (id: ActividadBlockId) => void;
   workoutSuggestions: Record<string, WorkoutSuggestion>;
   onSaveWorkoutSuggestions: (updates: Record<string, WorkoutSuggestion>) => void;
+  /** Mostrar la insignia de "entrenador certificado" arriba de todo -- solo
+   * cuando tu postulación (Ajustes > Ser entrenador) está aprobada. */
+  isApprovedTrainer?: boolean;
 }) {
   const blockOrder = resolveOrder(order, DEFAULT_ACTIVIDAD_ORDER);
   const drag = useSectionOrder(blockOrder, onReorder);
@@ -124,7 +128,7 @@ export function ActividadTab({
 
   const blocks: Record<ActividadBlockId, ReactNode> = {
     resumen: (
-      <Collapsible eyebrow="Hoy" title="Actividad" info={SECTION_HELP.actividad} defaultOpen>
+      <Collapsible eyebrow="Hoy" title="Entrenamiento" info={SECTION_HELP.actividad} defaultOpen>
         <div className="mb-4 grid grid-cols-3 gap-2 text-center">
           <div>
             <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-textMuted">Pasos</div>
@@ -193,7 +197,13 @@ export function ActividadTab({
   };
 
   return (
-    <DndContext sensors={drag.sensors} collisionDetection={drag.collisionDetection} onDragStart={drag.handleDragStart} onDragEnd={drag.handleDragEnd} onDragCancel={drag.handleDragCancel}>
+    <>
+      {isApprovedTrainer && (
+        <div className="mb-3 flex items-center gap-1.5 rounded-full border border-gold/50 bg-gold/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wide text-gold">
+          🏅 Sos entrenador certificado
+        </div>
+      )}
+      <DndContext sensors={drag.sensors} collisionDetection={drag.collisionDetection} onDragStart={drag.handleDragStart} onDragEnd={drag.handleDragEnd} onDragCancel={drag.handleDragCancel}>
       <SortableContext items={visibleOrder} strategy={verticalListSortingStrategy}>
         {visibleOrder.map((blockId) => (
           <SortableSection key={blockId} id={blockId} onHide={() => onHide(blockId)}>
@@ -202,5 +212,6 @@ export function ActividadTab({
         ))}
       </SortableContext>
     </DndContext>
+    </>
   );
 }
