@@ -273,42 +273,47 @@ export default function Home() {
           onOpenTools={() => setPanel("herramientas")}
           onOpenTrainer={() => setPanel("entrenador")}
           centerContent={
-            (activeTab === "inicio" || activeTab === "macros" || activeTab === "actividad") && (
-              <div className="flex w-full min-w-0 items-center justify-between gap-1">
-                <button
-                  type="button"
-                  onClick={() => setWeekOffset((w) => w - 1)}
-                  aria-label="Semana anterior"
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border bg-surfaceAlt text-text hover:border-gold/60"
-                >
-                  ‹
-                </button>
-                <div className="flex min-w-0 items-center gap-1.5 font-mono text-[11px] leading-none">
-                  <span className="shrink-0 text-textMuted">
-                    {monday.getDate()}/{monday.getMonth() + 1}–{sunday.getDate()}/{sunday.getMonth() + 1}
-                  </span>
-                  {weightThisWeek != null ? (
-                    <span className="shrink-0 font-sans font-bold text-text">{weightThisWeek.toFixed(1)}kg</span>
-                  ) : (
-                    <span className="shrink-0 text-rust">peso pend.</span>
-                  )}
-                  {weightTrend != null && weightTrend !== 0 && (
-                    <span className={`shrink-0 ${weightTrendGood == null ? "text-textMuted" : weightTrendGood ? "text-sage" : "text-rust"}`}>
-                      {weightTrend > 0 ? "▲" : "▼"}
-                    </span>
-                  )}
-                  {weightStreakCount >= 2 && <span className="shrink-0 text-gold">🔥{weightStreakCount}</span>}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setWeekOffset((w) => w + 1)}
-                  aria-label="Semana siguiente"
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border bg-surfaceAlt text-text hover:border-gold/60"
-                >
-                  ›
-                </button>
+            <div className="flex w-full min-w-0 items-center justify-between gap-1">
+              <button
+                type="button"
+                onClick={() => setWeekOffset((w) => w - 1)}
+                aria-label="Semana anterior"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border bg-surfaceAlt text-text hover:border-gold/60"
+              >
+                ‹
+              </button>
+              <div className="flex min-w-0 items-center gap-1.5 font-mono text-[11px] leading-none">
+                <span className="shrink-0 text-textMuted">
+                  {monday.getDate()}/{monday.getMonth() + 1}–{sunday.getDate()}/{sunday.getMonth() + 1}
+                </span>
+                {/* El peso/racha solo tiene sentido en las solapas que lo usan
+                    (Inicio, Macros, Entreno) -- en Comidas y Gastos se oculta,
+                    pero las flechas de semana siguen andando en todas. */}
+                {(activeTab === "inicio" || activeTab === "macros" || activeTab === "actividad") && (
+                  <>
+                    {weightThisWeek != null ? (
+                      <span className="shrink-0 font-sans font-bold text-text">{weightThisWeek.toFixed(1)}kg</span>
+                    ) : (
+                      <span className="shrink-0 text-rust">peso pend.</span>
+                    )}
+                    {weightTrend != null && weightTrend !== 0 && (
+                      <span className={`shrink-0 ${weightTrendGood == null ? "text-textMuted" : weightTrendGood ? "text-sage" : "text-rust"}`}>
+                        {weightTrend > 0 ? "▲" : "▼"}
+                      </span>
+                    )}
+                    {weightStreakCount >= 2 && <span className="shrink-0 text-gold">🔥{weightStreakCount}</span>}
+                  </>
+                )}
               </div>
-            )
+              <button
+                type="button"
+                onClick={() => setWeekOffset((w) => w + 1)}
+                aria-label="Semana siguiente"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border bg-surfaceAlt text-text hover:border-gold/60"
+              >
+                ›
+              </button>
+            </div>
           }
         />
         <TabBar active={activeTab} onChange={setActiveTab} enabledTabs={enabledTabs} />
