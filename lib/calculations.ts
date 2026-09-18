@@ -1,4 +1,4 @@
-import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, TrainingSession, GoalMode, ExerciseEntry, ExerciseSetEntry, Weekday, WEEKDAYS, MealItem, InventoryNutrition } from "./types";
+import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, TrainingSession, GoalMode, ExerciseEntry, ExerciseSetEntry, Weekday, WEEKDAYS, MealItem, InventoryNutrition, WorkoutVerdict } from "./types";
 
 /**
  * Sesiones de entrenamiento del día. Si ya tiene el formato nuevo
@@ -222,8 +222,6 @@ export function totalVolume(ejercicios: ExerciseEntry[] | undefined): number {
 /** Cómo salió un ejercicio del entrenamiento en vivo comparado contra lo planificado en la
  * rutina: si el volumen real (según las series cargadas) superó, empató o quedó por debajo
  * del volumen planificado (series x reps x peso de la plantilla). */
-export type WorkoutVerdict = "mejor" | "similar" | "peor";
-
 export function compareExerciseVolume(planned: ExerciseEntry, sets: ExerciseSetEntry[]): WorkoutVerdict {
   const plannedVolume = planned.series * planned.repeticiones * (planned.peso || 1);
   const actualVolume = sets.reduce((s, set) => s + set.repeticiones * (set.peso || 1), 0);

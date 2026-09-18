@@ -10,9 +10,12 @@ import {
   TrainingIntensity,
   Weekday,
   WorkoutSuggestion,
+  WorkoutReport,
+  WorkoutReportItem,
+  WorkoutVerdict,
   INTENSITY_STYLES,
 } from "@/lib/types";
-import { weekdayOf, getTrainingSessions, compareExerciseVolume, suggestNextSession, WorkoutVerdict } from "@/lib/calculations";
+import { weekdayOf, getTrainingSessions, compareExerciseVolume, suggestNextSession } from "@/lib/calculations";
 import { clampNumber } from "@/lib/inputLimits";
 import { ExercisePicker } from "@/components/ExercisePicker";
 import { RoutineEditorModal } from "@/components/RoutineEditorModal";
@@ -45,18 +48,6 @@ interface LiveSession {
   startedAt: number;
   routineId?: string;
   exercises: DraftExercise[];
-}
-
-interface ReportItem {
-  nombre: string;
-  verdict: WorkoutVerdict;
-  nota: string;
-}
-
-interface Report {
-  minutos: number;
-  overallIntensidad: TrainingIntensity;
-  items: ReportItem[];
 }
 
 function loadStoredSession(fecha: string): LiveSession | null {
@@ -119,7 +110,11 @@ export function LiveWorkout({
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [libraryTarget, setLibraryTarget] = useState<"new" | null>(null);
-  const [report, setReport] = useState<Report | null>(null);
+  // Ojo: arranca en null a propósito aunque `entry.entrenamientoReporte` ya
+  // pueda existir -- si lo iniciara con ese valor, el modal del reporte se
+  // abriría solo cada vez que se entra a la solapa. Se vuelve a abrir con el
+  // botón "Ver reporte" de más abajo, a pedido del usuario.
+  const [report, setReport] = useState<WorkoutReport | null>(null);
   const [planningOpen, setPlanningOpen] = useState(false);
   const [creatingRoutine, setCreatingRoutine] = useState(false);
 
@@ -231,7 +226,7 @@ export function LiveWorkout({
     if (!session) return;
     const elapsedMinutes = Math.max(1, Math.round((Date.now() - session.startedAt) / 60000));
     const finalExercises: ExerciseEntry[] = [];
-    const reportItems: ReportItem[] = [];
+    const reportItems: WorkoutReportItem[] = [];
     const suggestionUpdates: Record<string, WorkoutSuggestion> = {};
     const counts: Record<TrainingIntensity, number> = { leve: 0, moderado: 0, exigente: 0, fallo: 0 };
 
@@ -266,16 +261,18 @@ export function LiveWorkout({
     const ranked = (Object.entries(counts) as [TrainingIntensity, number][]).sort((a, b) => b[1] - a[1]);
     const overallIntensidad: TrainingIntensity = ranked[0][1] > 0 ? ranked[0][0] : "moderado";
     const existingSessions = getTrainingSessions(entry);
+    const newReport: WorkoutReport = { minutos: elapsedMinutes, overallIntensidad, items: reportItems };
 
     onFinish({
       ...entry,
       entreno: true,
       entrenamientos: [...existingSessions, { intensidad: overallIntensidad, minutos: elapsedMinutes, tipo: "fuerza" }],
       ejercicios: finalExercises,
+      entrenamientoReporte: newReport,
     });
     if (Object.keys(suggestionUpdates).length > 0) onSaveSuggestions(suggestionUpdates);
 
-    setReport({ minutos: elapsedMinutes, overallIntensidad, items: reportItems });
+    setReport(newReport);
     setSession(null);
     setOpenIndex(null);
   };
@@ -312,6 +309,15 @@ export function LiveWorkout({
               className="w-full rounded-lg p-3 font-sans text-sm font-bold bg-gold text-bg"
             >
               📋 Cargar rutina
+            </button>
+          )}
+          {entry.entrenamientoReporte && (
+            <button
+              type="button"
+              onClick={() => setReport(entry.entrenamientoReporte!)}
+              className="mt-2 w-full rounded-lg border border-dashed border-gold/40 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold"
+            >
+              📊 Ver reporte del entrenamiento de hoy
             </button>
           )}
         </>

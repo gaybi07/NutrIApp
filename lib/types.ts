@@ -176,6 +176,24 @@ export interface WorkoutSuggestion {
   generatedAt: number; // epoch ms
 }
 
+/** "mejor/similar/peor" que lo planificado, según el volumen real de esa serie. */
+export type WorkoutVerdict = "mejor" | "similar" | "peor";
+
+export interface WorkoutReportItem {
+  nombre: string;
+  verdict: WorkoutVerdict;
+  nota: string;
+}
+
+/** Reporte que queda al cerrar un entrenamiento en vivo -- se guarda en el
+ * DayEntry del día para poder volver a verlo más tarde (no es efímero, no
+ * desaparece apenas se cierra el modal la primera vez). */
+export interface WorkoutReport {
+  minutos: number;
+  overallIntensidad: TrainingIntensity;
+  items: WorkoutReportItem[];
+}
+
 /** Un alimento/plato individual dentro de una comida (ej. "Puré de papas" adentro de la Cena) — editable y borrable por separado. */
 export interface MealItem {
   id: string;
@@ -223,6 +241,7 @@ export interface DayEntry {
   entrenoIntensidad?: TrainingIntensity; // formato viejo
   entrenamientos?: TrainingSession[]; // formato nuevo: soporta más de un entrenamiento por día
   ejercicios?: ExerciseEntry[]; // desglose real de lo entrenado ese día (series/reps/peso por ejercicio)
+  entrenamientoReporte?: WorkoutReport; // reporte planificado vs. real del entrenamiento en vivo de ese día -- se puede volver a abrir más tarde
   alimentos?: string[]; // nombres de ingredientes comidos ese día (para diversidad de grupos alimenticios en Macros)
   desItems?: MealItem[]; // desglose editable del desayuno — la suma de estos da desK/desP/desC/desG/desF
   almItems?: MealItem[];

@@ -44,8 +44,6 @@ import { useProductMemory } from "@/lib/useProductMemory";
 import { emptyDay, MealKey, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER, resolveOrder } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
 
-const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-
 export default function Home() {
   const { days, settings, loaded, syncError, upsertDay, saveDays, saveSettings } = useLocalDays();
   const [authenticated, setAuthenticated] = useState(!isSupabaseConfigured);
@@ -265,63 +263,44 @@ export default function Home() {
           onOpenTrainer={() => setPanel("entrenador")}
           centerContent={
             (activeTab === "inicio" || activeTab === "macros" || activeTab === "actividad") && (
-              <div className="flex min-w-0 items-center gap-1.5 font-mono text-[11px] leading-none">
-                <span className="shrink-0 text-textMuted">
-                  {monday.getDate()}/{monday.getMonth() + 1}–{sunday.getDate()}/{sunday.getMonth() + 1}
-                </span>
-                {weightThisWeek != null ? (
-                  <span className="shrink-0 font-sans font-bold text-text">{weightThisWeek.toFixed(1)}kg</span>
-                ) : (
-                  <span className="shrink-0 text-rust">peso pend.</span>
-                )}
-                {weightTrend != null && weightTrend !== 0 && (
-                  <span className={`shrink-0 ${weightTrendGood == null ? "text-textMuted" : weightTrendGood ? "text-sage" : "text-rust"}`}>
-                    {weightTrend > 0 ? "▲" : "▼"}
+              <div className="flex w-full min-w-0 items-center justify-between gap-1">
+                <button
+                  type="button"
+                  onClick={() => setWeekOffset((w) => w - 1)}
+                  aria-label="Semana anterior"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border bg-surfaceAlt text-text hover:border-gold/60"
+                >
+                  ‹
+                </button>
+                <div className="flex min-w-0 items-center gap-1.5 font-mono text-[11px] leading-none">
+                  <span className="shrink-0 text-textMuted">
+                    {monday.getDate()}/{monday.getMonth() + 1}–{sunday.getDate()}/{sunday.getMonth() + 1}
                   </span>
-                )}
-                {weightStreakCount >= 2 && <span className="shrink-0 text-gold">🔥{weightStreakCount}</span>}
+                  {weightThisWeek != null ? (
+                    <span className="shrink-0 font-sans font-bold text-text">{weightThisWeek.toFixed(1)}kg</span>
+                  ) : (
+                    <span className="shrink-0 text-rust">peso pend.</span>
+                  )}
+                  {weightTrend != null && weightTrend !== 0 && (
+                    <span className={`shrink-0 ${weightTrendGood == null ? "text-textMuted" : weightTrendGood ? "text-sage" : "text-rust"}`}>
+                      {weightTrend > 0 ? "▲" : "▼"}
+                    </span>
+                  )}
+                  {weightStreakCount >= 2 && <span className="shrink-0 text-gold">🔥{weightStreakCount}</span>}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setWeekOffset((w) => w + 1)}
+                  aria-label="Semana siguiente"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border bg-surfaceAlt text-text hover:border-gold/60"
+                >
+                  ›
+                </button>
               </div>
             )
           }
         />
         <TabBar active={activeTab} onChange={setActiveTab} enabledTabs={enabledTabs} />
-
-        {/* Selector de semana global -- afecta a Inicio/Macros/Actividad por
-            igual (las tres leen weekDates/weekDays), así que vive acá arriba
-            en vez de adentro del bloque "Semana" de Inicio, donde antes solo
-            se podía cambiar la semana estando en esa solapa puntual. Comidas
-            y Gastos no dependen de la semana, así que no lo muestran.
-            El peso de esta semana y la racha van acá también (antes solo
-            estaban dentro de la tarjeta "Peso de esta semana" en Inicio) para
-            tenerlos siempre a la vista, sin scrollear ni cambiar de solapa. */}
-        {(activeTab === "inicio" || activeTab === "macros" || activeTab === "actividad") && (
-          <div className="mt-2 rounded-xl border border-border bg-surface/95 px-2 py-1.5 backdrop-blur lg:px-3">
-            <div className="flex items-center justify-between gap-2">
-              <button
-                type="button"
-                onClick={() => setWeekOffset((w) => w - 1)}
-                aria-label="Semana anterior"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-surfaceAlt text-text hover:border-gold/60"
-              >
-                ‹
-              </button>
-              <div className="text-center">
-                <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-textMuted">Semana</div>
-                <div className="font-sans text-sm font-semibold leading-none text-text">
-                  {monday.getDate()} {MONTHS[monday.getMonth()]} – {sunday.getDate()} {MONTHS[sunday.getMonth()]}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setWeekOffset((w) => w + 1)}
-                aria-label="Semana siguiente"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-surfaceAlt text-text hover:border-gold/60"
-              >
-                ›
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {activeTab === "macros" && (

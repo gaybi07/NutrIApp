@@ -24,13 +24,13 @@ export function AuthPanel({
   onOpenSections?: () => void;
   onOpenTools?: () => void;
   onOpenTrainer?: () => void;
-  /** Contenido opcional entre tu nombre y el botón de ajustes (⚙), a la
-   * misma altura -- pensado para el resumen de semana/peso. */
+  /** Contenido opcional que ocupa toda la fila de arriba, a la izquierda del
+   * botón de ajustes (⚙) -- pensado para la navegación de semana y el
+   * resumen de peso/racha (ya no se muestra el nombre de la cuenta acá). */
   centerContent?: ReactNode;
 }) {
   const [email, setEmail] = useState("");
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -44,26 +44,18 @@ export function AuthPanel({
       fetch("/api/auth/session").then((response) => response.json()),
     ]).then(([browserResult, serverResult]) => {
       const email = browserResult.data.user?.email ?? serverResult.email ?? null;
-      const metadata = browserResult.data.user?.user_metadata as Record<string, unknown> | undefined;
       setUserEmail(email);
-      setUserName((metadata?.full_name as string) || (metadata?.name as string) || null);
       onAuthChange?.(Boolean(email));
       onUserEmailChange?.(email);
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      const metadata = session?.user?.user_metadata as Record<string, unknown> | undefined;
       setUserEmail(session?.user?.email ?? null);
-      setUserName((metadata?.full_name as string) || (metadata?.name as string) || null);
       onAuthChange?.(Boolean(session?.user));
       onUserEmailChange?.(session?.user?.email ?? null);
     });
     return () => listener.subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onAuthChange]);
-
-  if (!isSupabaseConfigured) {
-    return <div className="text-center text-[11px] text-textMuted mb-4">Modo local: configurá Supabase para sincronizar entre dispositivos.</div>;
-  }
 
   const signIn = async (event: FormEvent) => {
     event.preventDefault();
@@ -97,15 +89,10 @@ export function AuthPanel({
     setStatus("Sesión cerrada.");
   };
 
-  if (userEmail) {
-    const displayName = userName || userEmail;
+  if (userEmail || !isSupabaseConfigured) {
     return (
       <div className="relative -mx-3 mb-3 flex items-center gap-2 border-b border-border bg-surface px-3 py-2.5 lg:mx-0 lg:rounded-xl lg:border">
-        <div className="flex min-w-0 shrink items-center gap-1.5">
-          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sage" />
-          <span className="truncate font-sans text-[13px] font-bold text-text">{displayName}</span>
-        </div>
-        <div className="flex min-w-0 flex-1 items-center justify-center">{centerContent}</div>
+        <div className="flex min-w-0 flex-1 items-center">{centerContent}</div>
         <button
           type="button"
           onClick={() => setMenuOpen((open) => !open)}
@@ -168,26 +155,34 @@ export function AuthPanel({
               >
                 Herramientas
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  onOpenTrainer?.();
-                }}
-                className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
-              >
-                Ser entrenador
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  signOut();
-                }}
-                className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-rust transition-colors hover:bg-surfaceAlt"
-              >
-                Cerrar sesión
-              </button>
+              {isSupabaseConfigured && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenTrainer?.();
+                  }}
+                  className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
+                >
+                  Ser entrenador
+                </button>
+              )}
+              {userEmail ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    signOut();
+                  }}
+                  className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-rust transition-colors hover:bg-surfaceAlt"
+                >
+                  Cerrar sesión
+                </button>
+              ) : (
+                <div className="border-t border-border px-3 py-2.5 text-[11px] text-textMuted">
+                  Modo local: configurá Supabase para sincronizar entre dispositivos.
+                </div>
+              )}
             </div>
           </>
         )}

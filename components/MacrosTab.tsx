@@ -275,11 +275,13 @@ export function MacrosTab({
   return (
     <DndContext sensors={drag.sensors} collisionDetection={drag.collisionDetection} onDragStart={drag.handleDragStart} onDragEnd={drag.handleDragEnd} onDragCancel={drag.handleDragCancel}>
       <SortableContext items={visibleOrder} strategy={verticalListSortingStrategy}>
+        <div className="min-w-0 space-y-4 lg:columns-2 lg:gap-4 lg:space-y-0 xl:columns-3">
         {visibleOrder.map((blockId) => (
-          <SortableSection key={blockId} id={blockId} onHide={() => onHide(blockId)}>
+          <SortableSection key={blockId} id={blockId} onHide={() => onHide(blockId)} dragDisabledOnDesktop>
             {blocks[blockId]}
           </SortableSection>
         ))}
+        </div>
       </SortableContext>
     </DndContext>
   );

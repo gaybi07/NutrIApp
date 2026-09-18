@@ -123,8 +123,14 @@ export function ComidasTab({
 
       <DndContext sensors={drag.sensors} collisionDetection={drag.collisionDetection} onDragStart={drag.handleDragStart} onDragEnd={drag.handleDragEnd} onDragCancel={drag.handleDragCancel}>
         <SortableContext items={visibleOrder} strategy={verticalListSortingStrategy}>
+          {/* Igual que Inicio: en PC los bloques se acomodan solos en columnas
+              tipo mosaico en vez de una sola tira vertical -- el arrastre no
+              tiene sentido ahí (el orden real lo decide el navegador
+              acomodando alturas), por eso cada SortableSection de acá abajo
+              pasa dragDisabledOnDesktop. */}
+          <div className="min-w-0 space-y-4 lg:columns-2 lg:gap-4 lg:space-y-0 xl:columns-3">
           {visibleOrder.map((blockId) => (
-            <SortableSection key={blockId} id={blockId} onHide={() => onHide(blockId)}>
+            <SortableSection key={blockId} id={blockId} onHide={() => onHide(blockId)} dragDisabledOnDesktop>
               {blockId === "hogar" && (
                 <HouseholdCard
                   household={household}
@@ -183,6 +189,7 @@ export function ComidasTab({
               )}
             </SortableSection>
           ))}
+          </div>
         </SortableContext>
       </DndContext>
     </div>
