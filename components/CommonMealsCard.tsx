@@ -10,6 +10,7 @@ const MEAL_KEYS: MealKey[] = ["des", "alm", "mer", "cen", "col"];
 const MAX_PER_MEAL = 5;
 
 const TIER_STYLE: Record<ProteinQualityTier, { label: string; dot: string }> = {
+  excelente: { label: "excelente", dot: "bg-[#38BDF8]" },
   bueno: { label: "bueno", dot: "bg-sage" },
   medio: { label: "medio", dot: "bg-gold" },
   malo: { label: "a mejorar", dot: "bg-rust" },
@@ -28,7 +29,8 @@ export function CommonMealsCard() {
       ) : (
         <>
           <div className="mb-3 flex flex-wrap gap-3 font-mono text-[9px] text-textMuted">
-            <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-sage" /> ≥2.5g prot/100kcal bueno</span>
+            <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-[#38BDF8]" /> ≥5g prot/100kcal excelente</span>
+            <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-sage" /> 2.5–5g bueno</span>
             <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-gold" /> 1.5–2.5g medio</span>
             <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-rust" /> &lt;1.5g a mejorar</span>
           </div>

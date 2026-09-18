@@ -12,6 +12,7 @@ const fmtDay = (fecha: string) => {
 };
 
 const TIER_STYLE: Record<ProteinQualityTier, { label: string; color: string; dot: string; panel: string }> = {
+  excelente: { label: "excelente", color: "text-[#38BDF8]", dot: "bg-[#38BDF8]", panel: "border-l-[#38BDF8]/70" },
   bueno: { label: "bueno", color: "text-sage", dot: "bg-sage", panel: "border-l-sage/70" },
   medio: { label: "medio", color: "text-gold", dot: "bg-gold", panel: "border-l-gold/70" },
   malo: { label: "malo", color: "text-rust", dot: "bg-rust", panel: "border-l-rust/70" },
