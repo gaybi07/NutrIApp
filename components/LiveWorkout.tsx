@@ -13,8 +13,6 @@ import {
 } from "@/lib/types";
 import { weekdayOf, getTrainingSessions, compareExerciseVolume, suggestNextSession, WorkoutVerdict } from "@/lib/calculations";
 import { clampNumber } from "@/lib/inputLimits";
-import { SECTION_HELP } from "@/lib/helpText";
-import { Collapsible } from "@/components/Collapsible";
 import { ExercisePicker } from "@/components/ExercisePicker";
 import { LibraryExercise } from "@/lib/exerciseLibrary";
 
@@ -264,7 +262,8 @@ export function LiveWorkout({
   const elapsedLabel = session ? formatElapsed(now - session.startedAt) : "0:00";
 
   return (
-    <Collapsible eyebrow="Fuerza" title="Entrenamiento en vivo" info={SECTION_HELP.ejerciciosHoy} defaultOpen scrollable={!session}>
+    <div className="mt-3 border-t border-border pt-3">
+      <div className="collapsible-eyebrow mb-1 font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Fuerza</div>
       {!session && (
         <>
           {scheduledRoutine ? (
@@ -507,6 +506,6 @@ export function LiveWorkout({
           </div>
         </div>
       )}
-    </Collapsible>
+    </div>
   );
 }

@@ -60,7 +60,6 @@ export function ExerciseLogCard({
       eyebrow="Fuerza"
       title="Ejercicios de hoy"
       info={SECTION_HELP.ejerciciosHoy}
-      defaultOpen
       badge={
         ejercicios.length > 0 ? (
           <div className="font-mono text-[10px] text-textMuted">Vol. {totalVolume(ejercicios).toLocaleString("es-AR")} kg</div>

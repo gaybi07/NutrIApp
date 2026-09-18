@@ -11,6 +11,7 @@ export function Collapsible({
   defaultOpen = false,
   openOnDesktop = false,
   scrollable = true,
+  locked = false,
   children,
 }: {
   eyebrow: string;
@@ -27,9 +28,12 @@ export function Collapsible({
    * adentro en vez de empujar el resto de la página. Poné false para
    * contenido con elementos que no deben recortarse (ej. tooltips absolutos). */
   scrollable?: boolean;
+  /** Bloque siempre abierto, sin flechita ni forma de colapsarlo -- para el
+   * "Hoy" de Entrenamiento, que no debería poder cerrarse nunca. */
+  locked?: boolean;
   children: ReactNode;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useState(locked || defaultOpen);
 
   useEffect(() => {
     if (!openOnDesktop) return;
@@ -41,7 +45,10 @@ export function Collapsible({
     mql.addEventListener("change", handleChange);
     return () => mql.removeEventListener("change", handleChange);
   }, [openOnDesktop]);
-  const toggle = () => setOpen((current) => !current);
+  const toggle = () => {
+    if (locked) return;
+    setOpen((current) => !current);
+  };
   const onHeaderKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
@@ -52,11 +59,11 @@ export function Collapsible({
   return (
     <section className="mb-4 rounded-2xl border border-border bg-surface/70 shadow-[0_0_0_1px_rgba(58,54,47,0.4)]">
       <div
-        role="button"
-        tabIndex={0}
+        role={locked ? undefined : "button"}
+        tabIndex={locked ? undefined : 0}
         onClick={toggle}
-        onKeyDown={onHeaderKeyDown}
-        className="flex w-full cursor-pointer items-center justify-between gap-2 p-3 text-left"
+        onKeyDown={locked ? undefined : onHeaderKeyDown}
+        className={`flex w-full items-center justify-between gap-2 p-3 text-left ${locked ? "" : "cursor-pointer"}`}
       >
         <div>
           <div className="collapsible-eyebrow font-mono text-[10px] uppercase tracking-[0.18em] text-gold">{eyebrow}</div>
@@ -67,12 +74,14 @@ export function Collapsible({
         </div>
         <div className="flex items-center gap-2">
           {badge}
-          <span
-            className="font-mono text-[11px] text-textMuted transition-transform"
-            style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
-          >
-            ▾
-          </span>
+          {!locked && (
+            <span
+              className="font-mono text-[11px] text-textMuted transition-transform"
+              style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+            >
+              ▾
+            </span>
+          )}
         </div>
       </div>
       {open && (

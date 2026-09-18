@@ -351,7 +351,10 @@ export default function Home() {
           order={settings.actividadOrder}
           onReorder={(actividadOrder) => saveSettings({ ...settings, actividadOrder })}
           hidden={settings.actividadHidden}
-          onHide={(id) => saveSettings({ ...settings, actividadHidden: [...(settings.actividadHidden || []), id] })}
+          onHide={(id) => {
+            if (id === "resumen") return; // "Hoy" nunca se apaga -- ver comentario en ActividadTab.tsx
+            saveSettings({ ...settings, actividadHidden: [...(settings.actividadHidden || []), id] });
+          }}
           workoutSuggestions={settings.workoutSuggestions || {}}
           onSaveWorkoutSuggestions={(updates) =>
             saveSettings({ ...settings, workoutSuggestions: { ...(settings.workoutSuggestions || {}), ...updates } })

@@ -113,7 +113,8 @@ export function ActividadTab({
 }) {
   const blockOrder = resolveOrder(order, DEFAULT_ACTIVIDAD_ORDER);
   const drag = useSectionOrder(blockOrder, onReorder);
-  const visibleOrder = blockOrder.filter((id) => !(hidden || []).includes(id));
+  // "resumen" (Hoy) nunca se apaga -- mismo criterio que "hoy" en Inicio.
+  const visibleOrder = blockOrder.filter((id) => id === "resumen" || !(hidden || []).includes(id));
 
   const sessions = getTrainingSessions(entry);
   const trainingKcal = estimateTrainingCalories(entry);
@@ -128,7 +129,7 @@ export function ActividadTab({
 
   const blocks: Record<ActividadBlockId, ReactNode> = {
     resumen: (
-      <Collapsible eyebrow="Hoy" title="Entrenamiento" info={SECTION_HELP.actividad} defaultOpen>
+      <Collapsible eyebrow="Hoy" title="Entrenamiento" info={SECTION_HELP.actividad} locked scrollable={false}>
         <div className="mb-4 grid grid-cols-3 gap-2 text-center">
           <div>
             <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-textMuted">Pasos</div>
@@ -165,17 +166,15 @@ export function ActividadTab({
             {entry.suenoHoras ? `${entry.suenoHoras}h dormidas` : "+ Sueño"}
           </button>
         </div>
+        <LiveWorkout
+          entry={entry}
+          routines={routines}
+          schedule={schedule}
+          onFinish={onUpsert}
+          suggestions={workoutSuggestions}
+          onSaveSuggestions={onSaveWorkoutSuggestions}
+        />
       </Collapsible>
-    ),
-    entrenoEnVivo: (
-      <LiveWorkout
-        entry={entry}
-        routines={routines}
-        schedule={schedule}
-        onFinish={onUpsert}
-        suggestions={workoutSuggestions}
-        onSaveSuggestions={onSaveWorkoutSuggestions}
-      />
     ),
     ejercicios: <ExerciseLogCard entry={entry} routines={routines} schedule={schedule} onSave={onUpsert} />,
     pasosEditar: <DailySteps weekDates={weekDates} weekDays={weekDays} onUpsert={onUpsert} />,
@@ -206,7 +205,7 @@ export function ActividadTab({
       <DndContext sensors={drag.sensors} collisionDetection={drag.collisionDetection} onDragStart={drag.handleDragStart} onDragEnd={drag.handleDragEnd} onDragCancel={drag.handleDragCancel}>
       <SortableContext items={visibleOrder} strategy={verticalListSortingStrategy}>
         {visibleOrder.map((blockId) => (
-          <SortableSection key={blockId} id={blockId} onHide={() => onHide(blockId)}>
+          <SortableSection key={blockId} id={blockId} onHide={blockId === "resumen" ? undefined : () => onHide(blockId)}>
             {blocks[blockId]}
           </SortableSection>
         ))}

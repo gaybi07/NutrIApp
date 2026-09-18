@@ -242,8 +242,12 @@ export function SectionsSettings({ settings, onSave }: { settings: Settings; onS
         {renderGroup("Macros", DEFAULT_MACROS_ORDER, MACROS_BLOCK_LABELS, settings.macrosHidden, (id) =>
           onSave({ ...settings, macrosHidden: toggleHidden(settings.macrosHidden, id) })
         )}
-        {renderGroup("Entreno", DEFAULT_ACTIVIDAD_ORDER, ACTIVIDAD_BLOCK_LABELS, settings.actividadHidden, (id) =>
-          onSave({ ...settings, actividadHidden: toggleHidden(settings.actividadHidden, id) })
+        {renderGroup(
+          "Entreno",
+          DEFAULT_ACTIVIDAD_ORDER.filter((id) => id !== "resumen"), // "resumen" (Hoy) nunca se apaga
+          ACTIVIDAD_BLOCK_LABELS,
+          settings.actividadHidden,
+          (id) => onSave({ ...settings, actividadHidden: toggleHidden(settings.actividadHidden, id) })
         )}
       </div>
     </div>
