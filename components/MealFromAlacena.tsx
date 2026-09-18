@@ -54,11 +54,16 @@ export function MealFromAlacena({
 
   const visible = filter === "todas" ? usable : usable.filter((i) => (i.category || "otros") === filter);
 
-  const draftFor = (item: InventoryItem) => drafts[item.id] ?? (item.unit === "u." ? "1" : String(Math.min(item.quantity, 100)));
+  const inBasket = (item: InventoryItem) => basket.find((b) => b.itemId === item.id)?.amount || 0;
+  const remaining = (item: InventoryItem) => Math.max(0, item.quantity - inBasket(item));
+
+  const draftFor = (item: InventoryItem) => drafts[item.id] ?? (item.unit === "u." ? "1" : String(Math.min(remaining(item), 100)));
 
   const addToBasket = (item: InventoryItem) => {
-    const amount = Number(draftFor(item));
-    if (!amount || amount <= 0) return;
+    const left = remaining(item);
+    if (left <= 0) return;
+    const amount = Math.min(Number(draftFor(item)) || 0, left);
+    if (amount <= 0) return;
     setBasket((prev) => {
       const existing = prev.find((b) => b.itemId === item.id);
       if (existing) return prev.map((b) => (b.itemId === item.id ? { ...b, amount: b.amount + amount } : b));
@@ -146,32 +151,39 @@ export function MealFromAlacena({
 
       {visible.length > 0 ? (
         <div className="flex max-h-64 flex-col gap-1.5 overflow-y-auto pr-0.5">
-          {visible.map((item) => (
-            <div key={item.id} className="flex items-center gap-2 rounded-lg border border-border bg-bg/40 px-2 py-1.5">
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[12px] text-text">{item.name}</div>
-                <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
-                  tenés {item.quantity} {item.unit} · {INVENTORY_CATEGORY_LABELS[item.category || "otros"]}
+          {visible.map((item) => {
+            const left = remaining(item);
+            return (
+              <div key={item.id} className="flex items-center gap-2 rounded-lg border border-border bg-bg/40 px-2 py-1.5">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[12px] text-text">{item.name}</div>
+                  <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
+                    {left > 0 ? `tenés ${left} ${item.unit} disponible${left === 1 ? "" : "s"}` : "ya sumaste todo lo que tenías"} ·{" "}
+                    {INVENTORY_CATEGORY_LABELS[item.category || "otros"]}
+                  </div>
                 </div>
+                <input
+                  type="number"
+                  min="0"
+                  max={left}
+                  inputMode="decimal"
+                  disabled={left <= 0}
+                  value={draftFor(item)}
+                  onChange={(e) => setDrafts((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                  className="w-16 shrink-0 rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px] disabled:opacity-40"
+                />
+                <span className="shrink-0 font-mono text-[9px] uppercase text-textMuted">{item.unit}</span>
+                <button
+                  type="button"
+                  onClick={() => addToBasket(item)}
+                  disabled={left <= 0}
+                  className="shrink-0 rounded-md border border-gold/60 bg-gold px-2 py-1 font-mono text-[10px] uppercase text-bg disabled:opacity-40"
+                >
+                  +
+                </button>
               </div>
-              <input
-                type="number"
-                min="0"
-                inputMode="decimal"
-                value={draftFor(item)}
-                onChange={(e) => setDrafts((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                className="w-16 shrink-0 rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
-              />
-              <span className="shrink-0 font-mono text-[9px] uppercase text-textMuted">{item.unit}</span>
-              <button
-                type="button"
-                onClick={() => addToBasket(item)}
-                className="shrink-0 rounded-md border border-gold/60 bg-gold px-2 py-1 font-mono text-[10px] uppercase text-bg"
-              >
-                +
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="rounded-xl border border-dashed border-border p-3 text-[12px] text-textMuted">

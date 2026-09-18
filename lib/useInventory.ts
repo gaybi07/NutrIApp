@@ -141,7 +141,11 @@ export function useInventory() {
             return parseInventoryText(item).map((entry) => ({ id: `${Date.now()}-${entry.name}-${Math.random()}`, ...entry }));
           }
           if (!item || !item.name) return [];
-          return [{ ...item, unit: defaultUnitForName(item.name) }];
+          // Ojo: NO recalcular "unit" para ítems que ya lo traen (pisaría la
+          // unidad real -- ej. "u." para milanesas -- con la adivinanza por
+          // nombre en cada carga de la app). Solo se completa si de verdad
+          // falta (ítems viejísimos guardados sin este campo).
+          return [{ ...item, unit: item.unit || defaultUnitForName(item.name) }];
         });
         const merged = migrated.reduce<InventoryItem[]>((result, item) => {
           const existing = result.find((candidate) => inventoryKey(candidate.name) === inventoryKey(item.name) && candidate.unit === item.unit);
