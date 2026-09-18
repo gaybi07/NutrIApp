@@ -4,12 +4,11 @@ import { ReactNode } from "react";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { BarChart, Bar, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip } from "recharts";
-import { DayEntry, INTENSITY_STYLES, Routine, TrainingSchedule, ActividadBlockId, DEFAULT_ACTIVIDAD_ORDER, resolveOrder, WorkoutSuggestion } from "@/lib/types";
+import { DayEntry, INTENSITY_STYLES, Routine, TrainingSchedule, Weekday, ActividadBlockId, DEFAULT_ACTIVIDAD_ORDER, resolveOrder, WorkoutSuggestion } from "@/lib/types";
 import { estimateTrainingCalories, getTrainingSessions, totalVolume } from "@/lib/calculations";
 import { useSectionOrder } from "@/lib/useSectionOrder";
 import { SortableSection } from "@/components/SortableSection";
 import { SECTION_HELP } from "@/lib/helpText";
-import { ExerciseLogCard } from "@/components/ExerciseLogCard";
 import { RoutineManager } from "@/components/RoutineManager";
 import { DailySteps } from "@/components/DailySteps";
 import { Collapsible } from "@/components/Collapsible";
@@ -89,6 +88,7 @@ export function ActividadTab({
   onHide,
   workoutSuggestions,
   onSaveWorkoutSuggestions,
+  onCreateAndAssignRoutine,
   isApprovedTrainer,
 }: {
   entry: DayEntry;
@@ -107,6 +107,7 @@ export function ActividadTab({
   onHide: (id: ActividadBlockId) => void;
   workoutSuggestions: Record<string, WorkoutSuggestion>;
   onSaveWorkoutSuggestions: (updates: Record<string, WorkoutSuggestion>) => void;
+  onCreateAndAssignRoutine: (routine: Routine, weekday: Weekday) => void;
   /** Mostrar la insignia de "entrenador certificado" arriba de todo -- solo
    * cuando tu postulación (Ajustes > Ser entrenador) está aprobada. */
   isApprovedTrainer?: boolean;
@@ -171,12 +172,13 @@ export function ActividadTab({
           routines={routines}
           schedule={schedule}
           onFinish={onUpsert}
+          onSaveSchedule={onSaveSchedule}
+          onCreateAndAssignRoutine={onCreateAndAssignRoutine}
           suggestions={workoutSuggestions}
           onSaveSuggestions={onSaveWorkoutSuggestions}
         />
       </Collapsible>
     ),
-    ejercicios: <ExerciseLogCard entry={entry} routines={routines} schedule={schedule} onSave={onUpsert} />,
     pasosEditar: <DailySteps weekDates={weekDates} weekDays={weekDays} onUpsert={onUpsert} />,
     pasosChart: <WeekBarChart title="Pasos de la semana" data={stepsData} color={STEPS_COLOR} unit="pasos" neonClass="chart-neon-a" />,
     entrenoChart: <WeekBarChart title="Calorías quemadas entrenando" data={trainingData} color={TRAINING_COLOR} unit="kcal" neonClass="chart-neon-b" />,

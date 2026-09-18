@@ -8,13 +8,19 @@ import {
   Routine,
   TrainingSchedule,
   TrainingIntensity,
+  Weekday,
   WorkoutSuggestion,
   INTENSITY_STYLES,
 } from "@/lib/types";
 import { weekdayOf, getTrainingSessions, compareExerciseVolume, suggestNextSession, WorkoutVerdict } from "@/lib/calculations";
 import { clampNumber } from "@/lib/inputLimits";
 import { ExercisePicker } from "@/components/ExercisePicker";
+import { RoutineEditorModal } from "@/components/RoutineEditorModal";
 import { LibraryExercise } from "@/lib/exerciseLibrary";
+
+function newId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
 
 const INTENSITIES: TrainingIntensity[] = ["leve", "moderado", "exigente", "fallo"];
 const STORAGE_KEY = "registro:liveWorkout:v1";
@@ -90,6 +96,8 @@ export function LiveWorkout({
   routines,
   schedule,
   onFinish,
+  onSaveSchedule,
+  onCreateAndAssignRoutine,
   suggestions,
   onSaveSuggestions,
 }: {
@@ -97,6 +105,12 @@ export function LiveWorkout({
   routines: Routine[];
   schedule: TrainingSchedule;
   onFinish: (entry: DayEntry) => void;
+  onSaveSchedule: (schedule: TrainingSchedule) => void;
+  /** Crea la rutina Y la asigna al día de hoy en una sola actualización --
+   * a propósito no son dos llamadas separadas (guardar rutina + asignar
+   * día): ambas leerían los settings viejos si se llaman sincrónicamente
+   * una atrás de la otra, y la segunda pisaría a la primera. */
+  onCreateAndAssignRoutine: (routine: Routine, weekday: Weekday) => void;
   suggestions: Record<string, WorkoutSuggestion>;
   onSaveSuggestions: (updates: Record<string, WorkoutSuggestion>) => void;
 }) {
@@ -106,6 +120,13 @@ export function LiveWorkout({
   const [now, setNow] = useState(() => Date.now());
   const [libraryTarget, setLibraryTarget] = useState<"new" | null>(null);
   const [report, setReport] = useState<Report | null>(null);
+  const [planningOpen, setPlanningOpen] = useState(false);
+  const [creatingRoutine, setCreatingRoutine] = useState(false);
+
+  const assignRoutineToday = (routineId: string) => {
+    onSaveSchedule({ ...schedule, [weekdayOf(entry.fecha)]: routineId });
+    setPlanningOpen(false);
+  };
 
   useEffect(() => {
     if (!session) return;
@@ -267,23 +288,88 @@ export function LiveWorkout({
       {!session && (
         <>
           {scheduledRoutine ? (
-            <div className="mb-3 rounded-lg border border-gold/30 bg-gold/10 px-2.5 py-2 text-[12px] text-textMuted">
-              Se va a cargar tu rutina de hoy: <span className="font-bold text-text">{scheduledRoutine.nombre}</span> (
-              {scheduledRoutine.ejercicios.length} ejercicios).
-            </div>
+            <>
+              <button
+                type="button"
+                onClick={startSession}
+                className="w-full rounded-lg p-3 font-sans text-sm font-bold bg-gold text-bg"
+              >
+                ▶ Iniciar entrenamiento
+              </button>
+              <div className="mt-2 space-y-1.5">
+                {scheduledRoutine.ejercicios.map((e, i) => (
+                  <div key={i} className="rounded-lg border border-border bg-bg/40 px-2.5 py-2 text-[12px] text-textMuted">
+                    {e.nombre} · {e.series}x{e.repeticiones}
+                    {e.peso ? ` · ${e.peso}kg` : ""}
+                  </div>
+                ))}
+              </div>
+            </>
           ) : (
-            <div className="mb-3 rounded-lg border border-dashed border-border px-2.5 py-2 text-[12px] text-textMuted">
-              No tenés rutina planificada para hoy — vas a poder armarla al toque, ejercicio por ejercicio, a medida que entrenás.
-            </div>
+            <button
+              type="button"
+              onClick={() => setPlanningOpen(true)}
+              className="w-full rounded-lg p-3 font-sans text-sm font-bold bg-gold text-bg"
+            >
+              📋 Cargar rutina
+            </button>
           )}
-          <button
-            type="button"
-            onClick={startSession}
-            className="w-full rounded-lg p-3 font-sans text-sm font-bold bg-gold text-bg"
-          >
-            ▶ Iniciar entrenamiento
-          </button>
         </>
+      )}
+
+      {planningOpen && (
+        <div className="fixed inset-0 z-[65] flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPlanningOpen(false)}>
+          <div
+            className="max-h-[80vh] w-full max-w-sm overflow-y-auto rounded-2xl border border-border bg-surface p-4 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-3 font-display text-lg text-text">Cargar rutina de hoy</div>
+            {routines.length > 0 && (
+              <div className="mb-3 space-y-1.5">
+                {routines.map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => assignRoutineToday(r.id)}
+                    className="w-full rounded-lg border border-border bg-bg/40 p-2.5 text-left"
+                  >
+                    <div className="text-sm font-semibold text-text">{r.nombre}</div>
+                    <div className="mt-0.5 font-mono text-[9px] uppercase tracking-wide text-textMuted">{r.ejercicios.length} ejercicios</div>
+                  </button>
+                ))}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setPlanningOpen(false);
+                setCreatingRoutine(true);
+              }}
+              className="w-full rounded-lg border border-dashed border-gold/50 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold"
+            >
+              + Nueva rutina
+            </button>
+            <button
+              type="button"
+              onClick={() => setPlanningOpen(false)}
+              className="mt-2 w-full rounded-lg border border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {creatingRoutine && (
+        <RoutineEditorModal
+          initial={null}
+          onClose={() => setCreatingRoutine(false)}
+          onSave={(routine) => {
+            const id = routine.id || newId();
+            onCreateAndAssignRoutine({ id, nombre: routine.nombre, ejercicios: routine.ejercicios }, weekdayOf(entry.fecha));
+            setCreatingRoutine(false);
+          }}
+        />
       )}
 
       {session && (

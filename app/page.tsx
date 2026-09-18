@@ -359,6 +359,13 @@ export default function Home() {
           onSaveWorkoutSuggestions={(updates) =>
             saveSettings({ ...settings, workoutSuggestions: { ...(settings.workoutSuggestions || {}), ...updates } })
           }
+          onCreateAndAssignRoutine={(routine, weekday) =>
+            saveSettings({
+              ...settings,
+              routines: [...(settings.routines || []), routine],
+              trainingSchedule: { ...(settings.trainingSchedule || {}), [weekday]: routine.id },
+            })
+          }
           isApprovedTrainer={isApprovedTrainer}
         />
       )}

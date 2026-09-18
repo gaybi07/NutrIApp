@@ -325,13 +325,12 @@ export const MACROS_BLOCK_LABELS: Record<MacrosBlockId, string> = {
 };
 
 export type ActividadBlockId =
-  | "resumen" | "ejercicios" | "pasosEditar" | "pasosChart" | "entrenoChart" | "suenoChart" | "volumenChart" | "rutinas";
+  | "resumen" | "pasosEditar" | "pasosChart" | "entrenoChart" | "suenoChart" | "volumenChart" | "rutinas";
 export const DEFAULT_ACTIVIDAD_ORDER: ActividadBlockId[] = [
-  "resumen", "ejercicios", "pasosEditar", "pasosChart", "entrenoChart", "suenoChart", "volumenChart", "rutinas",
+  "resumen", "pasosEditar", "pasosChart", "entrenoChart", "suenoChart", "volumenChart", "rutinas",
 ];
 export const ACTIVIDAD_BLOCK_LABELS: Record<ActividadBlockId, string> = {
   resumen: "Hoy · Entrenamiento",
-  ejercicios: "Ejercicios",
   pasosEditar: "Pasos (editar)",
   pasosChart: "Gráfico de pasos",
   entrenoChart: "Gráfico de entrenamiento",
