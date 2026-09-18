@@ -17,6 +17,7 @@ type AiShoppingItem = {
   unit: InventoryItem["unit"];
   category?: InventoryCategory;
   nutritionPer100g?: InventoryNutrition;
+  zona?: InventoryItem["zona"];
   // Solo vienen de leer un ticket con IA -- el alta manual no tiene de dónde sacarlos.
   brand?: string;
   price?: number;
@@ -85,6 +86,7 @@ export function ShoppingLog({
             unit: mem.unit,
             category: mem.category,
             nutritionPer100g: mem.nutritionPer100g,
+            zona: mem.zona,
           });
         } else {
           toAsk.push({ name: entry.name, containerCount: entry.quantity });
@@ -97,7 +99,7 @@ export function ShoppingLog({
         // desconocido cae a "g") se autocorrige una vez que la IA lo
         // clasificó bien alguna vez.
         const unit = !entry.unitExplicit && mem?.unit ? mem.unit : entry.unit;
-        ready.push({ name: entry.name, quantity: entry.quantity, unit, category: mem?.category, nutritionPer100g: mem?.nutritionPer100g });
+        ready.push({ name: entry.name, quantity: entry.quantity, unit, category: mem?.category, nutritionPer100g: mem?.nutritionPer100g, zona: mem?.zona });
       }
     });
 

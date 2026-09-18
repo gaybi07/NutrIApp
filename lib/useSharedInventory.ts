@@ -14,6 +14,7 @@ function rowToItem(row: Record<string, unknown>): InventoryItem {
     category: (row.category as InventoryCategory) || undefined,
     nutritionPer100g: (row.nutrition_per_100g as InventoryNutrition) || undefined,
     nutritionConfirmed: Boolean(row.nutrition_confirmed),
+    zona: (row.zona as InventoryItem["zona"]) || undefined,
   };
 }
 
@@ -89,15 +90,31 @@ export function useSharedInventory(householdId: string | null) {
   }, [householdId, refetch]);
 
   const addStructuredItems = useCallback(
-    (entries: Array<{ name: string; quantity: number; unit: InventoryItem["unit"]; category?: InventoryCategory; nutritionPer100g?: InventoryNutrition }>) => {
+    (
+      entries: Array<{
+        name: string;
+        quantity: number;
+        unit: InventoryItem["unit"];
+        category?: InventoryCategory;
+        nutritionPer100g?: InventoryNutrition;
+        zona?: InventoryItem["zona"];
+      }>
+    ) => {
       if (!supabase || !householdId) return;
       const working = new Map<string, InventoryItem>();
       items.forEach((item) => working.set(`${inventoryKey(item.name)}|${item.unit}`, item));
 
-      const toInsert: Array<{ name: string; quantity: number; unit: InventoryItem["unit"]; category?: InventoryCategory; nutritionPer100g?: InventoryNutrition }> = [];
-      const toUpdate = new Map<string, { quantity: number; category?: InventoryCategory; nutritionPer100g?: InventoryNutrition }>();
+      const toInsert: Array<{
+        name: string;
+        quantity: number;
+        unit: InventoryItem["unit"];
+        category?: InventoryCategory;
+        nutritionPer100g?: InventoryNutrition;
+        zona?: InventoryItem["zona"];
+      }> = [];
+      const toUpdate = new Map<string, { quantity: number; category?: InventoryCategory; nutritionPer100g?: InventoryNutrition; zona?: InventoryItem["zona"] }>();
 
-      entries.forEach(({ name, quantity, unit, category, nutritionPer100g }) => {
+      entries.forEach(({ name, quantity, unit, category, nutritionPer100g, zona }) => {
         const key = `${inventoryKey(name)}|${unit}`;
         const existing = working.get(key);
         if (existing) {
@@ -108,10 +125,11 @@ export function useSharedInventory(householdId: string | null) {
             quantity: nextQuantity,
             category: pending.category ?? (!existing.category ? category : undefined),
             nutritionPer100g: pending.nutritionPer100g ?? (!existing.nutritionConfirmed ? nutritionPer100g : undefined),
+            zona: pending.zona ?? (!existing.zona ? zona : undefined),
           });
         } else {
-          working.set(key, { id: `pending-${key}`, name, quantity, unit, category, nutritionPer100g });
-          toInsert.push({ name, quantity, unit, category: category || defaultCategoryForName(name), nutritionPer100g });
+          working.set(key, { id: `pending-${key}`, name, quantity, unit, category, nutritionPer100g, zona });
+          toInsert.push({ name, quantity, unit, category: category || defaultCategoryForName(name), nutritionPer100g, zona });
         }
       });
 
@@ -125,6 +143,7 @@ export function useSharedInventory(householdId: string | null) {
               unit: entry.unit,
               category: entry.category,
               nutrition_per_100g: entry.nutritionPer100g || null,
+              zona: entry.zona || null,
             }))
           );
         }
@@ -132,6 +151,7 @@ export function useSharedInventory(householdId: string | null) {
           const row: Record<string, unknown> = { quantity: patch.quantity };
           if (patch.category) row.category = patch.category;
           if (patch.nutritionPer100g) row.nutrition_per_100g = patch.nutritionPer100g;
+          if (patch.zona) row.zona = patch.zona;
           await supabase!.from("inventory_items").update(row).eq("id", id);
         }
         await refetch();
@@ -150,6 +170,7 @@ export function useSharedInventory(householdId: string | null) {
       if (patch.category !== undefined) row.category = patch.category;
       if (patch.nutritionPer100g !== undefined) row.nutrition_per_100g = patch.nutritionPer100g;
       if (patch.nutritionConfirmed !== undefined) row.nutrition_confirmed = patch.nutritionConfirmed;
+      if (patch.zona !== undefined) row.zona = patch.zona;
       (async () => {
         await supabase!.from("inventory_items").update(row).eq("id", id);
         await refetch();

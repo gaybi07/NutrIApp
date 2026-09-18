@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { InventoryCategory, InventoryItem, InventoryNutrition } from "@/lib/types";
+import { InventoryCategory, InventoryItem, InventoryNutrition, InventoryZone } from "@/lib/types";
 import { parseInventoryText } from "@/lib/useInventory";
 import { ProductMemoryApi } from "@/lib/useProductMemory";
 import { estimateNutritionFromOff } from "@/lib/offAverage";
@@ -12,6 +12,7 @@ export type AiShoppingItem = {
   unit: InventoryItem["unit"];
   category?: InventoryCategory;
   nutritionPer100g?: InventoryNutrition;
+  zona?: InventoryZone;
 };
 type PendingItem = { name: string; containerCount: number };
 type PendingDraft = { amount: string; unit: InventoryItem["unit"] };
@@ -29,6 +30,7 @@ export function QuickAddProducts({
   compact = false,
   autoFocus = false,
   prefillText,
+  forceZone,
 }: {
   addStructuredItems: (entries: AiShoppingItem[]) => void;
   productMemory: ProductMemoryApi;
@@ -38,6 +40,11 @@ export function QuickAddProducts({
    * en vez de que el usuario lo escriba -- cada valor nuevo reemplaza el
    * texto actual. */
   prefillText?: string;
+  /** Si viene seteada (ej. "+ Agregar acá" desde una zona de la Cocina
+   * Virtual), todo lo que se agregue en este uso queda con esa zona y la
+   * memoria de productos la recuerda para la próxima vez, sin importar
+   * desde dónde se vuelva a cargar ese producto. */
+  forceZone?: InventoryZone;
 }) {
   const [raw, setRaw] = useState("");
   const [status, setStatus] = useState("");
@@ -53,6 +60,15 @@ export function QuickAddProducts({
   const [pending, setPending] = useState<PendingItem[] | null>(null);
   const [pendingReady, setPendingReady] = useState<AiShoppingItem[]>([]);
   const [pendingDrafts, setPendingDrafts] = useState<Record<string, PendingDraft>>({});
+
+  // Central: cualquier alta final (con o sin zona forzada) pasa por acá, así
+  // se recuerda la zona en la memoria de productos una sola vez, en un solo
+  // lugar, en vez de repetir la lógica en cada punto de salida de abajo.
+  const finalize = (list: AiShoppingItem[]) => {
+    const withZone = forceZone ? list.map((item) => ({ ...item, zona: item.zona ?? forceZone })) : list;
+    if (forceZone) withZone.forEach((item) => productMemory.remember({ name: item.name, zona: forceZone }));
+    addStructuredItems(withZone);
+  };
 
   const parseFromText = async () => {
     if (!raw.trim()) {
@@ -74,6 +90,7 @@ export function QuickAddProducts({
             unit: mem.unit,
             category: mem.category,
             nutritionPer100g: mem.nutritionPer100g,
+            zona: mem.zona,
           });
         } else {
           toAsk.push({ name: entry.name, containerCount: entry.quantity });
@@ -84,7 +101,7 @@ export function QuickAddProducts({
         // cuál es la unidad real de este producto, usamos esa en vez de
         // la adivinanza.
         const unit = !entry.unitExplicit && mem?.unit ? mem.unit : entry.unit;
-        ready.push({ name: entry.name, quantity: entry.quantity, unit, category: mem?.category, nutritionPer100g: mem?.nutritionPer100g });
+        ready.push({ name: entry.name, quantity: entry.quantity, unit, category: mem?.category, nutritionPer100g: mem?.nutritionPer100g, zona: mem?.zona });
       }
     });
 
@@ -118,7 +135,7 @@ export function QuickAddProducts({
       return;
     }
 
-    addStructuredItems(ready);
+    finalize(ready);
     setRaw("");
     setStatus("Agregado a la alacena ✓");
   };
@@ -134,7 +151,7 @@ export function QuickAddProducts({
       resolved.push({ name: item.name, quantity: item.containerCount * amount, unit: draft.unit });
       productMemory.remember({ name: item.name, unitQuantity: amount, unit: draft.unit });
     }
-    addStructuredItems([...pendingReady, ...resolved]);
+    finalize([...pendingReady, ...resolved]);
     setPending(null);
     setPendingReady([]);
     setPendingDrafts({});

@@ -6,6 +6,7 @@ import { ProductMemoryApi } from "@/lib/useProductMemory";
 import { Collapsible } from "@/components/Collapsible";
 import { SECTION_HELP } from "@/lib/helpText";
 import { QuickAddProducts, AiShoppingItem } from "@/components/QuickAddProducts";
+import { CocinaView } from "@/components/CocinaView";
 import { ExtraConsumption } from "@/components/ExtraConsumption";
 import { ProductScanner } from "@/components/ProductScanner";
 import { inventoryKey } from "@/lib/useInventory";
@@ -59,6 +60,7 @@ export function AlacenaCard({
   todayEntry: DayEntry;
   onUpsertDay: (entry: DayEntry) => void;
 }) {
+  const [view, setView] = useState<"lista" | "cocina">("lista");
   const [filter, setFilter] = useState<InventoryCategory | "todas">("todas");
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [showExtraConsumption, setShowExtraConsumption] = useState(false);
@@ -389,6 +391,27 @@ export function AlacenaCard({
       </div>
       {status && <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] text-sage">{status}</div>}
 
+      <div className="mb-3 inline-flex rounded-full border border-border bg-bg/60 p-0.5">
+        <button
+          type="button"
+          onClick={() => setView("lista")}
+          className={`rounded-full px-3 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
+            view === "lista" ? "bg-gold text-bg" : "text-textMuted"
+          }`}
+        >
+          Lista
+        </button>
+        <button
+          type="button"
+          onClick={() => setView("cocina")}
+          className={`rounded-full px-3 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
+            view === "cocina" ? "bg-gold text-bg" : "text-textMuted"
+          }`}
+        >
+          Cocina
+        </button>
+      </div>
+
       {showQuickAdd && (
         <div className="mb-3 rounded-xl border border-sage/40 bg-sage/5 p-2.5">
           <QuickAddProducts
@@ -456,7 +479,9 @@ export function AlacenaCard({
         </div>
       )}
 
-      {items.length > 0 ? (
+      {view === "cocina" ? (
+        <CocinaView items={items} addStructuredItems={addStructuredItems} updateItem={updateItem} productMemory={productMemory} />
+      ) : items.length > 0 ? (
         <>
 
           {presentCategories.length > 1 && (

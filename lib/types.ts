@@ -35,6 +35,20 @@ export interface InventoryNutrition {
   fiber: number;
 }
 
+/** Dónde vive un producto en la "Cocina Virtual" (vista alternativa de la
+ * Alacena) — puramente organizativo, no cambia nada de la nutrición ni del
+ * stock. "mesada" es el catch-all para lo que todavía no se ubicó. */
+export type InventoryZone = "flotante" | "mesada" | "bajomesada" | "heladera";
+export const INVENTORY_ZONES: { id: InventoryZone; label: string }[] = [
+  { id: "flotante", label: "Alacena flotante" },
+  { id: "mesada", label: "Sobre la mesada" },
+  { id: "bajomesada", label: "Bajo mesada" },
+  { id: "heladera", label: "Heladera" },
+];
+export const INVENTORY_ZONE_LABELS: Record<InventoryZone, string> = Object.fromEntries(
+  INVENTORY_ZONES.map((z) => [z.id, z.label])
+) as Record<InventoryZone, string>;
+
 export interface InventoryItem {
   id: string;
   name: string;
@@ -45,6 +59,7 @@ export interface InventoryItem {
   // El usuario ya revisó/corrigió el valor nutricional a mano — no pisarlo
   // con una nueva estimación de la IA (ej. al usar "Revisar con IA").
   nutritionConfirmed?: boolean;
+  zona?: InventoryZone;
 }
 
 export interface CalculatorProfile {

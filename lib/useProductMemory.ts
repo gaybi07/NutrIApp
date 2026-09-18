@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { InventoryCategory, InventoryItem, InventoryNutrition } from "./types";
+import { InventoryCategory, InventoryItem, InventoryNutrition, InventoryZone } from "./types";
 import { inventoryKey } from "./useInventory";
 
 const KEY = "registro:productMemory:v1";
@@ -17,6 +17,10 @@ export interface ProductMemoryEntry {
   unit?: InventoryItem["unit"];
   category?: InventoryCategory;
   nutritionPer100g?: InventoryNutrition;
+  // Dónde lo guardás de verdad (Cocina Virtual) -- así la próxima vez que
+  // aparezca este producto (aunque sea "mandarinas" y antes fue "mandarina")
+  // se sugiere solo la misma zona en vez de tener que elegirla de nuevo.
+  zona?: InventoryZone;
   updatedAt: number;
 }
 
@@ -65,6 +69,7 @@ export function useProductMemory() {
           unit: entry.unit ?? existing?.unit,
           category: entry.category ?? existing?.category,
           nutritionPer100g: entry.nutritionPer100g ?? existing?.nutritionPer100g,
+          zona: entry.zona ?? existing?.zona,
           updatedAt: Date.now(),
         },
       };

@@ -173,17 +173,35 @@ export function useInventory() {
    * cruzado contra la memoria de productos, o una respuesta manual del
    * usuario) — si no trae categoría, cae a la heurística por palabra clave. */
   const addStructuredItems = useCallback(
-    (entries: Array<{ name: string; quantity: number; unit: InventoryItem["unit"]; category?: InventoryCategory; nutritionPer100g?: InventoryNutrition }>) => {
+    (
+      entries: Array<{
+        name: string;
+        quantity: number;
+        unit: InventoryItem["unit"];
+        category?: InventoryCategory;
+        nutritionPer100g?: InventoryNutrition;
+        zona?: InventoryItem["zona"];
+      }>
+    ) => {
       setItems((previous) => {
         const next = [...previous];
-        entries.forEach(({ name, quantity, unit, category, nutritionPer100g }) => {
+        entries.forEach(({ name, quantity, unit, category, nutritionPer100g, zona }) => {
           const existing = next.find((item) => inventoryKey(item.name) === inventoryKey(name) && item.unit === unit);
           if (existing) {
             existing.quantity += quantity;
             if (!existing.category && category) existing.category = category;
             if (!existing.nutritionConfirmed && nutritionPer100g) existing.nutritionPer100g = nutritionPer100g;
+            if (!existing.zona && zona) existing.zona = zona;
           } else {
-            next.push({ id: `${Date.now()}-${name}-${Math.random()}`, name, quantity, unit, category: category || defaultCategoryForName(name), nutritionPer100g });
+            next.push({
+              id: `${Date.now()}-${name}-${Math.random()}`,
+              name,
+              quantity,
+              unit,
+              category: category || defaultCategoryForName(name),
+              nutritionPer100g,
+              zona,
+            });
           }
         });
         localStorage.setItem(INVENTORY_KEY, JSON.stringify(next));

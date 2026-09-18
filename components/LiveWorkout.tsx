@@ -293,13 +293,11 @@ export function LiveWorkout({
               >
                 ▶ Iniciar entrenamiento
               </button>
-              <div className="mt-2 space-y-1.5">
-                {scheduledRoutine.ejercicios.map((e, i) => (
-                  <div key={i} className="rounded-lg border border-border bg-bg/40 px-2.5 py-2 text-[12px] text-textMuted">
-                    {e.nombre} · {e.series}x{e.repeticiones}
-                    {e.peso ? ` · ${e.peso}kg` : ""}
-                  </div>
-                ))}
+              {/* Antes de arrancar, solo el nombre -- la lista de ejercicios
+                  se ve recién adentro de la sesión en vivo (a pedido: no
+                  tiene sentido mostrarla si todavía no empezaste). */}
+              <div className="mt-2 rounded-lg border border-border bg-bg/40 px-2.5 py-2 text-center text-[12px] text-textMuted">
+                Rutina de hoy: <span className="font-semibold text-text">{scheduledRoutine.nombre}</span>
               </div>
             </>
           ) : (
