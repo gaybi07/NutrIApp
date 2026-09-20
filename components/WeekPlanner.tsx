@@ -111,7 +111,12 @@ export function WeekPlanner({
   onSave: (plan: WeekPlan) => void;
 }) {
   const [pickerFor, setPickerFor] = useState<{ fecha: string; meal: MealKey } | null>(null);
+  const [customText, setCustomText] = useState("");
   const { memory: mealMemory } = useMealMemory();
+
+  useEffect(() => {
+    setCustomText("");
+  }, [pickerFor]);
 
   const nextWeekDates = useMemo(() => getNextWeekDates(), []);
 
@@ -231,6 +236,33 @@ export function WeekPlanner({
             <div className="font-display text-lg text-text">
               {MEAL_LABELS[pickerFor.meal]} · {DOW_FULL[new Date(`${pickerFor.fecha}T00:00:00`).getDay()]}
             </div>
+            <div className="mt-3">
+              <label className="mb-1 block">Agregar algo distinto</label>
+              <div className="flex gap-1.5">
+                <input
+                  type="text"
+                  value={customText}
+                  onChange={(event) => setCustomText(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && customText.trim()) assign(pickerFor.fecha, pickerFor.meal, customText.trim());
+                  }}
+                  placeholder="Ej: Tarta de jamón y queso"
+                  className="flex-1"
+                />
+                <button
+                  type="button"
+                  disabled={!customText.trim()}
+                  onClick={() => assign(pickerFor.fecha, pickerFor.meal, customText.trim())}
+                  className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg disabled:opacity-40"
+                >
+                  + Agregar
+                </button>
+              </div>
+              <div className="mt-1 text-[10px] text-textMuted">
+                No suma a la lista de compras (no sabemos los ingredientes de algo escrito a mano) — para eso, elegí una receta del catálogo de abajo.
+              </div>
+            </div>
+
             <div className="mt-3 space-y-2">
               {weekPlan[pickerFor.fecha]?.[pickerFor.meal] && (
                 <button
