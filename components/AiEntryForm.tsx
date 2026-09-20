@@ -10,6 +10,7 @@ import { useMealMemory } from "@/lib/useMealMemory";
 import { parseInventoryText } from "@/lib/useInventory";
 import { useSpeechToText } from "@/lib/useSpeechToText";
 import { MealFromAlacena } from "@/components/MealFromAlacena";
+import { MealFromSearch } from "@/components/MealFromSearch";
 
 const MAX_SUGGESTIONS = 6;
 
@@ -75,7 +76,7 @@ export function AiEntryForm({
 }) {
   const [fecha, setFecha] = useState(fmtDate(new Date()));
   const [meal, setMeal] = useState<MealKey>("des");
-  const [mode, setMode] = useState<"ia" | "alacena">("ia");
+  const [mode, setMode] = useState<"ia" | "alacena" | "buscar">("ia");
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
@@ -242,6 +243,15 @@ export function AiEntryForm({
         >
           Desde Alacena
         </button>
+        <button
+          type="button"
+          onClick={() => setMode("buscar")}
+          className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
+            mode === "buscar" ? "bg-gold text-bg" : "text-textMuted"
+          }`}
+        >
+          Buscar producto
+        </button>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -267,6 +277,16 @@ export function AiEntryForm({
           meal={meal}
           onUpsert={onUpsert}
           consumeAmounts={consumeAmounts}
+          onAdded={(updated) => setMeal(suggestedMeal(updated, new Date().getHours()))}
+        />
+      )}
+
+      {mode === "buscar" && (
+        <MealFromSearch
+          days={days}
+          fecha={fecha}
+          meal={meal}
+          onUpsert={onUpsert}
           onAdded={(updated) => setMeal(suggestedMeal(updated, new Date().getHours()))}
         />
       )}
