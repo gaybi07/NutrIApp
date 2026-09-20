@@ -175,13 +175,22 @@ export function ActividadTab({
           <button
             type="button"
             onClick={onLogTraining}
-            className={`flex items-center justify-center gap-1 rounded-xl border px-2 py-2.5 font-mono text-[9.5px] uppercase tracking-wide ${
+            className={`flex flex-col items-center justify-center gap-0.5 rounded-xl border px-2 py-2 font-mono text-[9.5px] uppercase tracking-wide ${
               sessions.length > 0 ? `intensity-${intensidad}` : "bg-sage text-bg border-sage/60"
             }`}
             style={sessions.length > 0 ? { background: trainingStyle.background, color: trainingStyle.color, borderColor: trainingStyle.background } : undefined}
           >
-            {sessions.length > 0 && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-70" />}
-            {sessions.length > 0 ? trainingLabel : "+ Entreno"}
+            {sessions.length > 0 ? (
+              <>
+                <span className="text-[7.5px] tracking-wide opacity-75">Entreno +</span>
+                <span className="flex items-center gap-1 text-[10px] font-bold">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-70" />
+                  {trainingLabel}
+                </span>
+              </>
+            ) : (
+              "+ Entreno"
+            )}
           </button>
           <button
             type="button"

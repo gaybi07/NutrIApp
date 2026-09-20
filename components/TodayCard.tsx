@@ -97,13 +97,25 @@ export function TodayCard({
         <button
           type="button"
           onClick={onLogTraining}
-          className={`flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] ${
+          className={`flex flex-col items-center justify-center gap-0.5 rounded-xl border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.1em] ${
             sessions.length > 0 ? `intensity-${intensidad}` : "bg-sage text-bg border-sage/60"
           }`}
           style={sessions.length > 0 ? { background: trainingStyle.background, color: trainingStyle.color, borderColor: trainingStyle.background } : undefined}
         >
-          {sessions.length > 0 && <span className="h-2 w-2 rounded-full bg-current opacity-70" />}
-          {sessions.length > 0 ? trainingLabel : "+ Entrenamiento"}
+          {sessions.length > 0 ? (
+            <>
+              {/* Caption + "+" para que se note que se puede volver a tocar
+                  y editar/agregar -- antes esto quedaba solo como "Moderado"
+                  sin ninguna pista de que era un botón, no un dato fijo. */}
+              <span className="text-[8px] tracking-wide opacity-75">Entrenamiento +</span>
+              <span className="flex items-center gap-1 text-[11px] font-bold">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-current opacity-70" />
+                {trainingLabel}
+              </span>
+            </>
+          ) : (
+            "+ Entrenamiento"
+          )}
         </button>
       </div>
     </Collapsible>
