@@ -234,8 +234,8 @@ export default function Home() {
           tdeeFallback={settings.tdeeFallback}
           fontSize={settings.fontSize}
           onSelectFontSize={(fontSize) => saveSettings({ ...settings, fontSize })}
-          onComplete={({ gasto, objetivo, calculatorProfile, pesoKg, pasos }) => {
-            saveSettings({ ...settings, tdeeFallback: gasto, goal: objetivo, calculatorProfile });
+          onComplete={({ gasto, objetivo, calculatorProfile, pesoKg, pasos, enabledTabs: chosenTabs }) => {
+            saveSettings({ ...settings, tdeeFallback: gasto, goal: objetivo, calculatorProfile, enabledTabs: chosenTabs });
             if (pesoKg || pasos) {
               const fecha = fmtDate(new Date());
               const existing = days.find((d) => d.fecha === fecha) || emptyDay(fecha);

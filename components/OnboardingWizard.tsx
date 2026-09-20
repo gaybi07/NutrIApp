@@ -2,11 +2,31 @@
 
 import { useState } from "react";
 import { GuidedGoalCalculator } from "@/components/GuidedGoalCalculator";
-import { CalculatorProfile, FontSize, FONT_SIZE_OPTIONS } from "@/lib/types";
+import { CalculatorProfile, FontSize, FONT_SIZE_OPTIONS, MainTab, OPTIONAL_TABS } from "@/lib/types";
 
 type GoalResult = { gasto: number; objetivo: number; calculatorProfile: CalculatorProfile };
-type Step = "tamano" | "calc" | "actividad";
+type Step = "tamano" | "modulos" | "calc" | "actividad";
 type ActivityLevel = "leve" | "moderado" | "alto" | "exigente";
+
+const MODULE_INFO: Record<MainTab, { label: string; description: string }> = {
+  inicio: { label: "Inicio", description: "Resumen del día y de la semana." },
+  comidas: {
+    label: "Comidas",
+    description: "Alacena, recetas y planificación semanal — cargá lo que comés con IA, buscando productos, o descontando de tu alacena.",
+  },
+  macros: {
+    label: "Macros",
+    description: "Detalle día a día de proteína, carbohidratos, grasas y fibra — para ir más fino que solo las kcal totales.",
+  },
+  actividad: {
+    label: "Entrenamiento",
+    description: "Rutinas, entrenamiento en vivo, pasos, sueño y volumen entrenado por grupo muscular.",
+  },
+  gastos: {
+    label: "Gastos",
+    description: "Historial de lo que gastaste en el súper — precio, marca y fecha de cada compra.",
+  },
+};
 
 const ACTIVITY_LEVELS: Record<ActivityLevel, { label: string; pasos: number; description: string }> = {
   leve: {
@@ -33,6 +53,7 @@ const ACTIVITY_LEVELS: Record<ActivityLevel, { label: string; pasos: number; des
 
 const STEP_LABELS: Record<Step, string> = {
   tamano: "Tamaño de letra",
+  modulos: "Qué querés usar",
   calc: "Definí tu objetivo",
   actividad: "Tu nivel de actividad",
 };
@@ -46,13 +67,28 @@ export function OnboardingWizard({
   tdeeFallback: number;
   fontSize?: FontSize;
   onSelectFontSize: (fontSize: FontSize) => void;
-  onComplete: (data: { gasto: number; objetivo: number; calculatorProfile: CalculatorProfile; pesoKg?: number; pasos?: number }) => void;
+  onComplete: (data: {
+    gasto: number;
+    objetivo: number;
+    calculatorProfile: CalculatorProfile;
+    pesoKg?: number;
+    pasos?: number;
+    enabledTabs: MainTab[];
+  }) => void;
 }) {
   const [step, setStep] = useState<Step>("tamano");
   const [goalResult, setGoalResult] = useState<GoalResult | null>(null);
+  // Todo prendido por default -- el paso solo sirve para APAGAR lo que no te
+  // interesa ahora (siempre se puede reactivar después desde Preferencias >
+  // Solapas), no para forzar a elegir algo puntual.
+  const [selectedTabs, setSelectedTabs] = useState<MainTab[]>(OPTIONAL_TABS);
 
-  const stepOrder: Step[] = ["tamano", "calc", "actividad"];
+  const stepOrder: Step[] = ["tamano", "modulos", "calc", "actividad"];
   const stepIndex = stepOrder.indexOf(step);
+
+  const toggleModule = (tab: MainTab) => {
+    setSelectedTabs((prev) => (prev.includes(tab) ? prev.filter((t) => t !== tab) : [...prev, tab]));
+  };
 
   const finish = (activity?: ActivityLevel) => {
     if (!goalResult) return;
@@ -61,6 +97,7 @@ export function OnboardingWizard({
       ...goalResult,
       pesoKg,
       pasos: activity ? ACTIVITY_LEVELS[activity].pasos : undefined,
+      enabledTabs: ["inicio", ...selectedTabs],
     });
   };
 
@@ -84,7 +121,7 @@ export function OnboardingWizard({
                 type="button"
                 onClick={() => {
                   onSelectFontSize(opt.value);
-                  setStep("calc");
+                  setStep("modulos");
                 }}
                 className={`rounded-lg border px-3 py-3 text-left transition-colors ${
                   (fontSize || "chico") === opt.value ? "border-gold bg-gold/10" : "border-border bg-bg hover:border-gold/60"
@@ -97,6 +134,52 @@ export function OnboardingWizard({
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {step === "modulos" && (
+        <div className="rounded-xl border border-sage/40 bg-surface p-4">
+          <h3 className="mb-2 font-display text-lg text-text">¿Qué te gustaría llevar en la app?</h3>
+          <div className="mb-3 text-[11px] text-textMuted">
+            "Inicio" siempre está — es el resumen del día. Tocá para prender o apagar el resto; lo podés cambiar
+            cuando quieras desde Preferencias &gt; Solapas.
+          </div>
+          <div className="grid grid-cols-1 gap-2">
+            <div className="flex items-center justify-between rounded-lg border border-border bg-bg/40 px-3 py-2.5 opacity-70">
+              <span className="font-sans text-sm text-text">{MODULE_INFO.inicio.label}</span>
+              <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">Siempre activo</span>
+            </div>
+            {OPTIONAL_TABS.map((tab) => {
+              const active = selectedTabs.includes(tab);
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => toggleModule(tab)}
+                  className={`rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                    active ? "border-gold bg-gold/10" : "border-border bg-bg hover:border-gold/60"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`font-sans text-sm font-semibold ${active ? "text-text" : "text-textMuted"}`}>
+                      {MODULE_INFO[tab].label}
+                    </span>
+                    <span className={`font-mono text-[9px] uppercase tracking-wide ${active ? "text-gold" : "text-textMuted"}`}>
+                      {active ? "✓ Activo" : "Apagado"}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-textMuted">{MODULE_INFO[tab].description}</div>
+                </button>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={() => setStep("calc")}
+            className="mt-3 w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-bg"
+          >
+            Siguiente
+          </button>
         </div>
       )}
 
