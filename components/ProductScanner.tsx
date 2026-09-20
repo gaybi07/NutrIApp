@@ -84,6 +84,10 @@ export function ProductScanner({ onDecode, onClose }: { onDecode: (text: string)
             Cerrar
           </button>
         </div>
+        <div className="mb-2 rounded-lg border border-dashed border-border bg-bg/40 p-2 text-[11px] text-textMuted">
+          Esto lee los códigos QR que generás vos mismo desde un producto (botón &quot;Generar código QR&quot;, en la ficha del producto) — no
+          códigos de barra de fábrica. Sirve para consumir rápido algo que ya imprimiste y pegaste en el envase.
+        </div>
         {error ? (
           <div className="rounded-xl border border-dashed border-rust/40 bg-rust/10 p-3 text-[12px] text-rust">{error}</div>
         ) : (

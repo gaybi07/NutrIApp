@@ -69,6 +69,10 @@ export function AlacenaCard({
   householdName?: string;
 }) {
   const [showCocina, setShowCocina] = useState(false);
+  // La lista con buscador/filtros queda oculta por default -- mezclada con
+  // los botones de arriba se sentía como "demasiados datos a la vista" sin
+  // haber pedido verla. Se despliega solo al tocar "Ver lista".
+  const [showList, setShowList] = useState(false);
   const [filter, setFilter] = useState<InventoryCategory | "todas">("todas");
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   // "escribir" = alta rápida por texto (QuickAddProducts, lo de siempre);
@@ -366,13 +370,6 @@ export function AlacenaCard({
         >
           <span className="text-[13px] leading-none">+</span> Agregar productos
         </button>
-        <button
-          type="button"
-          onClick={() => setShowScanner(true)}
-          className="flex items-center gap-1 rounded-xl border border-gold/60 bg-gold/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-gold"
-        >
-          📷 Escanear
-        </button>
         {items.length > 0 && (
           <button
             type="button"
@@ -381,48 +378,79 @@ export function AlacenaCard({
               showExtraConsumption ? "border-rust bg-rust text-bg" : "border-rust/60 bg-rust/10 text-rust"
             }`}
           >
-            <span className="text-[13px] leading-none">−</span> Uso extra / invitados
+            <span className="text-[13px] leading-none">−</span> Descontar sin comida (invitados, se rompió, etc.)
           </button>
         )}
+        <button
+          type="button"
+          onClick={() => setShowScanner(true)}
+          className="flex items-center gap-1 rounded-xl border border-gold/60 bg-gold/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-gold"
+        >
+          📷 Escanear código guardado
+        </button>
         {items.length > 0 && (
-          <>
-            <button
-              type="button"
-              onClick={reviewWithAi}
-              disabled={reviewing || reviewLocked}
-              title={reviewLocked ? `Disponible de nuevo en ${reviewLockLabel} — revisa hasta ${REVIEW_MAX_ITEMS_PER_RUN} ítems por vez para no recargar la IA` : undefined}
-              className="rounded-xl border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg disabled:opacity-60"
-            >
-              {reviewing ? "Revisando..." : reviewLocked ? `Disponible en ${reviewLockLabel}` : "Revisar con IA"}
-            </button>
-            <button
-              type="button"
-              onClick={clearAll}
-              className="rounded-xl border border-border bg-bg/60 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
-            >
-              Vaciar alacena
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={clearAll}
+            className="rounded-xl border border-border bg-bg/60 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+          >
+            Vaciar alacena
+          </button>
         )}
       </div>
       {status && <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] text-sage">{status}</div>}
 
+      {showExtraConsumption && (
+        <div className="mb-2 text-[11px] text-textMuted">
+          Descontá algo de la alacena sin que cuente como una comida tuya — por ejemplo, si vino gente a comer, se te rompió un
+          producto, o le diste de comer a otra persona. No hace falta que tenga nutrición cargada, solo se resta del stock.
+        </div>
+      )}
+
       {items.length > 0 && (
         <div className="mb-3 flex flex-wrap items-center gap-2">
           {missingNutritionCount > 0 ? (
-            <div className="flex-1 rounded-lg border border-rust/50 bg-rust/10 px-3 py-2 text-[12px] text-rust">
-              ⚠ Falta información nutricional de {missingNutritionCount} producto{missingNutritionCount > 1 ? "s" : ""} — tocá
-              &quot;Revisar con IA&quot; o cada producto para cargarla.
+            <div className="flex flex-1 flex-wrap items-center justify-between gap-2 rounded-lg border border-rust/50 bg-rust/10 px-3 py-2 text-[12px] text-rust">
+              <span>
+                ⚠ Falta información nutricional de {missingNutritionCount} producto{missingNutritionCount > 1 ? "s" : ""}.
+              </span>
+              <button
+                type="button"
+                onClick={reviewWithAi}
+                disabled={reviewing || reviewLocked}
+                title={
+                  reviewLocked
+                    ? `Disponible de nuevo en ${reviewLockLabel} — revisa hasta ${REVIEW_MAX_ITEMS_PER_RUN} ítems por vez para no recargar la IA`
+                    : undefined
+                }
+                className="shrink-0 rounded-lg border border-rust/60 bg-rust px-2.5 py-1.5 font-mono text-[9.5px] uppercase tracking-wide text-bg disabled:opacity-60"
+              >
+                {reviewing ? "Revisando..." : reviewLocked ? `Disponible en ${reviewLockLabel}` : "Revisar con IA"}
+              </button>
             </div>
           ) : (
             <div className="flex-1 rounded-lg border border-sage/40 bg-sage/10 px-3 py-2 text-[12px] text-sage">
               ✓ Está todo OK — todos los productos tienen su valor nutricional cargado.
             </div>
           )}
+        </div>
+      )}
+
+      {items.length > 0 && (
+        <div className="mb-3 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setShowList((prev) => !prev)}
+            className={`rounded-lg border px-3 py-2 font-mono text-[10px] uppercase tracking-wide ${
+              showList ? "border-gold bg-gold text-bg" : "border-border bg-bg/60 text-textMuted"
+            }`}
+          >
+            📋 {showList ? "Ocultar lista" : `Ver lista (${items.length})`}
+          </button>
           <button
             type="button"
             onClick={() => setShowCocina(true)}
-            className="shrink-0 rounded-lg border border-gold/60 bg-gold/10 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold"
+            className="rounded-lg border border-gold/60 bg-gold/10 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold"
           >
             🗺️ Ver cocina
           </button>
@@ -520,7 +548,7 @@ export function AlacenaCard({
         </div>
       )}
 
-      {items.length > 0 ? (
+      {items.length > 0 && showList ? (
         <>
 
           {presentCategories.length > 1 && (
@@ -592,11 +620,11 @@ export function AlacenaCard({
             ))}
           </div>
         </>
-      ) : (
+      ) : items.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-3 text-[11px] text-textMuted">
           Todavía no cargaste nada. Tocá &quot;+ Agregar productos&quot; arriba para escribir, subir una foto del ticket o dictar por audio.
         </div>
-      )}
+      ) : null}
 
       {selected && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setSelected(null)}>
