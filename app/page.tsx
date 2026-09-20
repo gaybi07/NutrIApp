@@ -27,6 +27,7 @@ import { TodayMealsBreakdown } from "@/components/TodayMealsBreakdown";
 import { PurchaseHistoryCard } from "@/components/PurchaseHistoryCard";
 import { WeekMealsCard } from "@/components/WeekMealsCard";
 import { TrainingEntryForm } from "@/components/TrainingEntryForm";
+import { StepsEntryForm } from "@/components/StepsEntryForm";
 import { SleepEntryForm } from "@/components/SleepEntryForm";
 import { ThemeSettings, FontSizeSettings, TabsSettings, ToolsSettings, SectionsSettings } from "@/components/Preferences";
 import { TrainerPanel } from "@/components/TrainerPanel";
@@ -76,7 +77,7 @@ export default function Home() {
   const [weekOffset, setWeekOffset] = useState(0);
   const [activeTab, setActiveTab] = useState<MainTab>("inicio");
   const [panel, setPanel] = useState<
-    | "calc" | "ai" | "entreno" | "sueno" | "datos" | "planificador"
+    | "calc" | "ai" | "pasos" | "entreno" | "sueno" | "datos" | "planificador"
     | "tema" | "tamano-letra" | "solapas" | "herramientas" | "secciones" | "entrenador"
     | null
   >(null);
@@ -355,6 +356,7 @@ export default function Home() {
           entry={todayEntry}
           weekDates={weekDates}
           weekDays={weekDays}
+          onLogSteps={() => setPanel("pasos")}
           onLogTraining={() => setPanel("entreno")}
           onLogSleep={() => setPanel("sueno")}
           onUpsert={upsertDay}
@@ -411,6 +413,7 @@ export default function Home() {
                         goal={settings.goal}
                         tdeeFallback={settings.tdeeFallback}
                         onLogMeal={() => setPanel("ai")}
+                        onLogSteps={() => setPanel("pasos")}
                         onLogTraining={() => setPanel("entreno")}
                       />
                     </SortableSection>
@@ -581,6 +584,29 @@ export default function Home() {
             <div className="flex-1 p-3">
               <AiEntryForm days={days} onUpsert={upsertDay} onConsumeInventory={consumeByText} inventory={inventory} consumeAmounts={consumeAmounts} />
             </div>
+          </div>
+        </div>
+      )}
+
+      {panel === "pasos" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>
+          <div
+            className="relative my-4 max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-3 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              onClick={() => setPanel(null)}
+              className="absolute right-3 top-3 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+            >
+              Cerrar
+            </button>
+            <StepsEntryForm
+              entry={todayEntry}
+              onSave={(entry) => {
+                upsertDay(entry);
+                setPanel(null);
+              }}
+            />
           </div>
         </div>
       )}

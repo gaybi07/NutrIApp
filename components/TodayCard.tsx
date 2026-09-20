@@ -13,12 +13,14 @@ export function TodayCard({
   goal,
   tdeeFallback,
   onLogMeal,
+  onLogSteps,
   onLogTraining,
 }: {
   entry: DayEntry;
   goal: number;
   tdeeFallback: number;
   onLogMeal: () => void;
+  onLogSteps: () => void;
   onLogTraining: () => void;
 }) {
   const today = new Date(`${entry.fecha}T00:00:00`);
@@ -70,13 +72,27 @@ export function TodayCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <button
+        type="button"
+        onClick={onLogMeal}
+        className="w-full rounded-xl border border-gold/60 bg-gold px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-bg"
+      >
+        + Cargar comida
+      </button>
+      {/* Pasos y entrenamiento van cada uno en su propio botón -- antes
+          compartían uno solo que, apenas cargabas el entrenamiento, dejaba
+          de mostrar los pasos del todo (su texto pasaba a ser la intensidad
+          del entrenamiento), y no quedaba forma obvia de volver a tocar los
+          pasos para corregirlos. */}
+      <div className="mt-2 grid grid-cols-2 gap-2">
         <button
           type="button"
-          onClick={onLogMeal}
-          className="rounded-xl border border-gold/60 bg-gold px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-bg"
+          onClick={onLogSteps}
+          className={`rounded-xl border px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] ${
+            entry.pasos ? "border-sage/60 bg-sage/10 text-sage" : "border-border bg-transparent text-textMuted"
+          }`}
         >
-          + Cargar comida
+          {entry.pasos ? `${entry.pasos.toLocaleString("es-AR")} pasos` : "+ Pasos"}
         </button>
         <button
           type="button"

@@ -25,7 +25,6 @@ function sessionCalories(intensidad: TrainingIntensity, minutos: number, pesoKg?
 }
 
 export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: (entry: DayEntry) => void }) {
-  const [pasos, setPasos] = useState(entry.pasos ? String(entry.pasos) : "");
   const [sessions, setSessions] = useState<TrainingSession[]>(getTrainingSessions(entry));
   const [nuevoTipo, setNuevoTipo] = useState<TrainingType>("fuerza");
   const [nuevaDisciplina, setNuevaDisciplina] = useState("");
@@ -48,7 +47,6 @@ export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: 
   const handleSave = () => {
     onSave({
       ...entry,
-      pasos: clampNumber(Number(pasos) || 0),
       entreno: sessions.length > 0,
       entrenoIntensidad: sessions[0]?.intensidad,
       entrenoMinutos: sessions[0]?.minutos,
@@ -59,24 +57,7 @@ export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: 
   return (
     <div>
       <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold mb-1">Hoy</div>
-      <h2 className="font-display text-xl leading-none mb-3">Pasos y entrenamiento</h2>
-
-      <div className="mb-3">
-        <label className="mb-1 flex items-center font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
-          Pasos<InfoHint text={FIELD_HELP.pasosDiarios} />
-        </label>
-        <input
-          type="number"
-          min="0"
-          max="999999"
-          step="100"
-          inputMode="numeric"
-          value={pasos}
-          onChange={(event) => setPasos(event.target.value)}
-          placeholder="0"
-          className="w-full"
-        />
-      </div>
+      <h2 className="font-display text-xl leading-none mb-3">Entrenamiento</h2>
 
       <div className="mb-3">
         <label className="mb-1 block font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">

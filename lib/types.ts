@@ -325,10 +325,10 @@ export const INICIO_BLOCK_LABELS: Record<InicioBlockId, string> = {
   tabla: "Tabla de la semana",
 };
 
-/** La solapa Comidas tiene, a su vez, dos sub-solapas (ver ComidasSubTab):
- * "Alacena" (inventario + cómo llenarlo, incluyendo el ticket + qué
- * cocinar con lo que hay) y "Planificado" (planificador semanal). Cada
- * bloque pertenece a una sola sub-solapa, ver COMIDAS_SUBTAB_BLOCKS. */
+/** La solapa Comidas antes tenía dos sub-solapas (Alacena/Planificado) --
+ * unificadas en una sola tira continua a pedido del usuario, para no tener
+ * que ir y volver entre las dos. Todos los bloques conviven en un mismo
+ * orden ahora. */
 export type ComidasBlockId = "hogar" | "alacena" | "sugerencias" | "comunes" | "compras" | "planificador";
 export const DEFAULT_COMIDAS_ORDER: ComidasBlockId[] = ["hogar", "alacena", "sugerencias", "comunes", "compras", "planificador"];
 export const COMIDAS_BLOCK_LABELS: Record<ComidasBlockId, string> = {
@@ -338,12 +338,6 @@ export const COMIDAS_BLOCK_LABELS: Record<ComidasBlockId, string> = {
   comunes: "Comidas más comunes",
   compras: "Registro de compras",
   planificador: "Planificador semanal",
-};
-
-export type ComidasSubTab = "alacena" | "planificado";
-export const COMIDAS_SUBTAB_BLOCKS: Record<ComidasSubTab, ComidasBlockId[]> = {
-  alacena: ["hogar", "alacena", "sugerencias", "comunes", "compras"],
-  planificado: ["planificador"],
 };
 
 /** Un renglón de lo que se compró de verdad (marca, precio) -- separado del
@@ -409,15 +403,6 @@ export function resolveOrder<T>(order: T[] | undefined, fallback: T[]): T[] {
   const known = order.filter((id) => fallback.includes(id));
   const missing = fallback.filter((id) => !known.includes(id));
   return [...known, ...missing];
-}
-
-/** Para solapas que arrastran un subconjunto de una lista más grande (ej.
- * Comidas > Alacena, que solo reordena sus propios bloques): mete el
- * subconjunto ya reordenado de vuelta en la lista completa, sin mover los
- * bloques que pertenecen a otro subconjunto. */
-export function mergeGroupOrder<T>(full: T[], group: T[], reorderedGroup: T[]): T[] {
-  let i = 0;
-  return full.map((id) => (group.includes(id) ? reorderedGroup[i++] : id));
 }
 
 export interface Settings {

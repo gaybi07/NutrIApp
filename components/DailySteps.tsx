@@ -20,7 +20,7 @@ export function DailySteps({ weekDates, weekDays, onUpsert }: { weekDates: strin
   return (
     <Collapsible
       eyebrow="Movimiento diario"
-      title="Pasos de la semana"
+      title="Editar pasos"
       info={SECTION_HELP.pasos}
       badge={status ? <div className="font-mono text-[9px] uppercase text-sage">{status}</div> : undefined}
     >

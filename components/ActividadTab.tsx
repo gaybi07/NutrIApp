@@ -78,6 +78,7 @@ export function ActividadTab({
   entry,
   weekDates,
   weekDays,
+  onLogSteps,
   onLogTraining,
   onLogSleep,
   onUpsert,
@@ -99,6 +100,7 @@ export function ActividadTab({
   entry: DayEntry;
   weekDates: string[];
   weekDays: (DayEntry | null)[];
+  onLogSteps: () => void;
   onLogTraining: () => void;
   onLogSleep: () => void;
   onUpsert: (entry: DayEntry) => void;
@@ -157,26 +159,38 @@ export function ActividadTab({
             <div className="font-sans font-bold text-base leading-tight text-text">{entry.suenoHoras ? `${entry.suenoHoras}h` : "—"}</div>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        {/* Pasos, entrenamiento y sueño cada uno con su propio botón --
+            antes pasos y entrenamiento compartían uno solo que, apenas
+            cargabas el entrenamiento, dejaba de mostrar los pasos del todo. */}
+        <div className="grid grid-cols-3 gap-1.5">
+          <button
+            type="button"
+            onClick={onLogSteps}
+            className={`rounded-xl border px-2 py-2.5 font-mono text-[9.5px] uppercase tracking-wide ${
+              entry.pasos ? "border-sage/60 bg-sage/10 text-sage" : "border-border bg-transparent text-textMuted"
+            }`}
+          >
+            {entry.pasos ? `${entry.pasos.toLocaleString("es-AR")}` : "+ Pasos"}
+          </button>
           <button
             type="button"
             onClick={onLogTraining}
-            className={`flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] ${
+            className={`flex items-center justify-center gap-1 rounded-xl border px-2 py-2.5 font-mono text-[9.5px] uppercase tracking-wide ${
               sessions.length > 0 ? `intensity-${intensidad}` : "bg-sage text-bg border-sage/60"
             }`}
             style={sessions.length > 0 ? { background: trainingStyle.background, color: trainingStyle.color, borderColor: trainingStyle.background } : undefined}
           >
-            {sessions.length > 0 && <span className="h-2 w-2 rounded-full bg-current opacity-70" />}
-            {sessions.length > 0 ? trainingLabel : "+ Pasos y entrenamiento"}
+            {sessions.length > 0 && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-70" />}
+            {sessions.length > 0 ? trainingLabel : "+ Entreno"}
           </button>
           <button
             type="button"
             onClick={onLogSleep}
-            className={`flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] ${
+            className={`rounded-xl border px-2 py-2.5 font-mono text-[9.5px] uppercase tracking-wide ${
               entry.suenoHoras ? "bg-[#7C93A3] text-bg border-[#7C93A3]/60" : "bg-transparent text-textMuted border-border"
             }`}
           >
-            {entry.suenoHoras ? `${entry.suenoHoras}h dormidas` : "+ Sueño"}
+            {entry.suenoHoras ? `${entry.suenoHoras}h` : "+ Sueño"}
           </button>
         </div>
         <LiveWorkout
@@ -194,7 +208,7 @@ export function ActividadTab({
     objetivoEntreno: trainingGoalPreview ? <TrainingGoal goal={trainingGoalPreview} openOnDesktop /> : null,
     indicadoresEntreno: <TrainingIndicators routines={routines} workoutSuggestions={workoutSuggestions} />,
     pasosEditar: <DailySteps weekDates={weekDates} weekDays={weekDays} onUpsert={onUpsert} />,
-    pasosChart: <WeekBarChart title="Pasos de la semana" data={stepsData} color={STEPS_COLOR} unit="pasos" neonClass="chart-neon-a" />,
+    pasosChart: <WeekBarChart title="Gráfico de pasos" data={stepsData} color={STEPS_COLOR} unit="pasos" neonClass="chart-neon-a" />,
     entrenoChart: <WeekBarChart title="Calorías quemadas entrenando" data={trainingData} color={TRAINING_COLOR} unit="kcal" neonClass="chart-neon-b" />,
     suenoChart: (
       <WeekBarChart
