@@ -303,7 +303,7 @@ export const FONT_SIZE_OPTIONS: { value: FontSize; label: string; description: s
  * arrastrándolos (mantener apretado en cualquier parte del bloque, como
  * mover íconos en la pantalla de inicio del celular) — si no personalizó
  * nada todavía, se usa el orden por default de cada solapa. */
-export type InicioBlockId = "hoy" | "comidas" | "peso" | "objetivo" | "seguimiento" | "comidasSemana" | "tabla";
+export type InicioBlockId = "hoy" | "comidas" | "peso" | "objetivo" | "seguimiento" | "comidasSemana";
 export const DEFAULT_INICIO_ORDER: InicioBlockId[] = [
   "hoy",
   "comidas",
@@ -311,19 +311,18 @@ export const DEFAULT_INICIO_ORDER: InicioBlockId[] = [
   "objetivo",
   "seguimiento",
   "comidasSemana",
-  "tabla",
 ];
 export const INICIO_BLOCK_LABELS: Record<InicioBlockId, string> = {
   hoy: "Hoy",
   comidas: "Editar comidas de hoy",
   peso: "Peso de esta semana",
   objetivo: "Tu objetivo",
-  // Antes eran dos bloques separados (Indicadores + Kcal por día) -- se
-  // unificaron en uno solo a pedido del usuario, con las dos partes juntas
-  // adentro en vez de tener que abrir/cerrar dos tarjetas distintas.
+  // Antes eran tres bloques separados (Indicadores, Kcal por día y Tabla de
+  // la semana) -- se unificaron en uno solo a pedido del usuario, con las
+  // tres partes juntas adentro en vez de tener que abrir/cerrar tres
+  // tarjetas distintas para ver lo mismo de la semana.
   seguimiento: "Seguimiento semanal",
   comidasSemana: "Comidas por día",
-  tabla: "Tabla de la semana",
 };
 
 /** La solapa Comidas antes tenía dos sub-solapas (Alacena/Planificado) --

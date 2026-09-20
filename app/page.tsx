@@ -470,28 +470,23 @@ export default function Home() {
                           avgGoal={summary.avgGoal || settings.goal}
                           avgGasto={settings.tdeeFallback}
                         />
+                        <div className="my-3 border-t border-dashed border-border" />
+                        <Ledger
+                          weekDates={weekDates}
+                          weekDays={weekDays}
+                          goal={summary.avgGoal || settings.goal}
+                          tdeeFallback={settings.tdeeFallback}
+                          onUpsert={upsertDay}
+                          variant="actividad"
+                          bare
+                        />
                       </Collapsible>
                     </SortableSection>
                   );
                 }
-                if (blockId === "comidasSemana") {
-                  return (
-                    <SortableSection key="comidasSemana" id="comidasSemana" onHide={() => hideInicioBlock("comidasSemana")} dragDisabledOnDesktop>
-                      <WeekMealsCard weekDates={weekDates} weekDays={weekDays} onUpsert={upsertDay} openOnDesktop />
-                    </SortableSection>
-                  );
-                }
                 return (
-                  <SortableSection key="tabla" id="tabla" onHide={() => hideInicioBlock("tabla")} dragDisabledOnDesktop>
-                    <Ledger
-                      weekDates={weekDates}
-                      weekDays={weekDays}
-                      goal={summary.avgGoal || settings.goal}
-                      tdeeFallback={settings.tdeeFallback}
-                      onUpsert={upsertDay}
-                      variant="actividad"
-                      openOnDesktop
-                    />
+                  <SortableSection key="comidasSemana" id="comidasSemana" onHide={() => hideInicioBlock("comidasSemana")} dragDisabledOnDesktop>
+                    <WeekMealsCard weekDates={weekDates} weekDays={weekDays} onUpsert={upsertDay} openOnDesktop />
                   </SortableSection>
                 );
               })}

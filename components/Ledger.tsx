@@ -25,6 +25,7 @@ export function Ledger({
   onUpsert,
   variant = "actividad",
   openOnDesktop,
+  bare,
 }: {
   weekDates: string[];
   weekDays: (DayEntry | null)[];
@@ -33,6 +34,10 @@ export function Ledger({
   onUpsert: (entry: DayEntry) => void;
   variant?: LedgerVariant;
   openOnDesktop?: boolean;
+  /** Sin el envoltorio de Collapsible propio -- para meterlo adentro de otro
+   * bloque ya colapsable (ej. "Seguimiento semanal" en Inicio, junto con
+   * Indicadores y el gráfico), en vez de tener su propia tarjeta aparte. */
+  bare?: boolean;
 }) {
   const anyData = weekDays.some((d) => d);
   const [activeDate, setActiveDate] = useState<string | null>(null);
@@ -66,8 +71,7 @@ export function Ledger({
   const title = isNutricion ? "Tabla nutricional de la semana" : "Tabla de la semana";
   const info = isNutricion ? SECTION_HELP.tablaNutricion : SECTION_HELP.tabla;
 
-  return (
-    <Collapsible eyebrow="Detalle diario" title={title} info={info} openOnDesktop={openOnDesktop}>
+  const content = (
     <div className="bg-surface border border-border rounded-xl overflow-hidden">
       <div className={`grid ${gridCols} px-3 py-2 font-mono text-[8.5px] uppercase tracking-wide text-textMuted border-b border-border`}>
         {isNutricion ? (
@@ -182,6 +186,20 @@ export function Ledger({
         </div>
       )}
     </div>
+  );
+
+  if (bare) {
+    return (
+      <div>
+        <div className="mb-2 font-display text-base leading-none text-text">{title}</div>
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <Collapsible eyebrow="Detalle diario" title={title} info={info} openOnDesktop={openOnDesktop}>
+      {content}
     </Collapsible>
   );
 }
