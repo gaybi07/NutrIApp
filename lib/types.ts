@@ -331,7 +331,14 @@ export const INICIO_BLOCK_LABELS: Record<InicioBlockId, string> = {
  * que ir y volver entre las dos. Todos los bloques conviven en un mismo
  * orden ahora. */
 export type ComidasBlockId = "hogar" | "alacena" | "sugerencias" | "comunes" | "planificador";
-export const DEFAULT_COMIDAS_ORDER: ComidasBlockId[] = ["hogar", "alacena", "sugerencias", "comunes", "planificador"];
+// "comunes" (Comidas más comunes) sigue existiendo -- la memoria atrás
+// (useMealMemory) sigue guardando y alimentando sugerencias en otros
+// lados -- pero se sacó del orden por default a pedido del usuario: la
+// tarjeta en sí todavía no muestra nada realmente útil ("lo más común es
+// esto, bueno, nada"), así que por ahora queda oculta para todos hasta
+// que se le sume algo de verdad (ej. calificar si esas comidas son
+// buenas o no). Se puede reactivar agregándola de nuevo acá.
+export const DEFAULT_COMIDAS_ORDER: ComidasBlockId[] = ["hogar", "alacena", "sugerencias", "planificador"];
 export const COMIDAS_BLOCK_LABELS: Record<ComidasBlockId, string> = {
   hogar: "Grupo compartido",
   alacena: "Alacena",
@@ -358,18 +365,21 @@ export interface PurchaseRecord {
   category?: InventoryCategory;
 }
 
-export type MacrosBlockId = "resumen" | "ranking" | "reparto" | "semana" | "proteina" | "cruceEntreno" | "fibra" | "diversidad" | "tabla";
+export type MacrosBlockId = "resumen" | "ranking" | "reparto" | "reporte" | "cruceEntreno" | "diversidad" | "tabla";
 export const DEFAULT_MACROS_ORDER: MacrosBlockId[] = [
-  "resumen", "ranking", "reparto", "semana", "proteina", "cruceEntreno", "fibra", "diversidad", "tabla",
+  "resumen", "ranking", "reparto", "reporte", "cruceEntreno", "diversidad", "tabla",
 ];
 export const MACROS_BLOCK_LABELS: Record<MacrosBlockId, string> = {
   resumen: "Hoy · Macros",
   ranking: "Ranking de días",
   reparto: "Reparto de macros de hoy",
-  semana: "Macros de la semana",
-  proteina: "Proteína vs objetivo",
+  // Antes eran tres bloques separados (Macros de la semana, Proteína vs
+  // objetivo, Fibra de la semana) -- unificados en un solo reporte con un
+  // gráfico corto por macro (kcal, proteína, carbohidratos, grasas, fibra)
+  // más uno de densidad calórica, para ver de un vistazo cómo viene la
+  // semana completa sin ir abriendo tarjeta por tarjeta.
+  reporte: "Reporte semanal",
   cruceEntreno: "Comida vs. entrenamiento",
-  fibra: "Fibra de la semana",
   diversidad: "Diversidad de esta semana",
   tabla: "Tabla nutricional de la semana",
 };

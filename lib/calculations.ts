@@ -65,6 +65,31 @@ export function dayFiber(d: DayEntry): number {
   return (d.desF || 0) + (d.almF || 0) + (d.merF || 0) + (d.cenF || 0) + (d.colF || 0);
 }
 
+const ALL_MEAL_KEYS: MealKey[] = ["des", "alm", "mer", "cen", "col"];
+
+/**
+ * Densidad calórica promedio de lo comido en el día (kcal por gramo) --
+ * pensada como una señal de "qué tan bien elegís los alimentos", no solo
+ * cuánto comés. Más alto = comida más concentrada en calorías (frituras,
+ * grasas, ultraprocesados); más bajo = alimentos con más agua/fibra
+ * (verduras, frutas, proteínas magras). Solo cuenta los alimentos que
+ * tienen gramos cargados -- null si ninguno los tiene todavía ese día.
+ */
+export function dayCaloricDensity(d: DayEntry): number | null {
+  let kcal = 0;
+  let gramos = 0;
+  for (const meal of ALL_MEAL_KEYS) {
+    for (const item of getMealItems(d, meal)) {
+      if (item.gramos && item.gramos > 0) {
+        kcal += item.kcal;
+        gramos += item.gramos;
+      }
+    }
+  }
+  if (gramos <= 0) return null;
+  return kcal / gramos;
+}
+
 /**
  * Desglose editable de una comida del día. Si ya tiene items guardados, los
  * devuelve tal cual. Si no (comidas cargadas antes de este desglose, o

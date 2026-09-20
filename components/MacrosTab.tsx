@@ -5,7 +5,7 @@ import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { BarChart, Bar, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip, PieChart, Pie, Cell } from "recharts";
 import { DayEntry, MacrosBlockId, DEFAULT_MACROS_ORDER, resolveOrder, GoalMode } from "@/lib/types";
-import { dayTotal, dayProt, dayCarbs, dayFat, dayFiber, macroTargets, FoodTrainingInsight } from "@/lib/calculations";
+import { dayTotal, dayProt, dayCarbs, dayFat, dayFiber, dayCaloricDensity, macroTargets, FoodTrainingInsight } from "@/lib/calculations";
 import { FoodTrainingInsights } from "@/components/FoodTrainingInsights";
 import { classifyIngredient, FOOD_GROUP_LABELS, FoodGroup } from "@/lib/foodGroups";
 import { useSectionOrder } from "@/lib/useSectionOrder";
@@ -33,6 +33,55 @@ const MACRO_FOCUS_MESSAGE: Record<GoalMode, string> = {
   recomponer: "En mantenimiento: reparto parejo entre carbohidratos y grasas.",
   aumentar: "En volumen: más carbohidratos — son el combustible principal para entrenar fuerte.",
 };
+
+/** Un gráfico chico (110px) de barras por día de la semana, con línea de
+ * objetivo opcional -- usado varias veces seguidas dentro de "Reporte
+ * semanal" para que cada macro tenga su propio vistazo corto, en vez de
+ * un solo gráfico apilado gigante o varias tarjetas sueltas para abrir
+ * una por una. */
+function MiniWeekChart({
+  title,
+  data,
+  color,
+  unit,
+  referenceValue,
+  neonClass,
+}: {
+  title: string;
+  data: { dow: string; value: number }[];
+  color: string;
+  unit: string;
+  referenceValue?: number;
+  neonClass?: string;
+}) {
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <div className="font-mono text-[10px] uppercase tracking-wide text-textMuted">{title}</div>
+        {referenceValue != null && (
+          <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
+            obj. {referenceValue.toLocaleString("es-AR")}
+            {unit}
+          </span>
+        )}
+      </div>
+      <ResponsiveContainer width="100%" height={110}>
+        <BarChart data={data} margin={{ left: -20, right: 0, top: 5, bottom: 0 }}>
+          <XAxis dataKey="dow" tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 8.5, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "rgb(var(--color-border))" }} tickLine={false} />
+          <YAxis tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 8.5, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} width={28} />
+          <Tooltip
+            contentStyle={{ background: "rgb(var(--color-surface))", border: "1px solid rgb(var(--color-border))", borderRadius: 8, fontSize: 12 }}
+            labelStyle={{ color: "rgb(var(--color-text))" }}
+            formatter={(value: number) => `${value.toLocaleString("es-AR")}${unit}`}
+            cursor={{ fill: "rgb(var(--color-accent) / 0.10)" }}
+          />
+          {referenceValue != null && <ReferenceLine y={referenceValue} stroke={color} strokeDasharray="4 4" />}
+          <Bar dataKey="value" fill={color} radius={[3, 3, 0, 0]} className={neonClass} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
 
 function MacroStat({ label, value, target, color, neonClass }: { label: string; value: number; target: number; color: string; neonClass?: string }) {
   const pct = target > 0 ? Math.min(100, Math.round((value / target) * 100)) : 0;
@@ -98,23 +147,45 @@ export function MacrosTab({
     { name: "Grasas", value: fat * 9, color: COLORS.fat, neonClass: "chart-neon-c" },
   ].filter((slice) => slice.value > 0);
 
-  const weekMacroData = weekDates.map((fecha, i) => {
+  const kcalWeekData = weekDates.map((fecha, i) => {
     const d = weekDays[i];
     const dow = DOW[new Date(`${fecha}T00:00:00`).getDay()];
-    if (!d) return { dow, protein: 0, carbs: 0, fat: 0 };
-    return { dow, protein: dayProt(d) * 4, carbs: dayCarbs(d) * 4, fat: dayFat(d) * 9 };
+    return { dow, value: d ? dayTotal(d) : 0 };
   });
 
   const proteinWeekData = weekDates.map((fecha, i) => {
     const d = weekDays[i];
     const dow = DOW[new Date(`${fecha}T00:00:00`).getDay()];
-    return { dow, protein: d ? dayProt(d) : 0 };
+    return { dow, value: d ? dayProt(d) : 0 };
+  });
+
+  const carbsWeekData = weekDates.map((fecha, i) => {
+    const d = weekDays[i];
+    const dow = DOW[new Date(`${fecha}T00:00:00`).getDay()];
+    return { dow, value: d ? dayCarbs(d) : 0 };
+  });
+
+  const fatWeekData = weekDates.map((fecha, i) => {
+    const d = weekDays[i];
+    const dow = DOW[new Date(`${fecha}T00:00:00`).getDay()];
+    return { dow, value: d ? dayFat(d) : 0 };
   });
 
   const fiberWeekData = weekDates.map((fecha, i) => {
     const d = weekDays[i];
     const dow = DOW[new Date(`${fecha}T00:00:00`).getDay()];
-    return { dow, fiber: d ? dayFiber(d) : 0 };
+    return { dow, value: d ? dayFiber(d) : 0 };
+  });
+
+  // Densidad calórica (kcal/g) -- señal de qué tan concentrados en calorías
+  // vienen los alimentos elegidos, no solo cuánto se comió. Solo cuenta
+  // días con al menos un alimento con gramos cargados (ver
+  // dayCaloricDensity); el resto queda en 0.
+  const densityWeekData = weekDates.map((fecha, i) => {
+    const d = weekDays[i];
+    const dow = DOW[new Date(`${fecha}T00:00:00`).getDay()];
+    const density = d ? dayCaloricDensity(d) : null;
+    return { dow, value: density != null ? Math.round(density * 10) / 10 : 0 };
   });
 
   const diversity = FOOD_GROUPS_ORDER.reduce((acc, group) => {
@@ -193,57 +264,35 @@ export function MacrosTab({
       </Collapsible>
   );
 
-  const semanaBlock = (
-      <Collapsible
-        eyebrow="Semana"
-        title="Macros de la semana"
-        badge={<span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">objetivo {goal.toLocaleString("es-AR")} kcal</span>}
-      >
-        <ResponsiveContainer width="100%" height={180}>
-          <BarChart data={weekMacroData} margin={{ left: -20, right: 0, top: 5, bottom: 0 }}>
-            <XAxis dataKey="dow" tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "rgb(var(--color-border))" }} tickLine={false} />
-            <YAxis tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: "rgb(var(--color-surface))", border: "1px solid rgb(var(--color-border))", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "rgb(var(--color-text))" }} cursor={{ fill: "rgb(var(--color-accent) / 0.10)" }} />
-            <ReferenceLine y={goal} stroke="rgb(var(--color-accent))" strokeDasharray="4 4" label={{ value: `objetivo ${goal}`, fill: "rgb(var(--color-accent))", fontSize: 9, position: "right" }} />
-            <Bar dataKey="protein" stackId="a" fill={COLORS.protein} className="chart-neon-a" />
-            <Bar dataKey="carbs" stackId="a" fill={COLORS.carbs} />
-            <Bar dataKey="fat" stackId="a" fill={COLORS.fat} radius={[3, 3, 0, 0]} className="chart-neon-c" />
-          </BarChart>
-        </ResponsiveContainer>
-        <div className="mt-2 flex flex-wrap gap-3 font-mono text-[9px] text-textMuted">
-          <span className="flex items-center gap-1"><i className="chart-neon-a inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.protein }} />Proteína</span>
-          <span className="flex items-center gap-1"><i className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.carbs }} />Carbohidratos</span>
-          <span className="flex items-center gap-1"><i className="chart-neon-c inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.fat }} />Grasas</span>
+  // Un gráfico corto por macro (kcal, proteína, carbohidratos, grasas,
+  // fibra) más uno de densidad calórica -- todos juntos en un solo reporte
+  // en vez de tarjetas sueltas para abrir una por una. Los objetivos de
+  // carbos/grasas/fibra ya salen de macroTargets(), que varía según el
+  // modo (déficit/recomposición/volumen) -- ver ese comentario para el
+  // detalle. Por ahora el foco está puesto en déficit (menos grasas, llegar
+  // a la proteína objetivo); los demás modos se van a revisar más adelante.
+  const reporteSemanalBlock = (
+    <Collapsible eyebrow="Semana" title="Reporte semanal" info={SECTION_HELP.semana}>
+      <div className="space-y-3">
+        <MiniWeekChart title="Kcal por día" data={kcalWeekData} color="#f5f1e8" unit=" kcal" referenceValue={goal} />
+        <div className="border-t border-dashed border-border" />
+        <MiniWeekChart title="Proteína" data={proteinWeekData} color={COLORS.protein} unit="g" referenceValue={proteinTarget} neonClass="chart-neon-a" />
+        <div className="border-t border-dashed border-border" />
+        <MiniWeekChart title="Carbohidratos" data={carbsWeekData} color={COLORS.carbs} unit="g" referenceValue={targets.carbsG} />
+        <div className="border-t border-dashed border-border" />
+        <MiniWeekChart title="Grasas" data={fatWeekData} color={COLORS.fat} unit="g" referenceValue={targets.fatG} neonClass="chart-neon-c" />
+        <div className="border-t border-dashed border-border" />
+        <MiniWeekChart title="Fibra" data={fiberWeekData} color={COLORS.fiber} unit="g" referenceValue={targets.fiberG} neonClass="chart-neon-d" />
+        <div className="border-t border-dashed border-border" />
+        <div>
+          <MiniWeekChart title="Densidad calórica" data={densityWeekData} color="#8A9A7C" unit=" kcal/g" />
+          <div className="mt-1.5 text-[10px] text-textMuted">
+            Más alto = comida más concentrada en calorías (frituras, ultraprocesados). Más bajo = alimentos con más agua/fibra
+            (verduras, frutas, proteínas magras). En 0 los días sin gramos cargados todavía.
+          </div>
         </div>
-      </Collapsible>
-  );
-
-  const proteinaBlock = (
-      <Collapsible eyebrow="Semana" title="Proteína vs objetivo">
-        <ResponsiveContainer width="100%" height={160}>
-          <BarChart data={proteinWeekData} margin={{ left: -20, right: 0, top: 5, bottom: 0 }}>
-            <XAxis dataKey="dow" tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "rgb(var(--color-border))" }} tickLine={false} />
-            <YAxis tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: "rgb(var(--color-surface))", border: "1px solid rgb(var(--color-border))", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "rgb(var(--color-text))" }} cursor={{ fill: "rgb(var(--color-accent) / 0.10)" }} />
-            <ReferenceLine y={proteinTarget} stroke="#8A9A7C" strokeDasharray="4 4" label={{ value: `obj. ${proteinTarget}g`, fill: "#8A9A7C", fontSize: 9, position: "right" }} className="chart-neon-a" />
-            <Bar dataKey="protein" fill={COLORS.protein} radius={[3, 3, 0, 0]} className="chart-neon-a" />
-          </BarChart>
-        </ResponsiveContainer>
-      </Collapsible>
-  );
-
-  const fibraBlock = (
-      <Collapsible eyebrow="Semana" title="Fibra de la semana">
-        <ResponsiveContainer width="100%" height={160}>
-          <BarChart data={fiberWeekData} margin={{ left: -20, right: 0, top: 5, bottom: 0 }}>
-            <XAxis dataKey="dow" tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: "rgb(var(--color-border))" }} tickLine={false} />
-            <YAxis tick={{ fill: "rgb(var(--color-text-muted))", fontSize: 9, fontFamily: "JetBrains Mono" }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: "rgb(var(--color-surface))", border: "1px solid rgb(var(--color-border))", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "rgb(var(--color-text))" }} cursor={{ fill: "rgb(var(--color-accent) / 0.10)" }} />
-            <ReferenceLine y={targets.fiberG} stroke={COLORS.fiber} strokeDasharray="4 4" label={{ value: `obj. ${targets.fiberG}g`, fill: COLORS.fiber, fontSize: 9, position: "right" }} className="chart-neon-d" />
-            <Bar dataKey="fiber" fill={COLORS.fiber} radius={[3, 3, 0, 0]} className="chart-neon-d" />
-          </BarChart>
-        </ResponsiveContainer>
-      </Collapsible>
+      </div>
+    </Collapsible>
   );
 
   const diversidadBlock = (
@@ -284,10 +333,8 @@ export function MacrosTab({
     resumen: resumenBlock,
     ranking: rankingBlock,
     reparto: repartoBlock,
-    semana: semanaBlock,
-    proteina: proteinaBlock,
+    reporte: reporteSemanalBlock,
     cruceEntreno: <FoodTrainingInsights insight={foodTrainingInsight} openOnDesktop />,
-    fibra: fibraBlock,
     diversidad: diversidadBlock,
     tabla: tablaBlock,
   };
