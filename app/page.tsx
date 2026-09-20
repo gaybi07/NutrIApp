@@ -24,7 +24,6 @@ import { AuthPanel } from "@/components/AuthPanel";
 import { DataImport } from "@/components/DataImport";
 import { MealMemoryImport } from "@/components/MealMemoryImport";
 import { TodayCard } from "@/components/TodayCard";
-import { TodayMealsBreakdown } from "@/components/TodayMealsBreakdown";
 import { PurchaseHistoryCard } from "@/components/PurchaseHistoryCard";
 import { WeekMealsCard } from "@/components/WeekMealsCard";
 import { TrainingEntryForm } from "@/components/TrainingEntryForm";
@@ -417,13 +416,6 @@ export default function Home() {
                         onLogSteps={() => setPanel("pasos")}
                         onLogTraining={() => setPanel("entreno")}
                       />
-                    </SortableSection>
-                  );
-                }
-                if (blockId === "comidas") {
-                  return (
-                    <SortableSection key="comidas" id="comidas" onHide={() => hideInicioBlock("comidas")} dragDisabledOnDesktop>
-                      <TodayMealsBreakdown entry={todayEntry} onUpsert={upsertDay} openOnDesktop />
                     </SortableSection>
                   );
                 }

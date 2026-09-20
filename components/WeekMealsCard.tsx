@@ -31,7 +31,7 @@ export function WeekMealsCard({
   const selectedDay = new Date(`${selectedDate}T00:00:00`);
 
   return (
-    <Collapsible eyebrow="Semana" title="Comidas por día" info={SECTION_HELP.comidasSemana} openOnDesktop={openOnDesktop}>
+    <Collapsible eyebrow="Semana" title="Modificar comidas de la semana" info={SECTION_HELP.comidasSemana} openOnDesktop={openOnDesktop}>
       <div className="mb-3 grid grid-cols-7 gap-1">
         {weekDates.map((fecha, i) => {
           const date = new Date(`${fecha}T00:00:00`);
