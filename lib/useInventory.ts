@@ -181,17 +181,22 @@ export function useInventory() {
         category?: InventoryCategory;
         nutritionPer100g?: InventoryNutrition;
         zona?: InventoryItem["zona"];
+        // Para platos preparados (ver PrepareDish.tsx): el valor nutricional
+        // ya se calculó a mano a partir de los ingredientes usados, no es
+        // una estimación de IA -- que "Revisar con IA" no lo toque después.
+        nutritionConfirmed?: boolean;
       }>
     ) => {
       setItems((previous) => {
         const next = [...previous];
-        entries.forEach(({ name, quantity, unit, category, nutritionPer100g, zona }) => {
+        entries.forEach(({ name, quantity, unit, category, nutritionPer100g, zona, nutritionConfirmed }) => {
           const existing = next.find((item) => inventoryKey(item.name) === inventoryKey(name) && item.unit === unit);
           if (existing) {
             existing.quantity += quantity;
             if (!existing.category && category) existing.category = category;
             if (!existing.nutritionConfirmed && nutritionPer100g) existing.nutritionPer100g = nutritionPer100g;
             if (!existing.zona && zona) existing.zona = zona;
+            if (nutritionConfirmed) existing.nutritionConfirmed = true;
           } else {
             next.push({
               id: `${Date.now()}-${name}-${Math.random()}`,
@@ -201,6 +206,7 @@ export function useInventory() {
               category: category || defaultCategoryForName(name),
               nutritionPer100g,
               zona,
+              nutritionConfirmed,
             });
           }
         });

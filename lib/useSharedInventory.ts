@@ -98,6 +98,7 @@ export function useSharedInventory(householdId: string | null) {
         category?: InventoryCategory;
         nutritionPer100g?: InventoryNutrition;
         zona?: InventoryItem["zona"];
+        nutritionConfirmed?: boolean;
       }>
     ) => {
       if (!supabase || !householdId) return;
@@ -111,10 +112,14 @@ export function useSharedInventory(householdId: string | null) {
         category?: InventoryCategory;
         nutritionPer100g?: InventoryNutrition;
         zona?: InventoryItem["zona"];
+        nutritionConfirmed?: boolean;
       }> = [];
-      const toUpdate = new Map<string, { quantity: number; category?: InventoryCategory; nutritionPer100g?: InventoryNutrition; zona?: InventoryItem["zona"] }>();
+      const toUpdate = new Map<
+        string,
+        { quantity: number; category?: InventoryCategory; nutritionPer100g?: InventoryNutrition; zona?: InventoryItem["zona"]; nutritionConfirmed?: boolean }
+      >();
 
-      entries.forEach(({ name, quantity, unit, category, nutritionPer100g, zona }) => {
+      entries.forEach(({ name, quantity, unit, category, nutritionPer100g, zona, nutritionConfirmed }) => {
         const key = `${inventoryKey(name)}|${unit}`;
         const existing = working.get(key);
         if (existing) {
@@ -126,10 +131,11 @@ export function useSharedInventory(householdId: string | null) {
             category: pending.category ?? (!existing.category ? category : undefined),
             nutritionPer100g: pending.nutritionPer100g ?? (!existing.nutritionConfirmed ? nutritionPer100g : undefined),
             zona: pending.zona ?? (!existing.zona ? zona : undefined),
+            nutritionConfirmed: pending.nutritionConfirmed || nutritionConfirmed,
           });
         } else {
           working.set(key, { id: `pending-${key}`, name, quantity, unit, category, nutritionPer100g, zona });
-          toInsert.push({ name, quantity, unit, category: category || defaultCategoryForName(name), nutritionPer100g, zona });
+          toInsert.push({ name, quantity, unit, category: category || defaultCategoryForName(name), nutritionPer100g, zona, nutritionConfirmed });
         }
       });
 
@@ -144,6 +150,7 @@ export function useSharedInventory(householdId: string | null) {
               category: entry.category,
               nutrition_per_100g: entry.nutritionPer100g || null,
               zona: entry.zona || null,
+              nutrition_confirmed: entry.nutritionConfirmed || false,
             }))
           );
         }
@@ -152,6 +159,7 @@ export function useSharedInventory(householdId: string | null) {
           if (patch.category) row.category = patch.category;
           if (patch.nutritionPer100g) row.nutrition_per_100g = patch.nutritionPer100g;
           if (patch.zona) row.zona = patch.zona;
+          if (patch.nutritionConfirmed) row.nutrition_confirmed = true;
           await supabase!.from("inventory_items").update(row).eq("id", id);
         }
         await refetch();

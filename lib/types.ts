@@ -11,6 +11,7 @@ export type InventoryCategory =
   | "harinas"
   | "bebidas"
   | "condimentos"
+  | "preparado"
   | "otros";
 export const INVENTORY_CATEGORIES: { id: InventoryCategory; label: string }[] = [
   { id: "proteina_animal", label: "Proteína animal" },
@@ -21,6 +22,10 @@ export const INVENTORY_CATEGORIES: { id: InventoryCategory; label: string }[] = 
   { id: "harinas", label: "Harinas y cereales" },
   { id: "bebidas", label: "Bebidas" },
   { id: "condimentos", label: "Condimentos" },
+  // Platos caseros armados con "Preparar plato" (torta, guiso, lasaña...) --
+  // se guardan como un producto más, en porciones (unidad "u."), con el
+  // valor nutricional por porción ya calculado a partir de lo que se usó.
+  { id: "preparado", label: "Comida preparada" },
   { id: "otros", label: "Otros" },
 ];
 export const INVENTORY_CATEGORY_LABELS: Record<InventoryCategory, string> = Object.fromEntries(

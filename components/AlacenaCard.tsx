@@ -9,6 +9,7 @@ import { QuickAddProducts, AiShoppingItem } from "@/components/QuickAddProducts"
 import { ShoppingLog } from "@/components/ShoppingLog";
 import { CocinaView } from "@/components/CocinaView";
 import { ExtraConsumption } from "@/components/ExtraConsumption";
+import { PrepareDish } from "@/components/PrepareDish";
 import { ProductScanner } from "@/components/ProductScanner";
 import { inventoryKey } from "@/lib/useInventory";
 import { getMealItems, applyMealItems, suggestedMeal, nutritionForAmount } from "@/lib/calculations";
@@ -81,6 +82,7 @@ export function AlacenaCard({
   // productos" para no tener dos secciones separadas con el mismo nombre.
   const [addMode, setAddMode] = useState<"escribir" | "ticket">("escribir");
   const [showExtraConsumption, setShowExtraConsumption] = useState(false);
+  const [showPrepareDish, setShowPrepareDish] = useState(false);
   const [selected, setSelected] = useState<InventoryItem | null>(null);
   const [nutritionDraft, setNutritionDraft] = useState<InventoryNutrition>(EMPTY_NUTRITION);
   const [categoryDraft, setCategoryDraft] = useState<InventoryCategory>("otros");
@@ -381,6 +383,17 @@ export function AlacenaCard({
             <span className="text-[13px] leading-none">−</span> Descontar sin comida (invitados, se rompió, etc.)
           </button>
         )}
+        {items.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowPrepareDish((prev) => !prev)}
+            className={`flex items-center gap-1 rounded-xl border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] ${
+              showPrepareDish ? "border-gold bg-gold text-bg" : "border-gold/60 bg-gold/10 text-gold"
+            }`}
+          >
+            🍲 Preparar plato (torta, guiso, etc.)
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setShowScanner(true)}
@@ -496,6 +509,12 @@ export function AlacenaCard({
       {showExtraConsumption && (
         <div className="mb-3 rounded-xl border border-rust/40 bg-rust/5 p-2.5">
           <ExtraConsumption items={items} consumeAmounts={consumeAmounts} />
+        </div>
+      )}
+
+      {showPrepareDish && (
+        <div className="mb-3 rounded-xl border border-gold/40 bg-gold/5 p-2.5">
+          <PrepareDish items={items} consumeAmounts={consumeAmounts} addStructuredItems={addStructuredItems} />
         </div>
       )}
 

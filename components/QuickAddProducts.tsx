@@ -13,6 +13,7 @@ export type AiShoppingItem = {
   category?: InventoryCategory;
   nutritionPer100g?: InventoryNutrition;
   zona?: InventoryZone;
+  nutritionConfirmed?: boolean;
 };
 type PendingItem = { name: string; containerCount: number };
 type PendingDraft = { amount: string; unit: InventoryItem["unit"] };
