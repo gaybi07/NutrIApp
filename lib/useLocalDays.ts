@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { DayEntry, Settings } from "./types";
 import { isSupabaseConfigured } from "./supabase/browser";
 
@@ -22,6 +22,15 @@ export function useLocalDays() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [loaded, setLoaded] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+
+  // "Última versión conocida" de settings, en sync SIEMPRE (no solo tras el
+  // próximo render) -- saveSettings la lee para resolver actualizaciones en
+  // forma de función. Sin esto, dos saveSettings({ ...settings, x }) seguidos
+  // en el mismo tick (ej. tocar 💡 en dos secciones rápido, o Preferencias >
+  // Secciones con varios toques) pisaban uno al otro: ambos partían del mismo
+  // `settings` viejo cerrado por closure, así que solo el último sobrevivía.
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
 
   useEffect(() => {
     if (isSupabaseConfigured) {
@@ -134,10 +143,12 @@ export function useLocalDays() {
     []
   );
 
-  const saveSettings = useCallback((next: Settings) => {
-    setSettings(next);
+  const saveSettings = useCallback((next: Settings | ((prev: Settings) => Settings)) => {
+    const resolved = typeof next === "function" ? (next as (prev: Settings) => Settings)(settingsRef.current) : next;
+    settingsRef.current = resolved;
+    setSettings(resolved);
     try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(resolved));
     } catch (e) {
       console.error("Error guardando ajustes", e);
     }
@@ -145,7 +156,7 @@ export function useLocalDays() {
       fetch("/api/data", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ settings: next }),
+        body: JSON.stringify({ settings: resolved }),
       })
         .then((response) => {
           if (!response.ok) throw new Error("No se pudieron guardar los ajustes en la nube");

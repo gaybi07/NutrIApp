@@ -187,7 +187,13 @@ function toggleHidden<T extends string>(list: T[] | undefined, id: T): T[] {
 /** Prende/apaga secciones apagadas con el foquito (💡) desde cualquier
  * solapa — una vez apagada, una sección desaparece de la pantalla y
  * este panel es el único lugar para volver a prenderla. */
-export function SectionsSettings({ settings, onSave }: { settings: Settings; onSave: (settings: Settings) => void }) {
+export function SectionsSettings({
+  settings,
+  onSave,
+}: {
+  settings: Settings;
+  onSave: (settings: Settings | ((prev: Settings) => Settings)) => void;
+}) {
   const renderGroup = <T extends string,>(
     title: string,
     order: T[],
@@ -234,20 +240,20 @@ export function SectionsSettings({ settings, onSave }: { settings: Settings; onS
           DEFAULT_INICIO_ORDER.filter((id) => id !== "hoy"), // "hoy" nunca se apaga -- ver comentario en page.tsx
           INICIO_BLOCK_LABELS,
           settings.inicioHidden,
-          (id) => onSave({ ...settings, inicioHidden: toggleHidden(settings.inicioHidden, id) })
+          (id) => onSave((prev) => ({ ...prev, inicioHidden: toggleHidden(prev.inicioHidden, id) }))
         )}
         {renderGroup("Comidas", DEFAULT_COMIDAS_ORDER, COMIDAS_BLOCK_LABELS, settings.comidasHidden, (id) =>
-          onSave({ ...settings, comidasHidden: toggleHidden(settings.comidasHidden, id) })
+          onSave((prev) => ({ ...prev, comidasHidden: toggleHidden(prev.comidasHidden, id) }))
         )}
         {renderGroup("Macros", DEFAULT_MACROS_ORDER, MACROS_BLOCK_LABELS, settings.macrosHidden, (id) =>
-          onSave({ ...settings, macrosHidden: toggleHidden(settings.macrosHidden, id) })
+          onSave((prev) => ({ ...prev, macrosHidden: toggleHidden(prev.macrosHidden, id) }))
         )}
         {renderGroup(
           "Entreno",
           DEFAULT_ACTIVIDAD_ORDER.filter((id) => id !== "resumen"), // "resumen" (Hoy) nunca se apaga
           ACTIVIDAD_BLOCK_LABELS,
           settings.actividadHidden,
-          (id) => onSave({ ...settings, actividadHidden: toggleHidden(settings.actividadHidden, id) })
+          (id) => onSave((prev) => ({ ...prev, actividadHidden: toggleHidden(prev.actividadHidden, id) }))
         )}
       </div>
     </div>

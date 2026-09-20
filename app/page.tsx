@@ -98,7 +98,7 @@ export default function Home() {
   const inicioHidden = settings.inicioHidden || [];
   const hideInicioBlock = (id: (typeof inicioOrder)[number]) => {
     if (id === "hoy") return;
-    saveSettings({ ...settings, inicioHidden: [...inicioHidden, id] });
+    saveSettings((prev) => ({ ...prev, inicioHidden: [...(prev.inicioHidden || []), id] }));
   };
 
   const enabledTabs = resolveOrder(settings.enabledTabs, DEFAULT_ENABLED_TABS);
@@ -344,7 +344,7 @@ export default function Home() {
           order={settings.macrosOrder}
           onReorder={(macrosOrder) => saveSettings({ ...settings, macrosOrder })}
           hidden={settings.macrosHidden}
-          onHide={(id) => saveSettings({ ...settings, macrosHidden: [...(settings.macrosHidden || []), id] })}
+          onHide={(id) => saveSettings((prev) => ({ ...prev, macrosHidden: [...(prev.macrosHidden || []), id] }))}
           foodTrainingInsight={foodTrainingInsight}
           goalMode={settings.calculatorProfile?.modo}
         />
@@ -367,7 +367,7 @@ export default function Home() {
           hidden={settings.actividadHidden}
           onHide={(id) => {
             if (id === "resumen") return; // "Hoy" nunca se apaga -- ver comentario en ActividadTab.tsx
-            saveSettings({ ...settings, actividadHidden: [...(settings.actividadHidden || []), id] });
+            saveSettings((prev) => ({ ...prev, actividadHidden: [...(prev.actividadHidden || []), id] }));
           }}
           workoutSuggestions={settings.workoutSuggestions || {}}
           onSaveWorkoutSuggestions={(updates) =>
@@ -519,7 +519,7 @@ export default function Home() {
           order={settings.comidasOrder}
           onReorder={(comidasOrder) => saveSettings({ ...settings, comidasOrder })}
           hidden={settings.comidasHidden}
-          onHide={(id) => saveSettings({ ...settings, comidasHidden: [...(settings.comidasHidden || []), id] })}
+          onHide={(id) => saveSettings((prev) => ({ ...prev, comidasHidden: [...(prev.comidasHidden || []), id] }))}
           aiReviewLockedUntil={settings.aiReviewLockedUntil}
           onAiReviewLockedUntilChange={(aiReviewLockedUntil) => saveSettings({ ...settings, aiReviewLockedUntil })}
           todayEntry={todayEntry}
