@@ -3,7 +3,7 @@
 import { ReactNode } from "react";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { BarChart, Bar, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip } from "recharts";
 import { DayEntry, MacrosBlockId, DEFAULT_MACROS_ORDER, resolveOrder, GoalMode } from "@/lib/types";
 import { dayTotal, dayProt, dayCarbs, dayFat, dayFiber, dayCaloricDensity, macroTargets, FoodTrainingInsight } from "@/lib/calculations";
 import { FoodTrainingInsights } from "@/components/FoodTrainingInsights";
@@ -141,12 +141,6 @@ export function MacrosTab({
   const fat = dayFat(entry);
   const fiber = dayFiber(entry);
 
-  const pieData = [
-    { name: "Proteína", value: protein * 4, color: COLORS.protein, neonClass: "chart-neon-a" },
-    { name: "Carbohidratos", value: carbs * 4, color: COLORS.carbs, neonClass: "" },
-    { name: "Grasas", value: fat * 9, color: COLORS.fat, neonClass: "chart-neon-c" },
-  ].filter((slice) => slice.value > 0);
-
   const kcalWeekData = weekDates.map((fecha, i) => {
     const d = weekDays[i];
     const dow = DOW[new Date(`${fecha}T00:00:00`).getDay()];
@@ -234,36 +228,6 @@ export function MacrosTab({
   const weekDaysPresent = weekDays.filter((d): d is DayEntry => d !== null);
   const rankingBlock = <RankingCard days={weekDaysPresent} weightKg={weightKg} />;
 
-  const repartoBlock = (
-      <Collapsible eyebrow="Hoy" title="Reparto de macros">
-        {pieData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={180}>
-            <PieChart>
-              <Pie data={pieData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={70} paddingAngle={2} isAnimationActive={false}>
-                {pieData.map((slice) => (
-                  <Cell key={slice.name} fill={slice.color} stroke="none" className={slice.neonClass} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{ background: "rgb(var(--color-surface))", border: "1px solid rgb(var(--color-border))", borderRadius: 8, fontSize: 12 }}
-                labelStyle={{ color: "rgb(var(--color-text))" }}
-                formatter={(value: number) => `${Math.round(value)} kcal`}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="rounded-xl border border-dashed border-border p-4 text-center text-[12px] text-textMuted">
-            Todavía no cargaste comidas hoy.
-          </div>
-        )}
-        <div className="mt-2 flex flex-wrap justify-center gap-3 font-mono text-[9px] text-textMuted">
-          <span className="flex items-center gap-1"><i className="chart-neon-a inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.protein }} />Proteína</span>
-          <span className="flex items-center gap-1"><i className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.carbs }} />Carbohidratos</span>
-          <span className="flex items-center gap-1"><i className="chart-neon-c inline-block h-[7px] w-[7px] rounded-full" style={{ background: COLORS.fat }} />Grasas</span>
-        </div>
-      </Collapsible>
-  );
-
   // Un gráfico corto por macro (kcal, proteína, carbohidratos, grasas,
   // fibra) más uno de densidad calórica -- todos juntos en un solo reporte
   // en vez de tarjetas sueltas para abrir una por una. Los objetivos de
@@ -332,7 +296,6 @@ export function MacrosTab({
   const blocks: Record<MacrosBlockId, ReactNode> = {
     resumen: resumenBlock,
     ranking: rankingBlock,
-    reparto: repartoBlock,
     reporte: reporteSemanalBlock,
     cruceEntreno: <FoodTrainingInsights insight={foodTrainingInsight} openOnDesktop />,
     diversidad: diversidadBlock,

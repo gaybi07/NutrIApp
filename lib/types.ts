@@ -370,14 +370,13 @@ export interface PurchaseRecord {
   category?: InventoryCategory;
 }
 
-export type MacrosBlockId = "resumen" | "ranking" | "reparto" | "reporte" | "cruceEntreno" | "diversidad" | "tabla";
+export type MacrosBlockId = "resumen" | "ranking" | "reporte" | "cruceEntreno" | "diversidad" | "tabla";
 export const DEFAULT_MACROS_ORDER: MacrosBlockId[] = [
-  "resumen", "ranking", "reparto", "reporte", "cruceEntreno", "diversidad", "tabla",
+  "resumen", "ranking", "reporte", "cruceEntreno", "diversidad", "tabla",
 ];
 export const MACROS_BLOCK_LABELS: Record<MacrosBlockId, string> = {
   resumen: "Hoy · Macros",
   ranking: "Ranking de días",
-  reparto: "Reparto de macros de hoy",
   // Antes eran tres bloques separados (Macros de la semana, Proteína vs
   // objetivo, Fibra de la semana) -- unificados en un solo reporte con un
   // gráfico corto por macro (kcal, proteína, carbohidratos, grasas, fibra)
