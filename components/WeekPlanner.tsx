@@ -11,8 +11,25 @@ import { InfoHint } from "@/components/InfoHint";
 const DOW_FULL = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const MEAL_KEYS: MealKey[] = ["des", "alm", "mer", "cen", "col"];
+// La colación es lo único opcional -- estas 4 son las que cuentan para
+// "¿ya planificaste el día?" (el ✓/N-sobre-4 de cada fila y el aviso de
+// "falta planificar" del grupo).
+const REQUIRED_MEAL_KEYS: MealKey[] = ["des", "alm", "mer", "cen"];
 const MAX_PICKER_SUGGESTIONS = 6;
 const MAX_PERSONAL_SUGGESTIONS = 4;
+
+// Sentinel guardado en el mismo lugar que un título de receta -- para no
+// tener que sumar una estructura de datos paralela (ni una migración) solo
+// para marcar "esto no lo voy a planificar" (ej. viaje, día que como afuera).
+// No matchea ninguna receta real, así que no suma nada a la lista de
+// compras ni se puede confundir con un título elegido de verdad.
+export const SKIP_MEAL = "__skip__";
+function isFilled(value: string | undefined): boolean {
+  return !!value && value !== SKIP_MEAL;
+}
+function isSkipped(value: string | undefined): boolean {
+  return value === SKIP_MEAL;
+}
 
 function shortTitle(title: string) {
   return title.length > 24 ? `${title.slice(0, 22)}…` : title;
@@ -25,16 +42,31 @@ export function getNextWeekDates(): string[] {
   return [...Array(7)].map((_, i) => fmtDate(addDays(nextMonday, i)));
 }
 
-/** Cuántas comidas ya están elegidas para la semana que viene — para mostrar en el botón de entrada. */
+/** Cuántas comidas ya están elegidas (con receta de verdad, sin contar las marcadas "no planificar") para la semana que viene — para mostrar en el botón de entrada. */
 export function countPlannedMeals(weekPlan: WeekPlan): number {
   const dates = getNextWeekDates();
   let count = 0;
   for (const fecha of dates) {
     const dayPlan = weekPlan[fecha];
     if (!dayPlan) continue;
-    count += MEAL_KEYS.filter((meal) => dayPlan[meal]).length;
+    count += MEAL_KEYS.filter((meal) => isFilled(dayPlan[meal])).length;
   }
   return count;
+}
+
+/** Si ya se tocó algo de la semana que viene (comida elegida o marcada
+ * "no planificar") -- a diferencia de countPlannedMeals, una semana toda
+ * marcada como "no planificar" (ej. un viaje) cuenta como resuelta, para no
+ * seguir avisando "falta planificar" cuando en realidad ya se decidió que
+ * no hace falta. */
+export function hasWeekActivity(weekPlan: WeekPlan): boolean {
+  const dates = getNextWeekDates();
+  for (const fecha of dates) {
+    const dayPlan = weekPlan[fecha];
+    if (!dayPlan) continue;
+    if (REQUIRED_MEAL_KEYS.some((meal) => dayPlan[meal] !== undefined)) return true;
+  }
+  return false;
 }
 
 function DayPlanRow({
@@ -46,7 +78,7 @@ function DayPlanRow({
   dayPlan: Partial<Record<MealKey, string>>;
   onPick: (meal: MealKey) => void;
 }) {
-  const complete = MEAL_KEYS.every((meal) => dayPlan[meal]);
+  const complete = REQUIRED_MEAL_KEYS.every((meal) => dayPlan[meal] !== undefined);
   const [open, setOpen] = useState(!complete);
 
   useEffect(() => {
@@ -54,7 +86,7 @@ function DayPlanRow({
   }, [complete]);
 
   const date = new Date(`${fecha}T00:00:00`);
-  const filledCount = MEAL_KEYS.filter((meal) => dayPlan[meal]).length;
+  const resolvedCount = REQUIRED_MEAL_KEYS.filter((meal) => dayPlan[meal] !== undefined).length;
 
   return (
     <div className="rounded-xl border border-border bg-bg/40 p-2.5">
@@ -68,7 +100,7 @@ function DayPlanRow({
         </div>
         <div className="flex items-center gap-2">
           <span className={`font-mono text-[9px] uppercase tracking-wide ${complete ? "text-sage" : "text-textMuted"}`}>
-            {complete ? "✓" : `${filledCount}/4`}
+            {complete ? "✓" : `${resolvedCount}/${REQUIRED_MEAL_KEYS.length}`}
           </span>
           <span className="font-mono text-[10px] text-textMuted transition-transform" style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>
             ▾
@@ -78,19 +110,28 @@ function DayPlanRow({
       {open && (
         <div className="mt-1.5 grid grid-cols-2 gap-1.5">
           {MEAL_KEYS.map((meal) => {
-            const recipeTitle = dayPlan[meal];
+            const value = dayPlan[meal];
+            const filled = isFilled(value);
+            const skipped = isSkipped(value);
             return (
               <button
                 key={meal}
                 type="button"
                 onClick={() => onPick(meal)}
                 className={`rounded-lg border px-2 py-1.5 text-left font-mono text-[9.5px] uppercase tracking-wide ${
-                  recipeTitle ? "border-sage/50 bg-sage/10 text-sage" : "border-dashed border-border text-textMuted"
+                  filled
+                    ? "border-sage/50 bg-sage/10 text-sage"
+                    : skipped
+                      ? "border-border bg-bg/20 text-textMuted line-through opacity-60"
+                      : "border-dashed border-border text-textMuted"
                 }`}
               >
-                <div className="text-[8.5px] opacity-70">{MEAL_LABELS[meal]}</div>
+                <div className="text-[8.5px] opacity-70 no-underline">
+                  {MEAL_LABELS[meal]}
+                  {meal === "col" && !filled && !skipped && " (opcional)"}
+                </div>
                 <div className="mt-0.5 normal-case tracking-normal text-[11px]">
-                  {recipeTitle ? shortTitle(recipeTitle) : "+ Elegir"}
+                  {filled ? shortTitle(value as string) : skipped ? "✕ No planificado" : "+ Elegir"}
                 </div>
               </button>
             );
@@ -112,6 +153,8 @@ export function WeekPlanner({
 }) {
   const [pickerFor, setPickerFor] = useState<{ fecha: string; meal: MealKey } | null>(null);
   const [customText, setCustomText] = useState("");
+  const [showExport, setShowExport] = useState(false);
+  const [copyStatus, setCopyStatus] = useState("");
   const { memory: mealMemory } = useMealMemory();
 
   useEffect(() => {
@@ -167,6 +210,25 @@ export function WeekPlanner({
 
   const plannedCount = selectedRecipes.length;
   const totalPlannedCount = useMemo(() => countPlannedMeals(weekPlan), [weekPlan]);
+
+  const shoppingListText = useMemo(() => {
+    if (shoppingList.length === 0) return "";
+    const start = new Date(`${nextWeekDates[0]}T00:00:00`);
+    const end = new Date(`${nextWeekDates[6]}T00:00:00`);
+    const header = `Lista de compras — semana del ${start.getDate()} ${MONTHS[start.getMonth()]} al ${end.getDate()} ${MONTHS[end.getMonth()]}`;
+    const lines = shoppingList.map((entry) => `- ${entry.missing}${entry.unit === "u." ? " u." : entry.unit} ${entry.name}`);
+    return [header, "", ...lines].join("\n");
+  }, [shoppingList, nextWeekDates]);
+
+  const copyShoppingList = async () => {
+    if (!shoppingListText) return;
+    try {
+      await navigator.clipboard.writeText(shoppingListText);
+      setCopyStatus("Copiado al portapapeles ✓ — pegalo donde lo necesites.");
+    } catch {
+      setCopyStatus("No pude copiar solo — seleccioná el texto de arriba a mano y copialo.");
+    }
+  };
 
   const personalSuggestions: MealMemoryEntry[] = useMemo(() => {
     if (!pickerFor) return [];
@@ -225,6 +287,50 @@ export function WeekPlanner({
             ))}
           </div>
         )}
+
+        {shoppingList.length > 0 && (
+          <div className="mt-3 border-t border-dashed border-gold/30 pt-2.5">
+            <button
+              type="button"
+              onClick={() => {
+                setShowExport((prev) => !prev);
+                setCopyStatus("");
+              }}
+              className="w-full rounded-lg border border-gold/60 bg-gold/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-gold"
+            >
+              {showExport ? "Ocultar" : "📤 Exportar lista"}
+            </button>
+            {showExport && (
+              <div className="mt-2">
+                <textarea
+                  readOnly
+                  rows={shoppingList.length + 2}
+                  value={shoppingListText}
+                  onFocus={(event) => event.target.select()}
+                  className="w-full font-mono text-[10px]"
+                />
+                <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={copyShoppingList}
+                    className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg"
+                  >
+                    Copiar texto
+                  </button>
+                  <a
+                    href={`https://wa.me/?text=${encodeURIComponent(shoppingListText)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg border border-sage/50 bg-sage/10 px-3 py-2 text-center font-mono text-[10px] uppercase tracking-wide text-sage"
+                  >
+                    Enviar por WhatsApp
+                  </a>
+                </div>
+                {copyStatus && <div className="mt-1.5 text-[11px] text-textMuted">{copyStatus}</div>}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {pickerFor && (
@@ -264,15 +370,40 @@ export function WeekPlanner({
             </div>
 
             <div className="mt-3 space-y-2">
-              {weekPlan[pickerFor.fecha]?.[pickerFor.meal] && (
-                <button
-                  type="button"
-                  onClick={() => assign(pickerFor.fecha, pickerFor.meal, null)}
-                  className="w-full rounded-lg border border-rust/50 bg-rust/10 px-3 py-2 text-left font-mono text-[10px] uppercase tracking-wide text-rust"
-                >
-                  Quitar comida elegida
-                </button>
-              )}
+              {(() => {
+                const currentValue = weekPlan[pickerFor.fecha]?.[pickerFor.meal];
+                if (isSkipped(currentValue)) {
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => assign(pickerFor.fecha, pickerFor.meal, null)}
+                      className="w-full rounded-lg border border-border px-3 py-2 text-left font-mono text-[10px] uppercase tracking-wide text-textMuted"
+                    >
+                      Deshacer "no planificar"
+                    </button>
+                  );
+                }
+                return (
+                  <>
+                    {currentValue && (
+                      <button
+                        type="button"
+                        onClick={() => assign(pickerFor.fecha, pickerFor.meal, null)}
+                        className="w-full rounded-lg border border-rust/50 bg-rust/10 px-3 py-2 text-left font-mono text-[10px] uppercase tracking-wide text-rust"
+                      >
+                        Quitar comida elegida
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => assign(pickerFor.fecha, pickerFor.meal, SKIP_MEAL)}
+                      className="w-full rounded-lg border border-border bg-bg/40 px-3 py-2 text-left font-mono text-[10px] uppercase tracking-wide text-textMuted"
+                    >
+                      No voy a planificar esto (ej. viaje)
+                    </button>
+                  </>
+                );
+              })()}
 
               {personalSuggestions.length === 0 && catalogSuggestions.length === 0 && (
                 <div className="rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">

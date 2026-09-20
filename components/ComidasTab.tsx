@@ -23,7 +23,7 @@ import { RecipePlanner } from "@/components/RecipePlanner";
 import { CommonMealsCard } from "@/components/CommonMealsCard";
 import { AlacenaCard } from "@/components/AlacenaCard";
 import { HouseholdCard } from "@/components/HouseholdCard";
-import { countPlannedMeals } from "@/components/WeekPlanner";
+import { countPlannedMeals, hasWeekActivity } from "@/components/WeekPlanner";
 
 export function ComidasTab({
   items,
@@ -148,21 +148,55 @@ export function ComidasTab({
                 />
               )}
               {blockId === "comunes" && <CommonMealsCard />}
-              {blockId === "planificador" && (
-                <button
-                  type="button"
-                  onClick={onOpenPlanificador}
-                  className="mb-4 flex w-full items-center justify-between gap-2 rounded-2xl border border-border bg-surface/70 p-3 text-left shadow-[0_0_0_1px_rgba(58,54,47,0.4)]"
-                >
-                  <div>
-                    <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Planificador</div>
-                    <div className="font-display text-xl leading-none -tracking-[0.04em]">Semana que viene</div>
-                  </div>
-                  <div className="rounded-full border border-border bg-bg/70 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
-                    {countPlannedMeals(weekPlan)} comidas
-                  </div>
-                </button>
-              )}
+              {blockId === "planificador" && (() => {
+                const plannedCount = countPlannedMeals(weekPlan);
+                // Ahora que el plan se comparte entre los del grupo (ver
+                // useSharedWeekPlan), "0 comidas" con un grupo armado quiere
+                // decir que todavía nadie de los dos lo armó -- vale la pena
+                // avisar, en vez de que cada uno se entere recién al abrir
+                // el planificador.
+                const pending = !!household && !hasWeekActivity(weekPlan);
+                if (pending) {
+                  return (
+                    <section className="mb-4 rounded-xl border-2 border-rust/50 bg-surface p-3 shadow-[0_0_24px_-6px_rgba(239,68,68,0.45)]">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-gold">Planificador</div>
+                          <h2 className="font-display text-lg text-text">Semana que viene</h2>
+                        </div>
+                        <div className="shrink-0 rounded-full border border-rust/50 bg-rust/15 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide text-rust">
+                          Pendiente
+                        </div>
+                      </div>
+                      <div className="mt-2 rounded-lg border border-gold/30 bg-gold/10 px-3 py-2 text-[11px] text-textMuted">
+                        Todavía nadie del grupo planificó las comidas de la semana que viene.
+                      </div>
+                      <button
+                        type="button"
+                        onClick={onOpenPlanificador}
+                        className="mt-3 w-full rounded-lg border border-gold/60 bg-gold px-3 py-2 font-sans text-[12px] font-bold text-bg"
+                      >
+                        Planificar la semana
+                      </button>
+                    </section>
+                  );
+                }
+                return (
+                  <button
+                    type="button"
+                    onClick={onOpenPlanificador}
+                    className="mb-4 flex w-full items-center justify-between gap-2 rounded-2xl border border-border bg-surface/70 p-3 text-left shadow-[0_0_0_1px_rgba(58,54,47,0.4)]"
+                  >
+                    <div>
+                      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Planificador</div>
+                      <div className="font-display text-xl leading-none -tracking-[0.04em]">Semana que viene</div>
+                    </div>
+                    <div className="rounded-full border border-border bg-bg/70 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
+                      {plannedCount} comidas
+                    </div>
+                  </button>
+                );
+              })()}
             </SortableSection>
           ))}
           </div>

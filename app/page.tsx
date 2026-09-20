@@ -40,6 +40,7 @@ import { useInventory } from "@/lib/useInventory";
 import { useSharedInventory } from "@/lib/useSharedInventory";
 import { usePurchaseHistory } from "@/lib/usePurchaseHistory";
 import { useSharedPurchases } from "@/lib/useSharedPurchases";
+import { useSharedWeekPlan } from "@/lib/useSharedWeekPlan";
 import { useHousehold } from "@/lib/useHousehold";
 import { useTrainerApplication } from "@/lib/useTrainerApplication";
 import { useProductMemory } from "@/lib/useProductMemory";
@@ -72,6 +73,21 @@ export default function Home() {
   const localPurchases = usePurchaseHistory();
   const sharedPurchases = useSharedPurchases(household.household?.id ?? null);
   const { purchases, addPurchases, removePurchase } = household.household ? sharedPurchases : localPurchases;
+
+  // Igual que la alacena: el plan de la semana que viene se comparte entre
+  // los dos integrantes del grupo apenas hay uno armado (households.week_plan)
+  // -- así cualquiera ve si el otro ya planificó, en vez de cada cuenta
+  // teniendo su propio plan invisible para el resto (como pasaba antes con
+  // settings.weekPlan, que ahora solo se usa sin grupo).
+  const sharedWeekPlan = useSharedWeekPlan(household.household?.id ?? null);
+  const weekPlan = household.household ? sharedWeekPlan.weekPlan : settings.weekPlan || {};
+  const saveWeekPlan = useCallback(
+    (next: typeof weekPlan) => {
+      if (household.household) sharedWeekPlan.savePlan(next);
+      else saveSettings({ ...settings, weekPlan: next });
+    },
+    [household.household, sharedWeekPlan, settings, saveSettings]
+  );
 
   const productMemory = useProductMemory();
   const [weekOffset, setWeekOffset] = useState(0);
@@ -496,7 +512,7 @@ export default function Home() {
           goalMode={settings.calculatorProfile?.modo}
           dailyGoal={settings.goal}
           consumedKcal={todayKcal}
-          weekPlan={settings.weekPlan || {}}
+          weekPlan={weekPlan}
           onOpenPlanificador={() => setPanel("planificador")}
           addStructuredItems={addStructuredItems}
           updateInventoryItem={updateInventoryItem}
@@ -660,11 +676,7 @@ export default function Home() {
               </button>
             </div>
             <div className="flex-1 p-3">
-              <WeekPlanner
-                items={inventory}
-                weekPlan={settings.weekPlan || {}}
-                onSave={(weekPlan) => saveSettings({ ...settings, weekPlan })}
-              />
+              <WeekPlanner items={inventory} weekPlan={weekPlan} onSave={saveWeekPlan} />
             </div>
           </div>
         </div>
