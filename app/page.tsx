@@ -157,8 +157,14 @@ export default function Home() {
 
   const goalProgress = useMemo(() => {
     if (!settings.calculatorProfile) return null;
-    return computeGoalProgress(settings.calculatorProfile, currentWeightKg, weightTrend);
-  }, [settings.calculatorProfile, currentWeightKg, weightTrend]);
+    return computeGoalProgress(
+      settings.calculatorProfile,
+      currentWeightKg,
+      weightTrend,
+      proteinTargetForWeight(currentWeightKg),
+      settings.goal
+    );
+  }, [settings.calculatorProfile, currentWeightKg, weightTrend, settings.goal]);
 
   const muscleGroupTrend = useMemo(
     () => computeMuscleGroupVolumeTrend(days, weekDates),

@@ -491,7 +491,7 @@ export function calcGoalDeficit(
 
 export interface GoalProgressInfo {
   metaKg: number;
-  modo: "perder" | "aumentar";
+  modo: "perder" | "aumentar" | "recomponer";
   fechaObjetivo: string;
   diasRestantes: number; // negativo si la fecha ya pasó
   kgTotalPlan: number; // lo que había que bajar/subir en total, desde que se armó el objetivo
@@ -500,6 +500,8 @@ export interface GoalProgressInfo {
   kgPorSemanaNecesario: number | null; // ritmo necesario desde HOY para llegar a tiempo (null si ya no hay margen)
   ritmoRealSemanal: number | null; // kg ganados/perdidos en la dirección correcta esta semana (null si falta el dato)
   yaLlego: boolean;
+  proteinTargetG: number; // objetivo diario de proteína -- el único dato útil que sí aplica en "recomponer"
+  goalKcal: number; // objetivo diario de kcal
 }
 
 /**
@@ -507,13 +509,33 @@ export interface GoalProgressInfo {
  * contrastado con el ritmo que hacía falta -- para el resumen motivacional
  * de Inicio. A diferencia de calcGoalDeficit (que es una herramienta de
  * validación puntual), esto se recalcula todos los días con el peso actual.
- * "recomponer" no tiene una dirección de peso clara, así que no aplica acá.
+ * "recomponer" no tiene una dirección de peso clara (no hay meta de peso),
+ * así que devuelve un resumen simplificado: solo kcal + proteína objetivo,
+ * sin barra de progreso ni ritmo semanal.
  */
 export function computeGoalProgress(
   profile: { actual: string; meta: string; fecha: string; modo: GoalMode },
   currentWeightKg: number,
-  weightTrendKg: number | null
+  weightTrendKg: number | null,
+  proteinTargetG: number,
+  goalKcal: number
 ): GoalProgressInfo | null {
+  if (profile.modo === "recomponer") {
+    return {
+      metaKg: 0,
+      modo: "recomponer",
+      fechaObjetivo: "",
+      diasRestantes: 0,
+      kgTotalPlan: 0,
+      kgYaLogrados: 0,
+      kgRestantes: 0,
+      kgPorSemanaNecesario: null,
+      ritmoRealSemanal: null,
+      yaLlego: false,
+      proteinTargetG,
+      goalKcal,
+    };
+  }
   if (profile.modo !== "perder" && profile.modo !== "aumentar") return null;
   const actual = Number(profile.actual);
   const meta = Number(profile.meta);
@@ -545,6 +567,8 @@ export function computeGoalProgress(
     kgPorSemanaNecesario,
     ritmoRealSemanal,
     yaLlego,
+    proteinTargetG,
+    goalKcal,
   };
 }
 

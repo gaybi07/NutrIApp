@@ -2,7 +2,7 @@ import { GoalProgressInfo } from "@/lib/calculations";
 import { Collapsible } from "@/components/Collapsible";
 import { SECTION_HELP } from "@/lib/helpText";
 
-const MODO_LABEL: Record<GoalProgressInfo["modo"], { verbo: string; hacia: string }> = {
+const MODO_LABEL: Record<"perder" | "aumentar", { verbo: string; hacia: string }> = {
   perder: { verbo: "Bajando", hacia: "hasta" },
   aumentar: { verbo: "Subiendo", hacia: "hasta" },
 };
@@ -17,8 +17,34 @@ function fmtDateAr(iso: string) {
 }
 
 export function GoalProgress({ progress, openOnDesktop }: { progress: GoalProgressInfo; openOnDesktop?: boolean }) {
-  const { modo, metaKg, fechaObjetivo, diasRestantes, kgTotalPlan, kgYaLogrados, kgRestantes, kgPorSemanaNecesario, ritmoRealSemanal, yaLlego } =
+  const { modo, metaKg, fechaObjetivo, diasRestantes, kgTotalPlan, kgYaLogrados, kgRestantes, kgPorSemanaNecesario, ritmoRealSemanal, yaLlego, proteinTargetG, goalKcal } =
     progress;
+
+  // "Recomponer" no tiene una meta de peso (no hay dirección clara: el
+  // objetivo es cambiar composición corporal, no el número de la balanza),
+  // así que en vez de la barra de progreso muestra lo que sí importa acá:
+  // cuánta proteína y cuántas kcal por día.
+  if (modo === "recomponer") {
+    return (
+      <Collapsible eyebrow="Objetivo" title="Recomposición corporal" info={SECTION_HELP.objetivo} openOnDesktop={openOnDesktop}>
+        <div className="grid grid-cols-2 gap-2 text-center">
+          <div className="rounded-lg border border-border bg-bg/40 px-2 py-2">
+            <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">Objetivo diario</div>
+            <div className="font-sans text-lg font-bold leading-tight text-text">{goalKcal.toLocaleString("es-AR")}kcal</div>
+          </div>
+          <div className="rounded-lg border border-border bg-bg/40 px-2 py-2">
+            <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">Proteína</div>
+            <div className="font-sans text-lg font-bold leading-tight text-text">{proteinTargetG}g</div>
+            <div className="font-mono text-[9px] text-textMuted">por día</div>
+          </div>
+        </div>
+        <div className="mt-2 text-center text-[12px] text-textMuted">
+          Sin meta de peso: la proteína alta es lo que sostiene el músculo mientras recomponés.
+        </div>
+      </Collapsible>
+    );
+  }
+
   const label = MODO_LABEL[modo];
   const pct = kgTotalPlan > 0 ? Math.max(0, Math.min(100, Math.round((kgYaLogrados / kgTotalPlan) * 100))) : 0;
 

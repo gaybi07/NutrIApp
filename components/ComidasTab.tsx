@@ -102,7 +102,9 @@ export function ComidasTab({
   const blockOrder = resolveOrder(order, DEFAULT_COMIDAS_ORDER);
   const groupIds = COMIDAS_SUBTAB_BLOCKS[subTab];
   const groupOrder = blockOrder.filter((id) => groupIds.includes(id));
-  const visibleOrder = groupOrder.filter((id) => !(hidden || []).includes(id));
+  // "alacena" nunca se apaga -- mismo criterio que "hoy" en Inicio: es el
+  // bloque central de la solapa, siempre visible y siempre abierto.
+  const visibleOrder = groupOrder.filter((id) => id === "alacena" || !(hidden || []).includes(id));
 
   const handleReorder = (nextGroup: ComidasBlockId[]) => onReorder(mergeGroupOrder(blockOrder, groupIds, nextGroup));
   const drag = useSectionOrder(groupOrder, handleReorder);
@@ -133,7 +135,7 @@ export function ComidasTab({
               pasa dragDisabledOnDesktop. */}
           <div className="min-w-0 space-y-4 lg:columns-2 lg:gap-4 lg:space-y-0 xl:columns-3">
           {visibleOrder.map((blockId) => (
-            <SortableSection key={blockId} id={blockId} onHide={() => onHide(blockId)} dragDisabledOnDesktop>
+            <SortableSection key={blockId} id={blockId} onHide={blockId === "alacena" ? undefined : () => onHide(blockId)} dragDisabledOnDesktop>
               {blockId === "hogar" && (
                 <HouseholdCard
                   household={household}

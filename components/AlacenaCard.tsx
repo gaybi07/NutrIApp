@@ -329,7 +329,8 @@ export function AlacenaCard({
   return (
     <Collapsible
       eyebrow="Alacena"
-      title="Lo que tenés"
+      title="Alacena"
+      locked
       info={SECTION_HELP.alacena}
       badge={
         <div className="rounded-full border border-border bg-bg/70 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
