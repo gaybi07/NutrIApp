@@ -1,4 +1,4 @@
-import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, TrainingSession, GoalMode, ExerciseEntry, ExerciseSetEntry, Weekday, WEEKDAYS, MealItem, InventoryNutrition, WorkoutVerdict, TrainingSchedule } from "./types";
+import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, TrainingSession, GoalMode, ExerciseEntry, ExerciseSetEntry, Weekday, WEEKDAYS, MealItem, InventoryNutrition, WorkoutVerdict, TrainingSchedule, MuscleGroup, MUSCLE_GROUP_LABELS } from "./types";
 
 /**
  * Sesiones de entrenamiento del día. Si ya tiene el formato nuevo
@@ -160,17 +160,24 @@ export interface MacroTargets {
 /**
  * Reparto de macros objetivo a partir del objetivo diario de kcal y la
  * proteína objetivo (por peso corporal, ver `proteinTargetForWeight`). Las
- * kcal que sobran después de la proteína se dividen 50/50 entre
- * carbohidratos y grasas — un reparto flexible estándar, no una dieta
- * estricta con proporciones fijas. La fibra no resta kcal (ya está incluida
- * en los carbohidratos) — el objetivo es la recomendación genérica de
- * ~14g cada 1000 kcal (guía USDA), no depende del peso.
+ * kcal que sobran después de la proteína se reparten entre carbohidratos y
+ * grasas -- el reparto ya no es siempre 50/50, depende del modo:
+ * - "aumentar" (volumen): más carbohidratos (65/35) — son el combustible
+ *   principal para entrenar fuerte y sostener el estímulo de crecimiento.
+ * - "perder" (déficit): también más carbohidratos (60/40) — con menos kcal
+ *   totales, priorizar carbos ayuda a sostener el rendimiento y la saciedad;
+ *   la grasa igual no baja de un piso razonable.
+ * - "recomponer" (o sin modo): 50/50, reparto neutro.
+ * La fibra no resta kcal (ya está incluida en los carbohidratos) — el
+ * objetivo es la recomendación genérica de ~14g cada 1000 kcal (guía USDA),
+ * no depende del peso ni del modo.
  */
-export function macroTargets(goalKcal: number, proteinTargetG: number): MacroTargets {
+export function macroTargets(goalKcal: number, proteinTargetG: number, modo?: GoalMode): MacroTargets {
   const proteinKcal = proteinTargetG * 4;
   const remaining = Math.max(0, goalKcal - proteinKcal);
-  const carbsKcal = remaining * 0.5;
-  const fatKcal = remaining * 0.5;
+  const carbShare = modo === "aumentar" ? 0.65 : modo === "perder" ? 0.6 : 0.5;
+  const carbsKcal = remaining * carbShare;
+  const fatKcal = remaining * (1 - carbShare);
   return {
     proteinG: proteinTargetG,
     carbsG: Math.round(carbsKcal / 4),
@@ -210,13 +217,62 @@ export function estimateTrainingCalories(d: DayEntry): number {
   }, 0);
 }
 
-/** Volumen total entrenado (series × repeticiones × peso, sumado entre ejercicios). Ejercicios sin peso (corporal) suman igual con peso 1, para que sigan contando en la tendencia. */
+/** Volumen de un solo ejercicio (series × repeticiones × peso). Ejercicios
+ * sin peso (corporal) suman igual con peso 1, para que sigan contando en la
+ * tendencia. Si hay `sets` (detalle real serie por serie), se usa eso en vez
+ * del resumen series/repeticiones/peso. */
+function exerciseVolume(e: ExerciseEntry): number {
+  if (e.sets && e.sets.length > 0) return e.sets.reduce((s, set) => s + set.repeticiones * (set.peso || 1), 0);
+  return e.series * e.repeticiones * (e.peso || 1);
+}
+
+/** Volumen total entrenado, sumado entre todos los ejercicios de ese día (con o sin grupo muscular etiquetado). */
 export function totalVolume(ejercicios: ExerciseEntry[] | undefined): number {
   if (!ejercicios || ejercicios.length === 0) return 0;
-  return ejercicios.reduce((total, e) => {
-    if (e.sets && e.sets.length > 0) return total + e.sets.reduce((s, set) => s + set.repeticiones * (set.peso || 1), 0);
-    return total + e.series * e.repeticiones * (e.peso || 1);
-  }, 0);
+  return ejercicios.reduce((total, e) => total + exerciseVolume(e), 0);
+}
+
+/** Volumen entrenado ese día, agrupado por grupo muscular -- solo cuenta los
+ * ejercicios que tienen `grupoMuscular` etiquetado (los agregados a mano sin
+ * pasar por la biblioteca quedan afuera del desglose, aunque sí cuentan en
+ * `totalVolume`). Devuelve los 6 grupos siempre, en 0 si no hubo nada. */
+export function volumeByMuscleGroup(ejercicios: ExerciseEntry[] | undefined): Record<MuscleGroup, number> {
+  const result = Object.fromEntries(Object.keys(MUSCLE_GROUP_LABELS).map((g) => [g, 0])) as Record<MuscleGroup, number>;
+  if (!ejercicios) return result;
+  for (const e of ejercicios) {
+    if (!e.grupoMuscular) continue;
+    result[e.grupoMuscular] += exerciseVolume(e);
+  }
+  return result;
+}
+
+/** Compara el volumen por grupo muscular de la semana seleccionada (`weekDates`)
+ * contra la semana inmediatamente anterior -- para ver si el estímulo por
+ * zona sube, se sostiene o cae, semana a semana. Busca en TODO `days` (no
+ * solo `weekDays`) porque la semana anterior puede no estar cargada como
+ * prop en el tab que llama a esto. */
+export function computeMuscleGroupVolumeTrend(
+  days: DayEntry[],
+  weekDates: string[]
+): Record<MuscleGroup, { actual: number; anterior: number }> {
+  const groups = Object.keys(MUSCLE_GROUP_LABELS) as MuscleGroup[];
+  const result = Object.fromEntries(groups.map((g) => [g, { actual: 0, anterior: 0 }])) as Record<
+    MuscleGroup,
+    { actual: number; anterior: number }
+  >;
+  if (weekDates.length === 0) return result;
+
+  const actualSet = new Set(weekDates);
+  const previousDates = weekDates.map((fecha) => fmtDate(addDays(new Date(`${fecha}T00:00:00`), -7)));
+  const previousSet = new Set(previousDates);
+
+  for (const day of days) {
+    if (!actualSet.has(day.fecha) && !previousSet.has(day.fecha)) continue;
+    const volumes = volumeByMuscleGroup(day.ejercicios);
+    const bucket = actualSet.has(day.fecha) ? "actual" : "anterior";
+    for (const group of groups) result[group][bucket] += volumes[group];
+  }
+  return result;
 }
 
 /** Cómo salió un ejercicio del entrenamiento en vivo comparado contra lo planificado en la

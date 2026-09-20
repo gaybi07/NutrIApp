@@ -1,18 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ExerciseEntry, Routine, TrainingSchedule, Weekday, WEEKDAY_LABELS } from "@/lib/types";
-import { clampNumber } from "@/lib/inputLimits";
+import { Routine, TrainingSchedule, Weekday, WEEKDAY_LABELS } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
 import { Collapsible } from "@/components/Collapsible";
-import { ExercisePicker } from "@/components/ExercisePicker";
-import { LibraryExercise } from "@/lib/exerciseLibrary";
+import { RoutineEditorModal } from "@/components/RoutineEditorModal";
 
 const ORDERED_WEEKDAYS: Weekday[] = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
-
-function emptyExercise(): ExerciseEntry {
-  return { nombre: "", series: 4, repeticiones: 10, peso: undefined };
-}
 
 function newRoutineId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -30,10 +24,12 @@ export function RoutineManager({
   onSaveSchedule: (schedule: TrainingSchedule) => void;
 }) {
   const [pickerDay, setPickerDay] = useState<Weekday | null>(null);
-  const [editing, setEditing] = useState<Routine | null>(null);
-  // -1 = agregar un ejercicio nuevo elegido de la biblioteca; un índice
-  // puntual = reemplazar el nombre de esa fila por uno de la biblioteca.
-  const [libraryTarget, setLibraryTarget] = useState<number | null>(null);
+  // "new" = editor abierto para una rutina en blanco; una Routine puntual =
+  // editando una existente; null = editor cerrado. Antes esto tenía su
+  // propia copia entera del editor de ejercicios (con su propio buscador de
+  // biblioteca) duplicando RoutineEditorModal -- unificado acá para que el
+  // grupo muscular (y cualquier otro cambio futuro) se aplique en un solo lugar.
+  const [editingRoutine, setEditingRoutine] = useState<Routine | "new" | null>(null);
 
   const assignDay = (day: Weekday, routineId: string | null) => {
     const next = { ...schedule };
@@ -41,14 +37,6 @@ export function RoutineManager({
     else delete next[day];
     onSaveSchedule(next);
     setPickerDay(null);
-  };
-
-  const startNewRoutine = () => {
-    setEditing({ id: newRoutineId(), nombre: "", ejercicios: [emptyExercise()] });
-  };
-
-  const startEditRoutine = (routine: Routine) => {
-    setEditing({ ...routine, ejercicios: routine.ejercicios.map((e) => ({ ...e })) });
   };
 
   const deleteRoutine = (id: string) => {
@@ -64,40 +52,11 @@ export function RoutineManager({
     if (changed) onSaveSchedule(next);
   };
 
-  const saveEditing = () => {
-    if (!editing) return;
-    const nombre = editing.nombre.trim() || "Rutina sin nombre";
-    const ejercicios = editing.ejercicios.filter((e) => e.nombre.trim());
-    const cleaned: Routine = { id: editing.id, nombre, ejercicios };
+  const saveRoutine = (routine: { id?: string; nombre: string; ejercicios: Routine["ejercicios"] }) => {
+    const cleaned: Routine = { id: routine.id || newRoutineId(), nombre: routine.nombre, ejercicios: routine.ejercicios };
     const exists = routines.some((r) => r.id === cleaned.id);
     onSaveRoutines(exists ? routines.map((r) => (r.id === cleaned.id ? cleaned : r)) : [...routines, cleaned]);
-    setEditing(null);
-  };
-
-  const updateExercise = (index: number, patch: Partial<ExerciseEntry>) => {
-    if (!editing) return;
-    setEditing({ ...editing, ejercicios: editing.ejercicios.map((e, i) => (i === index ? { ...e, ...patch } : e)) });
-  };
-
-  const addExercise = () => {
-    if (!editing) return;
-    setEditing({ ...editing, ejercicios: [...editing.ejercicios, emptyExercise()] });
-  };
-
-  const removeExercise = (index: number) => {
-    if (!editing) return;
-    setEditing({ ...editing, ejercicios: editing.ejercicios.filter((_, i) => i !== index) });
-  };
-
-  const pickFromLibrary = (exercise: LibraryExercise) => {
-    if (!editing || libraryTarget === null) return;
-    const nombre = exercise.nameEs || exercise.name;
-    if (libraryTarget === -1) {
-      setEditing({ ...editing, ejercicios: [...editing.ejercicios, { ...emptyExercise(), nombre }] });
-    } else {
-      updateExercise(libraryTarget, { nombre });
-    }
-    setLibraryTarget(null);
+    setEditingRoutine(null);
   };
 
   return (
@@ -133,7 +92,7 @@ export function RoutineManager({
             type="button"
             onClick={(event) => {
               event.stopPropagation();
-              startNewRoutine();
+              setEditingRoutine("new");
             }}
             className="rounded-full border border-gold/60 bg-gold px-2.5 py-1 font-mono text-[9px] uppercase tracking-wide text-bg"
           >
@@ -154,7 +113,7 @@ export function RoutineManager({
                   <div className="flex gap-1.5">
                     <button
                       type="button"
-                      onClick={() => startEditRoutine(routine)}
+                      onClick={() => setEditingRoutine(routine)}
                       className="rounded-full border border-border px-2 py-1 font-mono text-[9px] uppercase tracking-wide text-textMuted"
                     >
                       Editar
@@ -223,119 +182,13 @@ export function RoutineManager({
         </div>
       )}
 
-      {editing && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setEditing(null)}>
-          <div
-            className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-surface p-4 shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <label>Nombre de la rutina</label>
-            <input
-              type="text"
-              placeholder="Ej: Día A: Pecho/Tríceps"
-              value={editing.nombre}
-              onChange={(event) => setEditing({ ...editing, nombre: event.target.value })}
-              className="w-full"
-            />
-            <div className="mt-3 space-y-2">
-              {editing.ejercicios.map((ex, i) => (
-                <div key={i} className="rounded-lg border border-border bg-bg/40 p-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <input
-                      type="text"
-                      placeholder="Ej: Press banca"
-                      value={ex.nombre}
-                      onChange={(event) => updateExercise(i, { nombre: event.target.value })}
-                      className="flex-1"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setLibraryTarget(i)}
-                      className="ml-2 shrink-0 rounded-md border border-border px-1.5 py-1 text-[12px]"
-                      aria-label="Buscar en la biblioteca de ejercicios"
-                    >
-                      🔍
-                    </button>
-                    <button type="button" onClick={() => removeExercise(i)} className="ml-1 shrink-0 font-mono text-[11px] text-rust" aria-label="Quitar ejercicio">
-                      ×
-                    </button>
-                  </div>
-                  <div className="mt-1.5 grid grid-cols-3 gap-1.5">
-                    <div>
-                      <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">Series</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="99"
-                        value={ex.series}
-                        onChange={(event) => updateExercise(i, { series: clampNumber(Number(event.target.value), 99) })}
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">Reps</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="999"
-                        value={ex.repeticiones}
-                        onChange={(event) => updateExercise(i, { repeticiones: clampNumber(Number(event.target.value), 999) })}
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">Peso (kg)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="999"
-                        step="0.5"
-                        value={ex.peso ?? ""}
-                        placeholder="—"
-                        onChange={(event) =>
-                          updateExercise(i, { peso: event.target.value ? clampNumber(Number(event.target.value), 999) : undefined })
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={addExercise}
-                className="rounded-lg border border-dashed border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted"
-              >
-                + Agregar ejercicio
-              </button>
-              <button
-                type="button"
-                onClick={() => setLibraryTarget(-1)}
-                className="rounded-lg border border-dashed border-gold/50 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold"
-              >
-                🔍 Desde biblioteca
-              </button>
-            </div>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setEditing(null)}
-                className="rounded-lg border border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={saveEditing}
-                className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg"
-              >
-                Guardar rutina
-              </button>
-            </div>
-          </div>
-        </div>
+      {editingRoutine && (
+        <RoutineEditorModal
+          initial={editingRoutine === "new" ? null : editingRoutine}
+          onSave={saveRoutine}
+          onClose={() => setEditingRoutine(null)}
+        />
       )}
-
-      {libraryTarget !== null && <ExercisePicker onSelect={pickFromLibrary} onClose={() => setLibraryTarget(null)} />}
     </div>
   );
 }

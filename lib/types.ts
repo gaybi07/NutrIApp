@@ -117,6 +117,21 @@ export interface ExerciseSetEntry {
   intensidad: TrainingIntensity;
 }
 
+/** Agrupación gruesa (6 grupos) para medir volumen entrenado por zona del
+ * cuerpo -- más fina que esto (la biblioteca de ejercicios distingue ~17
+ * músculos) sería demasiado ruido para un resumen semanal. Se completa sola
+ * al elegir un ejercicio "desde biblioteca" (ver muscleGroupFor en
+ * lib/exerciseLibrary.ts) pero también se puede elegir a mano. */
+export type MuscleGroup = "pecho" | "espalda" | "hombros" | "brazos" | "piernas" | "core";
+export const MUSCLE_GROUP_LABELS: Record<MuscleGroup, string> = {
+  pecho: "Pecho",
+  espalda: "Espalda",
+  hombros: "Hombros",
+  brazos: "Brazos",
+  piernas: "Piernas",
+  core: "Core",
+};
+
 /** Un ejercicio registrado. `sets` (opcional) es el detalle real serie por serie, cargado
  * desde el entrenamiento en vivo -- si está, series/repeticiones/peso de acá abajo son un
  * resumen derivado de `sets` (para que lo viejo que solo lee esos 3 campos siga andando). */
@@ -126,6 +141,7 @@ export interface ExerciseEntry {
   repeticiones: number;
   peso?: number; // kg, opcional (ej. ejercicios con peso corporal)
   sets?: ExerciseSetEntry[];
+  grupoMuscular?: MuscleGroup;
 }
 
 /** Rutina reusable (ej. "Día A: Pecho/Tríceps") — plantilla de ejercicios, no un registro de un día puntual. */
@@ -362,9 +378,9 @@ export const MACROS_BLOCK_LABELS: Record<MacrosBlockId, string> = {
 };
 
 export type ActividadBlockId =
-  | "resumen" | "objetivoEntreno" | "indicadoresEntreno" | "pasosEditar" | "pasosChart" | "entrenoChart" | "suenoChart" | "volumenChart" | "rutinas";
+  | "resumen" | "objetivoEntreno" | "indicadoresEntreno" | "pasosEditar" | "pasosChart" | "entrenoChart" | "suenoChart" | "volumenChart" | "volumenGrupos" | "rutinas";
 export const DEFAULT_ACTIVIDAD_ORDER: ActividadBlockId[] = [
-  "resumen", "objetivoEntreno", "indicadoresEntreno", "pasosEditar", "pasosChart", "entrenoChart", "suenoChart", "volumenChart", "rutinas",
+  "resumen", "objetivoEntreno", "indicadoresEntreno", "pasosEditar", "pasosChart", "entrenoChart", "suenoChart", "volumenChart", "volumenGrupos", "rutinas",
 ];
 export const ACTIVIDAD_BLOCK_LABELS: Record<ActividadBlockId, string> = {
   resumen: "Hoy · Entrenamiento",
@@ -375,6 +391,7 @@ export const ACTIVIDAD_BLOCK_LABELS: Record<ActividadBlockId, string> = {
   entrenoChart: "Gráfico de entrenamiento",
   suenoChart: "Gráfico de sueño",
   volumenChart: "Gráfico de volumen",
+  volumenGrupos: "Volumen por grupo muscular",
   rutinas: "Rutinas",
 };
 

@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ExerciseEntry } from "@/lib/types";
+import { ExerciseEntry, MuscleGroup, MUSCLE_GROUP_LABELS } from "@/lib/types";
 import { clampNumber } from "@/lib/inputLimits";
 import { ExercisePicker } from "@/components/ExercisePicker";
-import { LibraryExercise } from "@/lib/exerciseLibrary";
+import { LibraryExercise, muscleGroupFor } from "@/lib/exerciseLibrary";
+
+const MUSCLE_GROUPS: MuscleGroup[] = ["pecho", "espalda", "hombros", "piernas", "brazos", "core"];
 
 function emptyExercise(): ExerciseEntry {
   return { nombre: "", series: 4, repeticiones: 10, peso: undefined };
@@ -39,8 +41,9 @@ export function RoutineEditorModal({
   const pickFromLibrary = (exercise: LibraryExercise) => {
     if (libraryTarget === null) return;
     const nombreEjercicio = exercise.nameEs || exercise.name;
-    if (libraryTarget === -1) setEjercicios((prev) => [...prev, { ...emptyExercise(), nombre: nombreEjercicio }]);
-    else updateExercise(libraryTarget, { nombre: nombreEjercicio });
+    const grupoMuscular = muscleGroupFor(exercise.primaryMuscles);
+    if (libraryTarget === -1) setEjercicios((prev) => [...prev, { ...emptyExercise(), nombre: nombreEjercicio, grupoMuscular }]);
+    else updateExercise(libraryTarget, { nombre: nombreEjercicio, grupoMuscular });
     setLibraryTarget(null);
   };
 
@@ -121,6 +124,20 @@ export function RoutineEditorModal({
                     onChange={(event) => updateExercise(i, { peso: event.target.value ? clampNumber(Number(event.target.value), 999) : undefined })}
                   />
                 </div>
+              </div>
+              <div className="mt-1.5">
+                <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">Grupo muscular</label>
+                <select
+                  value={ex.grupoMuscular ?? ""}
+                  onChange={(event) => updateExercise(i, { grupoMuscular: (event.target.value || undefined) as MuscleGroup | undefined })}
+                >
+                  <option value="">Sin clasificar</option>
+                  {MUSCLE_GROUPS.map((group) => (
+                    <option key={group} value={group}>
+                      {MUSCLE_GROUP_LABELS[group]}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           ))}

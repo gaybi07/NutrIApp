@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { BarChart, Bar, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip } from "recharts";
-import { DayEntry, INTENSITY_STYLES, Routine, TrainingSchedule, Weekday, ActividadBlockId, DEFAULT_ACTIVIDAD_ORDER, resolveOrder, WorkoutSuggestion } from "@/lib/types";
+import { DayEntry, INTENSITY_STYLES, Routine, TrainingSchedule, Weekday, ActividadBlockId, DEFAULT_ACTIVIDAD_ORDER, resolveOrder, WorkoutSuggestion, MuscleGroup, GoalMode } from "@/lib/types";
 import { estimateTrainingCalories, getTrainingSessions, totalVolume, computeTrainingGoal } from "@/lib/calculations";
 import { useSectionOrder } from "@/lib/useSectionOrder";
 import { SortableSection } from "@/components/SortableSection";
@@ -12,6 +12,7 @@ import { SECTION_HELP } from "@/lib/helpText";
 import { RoutineManager } from "@/components/RoutineManager";
 import { TrainingIndicators } from "@/components/TrainingIndicators";
 import { TrainingGoal } from "@/components/TrainingGoal";
+import { MuscleGroupVolume } from "@/components/MuscleGroupVolume";
 import { DailySteps } from "@/components/DailySteps";
 import { Collapsible } from "@/components/Collapsible";
 import { LiveWorkout } from "@/components/LiveWorkout";
@@ -92,6 +93,8 @@ export function ActividadTab({
   onSaveWorkoutSuggestions,
   onCreateAndAssignRoutine,
   isApprovedTrainer,
+  muscleGroupTrend,
+  goalMode,
 }: {
   entry: DayEntry;
   weekDates: string[];
@@ -113,6 +116,8 @@ export function ActividadTab({
   /** Mostrar la insignia de "entrenador certificado" arriba de todo -- solo
    * cuando tu postulación (Ajustes > Ser entrenador) está aprobada. */
   isApprovedTrainer?: boolean;
+  muscleGroupTrend: Record<MuscleGroup, { actual: number; anterior: number }>;
+  goalMode?: GoalMode;
 }) {
   const blockOrder = resolveOrder(order, DEFAULT_ACTIVIDAD_ORDER);
   const drag = useSectionOrder(blockOrder, onReorder);
@@ -203,6 +208,7 @@ export function ActividadTab({
       />
     ),
     volumenChart: <WeekBarChart title="Volumen entrenado (series × reps × peso)" data={volumeData} color={VOLUME_COLOR} unit="kg" neonClass="chart-neon-d" />,
+    volumenGrupos: <MuscleGroupVolume trend={muscleGroupTrend} modo={goalMode} openOnDesktop />,
     rutinas: <RoutineManager routines={routines} schedule={schedule} onSaveRoutines={onSaveRoutines} onSaveSchedule={onSaveSchedule} />,
   };
 

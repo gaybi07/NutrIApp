@@ -1,3 +1,5 @@
+import { MuscleGroup } from "@/lib/types";
+
 export interface LibraryExercise {
   id: string;
   name: string;
@@ -10,6 +12,41 @@ export interface LibraryExercise {
   instructions: string[];
   instructionsEs?: string[];
   images: string[];
+}
+
+/** Del vocabulario fino de músculos del dataset (17 valores, ver
+ * MUSCLE_LABELS) a los 6 grupos gruesos que se usan para medir volumen
+ * semanal (MuscleGroup, en lib/types.ts). */
+const MUSCLE_TO_GROUP: Record<string, MuscleGroup> = {
+  chest: "pecho",
+  lats: "espalda",
+  "middle back": "espalda",
+  "lower back": "espalda",
+  traps: "espalda",
+  shoulders: "hombros",
+  neck: "hombros",
+  biceps: "brazos",
+  triceps: "brazos",
+  forearms: "brazos",
+  quadriceps: "piernas",
+  hamstrings: "piernas",
+  calves: "piernas",
+  glutes: "piernas",
+  abductors: "piernas",
+  adductors: "piernas",
+  abdominals: "core",
+};
+
+/** Grupo muscular grueso a partir del primer músculo primario que matchee
+ * -- undefined si el ejercicio no tiene músculos primarios reconocidos
+ * (dataset incompleto para ese ejercicio puntual). */
+export function muscleGroupFor(primaryMuscles: string[] | undefined): MuscleGroup | undefined {
+  if (!primaryMuscles) return undefined;
+  for (const muscle of primaryMuscles) {
+    const group = MUSCLE_TO_GROUP[muscle];
+    if (group) return group;
+  }
+  return undefined;
 }
 
 // Dataset gratuito y sin límites de requests (free-exercise-db, licencia

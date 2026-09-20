@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { BarChart, Bar, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip, PieChart, Pie, Cell } from "recharts";
-import { DayEntry, MacrosBlockId, DEFAULT_MACROS_ORDER, resolveOrder } from "@/lib/types";
+import { DayEntry, MacrosBlockId, DEFAULT_MACROS_ORDER, resolveOrder, GoalMode } from "@/lib/types";
 import { dayTotal, dayProt, dayCarbs, dayFat, dayFiber, macroTargets, FoodTrainingInsight } from "@/lib/calculations";
 import { FoodTrainingInsights } from "@/components/FoodTrainingInsights";
 import { classifyIngredient, FOOD_GROUP_LABELS, FoodGroup } from "@/lib/foodGroups";
@@ -24,6 +24,15 @@ const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 // no el ámbar nuevo de Oscuro/Claro — ver globals.css.
 const COLORS = { protein: "#3B82F6", carbs: "rgb(var(--color-carbs))", fat: "#8B5CF6", fiber: "#EC4899" };
 const FOOD_GROUPS_ORDER: FoodGroup[] = ["proteina_animal", "proteina_vegetal", "verdura", "fruta", "lacteo", "cereal", "grasa"];
+
+/** Por qué el reparto de carbos/grasas de abajo cambia según el modo -- ver
+ * el comentario de `macroTargets()` en lib/calculations.ts para el detalle
+ * de los porcentajes. */
+const MACRO_FOCUS_MESSAGE: Record<GoalMode, string> = {
+  perder: "Estás en déficit: priorizamos proteína alta para cuidar el músculo, con más carbohidratos que grasas para sostener el rendimiento.",
+  recomponer: "En mantenimiento: reparto parejo entre carbohidratos y grasas.",
+  aumentar: "En volumen: más carbohidratos — son el combustible principal para entrenar fuerte.",
+};
 
 function MacroStat({ label, value, target, color, neonClass }: { label: string; value: number; target: number; color: string; neonClass?: string }) {
   const pct = target > 0 ? Math.min(100, Math.round((value / target) * 100)) : 0;
@@ -55,6 +64,7 @@ export function MacrosTab({
   hidden,
   onHide,
   foodTrainingInsight,
+  goalMode,
 }: {
   entry: DayEntry;
   goal: number;
@@ -70,11 +80,12 @@ export function MacrosTab({
   hidden?: MacrosBlockId[];
   onHide: (id: MacrosBlockId) => void;
   foodTrainingInsight: FoodTrainingInsight;
+  goalMode?: GoalMode;
 }) {
   const blockOrder = resolveOrder(order, DEFAULT_MACROS_ORDER);
   const drag = useSectionOrder(blockOrder, onReorder);
   const visibleOrder = blockOrder.filter((id) => !(hidden || []).includes(id));
-  const targets = macroTargets(goal, proteinTarget);
+  const targets = macroTargets(goal, proteinTarget, goalMode);
   const consumedKcal = dayTotal(entry);
   const protein = dayProt(entry);
   const carbs = dayCarbs(entry);
@@ -121,6 +132,11 @@ export function MacrosTab({
 
   const resumenBlock = (
       <Collapsible eyebrow="Hoy" title="Macros" info={SECTION_HELP.macros} defaultOpen>
+        {goalMode && (
+          <div className="mb-3 rounded-lg border border-border bg-bg/40 px-2.5 py-2 text-[11px] text-textMuted">
+            {MACRO_FOCUS_MESSAGE[goalMode]}
+          </div>
+        )}
         <div className="mb-3 grid grid-cols-2 gap-3">
           <MacroStat label="Proteína" value={protein} target={targets.proteinG} color={COLORS.protein} neonClass="chart-neon-a" />
           <MacroStat label="Carbohidratos" value={carbs} target={targets.carbsG} color={COLORS.carbs} />

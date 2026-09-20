@@ -13,13 +13,14 @@ import {
   WorkoutReport,
   WorkoutReportItem,
   WorkoutVerdict,
+  MuscleGroup,
   INTENSITY_STYLES,
 } from "@/lib/types";
 import { weekdayOf, getTrainingSessions, compareExerciseVolume, suggestNextSession } from "@/lib/calculations";
 import { clampNumber } from "@/lib/inputLimits";
 import { ExercisePicker } from "@/components/ExercisePicker";
 import { RoutineEditorModal } from "@/components/RoutineEditorModal";
-import { LibraryExercise } from "@/lib/exerciseLibrary";
+import { LibraryExercise, muscleGroupFor } from "@/lib/exerciseLibrary";
 
 function newId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -41,6 +42,7 @@ interface DraftExercise {
   plannedPeso?: number;
   suggestionNote?: string;
   sets: DraftSet[];
+  grupoMuscular?: MuscleGroup;
 }
 
 interface LiveSession {
@@ -148,6 +150,7 @@ export function LiveWorkout({
             plannedPeso: e.peso,
             suggestionNote: suggestion?.nota,
             sets: Array.from({ length: e.series }, () => defaultSet(e.repeticiones, peso)),
+            grupoMuscular: e.grupoMuscular,
           };
         })
       : [];
@@ -161,14 +164,14 @@ export function LiveWorkout({
     setOpenIndex(null);
   };
 
-  const addExerciseByName = (nombre: string) => {
+  const addExerciseByName = (nombre: string, grupoMuscular?: MuscleGroup) => {
     setSession((prev) =>
       prev
         ? {
             ...prev,
             exercises: [
               ...prev.exercises,
-              { nombre, plannedSeries: 4, plannedRepeticiones: 10, sets: Array.from({ length: 4 }, () => defaultSet(10)) },
+              { nombre, plannedSeries: 4, plannedRepeticiones: 10, sets: Array.from({ length: 4 }, () => defaultSet(10)), grupoMuscular },
             ],
           }
         : prev
@@ -240,7 +243,7 @@ export function LiveWorkout({
       const avgReps = sets.length ? Math.round(sets.reduce((a, s) => a + s.repeticiones, 0) / sets.length) : ex.plannedRepeticiones;
       const pesos = sets.map((s) => s.peso).filter((p): p is number => p != null);
       const avgPeso = pesos.length ? Math.round((pesos.reduce((a, b) => a + b, 0) / pesos.length) * 2) / 2 : undefined;
-      finalExercises.push({ nombre: ex.nombre, series: sets.length, repeticiones: avgReps, peso: avgPeso, sets });
+      finalExercises.push({ nombre: ex.nombre, series: sets.length, repeticiones: avgReps, peso: avgPeso, sets, grupoMuscular: ex.grupoMuscular });
       doneSets.forEach((s) => counts[s.intensidad!]++);
 
       if (doneSets.length > 0) {
@@ -546,7 +549,7 @@ export function LiveWorkout({
 
       {libraryTarget && (
         <ExercisePicker
-          onSelect={(exercise: LibraryExercise) => addExerciseByName(exercise.nameEs || exercise.name)}
+          onSelect={(exercise: LibraryExercise) => addExerciseByName(exercise.nameEs || exercise.name, muscleGroupFor(exercise.primaryMuscles))}
           onClose={() => setLibraryTarget(null)}
         />
       )}
