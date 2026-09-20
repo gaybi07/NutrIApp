@@ -1,17 +1,13 @@
 import { WeekSummary } from "@/lib/calculations";
-import { Collapsible } from "@/components/Collapsible";
-import { SECTION_HELP } from "@/lib/helpText";
 
 export function SummaryCards({
   summary,
   goal,
   weight,
-  openOnDesktop,
 }: {
   summary: WeekSummary;
   goal: number;
   weight?: number;
-  openOnDesktop?: boolean;
 }) {
   const cards = [
     {
@@ -101,13 +97,11 @@ export function SummaryCards({
   );
 
   return (
-    <Collapsible eyebrow="Semana" title="Indicadores" info={SECTION_HELP.semana} scrollable={false} openOnDesktop={openOnDesktop}>
-      <div className="grid grid-cols-2 gap-2">
-        {cards.map((card) => renderCard(card))}
-        <div className="col-span-2 grid grid-cols-2 gap-2">
-          {deficitCards.map((card) => renderCard(card))}
-        </div>
+    <div className="grid grid-cols-2 gap-2">
+      {cards.map((card) => renderCard(card))}
+      <div className="col-span-2 grid grid-cols-2 gap-2">
+        {deficitCards.map((card) => renderCard(card))}
       </div>
-    </Collapsible>
+    </div>
   );
 }

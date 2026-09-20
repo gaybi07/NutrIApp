@@ -98,13 +98,22 @@ export function CocinaView({
   productMemory: ProductMemoryApi;
 }) {
   const [openZone, setOpenZone] = useState<InventoryZone | null>(null);
+  const [showUnassigned, setShowUnassigned] = useState(false);
   const [reassigning, setReassigning] = useState<string | null>(null);
 
   const byZone = useMemo(() => {
     const map: Record<InventoryZone, InventoryItem[]> = { flotante: [], mesada: [], bajomesada: [], heladera: [] };
-    items.forEach((item) => map[item.zona || "mesada"].push(item));
+    items.forEach((item) => {
+      if (item.zona) map[item.zona].push(item);
+    });
     return map;
   }, [items]);
+
+  // Productos sin zona asignada -- antes caían calladitos dentro de "mesada"
+  // sin ninguna marca, mezclados con lo que sí estaba clasificado a
+  // propósito. Ahora quedan aparte, marcados en rojo, hasta que se les
+  // asigne una zona real.
+  const unassigned = useMemo(() => items.filter((item) => !item.zona), [items]);
 
   const reassign = (item: InventoryItem, zona: InventoryZone) => {
     updateItem(item.id, { zona });
@@ -114,6 +123,17 @@ export function CocinaView({
 
   return (
     <div>
+      {unassigned.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setShowUnassigned(true)}
+          className="mb-2 flex w-full items-center justify-between gap-2 rounded-xl border border-rust/60 bg-rust/10 px-3 py-2.5 text-left"
+        >
+          <span className="font-mono text-[11px] uppercase tracking-wide text-rust">⚠ Sin zona: {unassigned.length}</span>
+          <span className="font-mono text-[9px] uppercase tracking-wide text-rust">Tocá para clasificar</span>
+        </button>
+      )}
+
       <div
         className="grid gap-2"
         style={{ gridTemplateColumns: "1fr minmax(112px, 34%)", gridTemplateRows: "1fr 56px 1fr", height: "min(64vh, 560px)" }}
@@ -234,6 +254,62 @@ export function CocinaView({
                 setReassigning(null);
               }}
               className="mt-3 w-full rounded-lg border border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showUnassigned && (
+        <div
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-bg/80 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          onClick={() => setShowUnassigned(false)}
+        >
+          <div
+            className="max-h-[82vh] w-full max-w-sm overflow-y-auto rounded-t-2xl border border-border bg-surface p-4 shadow-2xl sm:rounded-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-1 font-display text-lg text-text">Sin zona</div>
+            <div className="mb-3 text-[11px] text-textMuted">
+              Estos productos todavía no tienen una zona asignada — elegí una para cada uno.
+            </div>
+
+            {unassigned.length === 0 ? (
+              <div className="mb-3 rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">
+                Ya asignaste todo ✓
+              </div>
+            ) : (
+              <div className="mb-3 space-y-2">
+                {unassigned.map((item) => (
+                  <div key={item.id} className="rounded-lg border border-rust/40 bg-rust/5 px-2.5 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text">{item.name}</span>
+                      <span className="shrink-0 font-mono text-[11px] text-textMuted">
+                        {item.quantity} {item.unit}
+                      </span>
+                    </div>
+                    <div className="mt-2 grid grid-cols-2 gap-1.5 border-t border-border pt-2">
+                      {ZONE_ORDER.map((z) => (
+                        <button
+                          key={z}
+                          type="button"
+                          onClick={() => reassign(item, z)}
+                          className="rounded-lg border border-border bg-bg/60 px-2 py-1.5 font-mono text-[9.5px] uppercase tracking-wide text-textMuted"
+                        >
+                          {INVENTORY_ZONE_LABELS[z]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setShowUnassigned(false)}
+              className="w-full rounded-lg border border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted"
             >
               Cerrar
             </button>

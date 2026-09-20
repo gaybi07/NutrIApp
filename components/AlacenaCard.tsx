@@ -60,7 +60,7 @@ export function AlacenaCard({
   todayEntry: DayEntry;
   onUpsertDay: (entry: DayEntry) => void;
 }) {
-  const [view, setView] = useState<"lista" | "cocina">("lista");
+  const [showCocina, setShowCocina] = useState(false);
   const [filter, setFilter] = useState<InventoryCategory | "todas">("todas");
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [showExtraConsumption, setShowExtraConsumption] = useState(false);
@@ -114,6 +114,8 @@ export function AlacenaCard({
     () => (filter === "todas" ? items : items.filter((item) => (item.category || "otros") === filter)),
     [items, filter]
   );
+
+  const missingNutritionCount = useMemo(() => items.filter((item) => !item.nutritionPer100g).length, [items]);
 
   const openItem = (item: InventoryItem) => {
     setSelected(item);
@@ -392,26 +394,27 @@ export function AlacenaCard({
       </div>
       {status && <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] text-sage">{status}</div>}
 
-      <div className="mb-3 inline-flex rounded-full border border-border bg-bg/60 p-0.5">
-        <button
-          type="button"
-          onClick={() => setView("lista")}
-          className={`rounded-full px-3 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
-            view === "lista" ? "bg-gold text-bg" : "text-textMuted"
-          }`}
-        >
-          Lista
-        </button>
-        <button
-          type="button"
-          onClick={() => setView("cocina")}
-          className={`rounded-full px-3 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
-            view === "cocina" ? "bg-gold text-bg" : "text-textMuted"
-          }`}
-        >
-          Cocina
-        </button>
-      </div>
+      {items.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          {missingNutritionCount > 0 ? (
+            <div className="flex-1 rounded-lg border border-rust/50 bg-rust/10 px-3 py-2 text-[12px] text-rust">
+              ⚠ Falta información nutricional de {missingNutritionCount} producto{missingNutritionCount > 1 ? "s" : ""} — tocá
+              &quot;Revisar con IA&quot; o cada producto para cargarla.
+            </div>
+          ) : (
+            <div className="flex-1 rounded-lg border border-sage/40 bg-sage/10 px-3 py-2 text-[12px] text-sage">
+              ✓ Está todo OK — todos los productos tienen su valor nutricional cargado.
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowCocina(true)}
+            className="shrink-0 rounded-lg border border-gold/60 bg-gold/10 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold"
+          >
+            🗺️ Ver cocina
+          </button>
+        </div>
+      )}
 
       {showQuickAdd && (
         <div className="mb-3 rounded-xl border border-sage/40 bg-sage/5 p-2.5">
@@ -480,9 +483,7 @@ export function AlacenaCard({
         </div>
       )}
 
-      {view === "cocina" ? (
-        <CocinaView items={items} addStructuredItems={addStructuredItems} updateItem={updateItem} productMemory={productMemory} />
-      ) : items.length > 0 ? (
+      {items.length > 0 ? (
         <>
 
           {presentCategories.length > 1 && (
@@ -524,7 +525,9 @@ export function AlacenaCard({
                     openItem(item);
                   }
                 }}
-                className="flex cursor-pointer flex-col gap-1 rounded-xl border border-sage/60 bg-sage/10 px-2 py-2 text-left font-mono text-[11px] text-text"
+                className={`flex cursor-pointer flex-col gap-1 rounded-xl border px-2 py-2 text-left font-mono text-[11px] text-text ${
+                  item.nutritionPer100g ? "border-sage/60 bg-sage/10" : "border-rust/60 bg-rust/10"
+                }`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <span>
@@ -544,7 +547,6 @@ export function AlacenaCard({
                 </div>
                 <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
                   {INVENTORY_CATEGORY_LABELS[item.category || "otros"]}
-                  {item.nutritionPer100g ? " · valor cargado" : ""}
                 </span>
                 {!item.nutritionPer100g && (
                   <span className="font-mono text-[9px] uppercase tracking-wide text-rust">⚠ falta nutrición, tocá para cargarla</span>
@@ -727,6 +729,27 @@ export function AlacenaCard({
                 Guardar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showCocina && (
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-bg/80 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => setShowCocina(false)}>
+          <div
+            className="max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-border bg-surface p-4 shadow-2xl sm:rounded-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="font-display text-xl text-text">Cocina</div>
+              <button
+                type="button"
+                onClick={() => setShowCocina(false)}
+                className="rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+              >
+                Cerrar
+              </button>
+            </div>
+            <CocinaView items={items} addStructuredItems={addStructuredItems} updateItem={updateItem} productMemory={productMemory} />
           </div>
         </div>
       )}

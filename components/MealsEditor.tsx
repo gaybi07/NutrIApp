@@ -180,6 +180,48 @@ export function MealsEditor({
                     />
                   </div>
                 </div>
+                {/* Carbos/grasas/fibra no se mostraban acá -- si la IA
+                    devolvía un valor absurdo (ej. un cero de más) no había
+                    forma de corregirlo sin borrar y volver a cargar la
+                    comida entera. */}
+                <div className="mt-1.5 grid grid-cols-3 gap-1.5">
+                  <div>
+                    <div className="mb-0.5 font-mono text-[8px] uppercase tracking-wide text-textMuted">Carbos (g)</div>
+                    <input
+                      type="number"
+                      max="999999"
+                      value={item.carbs ?? 0}
+                      onChange={(e) => {
+                        if (countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { carbs: normalizeNumberInput(e.target) });
+                      }}
+                      className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
+                    />
+                  </div>
+                  <div>
+                    <div className="mb-0.5 font-mono text-[8px] uppercase tracking-wide text-textMuted">Grasas (g)</div>
+                    <input
+                      type="number"
+                      max="999999"
+                      value={item.fat ?? 0}
+                      onChange={(e) => {
+                        if (countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { fat: normalizeNumberInput(e.target) });
+                      }}
+                      className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
+                    />
+                  </div>
+                  <div>
+                    <div className="mb-0.5 font-mono text-[8px] uppercase tracking-wide text-textMuted">Fibra (g)</div>
+                    <input
+                      type="number"
+                      max="999999"
+                      value={item.fiber ?? 0}
+                      onChange={(e) => {
+                        if (countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { fiber: normalizeNumberInput(e.target) });
+                      }}
+                      className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
+                    />
+                  </div>
+                </div>
               </div>
             ))}
           </div>

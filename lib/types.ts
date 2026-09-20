@@ -303,15 +303,14 @@ export const FONT_SIZE_OPTIONS: { value: FontSize; label: string; description: s
  * arrastrándolos (mantener apretado en cualquier parte del bloque, como
  * mover íconos en la pantalla de inicio del celular) — si no personalizó
  * nada todavía, se usa el orden por default de cada solapa. */
-export type InicioBlockId = "hoy" | "comidas" | "peso" | "objetivo" | "indicadores" | "kcal" | "comidasSemana" | "tabla";
+export type InicioBlockId = "hoy" | "comidas" | "peso" | "objetivo" | "seguimiento" | "comidasSemana" | "tabla";
 export const DEFAULT_INICIO_ORDER: InicioBlockId[] = [
   "hoy",
   "comidas",
   "peso",
   "objetivo",
-  "indicadores",
+  "seguimiento",
   "comidasSemana",
-  "kcal",
   "tabla",
 ];
 export const INICIO_BLOCK_LABELS: Record<InicioBlockId, string> = {
@@ -319,8 +318,10 @@ export const INICIO_BLOCK_LABELS: Record<InicioBlockId, string> = {
   comidas: "Editar comidas de hoy",
   peso: "Peso de esta semana",
   objetivo: "Tu objetivo",
-  indicadores: "Indicadores",
-  kcal: "Kcal por día",
+  // Antes eran dos bloques separados (Indicadores + Kcal por día) -- se
+  // unificaron en uno solo a pedido del usuario, con las dos partes juntas
+  // adentro en vez de tener que abrir/cerrar dos tarjetas distintas.
+  seguimiento: "Seguimiento semanal",
   comidasSemana: "Comidas por día",
   tabla: "Tabla de la semana",
 };

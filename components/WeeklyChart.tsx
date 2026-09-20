@@ -3,7 +3,6 @@
 import { ComposedChart, Bar, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { DayEntry, TrainingSession, INTENSITY_STYLES } from "@/lib/types";
 import { dayGoal, estimateGasto, dayDeficit, getTrainingSessions } from "@/lib/calculations";
-import { Collapsible } from "@/components/Collapsible";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 const COLORS = { des: "#E88D67", alm: "rgb(var(--color-accent))", mer: "#C9A227", cen: "#B5533C", col: "#8B5CF6" };
@@ -68,14 +67,12 @@ export function WeeklyChart({
   goal,
   avgGoal,
   avgGasto,
-  openOnDesktop,
 }: {
   weekDates: string[];
   weekDays: (DayEntry | null)[];
   goal: number;
   avgGoal: number;
   avgGasto: number;
-  openOnDesktop?: boolean;
 }) {
   const data: ChartRow[] = weekDates.map((fecha, i) => {
     const d = weekDays[i];
@@ -107,16 +104,13 @@ export function WeeklyChart({
   const yDomain: [number, number] = [0, Math.ceil((maxValue * 1.1) / 100) * 100];
 
   return (
-    <Collapsible
-      eyebrow="Semana"
-      title="Kcal por día"
-      badge={
+    <div>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="font-display text-base leading-none text-text">Gráfico de la semana</div>
         <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
           base {goal.toLocaleString("es-AR")} / obj. prom. {avgGoal.toLocaleString("es-AR")}
         </span>
-      }
-      openOnDesktop={openOnDesktop}
-    >
+      </div>
       <ResponsiveContainer width="100%" height={180}>
         <ComposedChart data={data} margin={{ left: -20, right: 0, top: 5, bottom: 0 }}>
           <XAxis
@@ -150,6 +144,6 @@ export function WeeklyChart({
         <span className="flex items-center gap-1"><i className="w-[10px] h-[2px] inline-block" style={{ background: "rgb(var(--color-text))" }} />Objetivo diario</span>
         <span className="flex items-center gap-1"><i className="chart-neon-c w-[10px] h-[2px] inline-block" style={{ background: "#5FA8D3" }} />Gasto</span>
       </div>
-    </Collapsible>
+    </div>
   );
 }

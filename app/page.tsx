@@ -13,6 +13,7 @@ import { MacrosTab } from "@/components/MacrosTab";
 import { ActividadTab } from "@/components/ActividadTab";
 import { SummaryCards } from "@/components/SummaryCards";
 import { WeeklyChart } from "@/components/WeeklyChart";
+import { Collapsible } from "@/components/Collapsible";
 import { Ledger } from "@/components/Ledger";
 import { GoalCalculator } from "@/components/GoalCalculator";
 import { AiEntryForm } from "@/components/AiEntryForm";
@@ -451,29 +452,25 @@ export default function Home() {
                     </SortableSection>
                   );
                 }
-                if (blockId === "indicadores") {
+                if (blockId === "seguimiento") {
                   return (
-                    <SortableSection key="indicadores" id="indicadores" onHide={() => hideInicioBlock("indicadores")} dragDisabledOnDesktop>
-                      <SummaryCards
-                        summary={summary}
-                        goal={summary.avgGoal || settings.goal}
-                        weight={settings.weeklyWeights?.[fmtDate(monday)]}
-                        openOnDesktop
-                      />
-                    </SortableSection>
-                  );
-                }
-                if (blockId === "kcal") {
-                  return (
-                    <SortableSection key="kcal" id="kcal" onHide={() => hideInicioBlock("kcal")} dragDisabledOnDesktop>
-                      <WeeklyChart
-                        weekDates={weekDates}
-                        weekDays={weekDays}
-                        goal={settings.goal}
-                        avgGoal={summary.avgGoal || settings.goal}
-                        avgGasto={settings.tdeeFallback}
-                        openOnDesktop
-                      />
+                    <SortableSection key="seguimiento" id="seguimiento" onHide={() => hideInicioBlock("seguimiento")} dragDisabledOnDesktop>
+                      <Collapsible eyebrow="Semana" title="Seguimiento semanal" info={SECTION_HELP.semana} scrollable={false} openOnDesktop>
+                        <div className="mb-2 font-display text-base leading-none text-text">Indicadores</div>
+                        <SummaryCards
+                          summary={summary}
+                          goal={summary.avgGoal || settings.goal}
+                          weight={settings.weeklyWeights?.[fmtDate(monday)]}
+                        />
+                        <div className="my-3 border-t border-dashed border-border" />
+                        <WeeklyChart
+                          weekDates={weekDates}
+                          weekDays={weekDays}
+                          goal={settings.goal}
+                          avgGoal={summary.avgGoal || settings.goal}
+                          avgGasto={settings.tdeeFallback}
+                        />
+                      </Collapsible>
                     </SortableSection>
                   );
                 }
