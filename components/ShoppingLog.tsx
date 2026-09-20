@@ -29,10 +29,15 @@ export function ShoppingLog({
   addStructuredItems,
   addPurchases,
   productMemory,
+  bare,
 }: {
   addStructuredItems: (entries: AiShoppingItem[]) => void;
   addPurchases: (entries: Array<Omit<PurchaseRecord, "id">>) => void;
   productMemory: ProductMemoryApi;
+  /** Sin su propio Collapsible -- para meterlo adentro de "Agregar
+   * productos" en Alacena, como la opción "Con ticket", en vez de vivir en
+   * su propia sección aparte con el mismo nombre. */
+  bare?: boolean;
 }) {
   const [raw, setRaw] = useState("");
   const [loading, setLoading] = useState(false);
@@ -268,8 +273,8 @@ export function ShoppingLog({
     reader.readAsDataURL(file);
   };
 
-  return (
-    <Collapsible eyebrow="Compras" title="Agregar productos" info={SECTION_HELP.compras}>
+  const content = (
+    <>
       {pending ? (
         <>
           <div className="mb-3 rounded-xl border border-gold/40 bg-gold/10 p-2.5">
@@ -447,6 +452,14 @@ export function ShoppingLog({
       )}
 
       {status && <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-sage">{status}</div>}
+    </>
+  );
+
+  if (bare) return content;
+
+  return (
+    <Collapsible eyebrow="Compras" title="Agregar productos" info={SECTION_HELP.compras}>
+      {content}
     </Collapsible>
   );
 }

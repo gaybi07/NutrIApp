@@ -1,11 +1,12 @@
 "use client";
 
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
-import { DayEntry, InventoryCategory, InventoryItem, InventoryNutrition, MealItem, MEAL_LABELS, INVENTORY_CATEGORIES, INVENTORY_CATEGORY_LABELS } from "@/lib/types";
+import { DayEntry, InventoryCategory, InventoryItem, InventoryNutrition, MealItem, MEAL_LABELS, INVENTORY_CATEGORIES, INVENTORY_CATEGORY_LABELS, PurchaseRecord } from "@/lib/types";
 import { ProductMemoryApi } from "@/lib/useProductMemory";
 import { Collapsible } from "@/components/Collapsible";
 import { SECTION_HELP } from "@/lib/helpText";
 import { QuickAddProducts, AiShoppingItem } from "@/components/QuickAddProducts";
+import { ShoppingLog } from "@/components/ShoppingLog";
 import { CocinaView } from "@/components/CocinaView";
 import { ExtraConsumption } from "@/components/ExtraConsumption";
 import { ProductScanner } from "@/components/ProductScanner";
@@ -45,6 +46,8 @@ export function AlacenaCard({
   onAiReviewLockedUntilChange,
   todayEntry,
   onUpsertDay,
+  addPurchases,
+  householdName,
 }: {
   items: InventoryItem[];
   replaceItems: (items: InventoryItem[]) => void;
@@ -59,10 +62,20 @@ export function AlacenaCard({
    * la comida que corresponda por horario (ver suggestedMeal). */
   todayEntry: DayEntry;
   onUpsertDay: (entry: DayEntry) => void;
+  addPurchases: (entries: Array<Omit<PurchaseRecord, "id">>) => void;
+  /** Nombre del grupo (Casita Gabi y Fla, etc.) cuando la alacena es
+   * compartida -- así el título deja de decir siempre "Alacena" a secas y
+   * queda claro de qué alacena se trata cuando hay más de una persona. */
+  householdName?: string;
 }) {
   const [showCocina, setShowCocina] = useState(false);
   const [filter, setFilter] = useState<InventoryCategory | "todas">("todas");
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  // "escribir" = alta rápida por texto (QuickAddProducts, lo de siempre);
+  // "ticket" = lo que antes era la sección aparte "Compras" -- foto/audio del
+  // ticket + lectura con IA -- unificado acá adentro de "+ Agregar
+  // productos" para no tener dos secciones separadas con el mismo nombre.
+  const [addMode, setAddMode] = useState<"escribir" | "ticket">("escribir");
   const [showExtraConsumption, setShowExtraConsumption] = useState(false);
   const [selected, setSelected] = useState<InventoryItem | null>(null);
   const [nutritionDraft, setNutritionDraft] = useState<InventoryNutrition>(EMPTY_NUTRITION);
@@ -331,7 +344,7 @@ export function AlacenaCard({
   return (
     <Collapsible
       eyebrow="Alacena"
-      title="Alacena"
+      title={householdName ? `Alacena de ${householdName}` : "Alacena"}
       locked
       info={SECTION_HELP.alacena}
       badge={
@@ -418,13 +431,37 @@ export function AlacenaCard({
 
       {showQuickAdd && (
         <div className="mb-3 rounded-xl border border-sage/40 bg-sage/5 p-2.5">
-          <QuickAddProducts
-            addStructuredItems={addStructuredItems}
-            productMemory={productMemory}
-            compact
-            autoFocus={!scanPrefill}
-            prefillText={scanPrefill}
-          />
+          <div className="mb-2.5 flex gap-1 rounded-full border border-border bg-bg/60 p-0.5">
+            <button
+              type="button"
+              onClick={() => setAddMode("escribir")}
+              className={`flex-1 rounded-full px-3 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
+                addMode === "escribir" ? "bg-gold text-bg" : "text-textMuted"
+              }`}
+            >
+              Escribir
+            </button>
+            <button
+              type="button"
+              onClick={() => setAddMode("ticket")}
+              className={`flex-1 rounded-full px-3 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
+                addMode === "ticket" ? "bg-gold text-bg" : "text-textMuted"
+              }`}
+            >
+              📷 Con ticket
+            </button>
+          </div>
+          {addMode === "escribir" ? (
+            <QuickAddProducts
+              addStructuredItems={addStructuredItems}
+              productMemory={productMemory}
+              compact
+              autoFocus={!scanPrefill}
+              prefillText={scanPrefill}
+            />
+          ) : (
+            <ShoppingLog addStructuredItems={addStructuredItems} addPurchases={addPurchases} productMemory={productMemory} bare />
+          )}
         </div>
       )}
 
@@ -557,7 +594,7 @@ export function AlacenaCard({
         </>
       ) : (
         <div className="rounded-xl border border-dashed border-border p-3 text-[11px] text-textMuted">
-          Todavía no cargaste nada. Tocá &quot;+ Agregar productos&quot; arriba, o subí una foto del ticket / dictá por audio más abajo en Compras.
+          Todavía no cargaste nada. Tocá &quot;+ Agregar productos&quot; arriba para escribir, subir una foto del ticket o dictar por audio.
         </div>
       )}
 
@@ -741,13 +778,22 @@ export function AlacenaCard({
           >
             <div className="mb-3 flex items-center justify-between gap-2">
               <div className="font-display text-xl text-text">Cocina</div>
-              <button
-                type="button"
-                onClick={() => setShowCocina(false)}
-                className="rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
-              >
-                Cerrar
-              </button>
+              <div className="flex shrink-0 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setShowCocina(false)}
+                  className="rounded-full border border-gold/60 bg-gold/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-gold"
+                >
+                  📋 Ver lista completa
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCocina(false)}
+                  className="rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+                >
+                  Cerrar
+                </button>
+              </div>
             </div>
             <CocinaView items={items} addStructuredItems={addStructuredItems} updateItem={updateItem} productMemory={productMemory} />
           </div>

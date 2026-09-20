@@ -67,8 +67,11 @@ export function HouseholdCard({
     <Collapsible eyebrow="Alacena en grupo" title={household ? household.name : "Compartir alacena"} info={SECTION_HELP.hogar}>
       {household ? (
         <>
-          <div className="mb-3 text-[12px] text-textMuted">
-            Compartida con {household.memberCount} persona{household.memberCount !== 1 ? "s" : ""}. Todos ven y descuentan de la misma alacena.
+          <div className="mb-3 flex items-center gap-1.5 text-[12px]">
+            <span className="text-sage">✓ Estás conectado</span>
+            <span className="text-textMuted">
+              · {household.memberCount} persona{household.memberCount !== 1 ? "s" : ""}
+            </span>
           </div>
 
           <div className="flex flex-wrap gap-2">

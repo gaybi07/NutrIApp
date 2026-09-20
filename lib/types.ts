@@ -330,14 +330,16 @@ export const INICIO_BLOCK_LABELS: Record<InicioBlockId, string> = {
  * unificadas en una sola tira continua a pedido del usuario, para no tener
  * que ir y volver entre las dos. Todos los bloques conviven en un mismo
  * orden ahora. */
-export type ComidasBlockId = "hogar" | "alacena" | "sugerencias" | "comunes" | "compras" | "planificador";
-export const DEFAULT_COMIDAS_ORDER: ComidasBlockId[] = ["hogar", "alacena", "sugerencias", "comunes", "compras", "planificador"];
+export type ComidasBlockId = "hogar" | "alacena" | "sugerencias" | "comunes" | "planificador";
+export const DEFAULT_COMIDAS_ORDER: ComidasBlockId[] = ["hogar", "alacena", "sugerencias", "comunes", "planificador"];
 export const COMIDAS_BLOCK_LABELS: Record<ComidasBlockId, string> = {
   hogar: "Grupo compartido",
   alacena: "Alacena",
   sugerencias: "Sugerencias de recetas",
   comunes: "Comidas más comunes",
-  compras: "Registro de compras",
+  // Antes era su propia sección aparte ("Compras") con el mismo nombre que
+  // el botón de Alacena -- unificada ahí adentro, como la opción "Con
+  // ticket" al agregar productos.
   planificador: "Planificador semanal",
 };
 

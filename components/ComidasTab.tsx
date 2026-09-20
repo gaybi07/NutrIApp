@@ -24,7 +24,6 @@ import { CommonMealsCard } from "@/components/CommonMealsCard";
 import { AlacenaCard } from "@/components/AlacenaCard";
 import { HouseholdCard } from "@/components/HouseholdCard";
 import { countPlannedMeals } from "@/components/WeekPlanner";
-import { ShoppingLog } from "@/components/ShoppingLog";
 
 export function ComidasTab({
   items,
@@ -134,6 +133,8 @@ export function ComidasTab({
                   onAiReviewLockedUntilChange={onAiReviewLockedUntilChange}
                   todayEntry={todayEntry}
                   onUpsertDay={onUpsertDay}
+                  addPurchases={addPurchases}
+                  householdName={household?.name}
                 />
               )}
               {blockId === "sugerencias" && (
@@ -147,9 +148,6 @@ export function ComidasTab({
                 />
               )}
               {blockId === "comunes" && <CommonMealsCard />}
-              {blockId === "compras" && (
-                <ShoppingLog addStructuredItems={addStructuredItems} addPurchases={addPurchases} productMemory={productMemory} />
-              )}
               {blockId === "planificador" && (
                 <button
                   type="button"
