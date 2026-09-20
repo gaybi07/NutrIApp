@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { InventoryItem, MealKey, MEAL_LABELS, WeekPlan } from "@/lib/types";
 import { isoMonday, addDays, fmtDate } from "@/lib/calculations";
 import { Recipe, RECIPES } from "@/lib/recipes";
+import { inventoryKey } from "@/lib/useInventory";
 import { useMealMemory, MealMemoryEntry } from "@/lib/useMealMemory";
 import { SECTION_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
@@ -29,6 +30,19 @@ function isFilled(value: string | undefined): boolean {
 }
 function isSkipped(value: string | undefined): boolean {
   return value === SKIP_MEAL;
+}
+
+// Match más permisivo que un simple includes() para nombres compuestos --
+// "milanesas con puré" vs. "milanesa de carne" no son substring uno del
+// otro, pero comparten la palabra con la que vale la pena avisar ("milanesa"
+// / "milanesas", singular/plural). Se compara palabra por palabra (>= 4
+// letras, para no engancharse con "de"/"con"/etc.) además del substring
+// directo entre las dos frases completas.
+function fuzzyNameMatch(a: string, b: string): boolean {
+  if (a.includes(b) || b.includes(a)) return true;
+  const wordsA = a.split(" ").filter((w) => w.length >= 4);
+  const wordsB = b.split(" ").filter((w) => w.length >= 4);
+  return wordsA.some((wa) => wordsB.some((wb) => wa.includes(wb) || wb.includes(wa)));
 }
 
 function shortTitle(title: string) {
@@ -208,17 +222,50 @@ export function WeekPlanner({
       .filter((entry) => entry.missing > 0);
   }, [selectedRecipes, items]);
 
+  // Comidas planificadas que NO son del catálogo (escritas a mano o elegidas
+  // de "tu memoria") no tienen ingredientes con cantidad, así que no se
+  // pueden sumar a shoppingList -- pero si el nombre coincide con algo de la
+  // alacena y queda poco o nada, vale la pena avisar igual, aunque sea sin
+  // número exacto (no sabemos cuánto necesita esa comida puntual).
+  const reviewList = useMemo(() => {
+    const titles = new Set<string>();
+    for (const fecha of nextWeekDates) {
+      const dayPlan = weekPlan[fecha];
+      if (!dayPlan) continue;
+      for (const meal of MEAL_KEYS) {
+        const title = dayPlan[meal];
+        if (!isFilled(title)) continue;
+        if (RECIPES.some((r) => r.title === title)) continue;
+        titles.add(title as string);
+      }
+    }
+    return Array.from(titles)
+      .map((title) => {
+        const key = inventoryKey(title);
+        const stock = items.find((item) => fuzzyNameMatch(key, inventoryKey(item.name)));
+        if (!stock) return { title, note: "no está en tu alacena" };
+        const lowThreshold = stock.unit === "u." ? 2 : 200;
+        if (stock.quantity > lowThreshold) return null;
+        return { title, note: `tenés ${stock.quantity}${stock.unit === "u." ? " u." : stock.unit}, puede no alcanzar` };
+      })
+      .filter((entry): entry is { title: string; note: string } => entry !== null);
+  }, [weekPlan, nextWeekDates, items]);
+
   const plannedCount = selectedRecipes.length;
   const totalPlannedCount = useMemo(() => countPlannedMeals(weekPlan), [weekPlan]);
 
   const shoppingListText = useMemo(() => {
-    if (shoppingList.length === 0) return "";
+    if (shoppingList.length === 0 && reviewList.length === 0) return "";
     const start = new Date(`${nextWeekDates[0]}T00:00:00`);
     const end = new Date(`${nextWeekDates[6]}T00:00:00`);
     const header = `Lista de compras — semana del ${start.getDate()} ${MONTHS[start.getMonth()]} al ${end.getDate()} ${MONTHS[end.getMonth()]}`;
     const lines = shoppingList.map((entry) => `- ${entry.missing}${entry.unit === "u." ? " u." : entry.unit} ${entry.name}`);
-    return [header, "", ...lines].join("\n");
-  }, [shoppingList, nextWeekDates]);
+    const reviewLines =
+      reviewList.length > 0
+        ? ["", "A revisar (sin cantidad exacta):", ...reviewList.map((entry) => `- ${entry.title} (${entry.note})`)]
+        : [];
+    return [header, "", ...lines, ...reviewLines].join("\n");
+  }, [shoppingList, reviewList, nextWeekDates]);
 
   const copyShoppingList = async () => {
     if (!shoppingListText) return;
@@ -267,28 +314,46 @@ export function WeekPlanner({
         <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.15em] text-gold">Lista de compras de la semana</div>
         {totalPlannedCount === 0 ? (
           <div className="text-[12px] text-textMuted">Elegí recetas para los días de la semana que viene para ver qué te falta comprar.</div>
-        ) : plannedCount === 0 ? (
-          <div className="text-[12px] text-textMuted">
-            Lo que elegiste es de tu memoria personal, sin lista de ingredientes — no hay nada que sumar todavía. Elegí
-            alguna receta del catálogo para que se arme la lista.
-          </div>
-        ) : shoppingList.length === 0 ? (
-          <div className="text-[12px] text-sage">Ya tenés todo lo que necesitás en el inventario ✓</div>
+        ) : shoppingList.length === 0 && reviewList.length === 0 ? (
+          plannedCount === 0 ? (
+            <div className="text-[12px] text-textMuted">
+              Lo que elegiste es de tu memoria personal, sin lista de ingredientes — no hay nada que sumar todavía. Elegí
+              alguna receta del catálogo para que se arme la lista.
+            </div>
+          ) : (
+            <div className="text-[12px] text-sage">Ya tenés todo lo que necesitás en el inventario ✓</div>
+          )
         ) : (
-          <div className="flex flex-wrap gap-1.5">
-            {shoppingList.map((entry) => (
-              <span
-                key={`${entry.name}-${entry.unit}`}
-                className="rounded-full border border-border bg-bg px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide text-text"
-              >
-                {entry.missing}
-                {entry.unit === "u." ? " u." : entry.unit} {entry.name}
-              </span>
-            ))}
-          </div>
+          <>
+            {shoppingList.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {shoppingList.map((entry) => (
+                  <span
+                    key={`${entry.name}-${entry.unit}`}
+                    className="rounded-full border border-border bg-bg px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide text-text"
+                  >
+                    {entry.missing}
+                    {entry.unit === "u." ? " u." : entry.unit} {entry.name}
+                  </span>
+                ))}
+              </div>
+            )}
+            {reviewList.length > 0 && (
+              <div className={`flex flex-wrap gap-1.5 ${shoppingList.length > 0 ? "mt-2" : ""}`}>
+                {reviewList.map((entry) => (
+                  <span
+                    key={entry.title}
+                    className="rounded-full border border-rust/50 bg-rust/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide text-rust"
+                  >
+                    ⚠ Revisar: {entry.title} ({entry.note})
+                  </span>
+                ))}
+              </div>
+            )}
+          </>
         )}
 
-        {shoppingList.length > 0 && (
+        {(shoppingList.length > 0 || reviewList.length > 0) && (
           <div className="mt-3 border-t border-dashed border-gold/30 pt-2.5">
             <button
               type="button"
@@ -304,7 +369,7 @@ export function WeekPlanner({
               <div className="mt-2">
                 <textarea
                   readOnly
-                  rows={shoppingList.length + 2}
+                  rows={Math.min(20, shoppingListText.split("\n").length)}
                   value={shoppingListText}
                   onFocus={(event) => event.target.select()}
                   className="w-full font-mono text-[10px]"
