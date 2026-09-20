@@ -11,6 +11,7 @@ import { CocinaView } from "@/components/CocinaView";
 import { ExtraConsumption } from "@/components/ExtraConsumption";
 import { PrepareDish } from "@/components/PrepareDish";
 import { ProductScanner } from "@/components/ProductScanner";
+import { InfoHint } from "@/components/InfoHint";
 import { inventoryKey } from "@/lib/useInventory";
 import { getMealItems, applyMealItems, suggestedMeal, nutritionForAmount } from "@/lib/calculations";
 import { generateProductQrDataUrl } from "@/lib/generateProductQr";
@@ -359,66 +360,83 @@ export function AlacenaCard({
         </div>
       }
     >
-      <div className="mb-3 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => {
-            setShowQuickAdd((prev) => !prev);
-            setScanPrefill(undefined);
-          }}
-          className={`flex items-center gap-1 rounded-xl border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] ${
-            showQuickAdd ? "border-gold bg-gold text-bg" : "border-sage/60 bg-sage/10 text-sage"
-          }`}
-        >
-          <span className="text-[13px] leading-none">+</span> Agregar productos
-        </button>
-        {items.length > 0 && (
+      <div className="mb-3 grid grid-cols-2 gap-2">
+        <div className="flex items-center gap-1">
           <button
             type="button"
-            onClick={() => setShowExtraConsumption((prev) => !prev)}
-            className={`flex items-center gap-1 rounded-xl border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] ${
-              showExtraConsumption ? "border-rust bg-rust text-bg" : "border-rust/60 bg-rust/10 text-rust"
+            onClick={() => {
+              setShowQuickAdd((prev) => !prev);
+              setShowExtraConsumption(false);
+              setShowPrepareDish(false);
+              setScanPrefill(undefined);
+            }}
+            className={`flex-1 rounded-xl border px-2 py-2 font-mono text-[10px] uppercase tracking-[0.1em] ${
+              showQuickAdd ? "border-gold bg-gold text-bg" : "border-sage/60 bg-sage/10 text-sage"
             }`}
           >
-            <span className="text-[13px] leading-none">−</span> Descontar sin comida (invitados, se rompió, etc.)
+            + Agregar
           </button>
+          <InfoHint
+            label="Qué hace Agregar"
+            text="Sumá productos a la alacena: escribiendo o dictando (ej. '2 tomates, 200 g queso'), o con una foto del ticket de compra."
+          />
+        </div>
+        {items.length > 0 && (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                setShowExtraConsumption((prev) => !prev);
+                setShowQuickAdd(false);
+                setShowPrepareDish(false);
+              }}
+              className={`flex-1 rounded-xl border px-2 py-2 font-mono text-[10px] uppercase tracking-[0.1em] ${
+                showExtraConsumption ? "border-rust bg-rust text-bg" : "border-rust/60 bg-rust/10 text-rust"
+              }`}
+            >
+              − Descontar
+            </button>
+            <InfoHint
+              label="Qué hace Descontar"
+              text="Restá algo de la alacena sin que cuente como una comida tuya — por ejemplo, si vino gente a comer, se te rompió un producto, o le diste de comer a otra persona. No hace falta que tenga nutrición cargada, solo se resta del stock."
+            />
+          </div>
         )}
         {items.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setShowPrepareDish((prev) => !prev)}
-            className={`flex items-center gap-1 rounded-xl border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] ${
-              showPrepareDish ? "border-gold bg-gold text-bg" : "border-gold/60 bg-gold/10 text-gold"
-            }`}
-          >
-            🍲 Preparar plato (torta, guiso, etc.)
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                setShowPrepareDish((prev) => !prev);
+                setShowQuickAdd(false);
+                setShowExtraConsumption(false);
+              }}
+              className={`flex-1 rounded-xl border px-2 py-2 font-mono text-[10px] uppercase tracking-[0.1em] ${
+                showPrepareDish ? "border-gold bg-gold text-bg" : "border-gold/60 bg-gold/10 text-gold"
+              }`}
+            >
+              🍲 Preparar
+            </button>
+            <InfoHint
+              label="Qué hace Preparar plato"
+              text="Para cuando cocinás algo con varias cosas de la alacena (una torta, un guiso, un pastel de papa...). Elegís qué usaste, se descuenta el stock, decís cuántas porciones salieron y se guarda como un producto nuevo con el valor nutricional repartido entre las porciones."
+            />
+          </div>
         )}
-        <button
-          type="button"
-          onClick={() => setShowScanner(true)}
-          className="flex items-center gap-1 rounded-xl border border-gold/60 bg-gold/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-gold"
-        >
-          📷 Escanear código guardado
-        </button>
         {items.length > 0 && (
-          <button
-            type="button"
-            onClick={clearAll}
-            className="rounded-xl border border-border bg-bg/60 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
-          >
-            Vaciar alacena
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={clearAll}
+              className="flex-1 rounded-xl border border-border bg-bg/60 px-2 py-2 font-mono text-[10px] uppercase tracking-[0.1em] text-textMuted"
+            >
+              Vaciar
+            </button>
+            <InfoHint label="Qué hace Vaciar alacena" text="Borra todos los productos de la alacena de una vez. No se puede deshacer." />
+          </div>
         )}
       </div>
       {status && <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] text-sage">{status}</div>}
-
-      {showExtraConsumption && (
-        <div className="mb-2 text-[11px] text-textMuted">
-          Descontá algo de la alacena sin que cuente como una comida tuya — por ejemplo, si vino gente a comer, se te rompió un
-          producto, o le diste de comer a otra persona. No hace falta que tenga nutrición cargada, solo se resta del stock.
-        </div>
-      )}
 
       {items.length > 0 && (
         <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -471,50 +489,107 @@ export function AlacenaCard({
       )}
 
       {showQuickAdd && (
-        <div className="mb-3 rounded-xl border border-sage/40 bg-sage/5 p-2.5">
-          <div className="mb-2.5 flex gap-1 rounded-full border border-border bg-bg/60 p-0.5">
-            <button
-              type="button"
-              onClick={() => setAddMode("escribir")}
-              className={`flex-1 rounded-full px-3 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
-                addMode === "escribir" ? "bg-gold text-bg" : "text-textMuted"
-              }`}
-            >
-              Escribir
-            </button>
-            <button
-              type="button"
-              onClick={() => setAddMode("ticket")}
-              className={`flex-1 rounded-full px-3 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
-                addMode === "ticket" ? "bg-gold text-bg" : "text-textMuted"
-              }`}
-            >
-              📷 Con ticket
-            </button>
+        <div
+          className="fixed inset-0 z-[75] flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm"
+          onClick={() => setShowQuickAdd(false)}
+        >
+          <div
+            className="max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-2xl border border-sage/40 bg-surface p-4 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="font-display text-lg text-text">+ Agregar productos</div>
+              <button
+                type="button"
+                onClick={() => setShowQuickAdd(false)}
+                aria-label="Cerrar"
+                className="shrink-0 rounded-full border border-border px-2 py-1 text-[11px] text-textMuted"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="mb-2.5 flex gap-1 rounded-full border border-border bg-bg/60 p-0.5">
+              <button
+                type="button"
+                onClick={() => setAddMode("escribir")}
+                className={`flex-1 rounded-full px-3 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
+                  addMode === "escribir" ? "bg-gold text-bg" : "text-textMuted"
+                }`}
+              >
+                Escribir
+              </button>
+              <button
+                type="button"
+                onClick={() => setAddMode("ticket")}
+                className={`flex-1 rounded-full px-3 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
+                  addMode === "ticket" ? "bg-gold text-bg" : "text-textMuted"
+                }`}
+              >
+                📷 Con ticket
+              </button>
+            </div>
+            {addMode === "escribir" ? (
+              <QuickAddProducts
+                addStructuredItems={addStructuredItems}
+                productMemory={productMemory}
+                compact
+                autoFocus={!scanPrefill}
+                prefillText={scanPrefill}
+              />
+            ) : (
+              <ShoppingLog addStructuredItems={addStructuredItems} addPurchases={addPurchases} productMemory={productMemory} bare />
+            )}
           </div>
-          {addMode === "escribir" ? (
-            <QuickAddProducts
-              addStructuredItems={addStructuredItems}
-              productMemory={productMemory}
-              compact
-              autoFocus={!scanPrefill}
-              prefillText={scanPrefill}
-            />
-          ) : (
-            <ShoppingLog addStructuredItems={addStructuredItems} addPurchases={addPurchases} productMemory={productMemory} bare />
-          )}
         </div>
       )}
 
       {showExtraConsumption && (
-        <div className="mb-3 rounded-xl border border-rust/40 bg-rust/5 p-2.5">
-          <ExtraConsumption items={items} consumeAmounts={consumeAmounts} />
+        <div
+          className="fixed inset-0 z-[75] flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm"
+          onClick={() => setShowExtraConsumption(false)}
+        >
+          <div
+            className="max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-2xl border border-rust/40 bg-surface p-4 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="font-display text-lg text-text">− Descontar sin comida</div>
+              <button
+                type="button"
+                onClick={() => setShowExtraConsumption(false)}
+                aria-label="Cerrar"
+                className="shrink-0 rounded-full border border-border px-2 py-1 text-[11px] text-textMuted"
+              >
+                ✕
+              </button>
+            </div>
+            <ExtraConsumption items={items} consumeAmounts={consumeAmounts} />
+          </div>
         </div>
       )}
 
       {showPrepareDish && (
-        <div className="mb-3 rounded-xl border border-gold/40 bg-gold/5 p-2.5">
-          <PrepareDish items={items} consumeAmounts={consumeAmounts} addStructuredItems={addStructuredItems} />
+        <div
+          className="fixed inset-0 z-[75] flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm"
+          onClick={() => setShowPrepareDish(false)}
+        >
+          <div
+            className="max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-2xl border border-gold/40 bg-surface p-4 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="font-display text-lg text-text">🍲 Preparar plato</div>
+              <button
+                type="button"
+                onClick={() => setShowPrepareDish(false)}
+                aria-label="Cerrar"
+                className="shrink-0 rounded-full border border-border px-2 py-1 text-[11px] text-textMuted"
+              >
+                ✕
+              </button>
+            </div>
+            <PrepareDish items={items} consumeAmounts={consumeAmounts} addStructuredItems={addStructuredItems} />
+          </div>
         </div>
       )}
 
