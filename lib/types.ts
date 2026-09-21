@@ -467,6 +467,16 @@ export interface Report {
   createdAt: string;
 }
 
+/** Shape real de `Report.metrics` para un reporte generado por
+ * generate_student_report() -- mismos 8 campos de StudentMetrics más el
+ * desglose de incidencias del período. `Report.metrics` se deja tipado
+ * como Record<string, unknown> a propósito (ver arriba); esto es solo
+ * para leerlo del lado de la UI sin castear campo por campo. */
+export interface WeeklyReportMetrics extends StudentMetrics {
+  incidenciasTotal: number;
+  incidenciasPorTipo: Partial<Record<RoutineIncidentType, number>>;
+}
+
 /** Sugerencia para la próxima vez que se entrena este ejercicio dentro de esta rutina,
  * generada automáticamente al cerrar un entrenamiento en vivo (comparando lo hecho contra
  * lo planificado). Se guarda por `routineId + nombre` para poder mostrarla la semana que

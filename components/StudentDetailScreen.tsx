@@ -6,8 +6,9 @@ import { useStudentMetrics } from "@/lib/useStudentMetrics";
 import { useStudentDetail } from "@/lib/useStudentDetail";
 import { useTrainerIncidents } from "@/lib/useRoutineIncidents";
 import { useTrainerComments } from "@/lib/useTrainerComments";
+import { useStudentReports } from "@/lib/useStudentReports";
 import { isoMonday, fmtDate, addDays, weekdayOf } from "@/lib/calculations";
-import { StudentMetrics, StudentDayDetail, RoutineIncident, RoutineIncidentType } from "@/lib/types";
+import { StudentMetrics, StudentDayDetail, RoutineIncident, RoutineIncidentType, Report, WeeklyReportMetrics } from "@/lib/types";
 
 const INCIDENT_LABEL: Record<RoutineIncidentType, string> = {
   omitido: "Omitido",
@@ -28,12 +29,13 @@ const DOW_SHORT: Record<string, string> = {
   domingo: "Dom",
 };
 
-type Tab = "resumen" | "entrenamientos" | "incidencias" | "nutricion" | "peso" | "comentarios";
+type Tab = "resumen" | "entrenamientos" | "incidencias" | "nutricion" | "peso" | "comentarios" | "reportes";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "resumen", label: "Resumen" },
   { id: "entrenamientos", label: "Entrenamientos" },
   { id: "incidencias", label: "Incidencias" },
+  { id: "reportes", label: "Reportes" },
   { id: "nutricion", label: "Nutrición" },
   { id: "peso", label: "Peso" },
   { id: "comentarios", label: "Comentarios" },
@@ -260,6 +262,138 @@ function PesoTab({ weightHistory }: { weightHistory: { weekStart: string; peso: 
   );
 }
 
+const REPORT_STATUS_STYLE: Record<Report["status"], { label: string; color: string }> = {
+  borrador: { label: "Borrador", color: "text-gold" },
+  generado: { label: "Generado", color: "text-gold" },
+  enviado: { label: "Enviado ✓", color: "text-sage" },
+};
+
+function ReportMetricsGrid({ metrics }: { metrics: WeeklyReportMetrics }) {
+  const fmt = (value: number | null | undefined, suffix = "") => (value == null ? "—" : `${value}${suffix}`);
+  const cambioPeso =
+    metrics.cambioPeso == null ? "—" : `${metrics.cambioPeso > 0 ? "+" : ""}${metrics.cambioPeso.toFixed(1)}kg`;
+  const incidenciasPorTipo = Object.entries(metrics.incidenciasPorTipo || {});
+  return (
+    <div className="grid grid-cols-2 gap-1.5">
+      <MetricCard label="Adherencia" value={fmt(metrics.adherenciaSemanal, "%")} />
+      <MetricCard label="Entrenos" value={`${metrics.entrenosRealizados}/${metrics.entrenosPlanificados}`} />
+      <MetricCard label="Peso actual" value={fmt(metrics.pesoActual, "kg")} />
+      <MetricCard label="Cambio de peso" value={cambioPeso} />
+      <MetricCard label="Proteína prom." value={fmt(metrics.proteinaPromedio, "g")} />
+      <MetricCard label="Pasos prom." value={fmt(metrics.pasosPromedio)} />
+      <MetricCard
+        label="Incidencias"
+        value={
+          metrics.incidenciasTotal === 0
+            ? "Ninguna"
+            : `${metrics.incidenciasTotal} (${incidenciasPorTipo.map(([tipo, n]) => `${n} ${INCIDENT_LABEL[tipo as RoutineIncidentType]}`).join(", ")})`
+        }
+      />
+    </div>
+  );
+}
+
+function ReportCard({
+  report,
+  defaultExpanded,
+  busy,
+  onSaveComment,
+  onSend,
+}: {
+  report: Report;
+  defaultExpanded: boolean;
+  busy: boolean;
+  onSaveComment: (texto: string) => void;
+  onSend: () => void;
+}) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+  const [comment, setComment] = useState(report.trainerComment || "");
+  const metrics = report.metrics as unknown as WeeklyReportMetrics;
+  const status = REPORT_STATUS_STYLE[report.status];
+
+  return (
+    <div className="rounded-lg border border-border bg-bg/40 p-2.5">
+      <button type="button" onClick={() => setExpanded((v) => !v)} className="flex w-full items-center justify-between gap-2 text-left">
+        <span className="font-mono text-[11px] text-text">
+          {report.periodStart} – {report.periodEnd}
+        </span>
+        <span className={`font-mono text-[9px] uppercase tracking-wide ${status.color}`}>{status.label}</span>
+      </button>
+      {expanded && (
+        <div className="mt-2 border-t border-dashed border-border pt-2">
+          <ReportMetricsGrid metrics={metrics} />
+          <div className="mt-2">
+            <label className="mb-1 block font-mono text-[9px] uppercase tracking-wide text-textMuted">Comentario para el alumno</label>
+            <textarea
+              rows={3}
+              value={comment}
+              onChange={(event) => setComment(event.target.value)}
+              placeholder="Ej: buena semana, seguimos subiendo carga en sentadilla..."
+              className="w-full"
+            />
+          </div>
+          <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => onSaveComment(comment)}
+              className="rounded-lg border border-border px-2 py-1.5 font-mono text-[9px] uppercase tracking-wide text-textMuted disabled:opacity-50"
+            >
+              Guardar comentario
+            </button>
+            {report.status !== "enviado" && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={onSend}
+                className="rounded-lg border border-gold/60 bg-gold px-2 py-1.5 font-mono text-[9px] uppercase tracking-wide text-bg disabled:opacity-50"
+              >
+                Enviar al alumno
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReportesTab({ studentId, weekStart }: { studentId: string; weekStart: string }) {
+  const { reports, loaded, busy, generate, saveComment, send } = useStudentReports(studentId);
+  const hasCurrentWeek = reports.some((r) => r.periodStart === weekStart);
+
+  return (
+    <div>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => generate(weekStart)}
+        className="mb-3 w-full rounded-lg border border-gold/60 bg-gold/10 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold disabled:opacity-50"
+      >
+        {hasCurrentWeek ? "Recalcular reporte de esta semana" : "Generar reporte de esta semana"}
+      </button>
+      {!loaded ? (
+        <div className="text-[12px] text-textMuted">Cargando...</div>
+      ) : reports.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">Todavía no generaste ningún reporte.</div>
+      ) : (
+        <div className="space-y-1.5">
+          {reports.map((report, i) => (
+            <ReportCard
+              key={report.id}
+              report={report}
+              defaultExpanded={i === 0}
+              busy={busy}
+              onSaveComment={(texto) => saveComment(report.id, texto)}
+              onSend={() => send(report.id)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ComentariosTab({ studentId }: { studentId: string }) {
   const { comments, loaded, sending, send } = useTrainerComments(studentId);
   const [texto, setTexto] = useState("");
@@ -373,6 +507,7 @@ export function StudentDetailScreen({
           )}
           {tab === "nutricion" && <NutricionTab weekDates={weekDates} week={detailHook.week} />}
           {tab === "peso" && <PesoTab weightHistory={detailHook.weightHistory} />}
+          {tab === "reportes" && <ReportesTab studentId={studentId} weekStart={weekStart} />}
           {tab === "comentarios" && <ComentariosTab studentId={studentId} />}
         </div>
       </div>

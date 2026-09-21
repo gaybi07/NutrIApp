@@ -4,10 +4,11 @@ import { useRef, useState } from "react";
 import { useTrainerApplication, useTrainerAdmin } from "@/lib/useTrainerApplication";
 import { useTrainerLink, useTrainerStudents, useTrainerRoutines, useTrainerRoutinesForStudent } from "@/lib/useTrainerLink";
 import { useTrainerIncidents } from "@/lib/useRoutineIncidents";
-import { TrainerApplication, TrainerStatus, TrainerRoutine, TrainerLinkRequest, TrainerStudent, RoutineIncident, RoutineIncidentType, Routine } from "@/lib/types";
+import { TrainerApplication, TrainerStatus, TrainerRoutine, TrainerLinkRequest, TrainerStudent, RoutineIncident, RoutineIncidentType, WeeklyReportMetrics, Routine } from "@/lib/types";
 import { RoutineEditorModal } from "@/components/RoutineEditorModal";
 import { StudentDetailScreen } from "@/components/StudentDetailScreen";
 import { useMyTrainerComments } from "@/lib/useTrainerComments";
+import { useMyReports } from "@/lib/useStudentReports";
 
 const STATUS_STYLE: Record<TrainerStatus, { label: string; color: string }> = {
   pendiente: { label: "Pendiente de revisión", color: "text-gold" },
@@ -345,6 +346,7 @@ function StudentLinkSection({
   const linkHook = useTrainerLink(authenticated);
   const trainerRoutines = useTrainerRoutinesForStudent(authenticated, Boolean(linkHook.link));
   const commentsHook = useMyTrainerComments(authenticated, Boolean(linkHook.link));
+  const reportsHook = useMyReports(authenticated, Boolean(linkHook.link));
   const [code, setCode] = useState("");
   const [adoptedIds, setAdoptedIds] = useState<string[]>([]);
 
@@ -412,6 +414,28 @@ function StudentLinkSection({
             </div>
           )}
 
+          {reportsHook.reports.length > 0 && (
+            <div className="mt-3 border-t border-dashed border-border pt-2.5">
+              <div className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.15em] text-gold">Reportes de tu entrenador</div>
+              <div className="space-y-1.5">
+                {reportsHook.reports.map((report) => {
+                  const metrics = report.metrics as unknown as WeeklyReportMetrics;
+                  return (
+                    <div key={report.id} className="rounded-lg border border-border bg-bg/40 p-2.5">
+                      <div className="font-mono text-[10px] uppercase tracking-wide text-textMuted">
+                        {report.periodStart} – {report.periodEnd}
+                      </div>
+                      <div className="mt-1 font-mono text-[11px] text-text">
+                        Adherencia {metrics.adherenciaSemanal ?? "—"}% · {metrics.entrenosRealizados}/{metrics.entrenosPlanificados} entrenos ·{" "}
+                        {metrics.incidenciasTotal} incidencia{metrics.incidenciasTotal === 1 ? "" : "s"}
+                      </div>
+                      {report.trainerComment && <div className="mt-1.5 text-[12px] text-text">{report.trainerComment}</div>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           {commentsHook.comments.length > 0 && (
             <div className="mt-3 border-t border-dashed border-border pt-2.5">
               <div className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.15em] text-gold">Comentarios de tu entrenador</div>
