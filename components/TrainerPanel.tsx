@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useTrainerApplication, useTrainerAdmin } from "@/lib/useTrainerApplication";
 import { useTrainerLink, useTrainerStudents, useTrainerRoutines, useTrainerRoutinesForStudent } from "@/lib/useTrainerLink";
-import { TrainerApplication, TrainerStatus, TrainerRoutine, Routine } from "@/lib/types";
+import { TrainerApplication, TrainerStatus, TrainerRoutine, TrainerLinkRequest, Routine } from "@/lib/types";
 import { RoutineEditorModal } from "@/components/RoutineEditorModal";
 
 const STATUS_STYLE: Record<TrainerStatus, { label: string; color: string }> = {
@@ -72,6 +72,51 @@ function AdminRow({
   );
 }
 
+function PendingRequestRow({
+  request,
+  busy,
+  onRespond,
+}: {
+  request: TrainerLinkRequest;
+  busy: boolean;
+  onRespond: (decision: "aceptada" | "rechazada", note: string) => void;
+}) {
+  const [note, setNote] = useState("");
+  return (
+    <div className="rounded-lg border border-gold/40 bg-gold/5 p-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-semibold text-text">{request.studentEmail}</span>
+        <span className="font-mono text-[10px] text-gold">Quiere vincularse</span>
+      </div>
+      <input
+        type="text"
+        placeholder="Nota opcional (ej: motivo del rechazo)"
+        value={note}
+        onChange={(event) => setNote(event.target.value)}
+        className="mb-1.5 mt-2 w-full"
+      />
+      <div className="grid grid-cols-2 gap-1.5">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onRespond("rechazada", note)}
+          className="rounded-lg border border-rust/50 px-2 py-1.5 font-mono text-[10px] uppercase tracking-wide text-rust disabled:opacity-50"
+        >
+          Rechazar
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onRespond("aceptada", note)}
+          className="rounded-lg border border-sage/50 bg-sage/10 px-2 py-1.5 font-mono text-[10px] uppercase tracking-wide text-sage disabled:opacity-50"
+        >
+          Aceptar
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function TrainerStudentsAndRoutines({ authenticated }: { authenticated: boolean }) {
   const studentsHook = useTrainerStudents(authenticated, true);
   const routinesHook = useTrainerRoutines(authenticated, true);
@@ -89,6 +134,21 @@ function TrainerStudentsAndRoutines({ authenticated }: { authenticated: boolean 
         {studentsHook.inviteCode ? `Código: ${studentsHook.inviteCode}` : "Generar código de invitación"}
       </button>
       {studentsHook.status && <div className="mb-2 text-[11px] text-rust">{studentsHook.status}</div>}
+      {studentsHook.pendingRequests.length > 0 && (
+        <div className="mb-3">
+          <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Solicitudes pendientes</div>
+          <div className="space-y-1.5">
+            {studentsHook.pendingRequests.map((request) => (
+              <PendingRequestRow
+                key={request.id}
+                request={request}
+                busy={studentsHook.busyRequestId === request.id}
+                onRespond={(decision, note) => studentsHook.respond(request.id, decision, note)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
       {!studentsHook.loaded ? (
         <div className="text-[12px] text-textMuted">Cargando...</div>
       ) : studentsHook.students.length === 0 ? (
@@ -226,8 +286,19 @@ function StudentLinkSection({
             </div>
           )}
         </>
+      ) : linkHook.myRequest?.status === "pendiente" ? (
+        <div className="rounded-lg border border-dashed border-gold/50 bg-gold/5 p-3 text-[12px] text-textMuted">
+          Solicitud enviada a <span className="font-semibold text-text">{linkHook.myRequest.trainerEmail}</span> —
+          esperando que la acepte.
+        </div>
       ) : (
         <div>
+          {linkHook.myRequest?.status === "rechazada" && (
+            <div className="mb-2 rounded-lg border border-rust/40 bg-rust/10 px-2.5 py-2 text-[11px] text-rust">
+              Tu entrenador rechazó tu solicitud{linkHook.myRequest.responseNote ? `: ${linkHook.myRequest.responseNote}` : "."} Podés
+              probar con otro código.
+            </div>
+          )}
           <div className="mb-2 text-[11px] text-textMuted">Pedile el código a tu entrenador para vincularte.</div>
           <div className="flex gap-2">
             <input type="text" placeholder="Código" value={code} onChange={(event) => setCode(event.target.value)} className="min-w-0 flex-1" />
@@ -237,7 +308,7 @@ function StudentLinkSection({
               disabled={linkHook.busy || !code.trim()}
               className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg disabled:opacity-50"
             >
-              Vincularme
+              Enviar solicitud
             </button>
           </div>
         </div>

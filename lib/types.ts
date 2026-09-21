@@ -174,12 +174,20 @@ export interface TrainerApplication {
   reviewNote: string | null;
 }
 
+/** Estado del vínculo -- ver migration_2026-09-21_add_trainer_module.sql.
+ * Opcional/no usado todavía por el hook (`useTrainerLink.leave()` sigue
+ * haciendo DELETE físico); queda listo para cuando se actualice esa lógica
+ * a un "finalizado" que preserve el historial. */
+export type TrainerLinkStatus = "activo" | "finalizado";
+
 /** Vínculo entre un alumno y su entrenador (a lo sumo uno por alumno, igual
  * que el "hogar" de la alacena) -- lo que ve el lado ALUMNO. */
 export interface TrainerLink {
   trainerId: string;
   trainerEmail: string;
   createdAt: string;
+  status?: TrainerLinkStatus;
+  endedAt?: string | null;
 }
 
 /** Lo que ve el lado ENTRENADOR de un vínculo: uno de sus alumnos. */
@@ -188,6 +196,32 @@ export interface TrainerStudent {
   studentEmail: string;
   createdAt: string;
 }
+
+/** Solicitud de vinculación -- usar un código de invitación ya no crea el
+ * vínculo al instante, crea esto. Queda "pendiente" hasta que el
+ * entrenador la acepta (crea la fila en TrainerLink) o la rechaza (acá
+ * termina, nunca se crea el vínculo). Ver
+ * migration_2026-09-21b_add_trainer_link_requests.sql. */
+export type TrainerLinkRequestStatus = "pendiente" | "aceptada" | "rechazada";
+
+export interface TrainerLinkRequest {
+  id: string;
+  trainerId: string;
+  studentId: string;
+  trainerEmail: string;
+  studentEmail: string;
+  status: TrainerLinkRequestStatus;
+  respondedAt: string | null;
+  responseNote: string | null;
+  createdAt: string;
+}
+
+/** Solo una rutina "publicada" es asignable en un TrainingPlan -- "borrador"
+ * deja seguir editando sin que aparezca todavía en el selector del
+ * planificador, "archivada" la saca de circulación sin romper las
+ * assigned_sessions que ya la referencian (esas guardan una copia congelada,
+ * no una referencia viva). */
+export type RoutineStatus = "borrador" | "publicada" | "archivada";
 
 /** Rutina armada por un entrenador para sus alumnos -- vive en su propia tabla
  * (no en Settings.routines) porque la tienen que poder leer los alumnos
@@ -200,6 +234,140 @@ export interface TrainerRoutine {
   ejercicios: ExerciseEntry[];
   createdAt: string;
   updatedAt: string;
+  /** Opcional para no romper filas/objetos ya construidos sin este campo
+   * (agregado en migration_2026-09-21_add_trainer_module.sql, default
+   * "publicada" en la base). */
+  status?: RoutineStatus;
+}
+
+/** Planificación de UNA semana para UN alumno: qué rutina (id de
+ * TrainerRoutine) va cada día. El alumno no interactúa con esto
+ * directamente -- lo ve reflejado en las AssignedSession que se generan al
+ * publicar (ver `publish_training_plan` en la migración). */
+export type TrainingPlanStatus = "borrador" | "publicado";
+
+export interface TrainingPlan {
+  id: string;
+  trainerId: string;
+  studentId: string;
+  /** Lunes de la semana, YYYY-MM-DD (misma convención que isoMonday()). */
+  weekStart: string;
+  days: Partial<Record<Weekday, string>>; // weekday -> TrainerRoutine.id
+  status: TrainingPlanStatus;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Instancia concreta y fechada de un entrenamiento -- lo único que el
+ * alumno mueve o ejecuta. `routineSnapshot`/`routineNombre` quedan
+ * congelados al momento de asignar, así editar la rutina original después
+ * no altera sesiones ya asignadas.
+ *
+ * Máquina de estados: planificada -> movida -> en_curso -> completada,
+ * con las salidas vencida (pasó la fecha sin abrirla ni moverla) y
+ * cancelada (el entrenador la da de baja). Las transiciones reales las
+ * impone un trigger en la base (ver `trg_guard_assigned_sessions_update`),
+ * no alcanza con el tipo. */
+export type AssignedSessionStatus =
+  | "planificada"
+  | "movida"
+  | "en_curso"
+  | "completada"
+  | "vencida"
+  | "cancelada";
+
+export interface AssignedSession {
+  id: string;
+  planId: string;
+  trainerId: string;
+  studentId: string;
+  routineId: string | null;
+  routineSnapshot: ExerciseEntry[];
+  routineNombre: string;
+  fechaPlanificada: string; // YYYY-MM-DD, puede cambiar si se mueve
+  fechaOriginal: string; // YYYY-MM-DD, no cambia nunca
+  status: AssignedSessionStatus;
+  movedAt: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Lo que realmente pasó al ejecutar una AssignedSession -- 0..1 respecto a
+ * ella (nace recién cuando el alumno la cierra). `ejercicios` reutiliza el
+ * mismo shape que ya usa LiveWorkout (ExerciseEntry con sets reales:
+ * repeticiones/peso/intensidad = esfuerzo). */
+export interface WorkoutExecution {
+  id: string;
+  sessionId: string;
+  studentId: string;
+  trainerId: string;
+  ejercicios: ExerciseEntry[];
+  duracionMinutos: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Las 4 incidencias que el alumno puede informar durante o después de una
+ * ejecución. No incluye "salteé toda la sesión" -- eso se refleja en el
+ * estado `vencida` de la sesión, no como incidencia. */
+export type IncidentType = "omitido" | "reemplazado" | "serie_adicional" | "comentario_libre";
+
+export interface Incident {
+  id: string;
+  executionId: string;
+  studentId: string;
+  trainerId: string;
+  tipo: IncidentType;
+  /** Null en comentario_libre general -- no apunta a un ejercicio puntual. */
+  ejercicioNombre: string | null;
+  /** Texto libre, o el nombre del ejercicio de reemplazo si tipo="reemplazado". */
+  detalle: string | null;
+  vistoPorEntrenador: boolean;
+  createdAt: string;
+}
+
+/** Mensaje del entrenador al alumno -- de una sola vía en esta versión (el
+ * alumno no responde acá; su "comentario libre" ya es una Incident). */
+export type ObservationScope = "session" | "week" | "general";
+
+export interface Observation {
+  id: string;
+  trainerId: string;
+  studentId: string;
+  scope: ObservationScope;
+  /** No-null solo si scope === "session". */
+  sessionId: string | null;
+  /** No-null solo si scope === "week" (lunes de esa semana). */
+  weekStart: string | null;
+  texto: string;
+  readAt: string | null;
+  createdAt: string;
+}
+
+/** Snapshot de métricas de un alumno en un período, armado por el
+ * entrenador -- sobrevive a que el vínculo se finalice (a diferencia de
+ * AssignedSession/Incident, que dejan de ser legibles para el entrenador
+ * una vez desvinculado). */
+export type ReportStatus = "borrador" | "generado" | "enviado";
+
+export interface Report {
+  id: string;
+  trainerId: string;
+  studentId: string;
+  periodStart: string;
+  periodEnd: string;
+  status: ReportStatus;
+  /** Ver la sección de métricas del diseño del módulo (adherencia, volumen,
+   * distribución de incidencias, etc.) -- shape libre a propósito, se
+   * define del lado de la app al calcular el reporte, no en la base. */
+  metrics: Record<string, unknown>;
+  trainerComment: string | null;
+  generatedAt: string | null;
+  sentAt: string | null;
+  createdAt: string;
 }
 
 /** Sugerencia para la próxima vez que se entrena este ejercicio dentro de esta rutina,

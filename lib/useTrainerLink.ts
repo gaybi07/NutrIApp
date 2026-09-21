@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/browser";
-import { ExerciseEntry, TrainerLink, TrainerRoutine, TrainerStudent } from "./types";
+import { ExerciseEntry, TrainerLink, TrainerLinkRequest, TrainerRoutine, TrainerStudent } from "./types";
 
 function routineFromRow(row: Record<string, unknown>): TrainerRoutine {
   return {
@@ -15,13 +15,30 @@ function routineFromRow(row: Record<string, unknown>): TrainerRoutine {
   };
 }
 
+function requestFromRow(row: Record<string, unknown>): TrainerLinkRequest {
+  return {
+    id: row.id as string,
+    trainerId: row.trainer_id as string,
+    studentId: row.student_id as string,
+    trainerEmail: row.trainer_email as string,
+    studentEmail: row.student_email as string,
+    status: row.status as TrainerLinkRequest["status"],
+    respondedAt: (row.responded_at as string) ?? null,
+    responseNote: (row.response_note as string) ?? null,
+    createdAt: row.created_at as string,
+  };
+}
+
 /**
  * Lado ALUMNO del vínculo: a lo sumo un entrenador vinculado por vez (igual
- * que el "hogar" de la alacena). `join` valida el código server-side (RPC
- * `join_trainer`, ver migration_2026-09-18) y `leave` te desvincula.
+ * que el "hogar" de la alacena). Usar un código ya no vincula al instante --
+ * crea una solicitud (RPC `request_trainer_link`, ver
+ * migration_2026-09-21b) que queda "pendiente" hasta que el entrenador la
+ * acepta o la rechaza. `leave` desvincula un vínculo ya aceptado.
  */
 export function useTrainerLink(authenticated: boolean) {
   const [link, setLink] = useState<TrainerLink | null>(null);
+  const [myRequest, setMyRequest] = useState<TrainerLinkRequest | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
@@ -36,15 +53,40 @@ export function useTrainerLink(authenticated: boolean) {
     } = await supabase.auth.getUser();
     if (!user) {
       setLink(null);
+      setMyRequest(null);
       setLoaded(true);
       return;
     }
-    const { data } = await supabase
-      .from("trainer_links")
-      .select("trainer_id, trainer_email, created_at")
-      .eq("student_id", user.id)
-      .maybeSingle();
-    setLink(data ? { trainerId: data.trainer_id, trainerEmail: data.trainer_email, createdAt: data.created_at } : null);
+    const [{ data: linkRow }, { data: requestRow }] = await Promise.all([
+      supabase
+        .from("trainer_links")
+        .select("trainer_id, trainer_email, created_at, status, ended_at")
+        .eq("student_id", user.id)
+        .eq("status", "activo")
+        .maybeSingle(),
+      supabase
+        .from("trainer_link_requests")
+        .select("*")
+        .eq("student_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+    setLink(
+      linkRow
+        ? {
+            trainerId: linkRow.trainer_id,
+            trainerEmail: linkRow.trainer_email,
+            createdAt: linkRow.created_at,
+            status: linkRow.status,
+            endedAt: linkRow.ended_at,
+          }
+        : null
+    );
+    // Una solicitud pendiente siempre se muestra; una ya resuelta
+    // (aceptada/rechazada) solo importa si todavía no hay vínculo activo --
+    // si ya está vinculado, mostrar la última solicitud resuelta no aporta nada.
+    setMyRequest(requestRow && (requestRow.status === "pendiente" || !linkRow) ? requestFromRow(requestRow) : null);
     setLoaded(true);
   }, []);
 
@@ -52,6 +94,7 @@ export function useTrainerLink(authenticated: boolean) {
     if (authenticated) refetch();
     else {
       setLink(null);
+      setMyRequest(null);
       setLoaded(true);
     }
   }, [authenticated, refetch]);
@@ -60,15 +103,15 @@ export function useTrainerLink(authenticated: boolean) {
     async (code: string) => {
       if (!supabase) return;
       setBusy(true);
-      setStatus("Vinculando...");
-      const { error } = await supabase.rpc("join_trainer", { p_code: code.trim() });
+      setStatus("Enviando solicitud...");
+      const { error } = await supabase.rpc("request_trainer_link", { p_code: code.trim() });
       if (error) {
         setStatus(error.message.includes("nv") ? "Código inválido." : error.message);
         setBusy(false);
         return;
       }
       await refetch();
-      setStatus("Te vinculaste con tu entrenador ✓");
+      setStatus("Solicitud enviada — esperando que tu entrenador la acepte ✓");
       setBusy(false);
     },
     [refetch]
@@ -86,19 +129,24 @@ export function useTrainerLink(authenticated: boolean) {
     setBusy(false);
   }, [link]);
 
-  return { link, loaded, busy, status, join, leave };
+  return { link, myRequest, loaded, busy, status, join, leave };
 }
 
 /**
- * Lado ENTRENADOR: tus alumnos vinculados + generar código de invitación.
- * `generate_trainer_invite_code` (RPC) valida server-side que estés
- * aprobado -- acá `enabled` es solo para no disparar la consulta de más.
+ * Lado ENTRENADOR: tus alumnos vinculados + solicitudes pendientes +
+ * generar código de invitación. `generate_trainer_invite_code` (RPC) valida
+ * server-side que estés aprobado -- acá `enabled` es solo para no disparar
+ * la consulta de más. Aceptar/rechazar una solicitud pasa por
+ * `respond_trainer_link_request` (RPC, migration_2026-09-21b), que crea el
+ * vínculo y resuelve la solicitud en una sola transacción.
  */
 export function useTrainerStudents(authenticated: boolean, enabled: boolean) {
   const [students, setStudents] = useState<TrainerStudent[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<TrainerLinkRequest[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [busyRequestId, setBusyRequestId] = useState<string | null>(null);
   const [status, setStatus] = useState("");
 
   const refetch = useCallback(async () => {
@@ -106,11 +154,20 @@ export function useTrainerStudents(authenticated: boolean, enabled: boolean) {
       setLoaded(true);
       return;
     }
-    const { data } = await supabase
-      .from("trainer_links")
-      .select("student_id, student_email, created_at")
-      .order("created_at", { ascending: false });
-    setStudents((data || []).map((r) => ({ studentId: r.student_id, studentEmail: r.student_email, createdAt: r.created_at })));
+    const [{ data: studentRows }, { data: requestRows }] = await Promise.all([
+      supabase
+        .from("trainer_links")
+        .select("student_id, student_email, created_at")
+        .eq("status", "activo")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("trainer_link_requests")
+        .select("*")
+        .eq("status", "pendiente")
+        .order("created_at", { ascending: false }),
+    ]);
+    setStudents((studentRows || []).map((r) => ({ studentId: r.student_id, studentEmail: r.student_email, createdAt: r.created_at })));
+    setPendingRequests((requestRows || []).map(requestFromRow));
     setLoaded(true);
   }, [enabled]);
 
@@ -143,7 +200,27 @@ export function useTrainerStudents(authenticated: boolean, enabled: boolean) {
     [refetch]
   );
 
-  return { students, loaded, inviteCode, busy, status, getInviteCode, removeStudent };
+  const respond = useCallback(
+    async (requestId: string, decision: "aceptada" | "rechazada", note?: string) => {
+      if (!supabase) return;
+      setBusyRequestId(requestId);
+      const { error } = await supabase.rpc("respond_trainer_link_request", {
+        p_request_id: requestId,
+        p_decision: decision,
+        p_note: note || null,
+      });
+      if (error) {
+        setStatus(error.message);
+        setBusyRequestId(null);
+        return;
+      }
+      await refetch();
+      setBusyRequestId(null);
+    },
+    [refetch]
+  );
+
+  return { students, pendingRequests, loaded, inviteCode, busy, busyRequestId, status, getInviteCode, removeStudent, respond };
 }
 
 /** Lado ENTRENADOR: CRUD de tus propias rutinas para alumnos. */
