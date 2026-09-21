@@ -35,6 +35,17 @@ export function PrepareDish({
   const [portions, setPortions] = useState("");
   const [status, setStatus] = useState("");
 
+  // "variadas" -- para cuando no todas las porciones son iguales (ej. una
+  // porción grande para vos, una chica para tu pareja). En vez de repartir
+  // el total en N porciones iguales, se pesa el plato ya preparado y se
+  // arman uno o más "tamaños" (peso por porción + cuántas de ese tamaño
+  // salieron); cada tamaño se guarda como un producto de alacena distinto.
+  const [portionMode, setPortionMode] = useState<"iguales" | "variadas">("iguales");
+  const [totalWeight, setTotalWeight] = useState("");
+  const [groups, setGroups] = useState<Array<{ id: string; label: string; gramos: string; cantidad: string }>>([
+    { id: "1", label: "", gramos: "", cantidad: "" },
+  ]);
+
   const available = useMemo(() => items.filter((i) => i.quantity > 0), [items]);
 
   const presentCategories = useMemo(() => {
@@ -91,11 +102,39 @@ export function PrepareDish({
         }
       : null;
 
+  const totalWeightNum = Number(totalWeight);
+  const parsedGroups = groups
+    .map((g) => ({ ...g, gramosNum: Number(g.gramos), cantidadNum: Number(g.cantidad) }))
+    .filter((g) => g.gramosNum > 0 && g.cantidadNum > 0);
+  const assignedWeight = parsedGroups.reduce((sum, g) => sum + g.gramosNum * g.cantidadNum, 0);
+  const groupPreviews =
+    totalWeightNum > 0
+      ? parsedGroups.map((g) => {
+          const fraction = g.gramosNum / totalWeightNum;
+          const nutrition: InventoryNutrition = {
+            kcal: Math.round(totals.kcal * fraction),
+            protein: Math.round(totals.protein * fraction),
+            carbs: Math.round((totals.carbs || 0) * fraction),
+            fat: Math.round((totals.fat || 0) * fraction),
+            fiber: Math.round((totals.fiber || 0) * fraction),
+          };
+          return { ...g, nutrition };
+        })
+      : [];
+
+  const addGroup = () => setGroups((prev) => [...prev, { id: String(Date.now()), label: "", gramos: "", cantidad: "" }]);
+  const removeGroup = (id: string) => setGroups((prev) => (prev.length > 1 ? prev.filter((g) => g.id !== id) : prev));
+  const updateGroup = (id: string, patch: Partial<{ label: string; gramos: string; cantidad: string }>) =>
+    setGroups((prev) => prev.map((g) => (g.id === id ? { ...g, ...patch } : g)));
+
   const resetAll = () => {
     setBasket([]);
     setDrafts({});
     setDishName("");
     setPortions("");
+    setPortionMode("iguales");
+    setTotalWeight("");
+    setGroups([{ id: "1", label: "", gramos: "", cantidad: "" }]);
     setStep("elegir");
   };
 
@@ -113,6 +152,27 @@ export function PrepareDish({
       },
     ]);
     setStatus(`Guardado "${dishName.trim()}" (${portionsNum} porciones) en la alacena ✓ — elegile una zona en "Ver cocina".`);
+    resetAll();
+    setTimeout(() => setStatus(""), 8000);
+  };
+
+  const confirmVariadas = () => {
+    if (!dishName.trim() || basketDetails.length === 0 || totalWeightNum <= 0 || groupPreviews.length === 0) return;
+    consumeAmounts(basketDetails.map((b) => ({ id: b.item.id, quantity: b.amount })));
+    const multi = groupPreviews.length > 1;
+    addStructuredItems(
+      groupPreviews.map((g) => ({
+        name: multi ? `${dishName.trim()} (${g.label.trim() || `${g.gramosNum}g`})` : dishName.trim(),
+        quantity: g.cantidadNum,
+        unit: "u.",
+        category: "preparado",
+        nutritionPer100g: g.nutrition,
+        nutritionConfirmed: true,
+      }))
+    );
+    setStatus(
+      `Guardado "${dishName.trim()}" en ${groupPreviews.length} tamaño${multi ? "s" : ""} de porción en la alacena ✓ — elegile una zona en "Ver cocina".`
+    );
     resetAll();
     setTimeout(() => setStatus(""), 8000);
   };
@@ -235,22 +295,131 @@ export function PrepareDish({
             autoFocus
           />
 
-          <label className="mb-1 block">¿Cuántas porciones salieron?</label>
-          <input
-            type="number"
-            min="1"
-            inputMode="numeric"
-            value={portions}
-            onChange={(e) => setPortions(e.target.value)}
-            placeholder="Ej: 16"
-            className="w-full"
-          />
+          <div className="mb-2.5 flex gap-1 rounded-full border border-border bg-bg/60 p-0.5">
+            <button
+              type="button"
+              onClick={() => setPortionMode("iguales")}
+              className={`flex-1 rounded-full px-3 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
+                portionMode === "iguales" ? "bg-gold text-bg" : "text-textMuted"
+              }`}
+            >
+              Porciones iguales
+            </button>
+            <button
+              type="button"
+              onClick={() => setPortionMode("variadas")}
+              className={`flex-1 rounded-full px-3 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
+                portionMode === "variadas" ? "bg-gold text-bg" : "text-textMuted"
+              }`}
+            >
+              Tamaños distintos
+            </button>
+          </div>
 
-          {perPortion && (
-            <div className="mt-2 rounded-lg border border-border bg-bg/40 p-2 text-[11px] text-textMuted">
-              Cada porción: <span className="text-text">{perPortion.kcal} kcal</span> · {perPortion.protein}g prot ·{" "}
-              {perPortion.carbs}g carb · {perPortion.fat}g grasa · {perPortion.fiber}g fibra
-            </div>
+          {portionMode === "iguales" ? (
+            <>
+              <label className="mb-1 block">¿Cuántas porciones salieron?</label>
+              <input
+                type="number"
+                min="1"
+                inputMode="numeric"
+                value={portions}
+                onChange={(e) => setPortions(e.target.value)}
+                placeholder="Ej: 16"
+                className="w-full"
+              />
+
+              {perPortion && (
+                <div className="mt-2 rounded-lg border border-border bg-bg/40 p-2 text-[11px] text-textMuted">
+                  Cada porción: <span className="text-text">{perPortion.kcal} kcal</span> · {perPortion.protein}g prot ·{" "}
+                  {perPortion.carbs}g carb · {perPortion.fat}g grasa · {perPortion.fiber}g fibra
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <label className="mb-1 block">Peso total del plato ya preparado (g)</label>
+              <input
+                type="number"
+                min="1"
+                inputMode="decimal"
+                value={totalWeight}
+                onChange={(e) => setTotalWeight(e.target.value)}
+                placeholder="Ej: 3000"
+                className="w-full"
+              />
+              <div className="mt-1 text-[10px] text-textMuted">
+                Pesalo ya cocinado, en la fuente/olla — de ahí se calcula cuánto le toca a cada tamaño de porción.
+              </div>
+
+              <div className="mt-2.5 flex flex-col gap-2">
+                {groups.map((g) => {
+                  const preview = groupPreviews.find((p) => p.id === g.id);
+                  return (
+                    <div key={g.id} className="rounded-lg border border-border bg-bg/40 p-2">
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          value={g.label}
+                          onChange={(e) => updateGroup(g.id, { label: e.target.value })}
+                          placeholder="Nombre (opcional, ej: grande)"
+                          className="min-w-0 flex-[2]"
+                        />
+                        <input
+                          type="number"
+                          min="1"
+                          inputMode="decimal"
+                          value={g.gramos}
+                          onChange={(e) => updateGroup(g.id, { gramos: e.target.value })}
+                          placeholder="g c/u"
+                          className="w-16 min-w-0"
+                        />
+                        <input
+                          type="number"
+                          min="1"
+                          inputMode="numeric"
+                          value={g.cantidad}
+                          onChange={(e) => updateGroup(g.id, { cantidad: e.target.value })}
+                          placeholder="cant."
+                          className="w-14 min-w-0"
+                        />
+                        {groups.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeGroup(g.id)}
+                            aria-label="Quitar este tamaño"
+                            className="shrink-0 text-rust"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                      {preview && (
+                        <div className="mt-1.5 text-[10px] text-textMuted">
+                          Cada una: <span className="text-text">{preview.nutrition.kcal} kcal</span> · {preview.nutrition.protein}g prot ·{" "}
+                          {preview.nutrition.carbs}g carb · {preview.nutrition.fat}g grasa
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                onClick={addGroup}
+                className="mt-2 w-full rounded-lg border border-dashed border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-wide text-textMuted"
+              >
+                + Agregar otro tamaño de porción
+              </button>
+
+              {totalWeightNum > 0 && assignedWeight > 0 && (
+                <div className={`mt-2 text-[10px] ${assignedWeight > totalWeightNum ? "text-rust" : "text-textMuted"}`}>
+                  Asignaste {assignedWeight}g de {totalWeightNum}g
+                  {assignedWeight > totalWeightNum ? " — te pasaste del peso total" : ""}
+                </div>
+              )}
+            </>
           )}
 
           <div className="mt-3 grid grid-cols-2 gap-2">
@@ -261,14 +430,25 @@ export function PrepareDish({
             >
               ‹ Volver
             </button>
-            <button
-              type="button"
-              onClick={confirm}
-              disabled={!perPortion || !dishName.trim()}
-              className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg disabled:opacity-40"
-            >
-              Guardar plato
-            </button>
+            {portionMode === "iguales" ? (
+              <button
+                type="button"
+                onClick={confirm}
+                disabled={!perPortion || !dishName.trim()}
+                className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg disabled:opacity-40"
+              >
+                Guardar plato
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={confirmVariadas}
+                disabled={!dishName.trim() || totalWeightNum <= 0 || groupPreviews.length === 0}
+                className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg disabled:opacity-40"
+              >
+                Guardar plato
+              </button>
+            )}
           </div>
         </div>
       )}
