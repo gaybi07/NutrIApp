@@ -259,7 +259,18 @@ function StudentLinkSection({
   const [adoptedIds, setAdoptedIds] = useState<string[]>([]);
 
   const adopt = (routine: TrainerRoutine) => {
-    onSaveRoutines([...routines, { id: newId(), nombre: routine.nombre, ejercicios: routine.ejercicios.map((e) => ({ ...e })) }]);
+    onSaveRoutines([
+      ...routines,
+      {
+        id: newId(),
+        nombre: routine.nombre,
+        ejercicios: routine.ejercicios.map((e) => ({ ...e })),
+        origen: "asignada",
+        trainerRoutineId: routine.id,
+        trainerId: routine.trainerId,
+        assignedAt: new Date().toISOString(),
+      },
+    ]);
     setAdoptedIds((prev) => [...prev, routine.id]);
   };
 

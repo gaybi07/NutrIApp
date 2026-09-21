@@ -106,18 +106,26 @@ export function RoutineManager({
           </div>
         ) : (
           <div className="space-y-2">
-            {routines.map((routine) => (
+            {routines.map((routine) => {
+              const assigned = routine.origen === "asignada";
+              return (
               <div key={routine.id} className="rounded-lg border border-border bg-bg/40 p-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <div className="text-sm font-semibold">{routine.nombre}</div>
-                  <div className="flex gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setEditingRoutine(routine)}
-                      className="rounded-full border border-border px-2 py-1 font-mono text-[9px] uppercase tracking-wide text-textMuted"
-                    >
-                      Editar
-                    </button>
+                  <div className="flex items-center gap-1.5">
+                    {assigned ? (
+                      <span className="rounded-full border border-gold/40 bg-gold/10 px-2 py-1 font-mono text-[9px] uppercase tracking-wide text-gold">
+                        🔒 Asignada
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setEditingRoutine(routine)}
+                        className="rounded-full border border-border px-2 py-1 font-mono text-[9px] uppercase tracking-wide text-textMuted"
+                      >
+                        Editar
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => deleteRoutine(routine.id)}
@@ -136,7 +144,8 @@ export function RoutineManager({
                   ))}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Collapsible>

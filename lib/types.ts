@@ -149,11 +149,26 @@ export interface ExerciseEntry {
   grupoMuscular?: MuscleGroup;
 }
 
+/** De dónde salió una Routine -- "asignada" es de solo lectura para el
+ * alumno (no la puede editar ni desarmar en LiveWorkout), "personal" es
+ * plenamente suya. `undefined` en una rutina ya existente equivale a
+ * "personal" -- así las rutinas guardadas antes de este campo (todas las de
+ * antes de esta migración de tipos) siguen siendo editables como siempre. */
+export type RoutineOrigin = "personal" | "asignada";
+
 /** Rutina reusable (ej. "Día A: Pecho/Tríceps") — plantilla de ejercicios, no un registro de un día puntual. */
 export interface Routine {
   id: string;
   nombre: string;
   ejercicios: ExerciseEntry[];
+  origen?: RoutineOrigin;
+  /** Si origen === "asignada": de qué TrainerRoutine salió y quién la
+   * asignó. Es una referencia informativa, no un vínculo vivo -- si el
+   * entrenador edita su rutina después, esta copia no se actualiza sola
+   * (mismo comportamiento que "Adoptar" ya tenía antes de este campo). */
+  trainerRoutineId?: string;
+  trainerId?: string;
+  assignedAt?: string;
 }
 
 /** Qué rutina corresponde a cada día de la semana — se repite todas las semanas hasta que se cambie. */

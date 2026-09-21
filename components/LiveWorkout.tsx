@@ -109,6 +109,14 @@ export function LiveWorkout({
 }) {
   const scheduledRoutine = routines.find((r) => r.id === schedule[weekdayOf(entry.fecha)]);
   const [session, setSession] = useState<LiveSession | null>(() => loadStoredSession(entry.fecha));
+  // La rutina de la sesión EN CURSO, no la de hoy en el schedule -- son el
+  // mismo id salvo que la sesión ya haya empezado antes de un cambio de
+  // agenda. Si es "asignada" (vino del entrenador, ver Routine.origen en
+  // lib/types.ts), no se puede tocar la estructura: nada de agregar/quitar
+  // ejercicios ni series. Registrar reps/peso/esfuerzo por serie sigue
+  // permitido siempre -- eso es ejecutar la rutina, no modificarla.
+  const sessionRoutine = session ? routines.find((r) => r.id === session.routineId) : null;
+  const isAssignedRoutine = sessionRoutine?.origen === "asignada";
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [libraryTarget, setLibraryTarget] = useState<"new" | null>(null);
@@ -301,6 +309,7 @@ export function LiveWorkout({
                   tiene sentido mostrarla si todavía no empezaste). */}
               <div className="mt-2 rounded-lg border border-border bg-bg/40 px-2.5 py-2 text-center text-[12px] text-textMuted">
                 Rutina de hoy: <span className="font-semibold text-text">{scheduledRoutine.nombre}</span>
+                {scheduledRoutine.origen === "asignada" && <span className="ml-1.5 text-gold">🔒 Asignada</span>}
               </div>
             </>
           ) : (
@@ -381,6 +390,11 @@ export function LiveWorkout({
 
       {session && (
         <>
+          {isAssignedRoutine && (
+            <div className="mb-2 rounded-lg border border-dashed border-gold/40 bg-gold/5 px-3 py-2 text-center text-[11px] text-textMuted">
+              🔒 Rutina asignada por tu entrenador — ejercicios y series fijos, solo cargás reps/peso/esfuerzo.
+            </div>
+          )}
           <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border bg-bg/40 px-3 py-2">
             <div>
               <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">Tiempo</div>
@@ -443,7 +457,7 @@ export function LiveWorkout({
                           <div key={j} className="rounded-lg border border-border bg-bg/60 p-2">
                             <div className="mb-1 flex items-center justify-between">
                               <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">Serie {j + 1}</span>
-                              {ex.sets.length > 1 && (
+                              {ex.sets.length > 1 && !isAssignedRoutine && (
                                 <button
                                   type="button"
                                   onClick={() => removeSet(i, j)}
@@ -502,22 +516,24 @@ export function LiveWorkout({
                           </div>
                         ))}
                       </div>
-                      <div className="mt-2 grid grid-cols-2 gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => addSet(i)}
-                          className="rounded-lg border border-dashed border-border px-2 py-1.5 font-mono text-[9px] uppercase tracking-wide text-textMuted"
-                        >
-                          + Serie
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeExercise(i)}
-                          className="rounded-lg border border-dashed border-rust/40 px-2 py-1.5 font-mono text-[9px] uppercase tracking-wide text-rust"
-                        >
-                          Quitar ejercicio
-                        </button>
-                      </div>
+                      {!isAssignedRoutine && (
+                        <div className="mt-2 grid grid-cols-2 gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => addSet(i)}
+                            className="rounded-lg border border-dashed border-border px-2 py-1.5 font-mono text-[9px] uppercase tracking-wide text-textMuted"
+                          >
+                            + Serie
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeExercise(i)}
+                            className="rounded-lg border border-dashed border-rust/40 px-2 py-1.5 font-mono text-[9px] uppercase tracking-wide text-rust"
+                          >
+                            Quitar ejercicio
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -525,25 +541,27 @@ export function LiveWorkout({
             })}
           </div>
 
-          <div className="mt-2 grid grid-cols-2 gap-1.5">
-            <button
-              type="button"
-              onClick={() => {
-                const nombre = window.prompt("Nombre del ejercicio:");
-                if (nombre && nombre.trim()) addExerciseByName(nombre.trim());
-              }}
-              className="rounded-lg border border-dashed border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted"
-            >
-              + Agregar ejercicio
-            </button>
-            <button
-              type="button"
-              onClick={() => setLibraryTarget("new")}
-              className="rounded-lg border border-dashed border-gold/50 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold"
-            >
-              🔍 Desde biblioteca
-            </button>
-          </div>
+          {!isAssignedRoutine && (
+            <div className="mt-2 grid grid-cols-2 gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  const nombre = window.prompt("Nombre del ejercicio:");
+                  if (nombre && nombre.trim()) addExerciseByName(nombre.trim());
+                }}
+                className="rounded-lg border border-dashed border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted"
+              >
+                + Agregar ejercicio
+              </button>
+              <button
+                type="button"
+                onClick={() => setLibraryTarget("new")}
+                className="rounded-lg border border-dashed border-gold/50 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold"
+              >
+                🔍 Desde biblioteca
+              </button>
+            </div>
+          )}
         </>
       )}
 
