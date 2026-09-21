@@ -65,8 +65,10 @@ export function useRoutineIncidents() {
 }
 
 /** Lado ENTRENADOR: incidencias reportadas por sus alumnos vinculados, más
- * recientes primero, con "marcar como vista". */
-export function useTrainerIncidents(authenticated: boolean, enabled: boolean) {
+ * recientes primero, con "marcar como vista". Con `studentId` filtra a un
+ * solo alumno (pantalla de detalle); sin él, trae las de todos (panel
+ * general). */
+export function useTrainerIncidents(authenticated: boolean, enabled: boolean, studentId?: string) {
   const [incidents, setIncidents] = useState<RoutineIncident[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -76,14 +78,12 @@ export function useTrainerIncidents(authenticated: boolean, enabled: boolean) {
       setLoaded(true);
       return;
     }
-    const { data } = await supabase
-      .from("routine_incidents")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(50);
+    let query = supabase.from("routine_incidents").select("*").order("created_at", { ascending: false }).limit(50);
+    if (studentId) query = query.eq("student_id", studentId);
+    const { data } = await query;
     setIncidents((data || []).map(fromRow));
     setLoaded(true);
-  }, [enabled]);
+  }, [enabled, studentId]);
 
   useEffect(() => {
     if (authenticated && enabled) refetch();

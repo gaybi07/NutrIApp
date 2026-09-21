@@ -4,9 +4,10 @@ import { useRef, useState } from "react";
 import { useTrainerApplication, useTrainerAdmin } from "@/lib/useTrainerApplication";
 import { useTrainerLink, useTrainerStudents, useTrainerRoutines, useTrainerRoutinesForStudent } from "@/lib/useTrainerLink";
 import { useTrainerIncidents } from "@/lib/useRoutineIncidents";
-import { useStudentMetrics } from "@/lib/useStudentMetrics";
-import { TrainerApplication, TrainerStatus, TrainerRoutine, TrainerLinkRequest, RoutineIncident, RoutineIncidentType, StudentMetrics, Routine } from "@/lib/types";
+import { TrainerApplication, TrainerStatus, TrainerRoutine, TrainerLinkRequest, TrainerStudent, RoutineIncident, RoutineIncidentType, Routine } from "@/lib/types";
 import { RoutineEditorModal } from "@/components/RoutineEditorModal";
+import { StudentDetailScreen } from "@/components/StudentDetailScreen";
+import { useMyTrainerComments } from "@/lib/useTrainerComments";
 
 const STATUS_STYLE: Record<TrainerStatus, { label: string; color: string }> = {
   pendiente: { label: "Pendiente de revisión", color: "text-gold" },
@@ -128,33 +129,6 @@ function PendingRequestRow({
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-border bg-bg/40 p-2">
-      <div className="font-mono text-[8.5px] uppercase tracking-wide text-textMuted">{label}</div>
-      <div className="mt-0.5 text-sm font-semibold text-text">{value}</div>
-    </div>
-  );
-}
-
-function StudentMetricsPanel({ metrics }: { metrics: StudentMetrics }) {
-  const fmt = (value: number | null, suffix = "") => (value == null ? "—" : `${value}${suffix}`);
-  const cambioPeso =
-    metrics.cambioPeso == null ? "—" : `${metrics.cambioPeso > 0 ? "+" : ""}${metrics.cambioPeso.toFixed(1)}kg`;
-  return (
-    <div className="mt-2 grid grid-cols-2 gap-1.5">
-      <MetricCard label="Adherencia semanal" value={fmt(metrics.adherenciaSemanal, "%")} />
-      <MetricCard label="Entrenos realizados" value={String(metrics.entrenosRealizados)} />
-      <MetricCard label="Entrenos planificados" value={String(metrics.entrenosPlanificados)} />
-      <MetricCard label="Peso actual" value={fmt(metrics.pesoActual, "kg")} />
-      <MetricCard label="Cambio vs. semana ant." value={cambioPeso} />
-      <MetricCard label="Proteína promedio" value={fmt(metrics.proteinaPromedio, "g")} />
-      <MetricCard label="Pasos promedio" value={fmt(metrics.pasosPromedio)} />
-      <MetricCard label="Volumen semanal" value={fmt(Math.round(metrics.volumenSemanal), "kg")} />
-    </div>
-  );
-}
-
 function IncidentRow({
   incident,
   studentEmail,
@@ -200,18 +174,8 @@ function TrainerStudentsAndRoutines({ authenticated }: { authenticated: boolean 
   const studentsHook = useTrainerStudents(authenticated, true);
   const routinesHook = useTrainerRoutines(authenticated, true);
   const incidentsHook = useTrainerIncidents(authenticated, true);
-  const metricsHook = useStudentMetrics();
   const [editing, setEditing] = useState<TrainerRoutine | "new" | null>(null);
-  const [metricsOpenFor, setMetricsOpenFor] = useState<string | null>(null);
-
-  const toggleMetrics = (studentId: string) => {
-    if (metricsOpenFor === studentId) {
-      setMetricsOpenFor(null);
-      return;
-    }
-    setMetricsOpenFor(studentId);
-    if (!metricsHook.metricsByStudent[studentId]) metricsHook.load(studentId);
-  };
+  const [viewingStudent, setViewingStudent] = useState<TrainerStudent | null>(null);
 
   const copyInviteCode = async () => {
     if (!studentsHook.inviteCode) return;
@@ -272,26 +236,16 @@ function TrainerStudentsAndRoutines({ authenticated }: { authenticated: boolean 
       ) : (
         <div className="mb-3 space-y-1.5">
           {studentsHook.students.map((s) => (
-            <div key={s.studentId} className="rounded-lg border border-border bg-bg/40 px-2.5 py-2">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-mono text-[11px] text-text">{s.studentEmail}</span>
-                <div className="flex shrink-0 gap-2">
-                  <button type="button" onClick={() => toggleMetrics(s.studentId)} className="font-mono text-[10px] text-gold">
-                    {metricsOpenFor === s.studentId ? "Ocultar métricas" : "Ver métricas"}
-                  </button>
-                  <button type="button" onClick={() => studentsHook.removeStudent(s.studentId)} className="font-mono text-[10px] text-rust">
-                    Quitar
-                  </button>
-                </div>
+            <div key={s.studentId} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-bg/40 px-2.5 py-2">
+              <span className="font-mono text-[11px] text-text">{s.studentEmail}</span>
+              <div className="flex shrink-0 gap-2">
+                <button type="button" onClick={() => setViewingStudent(s)} className="font-mono text-[10px] text-gold">
+                  Ver alumno
+                </button>
+                <button type="button" onClick={() => studentsHook.removeStudent(s.studentId)} className="font-mono text-[10px] text-rust">
+                  Quitar
+                </button>
               </div>
-              {metricsOpenFor === s.studentId &&
-                (metricsHook.loadingId === s.studentId ? (
-                  <div className="mt-2 text-[11px] text-textMuted">Calculando...</div>
-                ) : metricsHook.metricsByStudent[s.studentId] ? (
-                  <StudentMetricsPanel metrics={metricsHook.metricsByStudent[s.studentId]!} />
-                ) : (
-                  <div className="mt-2 text-[11px] text-rust">No se pudieron cargar las métricas.</div>
-                ))}
             </div>
           ))}
         </div>
@@ -367,6 +321,14 @@ function TrainerStudentsAndRoutines({ authenticated }: { authenticated: boolean 
           onClose={() => setEditing(null)}
         />
       )}
+
+      {viewingStudent && (
+        <StudentDetailScreen
+          studentId={viewingStudent.studentId}
+          studentEmail={viewingStudent.studentEmail}
+          onClose={() => setViewingStudent(null)}
+        />
+      )}
     </div>
   );
 }
@@ -382,6 +344,7 @@ function StudentLinkSection({
 }) {
   const linkHook = useTrainerLink(authenticated);
   const trainerRoutines = useTrainerRoutinesForStudent(authenticated, Boolean(linkHook.link));
+  const commentsHook = useMyTrainerComments(authenticated, Boolean(linkHook.link));
   const [code, setCode] = useState("");
   const [adoptedIds, setAdoptedIds] = useState<string[]>([]);
 
@@ -446,6 +409,27 @@ function StudentLinkSection({
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {commentsHook.comments.length > 0 && (
+            <div className="mt-3 border-t border-dashed border-border pt-2.5">
+              <div className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.15em] text-gold">Comentarios de tu entrenador</div>
+              <div className="space-y-1.5">
+                {commentsHook.comments.map((comment) => (
+                  <div
+                    key={comment.id}
+                    className={`rounded-lg border p-2.5 ${comment.readAt ? "border-border bg-bg/40" : "border-gold/40 bg-gold/5"}`}
+                    onClick={() => !comment.readAt && commentsHook.markRead(comment.id)}
+                  >
+                    <div className="text-[12px] text-text">{comment.texto}</div>
+                    <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">
+                      {new Date(comment.createdAt).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" })}
+                      {!comment.readAt && " · nuevo"}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </>

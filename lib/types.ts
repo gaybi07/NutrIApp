@@ -246,6 +246,38 @@ export interface StudentMetrics {
   volumenSemanal: number;
 }
 
+/** Un día de la semana del alumno, tal como lo devuelve
+ * get_student_week_detail() -- potencia las secciones Entrenamientos y
+ * Nutrición de la pantalla de detalle del alumno con una sola llamada. */
+export interface StudentDayDetail {
+  fecha: string;
+  kcal: number;
+  proteina: number;
+  carbohidratos: number;
+  grasas: number;
+  pasos: number;
+  entreno: boolean;
+  entrenoIntensidad: TrainingIntensity | null;
+  volumen: number;
+}
+
+/** Un punto de la evolución de peso del alumno (get_student_weight_history). */
+export interface StudentWeightPoint {
+  weekStart: string;
+  peso: number;
+}
+
+/** Comentario del entrenador a un alumno -- de una sola vía (el alumno lo
+ * lee y lo puede marcar como leído, no responde por acá). */
+export interface TrainerComment {
+  id: string;
+  trainerId: string;
+  studentId: string;
+  texto: string;
+  readAt: string | null;
+  createdAt: string;
+}
+
 export interface RoutineIncident {
   id: string;
   studentId: string;
