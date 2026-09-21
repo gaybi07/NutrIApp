@@ -228,6 +228,24 @@ export type RoutineIncidentType =
   | "serie_adicional"
   | "ejercicio_fuera_de_plan";
 
+/** Las 8 tarjetas mínimas que ve el entrenador de un alumno puntual, para
+ * la semana que arranca en `weekStart` -- se calculan del lado del server
+ * (RPC get_student_metrics, migration_2026-09-21d) para que el entrenador
+ * nunca reciba filas crudas de `days`/`user_settings` del alumno, solo
+ * estos números ya agregados. `null` en un campo significa "sin datos esa
+ * semana", no cero. */
+export interface StudentMetrics {
+  weekStart: string;
+  adherenciaSemanal: number | null; // 0-100, entrenosRealizados/entrenosPlanificados
+  entrenosRealizados: number;
+  entrenosPlanificados: number;
+  pesoActual: number | null;
+  cambioPeso: number | null; // vs la semana anterior, puede ser negativo
+  proteinaPromedio: number | null;
+  pasosPromedio: number | null;
+  volumenSemanal: number;
+}
+
 export interface RoutineIncident {
   id: string;
   studentId: string;
