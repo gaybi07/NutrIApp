@@ -155,12 +155,12 @@ export function AuthPanel({
               >
                 Herramientas
               </button>
-              {isSupabaseConfigured && (
+              {isSupabaseConfigured && onOpenTrainer && (
                 <button
                   type="button"
                   onClick={() => {
                     setMenuOpen(false);
-                    onOpenTrainer?.();
+                    onOpenTrainer();
                   }}
                   className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
                 >

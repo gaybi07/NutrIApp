@@ -22,6 +22,8 @@ function fromRow(row: Record<string, unknown>): TrainerApplication {
     createdAt: row.created_at as string,
     reviewedAt: (row.reviewed_at as string) ?? null,
     reviewNote: (row.review_note as string) ?? null,
+    trainerPlan: (row.trainer_plan as TrainerApplication["trainerPlan"]) ?? "gratis",
+    maxStudents: (row.max_students as number) ?? 1,
   };
 }
 

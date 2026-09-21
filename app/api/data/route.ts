@@ -110,7 +110,7 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
 
-  const SETTINGS_COLUMNS = "goal, tdee_fallback, weekly_weights, calculator_profile, tour_done, week_plan, routines, training_schedule, theme, enabled_tabs, font_size, inicio_order, comidas_order, macros_order, actividad_order, inicio_hidden, comidas_hidden, macros_hidden, actividad_hidden";
+  const SETTINGS_COLUMNS = "goal, tdee_fallback, weekly_weights, calculator_profile, tour_done, week_plan, routines, training_schedule, theme, enabled_tabs, font_size, inicio_order, comidas_order, macros_order, actividad_order, inicio_hidden, comidas_hidden, macros_hidden, actividad_hidden, plan";
   const SETTINGS_COLUMNS_BASE = "goal, tdee_fallback, weekly_weights, calculator_profile, tour_done, week_plan, routines, training_schedule, theme, enabled_tabs, font_size";
 
   const [daysResult, settingsResultFull] = await Promise.all([
@@ -154,6 +154,7 @@ export async function GET() {
           comidasHidden: ((settingsResult.data as Record<string, unknown>).comidas_hidden as Settings["comidasHidden"]) || [],
           macrosHidden: ((settingsResult.data as Record<string, unknown>).macros_hidden as Settings["macrosHidden"]) || [],
           actividadHidden: ((settingsResult.data as Record<string, unknown>).actividad_hidden as Settings["actividadHidden"]) || [],
+          plan: ((settingsResult.data as Record<string, unknown>).plan as Settings["plan"]) || "basico",
         }
       : DEFAULT_SETTINGS,
   });
@@ -200,14 +201,17 @@ export async function PUT(req: NextRequest) {
       comidas_hidden: settings.comidasHidden || [],
       macros_hidden: settings.macrosHidden || [],
       actividad_hidden: settings.actividadHidden || [],
+      plan: settings.plan || "basico",
     };
     let { error } = await supabase.from("user_settings").upsert(settingsRow);
     // Igual que en GET: si todavía no se corrió la migración de las columnas
-    // de orden/apagado, reintentamos sin ellas en vez de perder el resto del guardado.
+    // de orden/apagado (o de plan), reintentamos sin ellas en vez de perder
+    // el resto del guardado.
     if (error?.message?.includes("does not exist")) {
       const {
         inicio_order, comidas_order, macros_order, actividad_order,
         inicio_hidden, comidas_hidden, macros_hidden, actividad_hidden,
+        plan,
         ...baseRow
       } = settingsRow;
       ({ error } = await supabase.from("user_settings").upsert(baseRow));

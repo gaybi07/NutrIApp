@@ -145,7 +145,9 @@ export function ToolsSettings({
   onOpenDatos,
 }: {
   onOpenCalc: () => void;
-  onOpenAI: () => void;
+  /** Ausente en el plan Básico -- "Cargar con IA" es Premium (ver
+   * migration_2026-09-21g_add_plan_gating.sql). */
+  onOpenAI?: () => void;
   onOpenDatos: () => void;
 }) {
   return (
@@ -160,17 +162,19 @@ export function ToolsSettings({
         >
           Objetivo
         </button>
-        <button
-          type="button"
-          onClick={onOpenAI}
-          className="rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
-        >
-          Cargar con IA
-        </button>
+        {onOpenAI && (
+          <button
+            type="button"
+            onClick={onOpenAI}
+            className="rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
+          >
+            Cargar con IA
+          </button>
+        )}
         <button
           type="button"
           onClick={onOpenDatos}
-          className="col-span-2 rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
+          className={`rounded-xl border border-border bg-surfaceAlt px-2 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text ${onOpenAI ? "" : "col-span-2"}`}
         >
           Datos
         </button>

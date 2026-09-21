@@ -171,7 +171,7 @@ function IncidentRow({
   );
 }
 
-function TrainerStudentsAndRoutines({ authenticated }: { authenticated: boolean }) {
+function TrainerStudentsAndRoutines({ authenticated, maxStudents }: { authenticated: boolean; maxStudents: number }) {
   const studentsHook = useTrainerStudents(authenticated, true);
   const routinesHook = useTrainerRoutines(authenticated, true);
   const incidentsHook = useTrainerIncidents(authenticated, true);
@@ -189,7 +189,17 @@ function TrainerStudentsAndRoutines({ authenticated }: { authenticated: boolean 
 
   return (
     <div className="mt-5 border-t border-border pt-3">
-      <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Tus alumnos</div>
+      <div className="mb-2 flex items-center justify-between">
+        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Tus alumnos</div>
+        <div className="font-mono text-[10px] text-textMuted">
+          {studentsHook.students.length}/{maxStudents} cupos usados
+        </div>
+      </div>
+      {studentsHook.students.length >= maxStudents && (
+        <div className="mb-2 rounded-lg border border-dashed border-gold/40 bg-gold/5 px-2.5 py-2 text-[11px] text-textMuted">
+          Llegaste al límite de alumnos de tu plan — subí de nivel para aceptar más.
+        </div>
+      )}
       {!studentsHook.inviteCode ? (
         <button
           type="button"
@@ -565,7 +575,9 @@ export function TrainerPanel({
         </>
       )}
 
-      {isApprovedTrainer && <TrainerStudentsAndRoutines authenticated={authenticated} />}
+      {isApprovedTrainer && (
+        <TrainerStudentsAndRoutines authenticated={authenticated} maxStudents={own.application?.maxStudents ?? 1} />
+      )}
 
       <StudentLinkSection authenticated={authenticated} routines={routines} onSaveRoutines={onSaveRoutines} />
 

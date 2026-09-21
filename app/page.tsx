@@ -110,15 +110,29 @@ export default function Home() {
     document.documentElement.setAttribute("data-font-size", settings.fontSize || "chico");
   }, [settings.fontSize]);
 
+  // Básico/Premium/Premium+ -- ver migration_2026-09-21g_add_plan_gating.sql.
+  // Estas listas son la única fuente de verdad de qué tapa el plan gratis;
+  // a diferencia de enabledTabs/inicioHidden/macrosHidden (elección del
+  // usuario, reversible desde Preferencias), esto no se puede apagar ni
+  // prender a mano -- se resuelve solo con lo que cuenta Settings.plan.
+  const clientPlan = settings.plan || "basico";
+  const isBasico = clientPlan === "basico";
+  const PLAN_LOCKED_TABS: MainTab[] = ["comidas", "actividad", "gastos"];
+  const PLAN_LOCKED_INICIO_BLOCKS = ["objetivo", "seguimiento", "comidasSemana"] as const;
+  const PLAN_LOCKED_MACROS_BLOCKS = ["reporte", "tabla"] as const;
+
   const inicioOrder = resolveOrder(settings.inicioOrder, DEFAULT_INICIO_ORDER);
   const inicioDrag = useSectionOrder(inicioOrder, (next) => saveSettings({ ...settings, inicioOrder: next }));
-  const inicioHidden = settings.inicioHidden || [];
+  const inicioHidden = isBasico ? [...(settings.inicioHidden || []), ...PLAN_LOCKED_INICIO_BLOCKS] : settings.inicioHidden || [];
   const hideInicioBlock = (id: (typeof inicioOrder)[number]) => {
     if (id === "hoy") return;
     saveSettings((prev) => ({ ...prev, inicioHidden: [...(prev.inicioHidden || []), id] }));
   };
+  const macrosHidden = isBasico ? [...(settings.macrosHidden || []), ...PLAN_LOCKED_MACROS_BLOCKS] : settings.macrosHidden || [];
 
-  const enabledTabs = resolveOrder(settings.enabledTabs, DEFAULT_ENABLED_TABS);
+  const enabledTabs = resolveOrder(settings.enabledTabs, DEFAULT_ENABLED_TABS).filter(
+    (tab) => tab === "inicio" || !isBasico || !PLAN_LOCKED_TABS.includes(tab)
+  );
   useEffect(() => {
     if (activeTab !== "inicio" && !enabledTabs.includes(activeTab)) setActiveTab("inicio");
   }, [activeTab, enabledTabs]);
@@ -301,7 +315,7 @@ export default function Home() {
           onOpenTabs={() => setPanel("solapas")}
           onOpenSections={() => setPanel("secciones")}
           onOpenTools={() => setPanel("herramientas")}
-          onOpenTrainer={() => setPanel("entrenador")}
+          onOpenTrainer={isBasico ? undefined : () => setPanel("entrenador")}
           centerContent={
             <div className="flex w-full min-w-0 items-center justify-between gap-1">
               <button
@@ -362,7 +376,7 @@ export default function Home() {
           onUpsert={upsertDay}
           order={settings.macrosOrder}
           onReorder={(macrosOrder) => saveSettings({ ...settings, macrosOrder })}
-          hidden={settings.macrosHidden}
+          hidden={macrosHidden}
           onHide={(id) => saveSettings((prev) => ({ ...prev, macrosHidden: [...(prev.macrosHidden || []), id] }))}
           foodTrainingInsight={foodTrainingInsight}
           goalMode={settings.calculatorProfile?.modo}
@@ -819,7 +833,7 @@ export default function Home() {
             </button>
             <ToolsSettings
               onOpenCalc={() => setPanel("calc")}
-              onOpenAI={() => setPanel("ai")}
+              onOpenAI={isBasico ? undefined : () => setPanel("ai")}
               onOpenDatos={() => setPanel("datos")}
             />
           </div>

@@ -178,6 +178,11 @@ export type TrainingSchedule = Partial<Record<Weekday, string>>; // weekday -> R
  * "ninguno" es el implícito (todavía no se postuló, no hay fila en la tabla). */
 export type TrainerStatus = "pendiente" | "aprobado" | "rechazado";
 
+/** Nivel de suscripción del entrenador (por cupo de alumnos, no por
+ * funciones -- un entrenador gratis ve exactamente el mismo panel completo,
+ * solo con menos lugares). Ver migration_2026-09-21g_add_plan_gating.sql. */
+export type TrainerPlanTier = "gratis" | "pago";
+
 export interface TrainerApplication {
   id: string;
   userId: string;
@@ -187,6 +192,8 @@ export interface TrainerApplication {
   createdAt: string;
   reviewedAt: string | null;
   reviewNote: string | null;
+  trainerPlan?: TrainerPlanTier;
+  maxStudents?: number;
 }
 
 /** Estado del vínculo -- ver migration_2026-09-21_add_trainer_module.sql.
@@ -697,8 +704,16 @@ export function resolveOrder<T>(order: T[] | undefined, fallback: T[]): T[] {
   return [...known, ...missing];
 }
 
+/** Básico (gratis) / Premium / Premium+ -- ver migration_2026-09-21g_add_plan_gating.sql.
+ * Sin `plan` guardado todavía (cuentas viejas) se trata como "basico". La
+ * diferencia entre Premium y Premium+ es solo el número de cupos de
+ * vínculo profesional (1 vs. 2) -- las herramientas que desbloquea el pago
+ * son las mismas en los dos. */
+export type ClientPlan = "basico" | "premium" | "premium_plus";
+
 export interface Settings {
   goal: number; // kcal objetivo diario de consumo
+  plan?: ClientPlan;
   tdeeFallback: number; // gasto de referencia cuando no hay pasos cargados
   weeklyWeights?: Record<string, number>; // peso registrado por semana, usando el lunes como clave
   calculatorProfile?: CalculatorProfile;
