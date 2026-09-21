@@ -3,13 +3,23 @@
 import { useRef, useState } from "react";
 import { useTrainerApplication, useTrainerAdmin } from "@/lib/useTrainerApplication";
 import { useTrainerLink, useTrainerStudents, useTrainerRoutines, useTrainerRoutinesForStudent } from "@/lib/useTrainerLink";
-import { TrainerApplication, TrainerStatus, TrainerRoutine, TrainerLinkRequest, Routine } from "@/lib/types";
+import { useTrainerIncidents } from "@/lib/useRoutineIncidents";
+import { TrainerApplication, TrainerStatus, TrainerRoutine, TrainerLinkRequest, RoutineIncident, RoutineIncidentType, Routine } from "@/lib/types";
 import { RoutineEditorModal } from "@/components/RoutineEditorModal";
 
 const STATUS_STYLE: Record<TrainerStatus, { label: string; color: string }> = {
   pendiente: { label: "Pendiente de revisión", color: "text-gold" },
   aprobado: { label: "Aprobado ✓", color: "text-sage" },
   rechazado: { label: "Rechazado", color: "text-rust" },
+};
+
+const INCIDENT_LABEL: Record<RoutineIncidentType, string> = {
+  omitido: "Omitido",
+  reemplazado: "Reemplazado",
+  comentario: "Comentario",
+  comentario_final: "Comentario final",
+  serie_adicional: "Serie adicional",
+  ejercicio_fuera_de_plan: "Ejercicio fuera de plan",
 };
 
 function newId() {
@@ -117,9 +127,51 @@ function PendingRequestRow({
   );
 }
 
+function IncidentRow({
+  incident,
+  studentEmail,
+  busy,
+  onMarkSeen,
+}: {
+  incident: RoutineIncident;
+  studentEmail: string;
+  busy: boolean;
+  onMarkSeen: () => void;
+}) {
+  return (
+    <div className={`rounded-lg border p-2.5 ${incident.vistoPorEntrenador ? "border-border bg-bg/40" : "border-gold/40 bg-gold/5"}`}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-semibold text-text">{studentEmail}</span>
+        <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">{incident.fecha}</span>
+      </div>
+      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+        <span className="rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wide text-gold">
+          {INCIDENT_LABEL[incident.tipo]}
+        </span>
+        <span className="font-mono text-[10px] text-textMuted">
+          {incident.routineNombre}
+          {incident.ejercicioNombre ? ` · ${incident.ejercicioNombre}` : ""}
+        </span>
+      </div>
+      {incident.detalle && <div className="mt-1 text-[11px] text-textMuted">{incident.detalle}</div>}
+      {!incident.vistoPorEntrenador && (
+        <button
+          type="button"
+          onClick={onMarkSeen}
+          disabled={busy}
+          className="mt-1.5 rounded-full border border-border px-2 py-1 font-mono text-[9px] uppercase tracking-wide text-textMuted disabled:opacity-50"
+        >
+          Marcar como vista
+        </button>
+      )}
+    </div>
+  );
+}
+
 function TrainerStudentsAndRoutines({ authenticated }: { authenticated: boolean }) {
   const studentsHook = useTrainerStudents(authenticated, true);
   const routinesHook = useTrainerRoutines(authenticated, true);
+  const incidentsHook = useTrainerIncidents(authenticated, true);
   const [editing, setEditing] = useState<TrainerRoutine | "new" | null>(null);
 
   const copyInviteCode = async () => {
@@ -187,6 +239,27 @@ function TrainerStudentsAndRoutines({ authenticated }: { authenticated: boolean 
                 Quitar
               </button>
             </div>
+          ))}
+        </div>
+      )}
+
+      <div className="mb-2 mt-4 font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Incidencias</div>
+      {!incidentsHook.loaded ? (
+        <div className="mb-3 text-[12px] text-textMuted">Cargando...</div>
+      ) : incidentsHook.incidents.length === 0 ? (
+        <div className="mb-3 rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">
+          Todavía no hay incidencias reportadas en tus rutinas asignadas.
+        </div>
+      ) : (
+        <div className="mb-3 space-y-1.5">
+          {incidentsHook.incidents.map((incident) => (
+            <IncidentRow
+              key={incident.id}
+              incident={incident}
+              studentEmail={studentsHook.students.find((s) => s.studentId === incident.studentId)?.studentEmail || incident.studentId}
+              busy={incidentsHook.busyId === incident.id}
+              onMarkSeen={() => incidentsHook.markSeen(incident.id)}
+            />
           ))}
         </div>
       )}

@@ -212,6 +212,38 @@ export interface TrainerStudent {
   createdAt: string;
 }
 
+/** Desvíos registrados al ejecutar una rutina asignada (LiveWorkout) --
+ * nunca modifican la rutina en sí, son un registro aparte para que el
+ * entrenador los revise. `omitido`/`reemplazado`/`comentario` van atados a
+ * un ejercicio planificado puntual; `comentario_final` es de todo el
+ * entrenamiento (sin ejercicio); `serie_adicional` y `ejercicio_fuera_de_plan`
+ * son desvíos que SÍ se permiten hacer en vivo, pero quedan marcados en vez
+ * de mezclarse silenciosamente con lo planificado. Ver
+ * migration_2026-09-21c_add_routine_incidents.sql. */
+export type RoutineIncidentType =
+  | "omitido"
+  | "reemplazado"
+  | "comentario"
+  | "comentario_final"
+  | "serie_adicional"
+  | "ejercicio_fuera_de_plan";
+
+export interface RoutineIncident {
+  id: string;
+  studentId: string;
+  trainerId: string;
+  fecha: string; // YYYY-MM-DD, el día del entrenamiento
+  routineId: string; // Routine.id local (Settings.routines del alumno)
+  routineNombre: string;
+  trainerRoutineId: string | null;
+  tipo: RoutineIncidentType;
+  /** Null solo en comentario_final. */
+  ejercicioNombre: string | null;
+  detalle: string | null;
+  vistoPorEntrenador: boolean;
+  createdAt: string;
+}
+
 /** Solicitud de vinculación -- usar un código de invitación ya no crea el
  * vínculo al instante, crea esto. Queda "pendiente" hasta que el
  * entrenador la acepta (crea la fila en TrainerLink) o la rechaza (acá

@@ -21,6 +21,7 @@ import { clampNumber } from "@/lib/inputLimits";
 import { ExercisePicker } from "@/components/ExercisePicker";
 import { RoutineEditorModal } from "@/components/RoutineEditorModal";
 import { LibraryExercise, muscleGroupFor } from "@/lib/exerciseLibrary";
+import { useRoutineIncidents, RoutineIncidentInput } from "@/lib/useRoutineIncidents";
 
 function newId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -43,6 +44,18 @@ interface DraftExercise {
   suggestionNote?: string;
   sets: DraftSet[];
   grupoMuscular?: MuscleGroup;
+  /** Se agregó en vivo durante una rutina asignada, no estaba en el plan --
+   * a diferencia de un ejercicio planificado, este SÍ se puede quitar y
+   * agregarle/sacarle series libremente (nunca fue parte de lo fijado por
+   * el entrenador). Se registra como incidencia "ejercicio_fuera_de_plan"
+   * al finalizar. Sin sentido en una rutina personal (ahí todo es igual). */
+  esFueraDePlan?: boolean;
+  /** Los tres desvíos que sí aplican a un ejercicio PLANIFICADO de una
+   * rutina asignada -- no borran el ejercicio de la sesión (eso ocultaría
+   * que estaba planificado), solo lo marcan para que el entrenador lo vea. */
+  omitido?: boolean;
+  reemplazadoPor?: string;
+  comentario?: string;
 }
 
 interface LiveSession {
@@ -127,6 +140,10 @@ export function LiveWorkout({
   const [report, setReport] = useState<WorkoutReport | null>(null);
   const [planningOpen, setPlanningOpen] = useState(false);
   const [creatingRoutine, setCreatingRoutine] = useState(false);
+  // Solo se usa para rutinas asignadas -- ver handleFinish/confirmFinish.
+  const [finishing, setFinishing] = useState(false);
+  const [finalComment, setFinalComment] = useState("");
+  const { recordMany } = useRoutineIncidents();
 
   const assignRoutineToday = (routineId: string) => {
     onSaveSchedule({ ...schedule, [weekdayOf(entry.fecha)]: routineId });
@@ -179,7 +196,17 @@ export function LiveWorkout({
             ...prev,
             exercises: [
               ...prev.exercises,
-              { nombre, plannedSeries: 4, plannedRepeticiones: 10, sets: Array.from({ length: 4 }, () => defaultSet(10)), grupoMuscular },
+              {
+                nombre,
+                plannedSeries: 4,
+                plannedRepeticiones: 10,
+                sets: Array.from({ length: 4 }, () => defaultSet(10)),
+                grupoMuscular,
+                // Si la sesión es de una rutina asignada, esto nunca estuvo
+                // en el plan -- se marca para poder quitarlo/editarlo libre
+                // y para registrar la incidencia al finalizar.
+                esFueraDePlan: isAssignedRoutine || undefined,
+              },
             ],
           }
         : prev
@@ -222,6 +249,34 @@ export function LiveWorkout({
     });
   };
 
+  // Los tres desvíos de un ejercicio PLANIFICADO -- nunca lo sacan de la
+  // sesión, solo lo marcan (ver comentario en DraftExercise). Reemplazar/
+  // comentar usan window.prompt, igual que "+ Agregar ejercicio" -- mismo
+  // patrón liviano ya establecido en este componente.
+  const toggleOmitido = (exIndex: number) => {
+    setSession((prev) => {
+      if (!prev) return prev;
+      const exercises = prev.exercises.map((ex, i) => (i === exIndex ? { ...ex, omitido: !ex.omitido } : ex));
+      return { ...prev, exercises };
+    });
+  };
+
+  const setReemplazadoPor = (exIndex: number, reemplazadoPor: string | undefined) => {
+    setSession((prev) => {
+      if (!prev) return prev;
+      const exercises = prev.exercises.map((ex, i) => (i === exIndex ? { ...ex, reemplazadoPor } : ex));
+      return { ...prev, exercises };
+    });
+  };
+
+  const setComentario = (exIndex: number, comentario: string | undefined) => {
+    setSession((prev) => {
+      if (!prev) return prev;
+      const exercises = prev.exercises.map((ex, i) => (i === exIndex ? { ...ex, comentario } : ex));
+      return { ...prev, exercises };
+    });
+  };
+
   // Cuando la última serie sin cargar queda completa (tiene intensidad), colapsa
   // solo -- así el usuario pasa naturalmente al siguiente ejercicio.
   useEffect(() => {
@@ -233,13 +288,14 @@ export function LiveWorkout({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
-  const handleFinish = () => {
+  const doFinish = (comentarioFinal: string) => {
     if (!session) return;
     const elapsedMinutes = Math.max(1, Math.round((Date.now() - session.startedAt) / 60000));
     const finalExercises: ExerciseEntry[] = [];
     const reportItems: WorkoutReportItem[] = [];
     const suggestionUpdates: Record<string, WorkoutSuggestion> = {};
     const counts: Record<TrainingIntensity, number> = { leve: 0, moderado: 0, exigente: 0, fallo: 0 };
+    const incidents: RoutineIncidentInput[] = [];
 
     for (const ex of session.exercises) {
       const doneSets = ex.sets.filter((s) => s.intensidad != null);
@@ -267,6 +323,79 @@ export function LiveWorkout({
           };
         }
       }
+
+      // Incidencias -- solo tienen sentido con una rutina asignada (hay un
+      // entrenador del otro lado a quien avisar); una rutina personal no
+      // genera nada de esto, se comporta exactamente como antes.
+      if (isAssignedRoutine) {
+        if (ex.esFueraDePlan) {
+          incidents.push({
+            fecha: entry.fecha,
+            routineId: session.routineId || "",
+            routineNombre: sessionRoutine?.nombre || "",
+            trainerRoutineId: sessionRoutine?.trainerRoutineId,
+            tipo: "ejercicio_fuera_de_plan",
+            ejercicioNombre: ex.nombre,
+            detalle: `${sets.length} serie${sets.length === 1 ? "" : "s"} realizada${sets.length === 1 ? "" : "s"}`,
+          });
+        } else {
+          if (ex.omitido) {
+            incidents.push({
+              fecha: entry.fecha,
+              routineId: session.routineId || "",
+              routineNombre: sessionRoutine?.nombre || "",
+              trainerRoutineId: sessionRoutine?.trainerRoutineId,
+              tipo: "omitido",
+              ejercicioNombre: ex.nombre,
+            });
+          }
+          if (ex.reemplazadoPor) {
+            incidents.push({
+              fecha: entry.fecha,
+              routineId: session.routineId || "",
+              routineNombre: sessionRoutine?.nombre || "",
+              trainerRoutineId: sessionRoutine?.trainerRoutineId,
+              tipo: "reemplazado",
+              ejercicioNombre: ex.nombre,
+              detalle: `Reemplazado por: ${ex.reemplazadoPor}`,
+            });
+          }
+          if (ex.comentario) {
+            incidents.push({
+              fecha: entry.fecha,
+              routineId: session.routineId || "",
+              routineNombre: sessionRoutine?.nombre || "",
+              trainerRoutineId: sessionRoutine?.trainerRoutineId,
+              tipo: "comentario",
+              ejercicioNombre: ex.nombre,
+              detalle: ex.comentario,
+            });
+          }
+          if (sets.length > ex.plannedSeries) {
+            const extra = sets.length - ex.plannedSeries;
+            incidents.push({
+              fecha: entry.fecha,
+              routineId: session.routineId || "",
+              routineNombre: sessionRoutine?.nombre || "",
+              trainerRoutineId: sessionRoutine?.trainerRoutineId,
+              tipo: "serie_adicional",
+              ejercicioNombre: ex.nombre,
+              detalle: `${extra} serie${extra === 1 ? "" : "s"} de más (planificadas: ${ex.plannedSeries})`,
+            });
+          }
+        }
+      }
+    }
+
+    if (isAssignedRoutine && comentarioFinal.trim()) {
+      incidents.push({
+        fecha: entry.fecha,
+        routineId: session.routineId || "",
+        routineNombre: sessionRoutine?.nombre || "",
+        trainerRoutineId: sessionRoutine?.trainerRoutineId,
+        tipo: "comentario_final",
+        detalle: comentarioFinal.trim(),
+      });
     }
 
     const ranked = (Object.entries(counts) as [TrainingIntensity, number][]).sort((a, b) => b[1] - a[1]);
@@ -282,10 +411,21 @@ export function LiveWorkout({
       entrenamientoReporte: newReport,
     });
     if (Object.keys(suggestionUpdates).length > 0) onSaveSuggestions(suggestionUpdates);
+    if (incidents.length > 0) recordMany(sessionRoutine?.trainerId, incidents);
 
     setReport(newReport);
     setSession(null);
     setOpenIndex(null);
+    setFinishing(false);
+    setFinalComment("");
+  };
+
+  // Con rutina asignada, antes de cerrar de verdad se pide el comentario
+  // final (opcional) -- con rutina personal, "Finalizar" sigue haciendo
+  // exactamente lo mismo que siempre (sin paso extra).
+  const handleFinish = () => {
+    if (isAssignedRoutine) setFinishing(true);
+    else doFinish("");
   };
 
   const elapsedLabel = session ? formatElapsed(now - session.startedAt) : "0:00";
@@ -392,7 +532,8 @@ export function LiveWorkout({
         <>
           {isAssignedRoutine && (
             <div className="mb-2 rounded-lg border border-dashed border-gold/40 bg-gold/5 px-3 py-2 text-center text-[11px] text-textMuted">
-              🔒 Rutina asignada por tu entrenador — ejercicios y series fijos, solo cargás reps/peso/esfuerzo.
+              🔒 Rutina asignada por tu entrenador — no podés borrar lo planificado, pero podés marcar omitidos, reemplazos, series
+              extra y ejercicios fuera de plan. Todo queda registrado para que lo vea.
             </div>
           )}
           <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border bg-bg/40 px-3 py-2">
@@ -429,6 +570,12 @@ export function LiveWorkout({
               const doneCount = ex.sets.filter((s) => s.intensidad != null).length;
               const complete = ex.sets.length > 0 && doneCount === ex.sets.length;
               const open = openIndex === i;
+              // En una rutina asignada, un ejercicio planificado no se puede
+              // sacar de la sesión ni perder series por debajo de lo fijado
+              // -- solo uno agregado en vivo (esFueraDePlan) es plenamente
+              // libre, igual que en una rutina personal.
+              const canRemoveExercise = !isAssignedRoutine || ex.esFueraDePlan;
+              const canRemoveSetBelow = (setIndex: number) => !isAssignedRoutine || ex.esFueraDePlan || setIndex >= ex.plannedSeries;
               return (
                 <div key={i} className="overflow-hidden rounded-lg border border-border bg-bg/40">
                   <button
@@ -438,7 +585,14 @@ export function LiveWorkout({
                   >
                     <div className="flex min-w-0 items-center gap-2">
                       <span className={`h-2 w-2 shrink-0 rounded-full ${complete ? "bg-sage" : "bg-textMuted/40"}`} />
-                      <span className="truncate text-sm font-semibold text-text">{ex.nombre}</span>
+                      <span className={`truncate text-sm font-semibold ${ex.omitido ? "text-textMuted line-through" : "text-text"}`}>
+                        {ex.nombre}
+                      </span>
+                      {ex.esFueraDePlan && (
+                        <span className="shrink-0 rounded-full border border-border px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-wide text-textMuted">
+                          Fuera de plan
+                        </span>
+                      )}
                     </div>
                     <span className="shrink-0 font-mono text-[10px] text-textMuted">
                       {doneCount}/{ex.sets.length} series {open ? "▲" : "▼"}
@@ -452,12 +606,30 @@ export function LiveWorkout({
                           💡 {ex.suggestionNote}
                         </div>
                       )}
+                      {ex.omitido && (
+                        <div className="mb-2 rounded-lg border border-rust/30 bg-rust/10 px-2 py-1.5 text-[11px] text-rust">
+                          Marcado como omitido — se avisa a tu entrenador.
+                        </div>
+                      )}
+                      {ex.reemplazadoPor && (
+                        <div className="mb-2 rounded-lg border border-gold/30 bg-gold/10 px-2 py-1.5 text-[11px] text-textMuted">
+                          Reemplazado por: <span className="font-semibold text-text">{ex.reemplazadoPor}</span>
+                        </div>
+                      )}
+                      {ex.comentario && (
+                        <div className="mb-2 rounded-lg border border-border bg-bg/60 px-2 py-1.5 text-[11px] text-textMuted">
+                          💬 {ex.comentario}
+                        </div>
+                      )}
                       <div className="space-y-1.5">
                         {ex.sets.map((set, j) => (
                           <div key={j} className="rounded-lg border border-border bg-bg/60 p-2">
                             <div className="mb-1 flex items-center justify-between">
-                              <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">Serie {j + 1}</span>
-                              {ex.sets.length > 1 && !isAssignedRoutine && (
+                              <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
+                                Serie {j + 1}
+                                {isAssignedRoutine && !ex.esFueraDePlan && j >= ex.plannedSeries ? " · extra" : ""}
+                              </span>
+                              {ex.sets.length > 1 && canRemoveSetBelow(j) && (
                                 <button
                                   type="button"
                                   onClick={() => removeSet(i, j)}
@@ -516,21 +688,55 @@ export function LiveWorkout({
                           </div>
                         ))}
                       </div>
-                      {!isAssignedRoutine && (
-                        <div className="mt-2 grid grid-cols-2 gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => addSet(i)}
-                            className="rounded-lg border border-dashed border-border px-2 py-1.5 font-mono text-[9px] uppercase tracking-wide text-textMuted"
-                          >
-                            + Serie
-                          </button>
+                      <div className="mt-2 grid grid-cols-2 gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => addSet(i)}
+                          className="rounded-lg border border-dashed border-border px-2 py-1.5 font-mono text-[9px] uppercase tracking-wide text-textMuted"
+                        >
+                          + Serie
+                        </button>
+                        {canRemoveExercise && (
                           <button
                             type="button"
                             onClick={() => removeExercise(i)}
                             className="rounded-lg border border-dashed border-rust/40 px-2 py-1.5 font-mono text-[9px] uppercase tracking-wide text-rust"
                           >
                             Quitar ejercicio
+                          </button>
+                        )}
+                      </div>
+
+                      {isAssignedRoutine && !ex.esFueraDePlan && (
+                        <div className="mt-1.5 grid grid-cols-3 gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => toggleOmitido(i)}
+                            className={`rounded-lg border px-2 py-1.5 font-mono text-[9px] uppercase tracking-wide ${
+                              ex.omitido ? "border-rust/50 bg-rust/10 text-rust" : "border-dashed border-border text-textMuted"
+                            }`}
+                          >
+                            {ex.omitido ? "Deshacer omitir" : "Omitir"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const value = window.prompt("¿Con qué lo reemplazaste?", ex.reemplazadoPor || "");
+                              if (value !== null) setReemplazadoPor(i, value.trim() || undefined);
+                            }}
+                            className="rounded-lg border border-dashed border-gold/50 px-2 py-1.5 font-mono text-[9px] uppercase tracking-wide text-gold"
+                          >
+                            Reemplazar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const value = window.prompt("Comentario para tu entrenador:", ex.comentario || "");
+                              if (value !== null) setComentario(i, value.trim() || undefined);
+                            }}
+                            className="rounded-lg border border-dashed border-border px-2 py-1.5 font-mono text-[9px] uppercase tracking-wide text-textMuted"
+                          >
+                            💬 Comentario
                           </button>
                         </div>
                       )}
@@ -541,28 +747,68 @@ export function LiveWorkout({
             })}
           </div>
 
-          {!isAssignedRoutine && (
-            <div className="mt-2 grid grid-cols-2 gap-1.5">
-              <button
-                type="button"
-                onClick={() => {
-                  const nombre = window.prompt("Nombre del ejercicio:");
-                  if (nombre && nombre.trim()) addExerciseByName(nombre.trim());
-                }}
-                className="rounded-lg border border-dashed border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted"
-              >
-                + Agregar ejercicio
-              </button>
-              <button
-                type="button"
-                onClick={() => setLibraryTarget("new")}
-                className="rounded-lg border border-dashed border-gold/50 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold"
-              >
-                🔍 Desde biblioteca
-              </button>
+          <div className="mt-2 grid grid-cols-2 gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                const nombre = window.prompt("Nombre del ejercicio:");
+                if (nombre && nombre.trim()) addExerciseByName(nombre.trim());
+              }}
+              className="rounded-lg border border-dashed border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted"
+            >
+              + Agregar ejercicio
+            </button>
+            <button
+              type="button"
+              onClick={() => setLibraryTarget("new")}
+              className="rounded-lg border border-dashed border-gold/50 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold"
+            >
+              🔍 Desde biblioteca
+            </button>
+          </div>
+          {isAssignedRoutine && (
+            <div className="mt-1.5 text-center text-[10px] text-textMuted">
+              Lo que agregues acá queda marcado "fuera de plan" para tu entrenador.
             </div>
           )}
         </>
+      )}
+
+      {finishing && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setFinishing(false)}>
+          <div
+            className="w-full max-w-sm rounded-2xl border border-border bg-surface p-4 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="font-display text-lg text-text">Cerrar entrenamiento</div>
+            <div className="mb-2 mt-1 text-[11px] text-textMuted">
+              Comentario final para tu entrenador (opcional) — se guarda junto con lo que hayas marcado en cada ejercicio.
+            </div>
+            <textarea
+              rows={3}
+              value={finalComment}
+              onChange={(event) => setFinalComment(event.target.value)}
+              placeholder="Ej: me costó más de lo normal, dormí poco"
+              className="w-full"
+            />
+            <div className="mt-3 grid grid-cols-2 gap-1.5">
+              <button
+                type="button"
+                onClick={() => setFinishing(false)}
+                className="rounded-lg border border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => doFinish(finalComment)}
+                className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg"
+              >
+                Finalizar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {libraryTarget && (
