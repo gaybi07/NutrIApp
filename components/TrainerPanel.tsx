@@ -122,17 +122,42 @@ function TrainerStudentsAndRoutines({ authenticated }: { authenticated: boolean 
   const routinesHook = useTrainerRoutines(authenticated, true);
   const [editing, setEditing] = useState<TrainerRoutine | "new" | null>(null);
 
+  const copyInviteCode = async () => {
+    if (!studentsHook.inviteCode) return;
+    try {
+      await navigator.clipboard.writeText(studentsHook.inviteCode);
+    } catch {
+      // si el portapapeles no está disponible, el código ya está visible en pantalla
+    }
+  };
+
   return (
     <div className="mt-5 border-t border-border pt-3">
       <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Tus alumnos</div>
-      <button
-        type="button"
-        onClick={studentsHook.getInviteCode}
-        disabled={studentsHook.busy}
-        className="mb-2 w-full rounded-lg border border-gold/60 bg-gold/10 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold disabled:opacity-50"
-      >
-        {studentsHook.inviteCode ? `Código: ${studentsHook.inviteCode}` : "Generar código de invitación"}
-      </button>
+      {!studentsHook.inviteCode ? (
+        <button
+          type="button"
+          onClick={studentsHook.getInviteCode}
+          disabled={studentsHook.busy}
+          className="mb-2 w-full rounded-lg border border-gold/60 bg-gold/10 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold disabled:opacity-50"
+        >
+          Generar código de invitación
+        </button>
+      ) : (
+        <div className="mb-2 rounded-lg border border-gold/40 bg-gold/5 p-3 text-center">
+          <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
+            Compartí este código con tu alumno
+          </div>
+          <div className="mb-2 font-mono text-2xl tracking-[0.3em] text-gold">{studentsHook.inviteCode}</div>
+          <button
+            type="button"
+            onClick={copyInviteCode}
+            className="rounded-lg border border-gold/60 bg-bg/60 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text"
+          >
+            Copiar código
+          </button>
+        </div>
+      )}
       {studentsHook.status && <div className="mb-2 text-[11px] text-rust">{studentsHook.status}</div>}
       {studentsHook.pendingRequests.length > 0 && (
         <div className="mb-3">

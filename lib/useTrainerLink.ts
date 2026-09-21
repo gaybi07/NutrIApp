@@ -179,6 +179,28 @@ export function useTrainerStudents(authenticated: boolean, enabled: boolean) {
   const getInviteCode = useCallback(async () => {
     if (!supabase) return;
     setBusy(true);
+    // Igual que getInviteCode() de useHousehold: reusa el código ya generado
+    // si existe -- "código único" para compartir, no uno nuevo cada vez que
+    // se reabre el panel (los códigos no expiran ni se consumen al usarse).
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      setBusy(false);
+      return;
+    }
+    const { data: existing } = await supabase
+      .from("trainer_invites")
+      .select("code")
+      .eq("trainer_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (existing?.code) {
+      setInviteCode(existing.code);
+      setBusy(false);
+      return;
+    }
     const { data, error } = await supabase.rpc("generate_trainer_invite_code");
     if (error) {
       setStatus(error.message);
