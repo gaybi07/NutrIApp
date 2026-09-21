@@ -165,6 +165,8 @@ export default function Home() {
     return profileWeight || 75;
   }, [days, settings]);
 
+  const proteinTargetG = useMemo(() => proteinTargetForWeight(currentWeightKg), [currentWeightKg]);
+
   const weightTrend = useMemo(() => {
     const currentWeight = settings.weeklyWeights?.[fmtDate(monday)];
     const previousWeight = settings.weeklyWeights?.[fmtDate(addDays(monday, -7))];
@@ -676,7 +678,13 @@ export default function Home() {
               </button>
             </div>
             <div className="flex-1 p-3">
-              <WeekPlanner items={inventory} weekPlan={weekPlan} onSave={saveWeekPlan} />
+              <WeekPlanner
+                items={inventory}
+                weekPlan={weekPlan}
+                onSave={saveWeekPlan}
+                dailyGoal={settings.goal}
+                proteinTargetG={proteinTargetG}
+              />
             </div>
           </div>
         </div>

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { InventoryItem, MealKey, MEAL_LABELS, WeekPlan } from "@/lib/types";
 import { isoMonday, addDays, fmtDate } from "@/lib/calculations";
-import { Recipe, RECIPES } from "@/lib/recipes";
+import { Recipe, RecipeIngredient, RECIPES } from "@/lib/recipes";
 import { inventoryKey } from "@/lib/useInventory";
 import { useMealMemory, MealMemoryEntry } from "@/lib/useMealMemory";
 import { SECTION_HELP } from "@/lib/helpText";
@@ -47,6 +47,45 @@ function fuzzyNameMatch(a: string, b: string): boolean {
 
 function shortTitle(title: string) {
   return title.length > 24 ? `${title.slice(0, 22)}…` : title;
+}
+
+// Reparto típico de las kcal/proteína del día entre comidas -- fijo, no
+// depende de qué más se haya planificado ese día (más simple y predecible
+// que ir descontando lo que ya se planificó, y evita que la recomendación
+// de una comida cambie según el orden en que se van eligiendo las otras).
+const MEAL_SHARE: Record<MealKey, number> = { des: 0.2, alm: 0.35, mer: 0.1, cen: 0.3, col: 0.05 };
+
+/**
+ * Porción sugerida de una receta del catálogo para una comida puntual --
+ * escala TODA la lista de ingredientes por un factor que busca un
+ * compromiso entre pegarle a las kcal y a la proteína de la porción típica
+ * de esa comida (según MEAL_SHARE). Acotado a un rango razonable (0.5x-2x)
+ * para no sugerir disparates con recetas muy chicas/grandes frente al
+ * objetivo. Solo tiene sentido para recetas del catálogo -- son las únicas
+ * con ingredientes + kcal/proteína de la receta completa para escalar.
+ */
+function recommendedPortion(
+  recipe: Recipe,
+  meal: MealKey,
+  dailyGoalKcal: number,
+  dailyProteinTargetG: number
+): { scale: number; ingredients: RecipeIngredient[] } {
+  const share = MEAL_SHARE[meal];
+  const targetKcal = dailyGoalKcal * share;
+  const targetProtein = dailyProteinTargetG * share;
+  const kcalScale = recipe.kcal > 0 ? targetKcal / recipe.kcal : 1;
+  const proteinScale = recipe.protein > 0 ? targetProtein / recipe.protein : kcalScale;
+  const scale = Math.min(2, Math.max(0.5, (kcalScale + proteinScale) / 2));
+  const ingredients = recipe.ingredients.map((ing) => {
+    const raw = ing.quantity * scale;
+    const rounded = ing.unit === "u." ? Math.max(1, Math.round(raw)) : Math.max(5, Math.round(raw / 5) * 5);
+    return { ...ing, quantity: rounded };
+  });
+  return { scale, ingredients };
+}
+
+function portionText(ingredients: RecipeIngredient[]): string {
+  return ingredients.map((ing) => `${ing.quantity}${ing.unit === "u." ? " u." : ing.unit} ${ing.name}`).join(" · ");
 }
 
 /** Los 7 días de la semana calendario siguiente a la actual (lunes a domingo). */
@@ -160,10 +199,14 @@ export function WeekPlanner({
   items,
   weekPlan,
   onSave,
+  dailyGoal,
+  proteinTargetG,
 }: {
   items: InventoryItem[];
   weekPlan: WeekPlan;
   onSave: (plan: WeekPlan) => void;
+  dailyGoal: number;
+  proteinTargetG: number;
 }) {
   const [pickerFor, setPickerFor] = useState<{ fecha: string; meal: MealKey } | null>(null);
   const [customText, setCustomText] = useState("");
@@ -448,8 +491,14 @@ export function WeekPlanner({
                     </button>
                   );
                 }
+                const currentRecipe = currentValue ? RECIPES.find((r) => r.title === currentValue) : undefined;
                 return (
                   <>
+                    {currentRecipe && (
+                      <div className="rounded-lg border border-gold/30 bg-gold/5 px-3 py-2 text-[11px] text-gold">
+                        Porción recomendada: {portionText(recommendedPortion(currentRecipe, pickerFor.meal, dailyGoal, proteinTargetG).ingredients)}
+                      </div>
+                    )}
                     {currentValue && (
                       <button
                         type="button"
@@ -493,22 +542,28 @@ export function WeekPlanner({
                 </button>
               ))}
 
-              {catalogSuggestions.map((recipe) => (
-                <button
-                  key={recipe.title}
-                  type="button"
-                  onClick={() => assign(pickerFor.fecha, pickerFor.meal, recipe.title)}
-                  className="w-full rounded-lg border border-border bg-bg/40 p-2.5 text-left"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-sm font-semibold">{recipe.title}</div>
-                    <div className="font-mono text-[9px] uppercase tracking-wide text-gold">{recipe.time}</div>
-                  </div>
-                  <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">
-                    {recipe.kcal} kcal · {recipe.protein}g prot
-                  </div>
-                </button>
-              ))}
+              {catalogSuggestions.map((recipe) => {
+                const portion = recommendedPortion(recipe, pickerFor.meal, dailyGoal, proteinTargetG);
+                return (
+                  <button
+                    key={recipe.title}
+                    type="button"
+                    onClick={() => assign(pickerFor.fecha, pickerFor.meal, recipe.title)}
+                    className="w-full rounded-lg border border-border bg-bg/40 p-2.5 text-left"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-sm font-semibold">{recipe.title}</div>
+                      <div className="font-mono text-[9px] uppercase tracking-wide text-gold">{recipe.time}</div>
+                    </div>
+                    <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">
+                      {recipe.kcal} kcal · {recipe.protein}g prot (receta completa)
+                    </div>
+                    <div className="mt-1 rounded-md border border-gold/30 bg-gold/5 px-1.5 py-1 text-[10px] text-gold">
+                      Porción para vos: {portionText(portion.ingredients)}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
             {(personalSuggestions.length > 0 || catalogSuggestions.length > 0) && (
               <div className="mt-2 text-[10px] text-textMuted">
