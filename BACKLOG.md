@@ -59,6 +59,52 @@ Leyenda: `[x]` hecho · `[~]` parcial / en curso · `[ ]` sin empezar
 - Filtros por objetivo / déficit
 - Vista de "mañana" y "hoy"
 
+## Sistema de logros / misiones / puntos (idea 2026-09-20, sin implementar)
+
+Pedido: incentivar moverse más (pasos, entreno, constancia) con algo tipo
+logros/misiones — "hoy no llegaste nunca a 10.000 pasos esta semana, probá
+hoy", y que marque cuando se cumple, cuántas semanas seguidas, etc.
+
+**Viabilidad**: alta. Ya hay bastante de la data cruda necesaria sin agregar
+nada nuevo: `DayEntry.pasos`, entrenamientos (`getTrainingSessions`),
+proteína del día (`dayProt`), peso semanal, y ya existe un patrón de racha
+(`weightStreak()` en `lib/calculations.ts`, cuenta semanas seguidas con peso
+cargado) que se puede generalizar a otras rachas (días seguidos con X pasos,
+semanas seguidas entrenando N veces, etc.). Lo que falta es: (1) un motor de
+"misiones" que evalúe condiciones sobre `days`/`settings` y devuelva
+completado/progreso, (2) dónde guardar logros ya desbloqueados (para no
+recalcular históricos cada vez — probablemente un array en `Settings`,
+sincronizado igual que el resto), y (3) diseño de UI (¿tarjeta en Inicio?
+¿pantalla propia? ¿notificación/popup al desbloquear uno?).
+
+**Preguntas de diseño a resolver antes de implementar**:
+- ¿Los logros son individuales (por cuenta) o también tiene sentido alguno
+  a nivel hogar (ej. "el grupo entrenó los 7 días de la semana")?
+- ¿Puntos acumulables (con algún canje/nivel) o solo insignias sueltas sin
+  puntaje?
+- ¿Se pueden "perder" rachas si un día no se cumple, o son de mejor-marca
+  histórica (nunca bajan)?
+- ¿Notificación push al desbloquear uno, o alcanza con verlo la próxima vez
+  que abre la app (más simple, ya el patrón de banners tipo "Peso pendiente"
+  serviría de base)?
+
+**Posibles logros/misiones (para elegir/ajustar, no una lista cerrada)**:
+- Constancia de pasos: "7 días seguidos con 10.000+ pasos", "nuevo récord
+  semanal de pasos promedio"
+- Constancia de entreno: "3 semanas seguidas cumpliendo tu plan semanal de
+  entreno" (ya existe `computeTrainingGoal` para la base de esto)
+- Proteína: "5 días seguidos llegando a tu objetivo de proteína"
+- Registro: "30 días seguidos registrando comidas" (constancia de uso, no
+  de resultado)
+- Peso: "4 semanas seguidas cargando el peso semanal" (ya casi listo, es
+  `weightStreak` expuesto como logro en vez de solo un número)
+- Alacena / cocina: "primera vez que usás 'Preparar plato'", "una semana
+  entera sin que la mesada quede en rojo" (todo guardado a tiempo)
+- Planificación: "planificaste la semana completa (7 días) antes del
+  domingo" — encaja con el plan semanal compartido nuevo
+- Hitos puntuales (no de racha): "primer -1kg", "primera semana en objetivo
+  de proteína", "100 comidas registradas"
+
 ## UX pendiente (detectado en la revisión del 2026-09-09)
 
 - Confirmar que los 4 botones de acción (Objetivo / Cargar con IA / Ranking / Datos)
