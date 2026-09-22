@@ -118,7 +118,11 @@ export default function Home() {
   const clientPlan = settings.plan || "basico";
   const isBasico = clientPlan === "basico";
   const PLAN_LOCKED_TABS: MainTab[] = ["comidas", "actividad", "gastos"];
-  const PLAN_LOCKED_INICIO_BLOCKS = ["objetivo", "seguimiento", "comidasSemana"] as const;
+  // "comidasSemana" (Modificar comidas de la semana) queda afuera de esta
+  // lista a propósito -- es la única forma de corregir un error en algo ya
+  // cargado (no es un "reporte", es edición básica), así que se mantiene
+  // disponible para básico igual que "hoy" y "peso".
+  const PLAN_LOCKED_INICIO_BLOCKS = ["objetivo", "seguimiento"] as const;
   const PLAN_LOCKED_MACROS_BLOCKS = ["reporte", "tabla"] as const;
 
   const inicioOrder = resolveOrder(settings.inicioOrder, DEFAULT_INICIO_ORDER);
