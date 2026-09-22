@@ -90,12 +90,6 @@ export function AiEntryForm({
   const [mode, setMode] = useState<"ia" | "alacena" | "buscar">("ia");
   const [manualDesc, setManualDesc] = useState("");
   const [manualValues, setManualValues] = useState({ kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
-  // Alacena/Buscar producto quedan un escalón más escondidas por defecto --
-  // 3 pestañas del mismo tamaño compitiendo por atención era justo lo que
-  // hacía más difícil el paso a paso para alguien menos entrenado con la
-  // app; la carga con texto+calcular es el camino principal, el resto es
-  // "otras formas de cargar" bajo demanda.
-  const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
@@ -373,47 +367,35 @@ export function AiEntryForm({
     >
       <div className="font-display italic text-[15px] text-gold mb-2.5">✎ Cargar comida</div>
 
-      {!disableAi && !showMoreOptions && (
+      <div className="mb-2.5 flex gap-1 rounded-xl border border-border bg-bg/40 p-1">
         <button
           type="button"
-          onClick={() => setShowMoreOptions(true)}
-          className="mb-2 font-mono text-[10px] uppercase tracking-wide text-textMuted underline"
+          onClick={() => (disableAi ? setStatus("🔒 Con IA es Premium — actualizá tu plan para desbloquearlo.") : setMode("ia"))}
+          className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
+            disableAi ? "text-textMuted/50" : mode === "ia" ? "bg-gold text-bg" : "text-textMuted"
+          }`}
         >
-          Otras formas de cargar (Alacena / Buscar producto)
+          {disableAi ? "🔒 " : ""}Con IA
         </button>
-      )}
-
-      {!disableAi && showMoreOptions && (
-        <div className="mb-2.5 flex gap-1 rounded-xl border border-border bg-bg/40 p-1">
-          <button
-            type="button"
-            onClick={() => setMode("ia")}
-            className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
-              mode === "ia" ? "bg-gold text-bg" : "text-textMuted"
-            }`}
-          >
-            Con IA
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("alacena")}
-            className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
-              mode === "alacena" ? "bg-gold text-bg" : "text-textMuted"
-            }`}
-          >
-            Desde Alacena
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("buscar")}
-            className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
-              mode === "buscar" ? "bg-gold text-bg" : "text-textMuted"
-            }`}
-          >
-            Buscar producto
-          </button>
-        </div>
-      )}
+        <button
+          type="button"
+          onClick={() => (disableAi ? setStatus("🔒 Desde Alacena es Premium — actualizá tu plan para desbloquearlo.") : setMode("alacena"))}
+          className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
+            disableAi ? "text-textMuted/50" : mode === "alacena" ? "bg-gold text-bg" : "text-textMuted"
+          }`}
+        >
+          {disableAi ? "🔒 " : ""}Desde Alacena
+        </button>
+        <button
+          type="button"
+          onClick={() => (disableAi ? setStatus("🔒 Buscar producto es Premium — actualizá tu plan para desbloquearlo.") : setMode("buscar"))}
+          className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
+            disableAi ? "text-textMuted/50" : mode === "buscar" ? "bg-gold text-bg" : "text-textMuted"
+          }`}
+        >
+          {disableAi ? "🔒 " : ""}Buscar producto
+        </button>
+      </div>
 
       <div className="grid grid-cols-2 gap-2">
         <div>
