@@ -24,7 +24,7 @@ export const foodKey = inventoryKey;
 export function defaultUnitForName(name: string): InventoryItem["unit"] {
   const key = inventoryKey(name);
   if (
-    /(huevo|palta|banana|manzana|yogur|yogurt|tomate|cebolla|papa|morron|limon|alfajor|medialuna|factura|empanada|sandwich|sanguche|barrita|pancho|hamburgues|salchicha)/.test(
+    /(huevo|palta|banana|manzana|mandarina|naranja|pera|durazno|kiwi|yogur|yogurt|tomate|cebolla|papa|morron|limon|alfajor|medialuna|factura|empanada|sandwich|sanguche|barrita|pancho|hamburgues|salchicha)/.test(
       key
     )
   )

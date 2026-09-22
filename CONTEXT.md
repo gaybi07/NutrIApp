@@ -54,6 +54,22 @@ _Avoid_: Free plan
 The tier on a Trainer Application — Gratis or Pago — governing only the trainer's maximum number of students. Feature set is identical between tiers.
 _Avoid_: Trainer plan (ambiguous with Client Plan), subscription
 
+### Account Modes
+
+One account can hold more than one of these at once — they are not mutually exclusive tiers, they are lenses on the same account depending on what it's doing right now.
+
+**Alumno**:
+An account with an active Trainer Link — their Routines, workout data, and reports are visible to (and partly driven by) their Trainer. Requires a non-Básico Client Plan.
+_Avoid_: Student (used in code/types; "Alumno" is the product-facing term), cliente
+
+**Autoentrenador**:
+An account with NO active Trainer Link — manages 100% of their own Routines and workout logging solo, with nothing driven by a Trainer. This is the default mode for any account, Básico or not; only Alumno requires linking out of it.
+_Avoid_: Self-trainer, standalone user, "sin profe" (imprecise — doesn't name the mode itself)
+
+**Profe**:
+An account with an approved Trainer Application — sees the Trainer Panel and manages Trainer Routines, Training Plans, and their students' reports. Called "Trainer" in code/types; "Profe" is the product-facing term.
+_Avoid_: Coach, entrenador (used informally in code/UI strings — keep "Profe" as the one canonical term going forward)
+
 ### Trainer ↔ Student
 
 **Trainer Application**:
