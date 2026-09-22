@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { DayEntry, InventoryItem, MealKey, MEAL_LABELS, MealItem, emptyDay, PREPARATION_CATEGORY_SUGGESTIONS } from "@/lib/types";
 import { countDigits, MAX_DIGITS, MAX_TEXT_LENGTH, normalizeNumberInput } from "@/lib/inputLimits";
-import { fmtDate, getMealItems, applyMealItems, suggestedMeal } from "@/lib/calculations";
+import { fmtDate, addDays, getMealItems, applyMealItems, suggestedMeal } from "@/lib/calculations";
 import { FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 import { useMealMemory } from "@/lib/useMealMemory";
@@ -296,6 +296,50 @@ export function AiEntryForm({
     registerPreparationUse(prepId);
   };
 
+  // ¿Repetís algo reciente? -- mira los días ya cargados, no necesita
+  // memoria aparte: (1) ayer, misma comida, si hoy todavía no cargaste
+  // nada ahí; (2) si se está cargando la cena, el almuerzo de hoy (por si
+  // sobró). Un toque guarda con las mismas cantidades de esa vez.
+  const recientes = useMemo(() => {
+    const list: { key: string; label: string; items: MealItem[] }[] = [];
+    const entryFecha = days.find((d) => d.fecha === fecha);
+    const yaCargadoHoy = entryFecha ? getMealItems(entryFecha, meal).length > 0 : false;
+
+    if (!yaCargadoHoy) {
+      const ayer = fmtDate(addDays(new Date(`${fecha}T00:00:00`), -1));
+      const entryAyer = days.find((d) => d.fecha === ayer);
+      const itemsAyer = entryAyer ? getMealItems(entryAyer, meal) : [];
+      if (itemsAyer.length > 0) list.push({ key: "ayer", label: `Ayer (${MEAL_LABELS[meal]})`, items: itemsAyer });
+    }
+
+    if (meal === "cen" && entryFecha) {
+      const itemsAlmuerzo = getMealItems(entryFecha, "alm");
+      if (itemsAlmuerzo.length > 0) list.push({ key: "almuerzo-hoy", label: "Del almuerzo de hoy", items: itemsAlmuerzo });
+    }
+
+    return list;
+  }, [days, fecha, meal]);
+
+  const handleUseReciente = (items: MealItem[]) => {
+    const totals = items.reduce(
+      (acc, i) => ({
+        kcal: acc.kcal + i.kcal,
+        protein: acc.protein + i.protein,
+        carbs: acc.carbs + (i.carbs || 0),
+        fat: acc.fat + (i.fat || 0),
+        fiber: acc.fiber + (i.fiber || 0),
+      }),
+      { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
+    );
+    handleSave({
+      ...totals,
+      detalle: "",
+      resumen: items.map((i) => i.nombre).join(", "),
+      ingredientes: "",
+      items: items.map((i) => ({ nombre: i.nombre, kcal: i.kcal, protein: i.protein, carbs: i.carbs, fat: i.fat, fiber: i.fiber, gramos: i.gramos })),
+    });
+  };
+
   // Tus favoritas de ESTA comida puntual, para cargar de un solo toque --
   // ya se sabe kcal/proteína/etc. de la última vez, no hace falta recalcular
   // con IA ni revisar nada antes de guardar.
@@ -397,6 +441,28 @@ export function AiEntryForm({
           </div>
         )}
       </div>
+
+      {recientes.length > 0 && (
+        <div className="mt-2.5">
+          <label className="mb-1 flex items-center">¿Repetís algo reciente?</label>
+          <div className="flex flex-col gap-1.5">
+            {recientes.map((r) => (
+              <button
+                key={r.key}
+                type="button"
+                onClick={() => handleUseReciente(r.items)}
+                className="flex items-center justify-between gap-2 rounded-xl border border-gold/50 bg-gold/10 px-3 py-2.5 text-left"
+              >
+                <span className="min-w-0">
+                  <span className="block font-mono text-[9px] uppercase tracking-wide text-gold">{r.label}</span>
+                  <span className="block truncate text-sm font-semibold text-text">{r.items.map((i) => i.nombre).join(", ")}</span>
+                </span>
+                <span className="shrink-0 font-mono text-[10px] uppercase tracking-wide text-gold">toque para cargar</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {favoritos.length > 0 && (
         <div className="mt-2.5">
