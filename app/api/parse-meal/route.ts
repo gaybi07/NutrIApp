@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callGeminiJson, GeminiRateLimitError } from "@/lib/geminiClient";
+import { resolveMealFromFoods, foodsFromMealItems, learnFoods } from "@/lib/foodsResolver";
+import { parseInventoryText } from "@/lib/foodText";
 
 const SYSTEM_PROMPT = `Sos un nutricionista argentino calculando kcal, proteína, carbohidratos, grasas y fibra de una comida a partir de una descripción en lenguaje natural, a veces dictada por voz (puede tener errores de dictado, corregilos si son obvios, y puede ser larga o tener detalles de más).
 Reglas:
@@ -37,6 +39,15 @@ async function parseWithAnthropic(text: string, apiKey: string) {
   return extractJson(textBlock.text);
 }
 
+/** Deriva y guarda alimentos aprendidos a partir de una respuesta de IA ya
+ * calculada -- sin bloquear la respuesta al usuario (fire-and-forget) y sin
+ * que un error acá pueda tirar abajo el request. */
+function learnFromResult(text: string, result: { items?: unknown }) {
+  const items = result.items as Array<{ nombre: string; gramos?: number; kcal: number; protein: number; carbs?: number; fat?: number; fiber?: number }> | undefined;
+  if (!items || items.length === 0) return;
+  learnFoods(foodsFromMealItems(items, parseInventoryText(text))).catch(() => {});
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { text } = await req.json();
@@ -44,12 +55,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Falta el texto de la comida" }, { status: 400 });
     }
 
+    // Antes que nada, un intento SIN IA: si ya conocemos cada alimento de la
+    // tabla foods con confianza (verificado o ya usado varias veces), armamos
+    // la respuesta directo -- 0 llamadas a Gemini/Anthropic. Si cualquier
+    // alimento no matchea con confianza, sigue el flujo de siempre.
+    const local = await resolveMealFromFoods(text);
+    if (local) return NextResponse.json(local);
+
     // Gemini primero (gratis); si está saturado o falla y hay una key de
     // Anthropic configurada, cae ahí en vez de fallar directo -- dos
     // proveedores distintos como respaldo mutuo.
     if (process.env.GEMINI_API_KEY) {
       try {
-        return NextResponse.json(await callGeminiJson(SYSTEM_PROMPT, [{ text: `Comida: ${text}` }]));
+        const result = await callGeminiJson(SYSTEM_PROMPT, [{ text: `Comida: ${text}` }]);
+        learnFromResult(text, result as { items?: unknown });
+        return NextResponse.json(result);
       } catch (geminiError) {
         if (!process.env.ANTHROPIC_API_KEY) {
           if (geminiError instanceof GeminiRateLimitError) {
@@ -71,7 +91,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json(await parseWithAnthropic(text, process.env.ANTHROPIC_API_KEY));
+    const result = await parseWithAnthropic(text, process.env.ANTHROPIC_API_KEY);
+    learnFromResult(text, result as { items?: unknown });
+    return NextResponse.json(result);
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "No se pudo calcular la comida" }, { status: 500 });

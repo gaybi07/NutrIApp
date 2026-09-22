@@ -12,7 +12,8 @@ import {
   INVENTORY_CATEGORY_LABELS,
   emptyDay,
 } from "@/lib/types";
-import { getMealItems, applyMealItems, nutritionForAmount } from "@/lib/calculations";
+import { getMealItems, applyMealItems, nutritionForAmount, unitsToGrams } from "@/lib/calculations";
+import { useFoods } from "@/lib/useFoods";
 
 type BasketEntry = { itemId: string; amount: number };
 
@@ -43,6 +44,14 @@ export function MealFromAlacena({
   const [basket, setBasket] = useState<BasketEntry[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [status, setStatus] = useState("");
+  // Para items guardados en gramos pero con un peso-por-unidad conocido (ej.
+  // un alimento que no cayó en la heurística de "u." por nombre) -- deja
+  // escribir "1" queriendo decir "1 banana" en vez de tener que pesarla.
+  // La canasta y consumeAmounts siguen trabajando siempre en gramos (la
+  // unidad real del item): esto solo cambia cómo se interpreta el número
+  // que se escribe, convirtiéndolo ANTES de entrar a la canasta.
+  const [unitMode, setUnitMode] = useState<Record<string, boolean>>({});
+  const { gramsPerUnit } = useFoods();
 
   const usable = useMemo(() => items.filter((i) => i.nutritionPer100g && i.quantity > 0), [items]);
   const missingCount = items.length - usable.length;
@@ -57,12 +66,14 @@ export function MealFromAlacena({
   const inBasket = (item: InventoryItem) => basket.find((b) => b.itemId === item.id)?.amount || 0;
   const remaining = (item: InventoryItem) => Math.max(0, item.quantity - inBasket(item));
 
-  const draftFor = (item: InventoryItem) => drafts[item.id] ?? (item.unit === "u." ? "1" : String(Math.min(remaining(item), 100)));
+  const draftFor = (item: InventoryItem) => drafts[item.id] ?? (item.unit === "u." || unitMode[item.id] ? "1" : String(Math.min(remaining(item), 100)));
 
   const addToBasket = (item: InventoryItem) => {
     const left = remaining(item);
     if (left <= 0) return;
-    const amount = Math.min(Number(draftFor(item)) || 0, left);
+    const typed = Number(draftFor(item)) || 0;
+    const gpu = item.unit === "g" ? gramsPerUnit(item.name) : null;
+    const amount = Math.min(unitMode[item.id] && gpu ? unitsToGrams(typed, gpu) : typed, left);
     if (amount <= 0) return;
     setBasket((prev) => {
       const existing = prev.find((b) => b.itemId === item.id);
@@ -100,6 +111,13 @@ export function MealFromAlacena({
       fat: b.nutrition.fat,
       fiber: b.nutrition.fiber,
       gramos: b.item.unit !== "u." ? b.amount : undefined,
+      // Referencia al producto de la alacena del que se descontó, para que
+      // editar/borrar esta comida después pueda devolver o restar stock en
+      // vez de dejarlo desincronizado (ver MealsEditor.onInventoryDelta).
+      fuenteAlacenaId: b.item.id,
+      fuenteCantidad: b.amount,
+      fuenteUnidad: b.item.unit,
+      fuenteSnapshot: { name: b.item.name, category: b.item.category, nutritionPer100g: b.item.nutritionPer100g, zona: b.item.zona },
     }));
     const alimentosDelDia = Array.from(new Set([...(existing.alimentos || []), ...basketDetails.map((b) => b.item.name)]));
     const itemsActuales = getMealItems(existing, meal);
@@ -153,6 +171,9 @@ export function MealFromAlacena({
         <div className="flex max-h-64 flex-col gap-1.5 overflow-y-auto pr-0.5">
           {visible.map((item) => {
             const left = remaining(item);
+            const gpuForUnitItem = item.unit === "u." ? gramsPerUnit(item.name) : null;
+            const gpuForGramItem = item.unit === "g" ? gramsPerUnit(item.name) : null;
+            const inUnitMode = item.unit === "g" && Boolean(gpuForGramItem) && unitMode[item.id];
             return (
               <div key={item.id} className="flex items-center gap-2 rounded-lg border border-border bg-bg/40 px-2 py-1.5">
                 <div className="min-w-0 flex-1">
@@ -160,19 +181,35 @@ export function MealFromAlacena({
                   <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
                     {left > 0 ? `tenés ${left} ${item.unit} disponible${left === 1 ? "" : "s"}` : "ya sumaste todo lo que tenías"} ·{" "}
                     {INVENTORY_CATEGORY_LABELS[item.category || "otros"]}
+                    {gpuForUnitItem ? ` · 1 u. ≈ ${gpuForUnitItem} g` : ""}
+                    {gpuForGramItem ? ` · 1 u. ≈ ${gpuForGramItem} g` : ""}
                   </div>
                 </div>
+                {gpuForGramItem && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUnitMode((prev) => ({ ...prev, [item.id]: !prev[item.id] }));
+                      setDrafts((prev) => ({ ...prev, [item.id]: "" }));
+                    }}
+                    className={`shrink-0 rounded-md border px-1.5 py-1 font-mono text-[9px] uppercase ${
+                      inUnitMode ? "border-gold bg-gold text-bg" : "border-border bg-bg/60 text-textMuted"
+                    }`}
+                  >
+                    {inUnitMode ? "u." : "g"}
+                  </button>
+                )}
                 <input
                   type="number"
                   min="0"
-                  max={left}
+                  max={inUnitMode ? undefined : left}
                   inputMode="decimal"
                   disabled={left <= 0}
                   value={draftFor(item)}
                   onChange={(e) => setDrafts((prev) => ({ ...prev, [item.id]: e.target.value }))}
                   className="w-16 shrink-0 rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px] disabled:opacity-40"
                 />
-                <span className="shrink-0 font-mono text-[9px] uppercase text-textMuted">{item.unit}</span>
+                <span className="shrink-0 font-mono text-[9px] uppercase text-textMuted">{inUnitMode ? "u." : item.unit}</span>
                 <button
                   type="button"
                   onClick={() => addToBasket(item)}

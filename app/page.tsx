@@ -67,8 +67,22 @@ export default function Home() {
     consumeByText,
     consumeItem,
     consumeAmounts,
+    restoreAmounts,
     persist: replaceInventory,
   } = household.household ? sharedInventory : localInventory;
+
+  // Reconcilia la alacena cuando se edita/borra una comida cargada desde ahí
+  // (ver MealsEditor.onInventoryDelta) -- delta>0 es "comiste más" (descontar
+  // de nuevo), delta<0 es "comiste menos o borraste" (devolver stock).
+  const handleMealInventoryDelta = useCallback(
+    (deltas: Array<{ itemId: string; delta: number; fallback?: Parameters<typeof restoreAmounts>[0][number]["fallback"] }>) => {
+      const toConsume = deltas.filter((d) => d.delta > 0).map((d) => ({ id: d.itemId, quantity: d.delta }));
+      const toRestore = deltas.filter((d) => d.delta < 0).map((d) => ({ id: d.itemId, quantity: -d.delta, fallback: d.fallback }));
+      if (toConsume.length > 0) consumeAmounts(toConsume);
+      if (toRestore.length > 0) restoreAmounts(toRestore);
+    },
+    [consumeAmounts, restoreAmounts]
+  );
 
   const localPurchases = usePurchaseHistory();
   const sharedPurchases = useSharedPurchases(household.household?.id ?? null);
@@ -524,7 +538,13 @@ export default function Home() {
                 }
                 return (
                   <SortableSection key="comidasSemana" id="comidasSemana" onHide={() => hideInicioBlock("comidasSemana")} dragDisabledOnDesktop>
-                    <WeekMealsCard weekDates={weekDates} weekDays={weekDays} onUpsert={upsertDay} openOnDesktop />
+                    <WeekMealsCard
+                      weekDates={weekDates}
+                      weekDays={weekDays}
+                      onUpsert={upsertDay}
+                      openOnDesktop
+                      onInventoryDelta={handleMealInventoryDelta}
+                    />
                   </SortableSection>
                 );
               })}

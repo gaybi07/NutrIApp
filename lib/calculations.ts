@@ -144,6 +144,47 @@ export function nutritionForAmount(
   };
 }
 
+/** Conversión unidades↔gramos para alimentos con peso-por-unidad conocido
+ * (tabla `foods`, ver lib/useFoods.ts) — para que alguien que no pesa la
+ * comida pueda cargar "1 banana" y por atrás se sepa que son ~120 g. No
+ * reemplaza a nutritionForAmount (que sigue usando "u." como "por unidad"
+ * tal cual, sin pasar por gramos) — esto es solo para mostrar el
+ * equivalente y para convertir ANTES de que la cantidad entre a un flujo
+ * que sí trabaja en gramos. */
+export function unitsToGrams(units: number, gramsPerUnit: number): number {
+  return Math.round(units * gramsPerUnit);
+}
+
+export function gramsToUnits(grams: number, gramsPerUnit: number): number {
+  if (gramsPerUnit <= 0) return 0;
+  return Math.round((grams / gramsPerUnit) * 10) / 10; // 1 decimal -- "0.5 banana" tiene sentido, "0.53" no
+}
+
+/** Macros de una cantidad de un alimento de la tabla `foods` (siempre por
+ * 100 g/ml) -- comparte la conversión "u." → gramos con nutritionForAmount,
+ * pero esta necesita gramosPorUnidad porque `foods` no tiene un concepto de
+ * "por unidad" propio como sí tiene un InventoryItem. Devuelve null si es
+ * "u." y no se conoce el peso por unidad -- no hay forma honesta de
+ * calcularlo. Usado tanto al desglosar un plato (IngredientBreakdown) como
+ * al reusar una preparación guardada (AiEntryForm.usePreparacion). */
+export function macrosForFoodQuantity(
+  food: { kcal: number; protein: number; carbs: number; fat: number; fiber: number; gramosPorUnidad?: number },
+  cantidad: number,
+  unidad: "g" | "ml" | "u."
+): { kcal: number; protein: number; carbs: number; fat: number; fiber: number; gramos: number } | null {
+  const gramos = unidad === "u." ? (food.gramosPorUnidad ? cantidad * food.gramosPorUnidad : null) : cantidad;
+  if (gramos == null) return null;
+  const factor = gramos / 100;
+  return {
+    gramos: Math.round(gramos),
+    kcal: Math.round(food.kcal * factor),
+    protein: Math.round(food.protein * factor),
+    carbs: Math.round(food.carbs * factor),
+    fat: Math.round(food.fat * factor),
+    fiber: Math.round(food.fiber * factor),
+  };
+}
+
 /** Suma kcal/proteína/carbohidratos/grasas/fibra de una lista de items. */
 export function sumMealItems(items: MealItem[]): { kcal: number; protein: number; carbs: number; fat: number; fiber: number } {
   return items.reduce(

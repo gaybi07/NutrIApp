@@ -1,17 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { DayEntry, InventoryItem, MealKey, MEAL_LABELS, MealItem, emptyDay, PREPARATION_CATEGORY_SUGGESTIONS } from "@/lib/types";
+import { DayEntry, InventoryItem, MealKey, MEAL_LABELS, MealItem, emptyDay, PREPARATION_CATEGORY_SUGGESTIONS, PreparationIngredient } from "@/lib/types";
 import { countDigits, MAX_DIGITS, MAX_TEXT_LENGTH, normalizeNumberInput } from "@/lib/inputLimits";
-import { fmtDate, addDays, getMealItems, applyMealItems, suggestedMeal } from "@/lib/calculations";
+import { fmtDate, addDays, getMealItems, applyMealItems, suggestedMeal, macrosForFoodQuantity } from "@/lib/calculations";
 import { FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 import { useMealMemory } from "@/lib/useMealMemory";
 import { useMealPreparations } from "@/lib/useMealPreparations";
 import { parseInventoryText } from "@/lib/useInventory";
 import { useSpeechToText } from "@/lib/useSpeechToText";
+import { useFoods } from "@/lib/useFoods";
 import { MealFromAlacena } from "@/components/MealFromAlacena";
 import { MealFromSearch } from "@/components/MealFromSearch";
+import { IngredientBreakdown, BreakdownRow } from "@/components/IngredientBreakdown";
 
 const MAX_SUGGESTIONS = 6;
 
@@ -110,6 +112,12 @@ export function AiEntryForm({
   const [savePrep, setSavePrep] = useState(false);
   const [prepName, setPrepName] = useState("");
   const [prepCategoria, setPrepCategoria] = useState("");
+  // Desglose de un item compuesto (ej. "Milanesa" → pollo+huevo+pan rallado)
+  // -- por índice dentro de preview.items, para poder guardar la preparación
+  // con la estructura real aunque el item visible siga siendo uno solo.
+  const [breakdownOpenIndex, setBreakdownOpenIndex] = useState<number | null>(null);
+  const [breakdowns, setBreakdowns] = useState<Record<number, PreparationIngredient[]>>({});
+  const { findFood } = useFoods();
   const { supported: speechSupported, recording, toggle: toggleRecording } = useSpeechToText(
     (transcript) => setText((prev) => (prev ? `${prev} ${transcript}` : transcript)),
     () => setStatus("No pude escucharte, probá de nuevo o escribilo a mano.")
@@ -134,6 +142,8 @@ export function AiEntryForm({
     setStatus("");
     setPreview(null);
     setConsumeResult(null);
+    setBreakdowns({});
+    setBreakdownOpenIndex(null);
 
     if (!forceAi) {
       const match = findMatch(text);
@@ -218,19 +228,64 @@ export function AiEntryForm({
     onUpsert(updated);
     const result = onConsumeInventory?.(p.ingredientes || text);
     remember(p.resumen || text, p.kcal, p.protein, p.carbs, p.fat, meal, p.fiber, p.ingredientes, p.items);
-    if (savePrep && prepName.trim() && p.items.length > 1) {
-      savePreparation(prepName, prepCategoria, p.items.map((i) => i.nombre), meal);
+    if (savePrep && prepName.trim()) {
+      // Por cada item: si se desglosó (breakdowns[i]), usa esa estructura con
+      // cantidades reales; si no, lo trata como un solo "ingrediente" (el
+      // plato entero) -- así la preparación siempre queda con detalle
+      // completo, aunque nadie haya tocado "Desglosar".
+      const ingredientesDetalle: PreparationIngredient[] = p.items.flatMap((item, i) => {
+        const custom = breakdowns[i];
+        if (custom && custom.length > 0) return custom;
+        return [{ nombre: item.nombre, cantidad: item.gramos ?? 1, unidad: (item.gramos != null ? "g" : "u.") as "g" | "u." }];
+      });
+      savePreparation(prepName, prepCategoria, ingredientesDetalle, meal);
     }
     setText("");
     setPreview(null);
     setSavePrep(false);
     setPrepName("");
     setPrepCategoria("");
+    setBreakdowns({});
+    setBreakdownOpenIndex(null);
     setStatus(`Sumado a ${MEAL_LABELS[meal]} del ${fecha} ✓`);
     setConsumeResult(result && (result.consumed.length > 0 || result.missing.length > 0) ? result : null);
     setMeal(suggestedMeal(updated, new Date().getHours()));
     setTimeout(() => setStatus(""), 3500);
     setTimeout(() => setConsumeResult(null), 9000);
+  };
+
+  // Guarda la estructura del desglose siempre (para poder guardarla como
+  // preparación con cantidades reales), y si se eligió "usar lo calculado"
+  // también reemplaza los macros de ESE item por la suma de sus ingredientes
+  // -- sin cambiar cuántos items tiene el preview, para no tener que
+  // reacomodar índices de otros desgloses ya guardados.
+  const handleBreakdownConfirm = (index: number, ingredientes: PreparationIngredient[], rows: BreakdownRow[], useCalculated: boolean) => {
+    setBreakdowns((prev) => ({ ...prev, [index]: ingredientes }));
+    if (useCalculated && preview) {
+      const sums = rows.reduce(
+        (acc, r) => ({
+          kcal: acc.kcal + (r.macros?.kcal ?? 0),
+          protein: acc.protein + (r.macros?.protein ?? 0),
+          carbs: acc.carbs + (r.macros?.carbs ?? 0),
+          fat: acc.fat + (r.macros?.fat ?? 0),
+          fiber: acc.fiber + (r.macros?.fiber ?? 0),
+        }),
+        { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
+      );
+      const items = preview.items.map((item, i) => (i === index ? { ...item, ...sums } : item));
+      const totals = items.reduce(
+        (acc, item) => ({
+          kcal: acc.kcal + item.kcal,
+          protein: acc.protein + item.protein,
+          carbs: acc.carbs + (item.carbs || 0),
+          fat: acc.fat + (item.fat || 0),
+          fiber: acc.fiber + (item.fiber || 0),
+        }),
+        { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
+      );
+      setPreview({ ...preview, items, ...totals });
+    }
+    setBreakdownOpenIndex(null);
   };
 
   const handleManualSave = () => {
@@ -285,9 +340,42 @@ export function AiEntryForm({
     [preparations, meal]
   );
 
-  const usePreparacion = (prepId: string, ingredientes: string[]) => {
-    setText(ingredientes.join(", "));
-    registerPreparationUse(prepId);
+  const usePreparacion = (prep: (typeof preparations)[number]) => {
+    // Si TODOS los ingredientes de la preparación resuelven contra la tabla
+    // foods (incluye peso-por-unidad si hace falta), se arma la comida
+    // directo -- sin pasar por la IA. Si falta cualquiera, cae al
+    // comportamiento de siempre: completa el texto y la persona recalcula.
+    if (prep.ingredientesDetalle && prep.ingredientesDetalle.length > 0) {
+      const resueltos = prep.ingredientesDetalle.map((ing) => {
+        const food = findFood(ing.nombre);
+        const macros = food ? macrosForFoodQuantity(food, ing.cantidad, ing.unidad) : null;
+        return macros ? { nombre: ing.nombre, ...macros } : null;
+      });
+      if (resueltos.every((r): r is NonNullable<typeof r> => r !== null)) {
+        const totals = resueltos.reduce(
+          (acc, r) => ({
+            kcal: acc.kcal + r.kcal,
+            protein: acc.protein + r.protein,
+            carbs: acc.carbs + r.carbs,
+            fat: acc.fat + r.fat,
+            fiber: acc.fiber + r.fiber,
+          }),
+          { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
+        );
+        setPreview({
+          ...totals,
+          detalle: "",
+          resumen: prep.nombre,
+          ingredientes: prep.ingredientesDetalle.map((i) => `${i.cantidad} ${i.unidad} ${i.nombre}`).join(", "),
+          items: resueltos.map((r) => ({ nombre: r.nombre, kcal: r.kcal, protein: r.protein, carbs: r.carbs, fat: r.fat, fiber: r.fiber, gramos: r.gramos })),
+        });
+        setStatus(`Armado desde tu preparación "${prep.nombre}" — sin IA. Revisá y guardá ↓`);
+        registerPreparationUse(prep.id);
+        return;
+      }
+    }
+    setText(prep.ingredientes.join(", "));
+    registerPreparationUse(prep.id);
   };
 
   // ¿Repetís algo reciente? -- mira los días ya cargados, no necesita
@@ -602,7 +690,7 @@ export function AiEntryForm({
                 <button
                   key={prep.id}
                   type="button"
-                  onClick={() => usePreparacion(prep.id, prep.ingredientes)}
+                  onClick={() => usePreparacion(prep)}
                   className="rounded-full border border-gold/40 bg-gold/10 px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-wide text-gold hover:border-gold/60"
                   title={prep.ingredientes.join(", ")}
                 >
@@ -683,17 +771,31 @@ export function AiEntryForm({
           {preview.items.length > 0 && (
             <div className="my-2 flex flex-col gap-1">
               {preview.items.map((item, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between gap-2 rounded-lg border border-border bg-bg/40 px-2.5 py-1.5 text-[11px]"
-                >
-                  <span className="text-text">
-                    {item.nombre}
-                    {item.gramos ? ` (${item.gramos} g)` : ""}
-                  </span>
-                  <span className="shrink-0 text-textMuted">
-                    {item.kcal} kcal · {item.protein}g prot
-                  </span>
+                <div key={i}>
+                  <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-bg/40 px-2.5 py-1.5 text-[11px]">
+                    <span className="text-text">
+                      {item.nombre}
+                      {item.gramos ? ` (${item.gramos} g)` : ""}
+                      {breakdowns[i] ? " · desglosado" : ""}
+                    </span>
+                    <span className="shrink-0 flex items-center gap-1.5 text-textMuted">
+                      {item.kcal} kcal · {item.protein}g prot
+                      <button
+                        type="button"
+                        onClick={() => setBreakdownOpenIndex(breakdownOpenIndex === i ? null : i)}
+                        className="font-mono text-[9px] uppercase text-gold underline"
+                      >
+                        {breakdowns[i] ? "editar" : "desglosar"}
+                      </button>
+                    </span>
+                  </div>
+                  {breakdownOpenIndex === i && (
+                    <IngredientBreakdown
+                      original={item}
+                      onCancel={() => setBreakdownOpenIndex(null)}
+                      onConfirm={(ingredientes, rows, useCalculated) => handleBreakdownConfirm(i, ingredientes, rows, useCalculated)}
+                    />
+                  )}
                 </div>
               ))}
             </div>
@@ -712,7 +814,7 @@ export function AiEntryForm({
               Se descuenta del inventario (si lo tenés cargado): {preview.ingredientes}
             </div>
           )}
-          {preview.items.length > 1 && (
+          {preview.items.length > 0 && (
             <div className="mb-2 rounded-lg border border-dashed border-gold/40 bg-gold/5 p-2.5">
               <label className="flex items-center gap-1.5 text-[12px] text-text">
                 <input type="checkbox" checked={savePrep} onChange={(e) => setSavePrep(e.target.checked)} />

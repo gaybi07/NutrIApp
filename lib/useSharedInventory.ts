@@ -290,6 +290,79 @@ export function useSharedInventory(householdId: string | null) {
     [items, householdId, refetch]
   );
 
+  /** Contraparte de consumeAmounts — devuelve stock (comiste menos de lo
+   * cargado, o borraste una comida cargada desde la alacena). Si el producto
+   * ya no existe (consumeAmounts lo borró al llegar a 0), lo recrea a partir
+   * del "fallback" en vez de perder el ajuste. */
+  const restoreAmounts = useCallback(
+    (
+      entries: Array<{
+        id: string;
+        quantity: number;
+        fallback?: {
+          name: string;
+          unit: InventoryItem["unit"];
+          category?: InventoryCategory;
+          nutritionPer100g?: InventoryNutrition;
+          zona?: InventoryItem["zona"];
+        };
+      }>
+    ) => {
+      if (!supabase || !householdId) return;
+      const toUpdate: Array<{ id: string; quantity: number }> = [];
+      const toInsert: Array<{
+        name: string;
+        quantity: number;
+        unit: InventoryItem["unit"];
+        category?: InventoryCategory;
+        nutritionPer100g?: InventoryNutrition;
+        zona?: InventoryItem["zona"];
+      }> = [];
+
+      entries.forEach(({ id, quantity, fallback }) => {
+        if (quantity <= 0) return;
+        const existing = items.find((item) => item.id === id);
+        if (existing) {
+          toUpdate.push({ id, quantity: existing.quantity + quantity });
+          return;
+        }
+        if (!fallback) return;
+        const byName = items.find((item) => inventoryKey(item.name) === inventoryKey(fallback.name) && item.unit === fallback.unit);
+        if (byName) {
+          toUpdate.push({ id: byName.id, quantity: byName.quantity + quantity });
+          return;
+        }
+        toInsert.push({
+          name: fallback.name,
+          quantity,
+          unit: fallback.unit,
+          category: fallback.category || defaultCategoryForName(fallback.name),
+          nutritionPer100g: fallback.nutritionPer100g,
+          zona: fallback.zona,
+        });
+      });
+
+      (async () => {
+        for (const u of toUpdate) await supabase!.from("inventory_items").update({ quantity: u.quantity }).eq("id", u.id);
+        if (toInsert.length > 0) {
+          await supabase!.from("inventory_items").insert(
+            toInsert.map((entry) => ({
+              household_id: householdId,
+              name: entry.name,
+              quantity: entry.quantity,
+              unit: entry.unit,
+              category: entry.category,
+              nutrition_per_100g: entry.nutritionPer100g || null,
+              zona: entry.zona || null,
+            }))
+          );
+        }
+        await refetch();
+      })();
+    },
+    [items, householdId, refetch]
+  );
+
   /** Solo se usa hoy para sacar items (Vaciar alacena / quitar uno) -- borra
    * lo que estaba y ya no está en `next`. */
   const persist = useCallback(
@@ -306,5 +379,5 @@ export function useSharedInventory(householdId: string | null) {
     [items, householdId, refetch]
   );
 
-  return { items, loaded, addStructuredItems, updateItem, applyReview, consumeByText, consumeItem, consumeAmounts, persist };
+  return { items, loaded, addStructuredItems, updateItem, applyReview, consumeByText, consumeItem, consumeAmounts, restoreAmounts, persist };
 }

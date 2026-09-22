@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callGeminiJson, GeminiRateLimitError } from "@/lib/geminiClient";
+import { learnFoods } from "@/lib/foodsStore";
 
 export const maxDuration = 30;
 
@@ -97,6 +98,29 @@ export async function POST(req: NextRequest) {
     if (parsed.error) {
       return NextResponse.json({ error: parsed.error }, { status: 422 });
     }
+
+    // Dato de mejor calidad de todo el sistema (etiqueta real, no una
+    // estimación) -- se guarda verificado de una. Solo cuando la unidad es
+    // g/ml: para "u." la IA devuelve valores POR UNIDAD, no por 100 g, y
+    // mezclarlos rompería la convención de la tabla foods.
+    if (name && unit !== "u." && parsed.kcal != null) {
+      learnFoods([
+        {
+          nombre: name,
+          kcal: parsed.kcal,
+          protein: parsed.protein ?? 0,
+          carbs: parsed.carbs ?? 0,
+          fat: parsed.fat ?? 0,
+          fiber: parsed.fiber ?? 0,
+          // No es "seed_curado" (esa etiqueta implica revisión humana) pero
+          // sí "verificado": es una lectura real de etiqueta, no una
+          // estimación -- mejor calidad que cualquier "aprendido_ia" normal.
+          origen: "aprendido_ia",
+          verificado: true,
+        },
+      ]).catch(() => {});
+    }
+
     return NextResponse.json(parsed);
   } catch (error) {
     console.error("Error leyendo etiqueta nutricional:", error);

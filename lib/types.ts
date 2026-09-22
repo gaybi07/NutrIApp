@@ -522,6 +522,23 @@ export interface MealItem {
   fat?: number;
   fiber?: number;
   gramos?: number; // peso aproximado de la porción — al cambiarlo, se reescalan kcal/proteína/etc. en proporción
+  /** Si este item se cargó desde "Desde Alacena", el id del InventoryItem del
+   * que se descontó stock. Sin esto, editar o borrar el item después dejaba
+   * la alacena desincronizada de lo que de verdad se comió. */
+  fuenteAlacenaId?: string;
+  /** Cuánto se descontó, EN LA UNIDAD DEL ITEM DE ALACENA (no siempre gramos:
+   * para "u." son unidades). Es la cantidad contra la que se calcula el
+   * delta al editar — puede diferir de "gramos" para items en "u.". */
+  fuenteCantidad?: number;
+  fuenteUnidad?: InventoryItem["unit"];
+  /** Datos mínimos para RECREAR el producto en la alacena si ya se borró por
+   * haber llegado a 0 (consumeAmounts elimina los items que quedan en cero). */
+  fuenteSnapshot?: {
+    name: string;
+    category?: InventoryCategory;
+    nutritionPer100g?: InventoryNutrition;
+    zona?: InventoryZone;
+  };
 }
 
 export interface DayEntry {
@@ -746,11 +763,29 @@ export const PREPARATION_CATEGORY_SUGGESTIONS = ["Almuerzos", "Cenas", "Merienda
  * solo se recuerdan los nombres de los ingredientes, no gramos. Vive en
  * localStorage (lib/useMealPreparations.ts), es un hábito personal por
  * dispositivo, igual que la memoria de comidas. */
+/** Un ingrediente de una preparación, CON cantidad -- misma forma que
+ * ParsedInventoryEntry (lib/foodText.ts) a propósito: el texto que escribe
+ * la persona para desglosar un plato se parsea con el mismo parser que ya
+ * usa la Alacena, no hay una segunda forma de decir lo mismo en el código. */
+export interface PreparationIngredient {
+  nombre: string;
+  cantidad: number;
+  unidad: "g" | "ml" | "u.";
+}
+
 export interface MealPreparation {
   id: string;
   nombre: string;
   categoria: string;
   ingredientes: string[];
+  /** Con cantidades -- si está y cada ingrediente resuelve contra la tabla
+   * `foods`, reusar esta preparación puede armar la comida directo, sin
+   * pasar por la IA. Preparaciones guardadas antes de esto no lo tienen y
+   * siguen funcionando igual que siempre (solo con "ingredientes"). */
+  ingredientesDetalle?: PreparationIngredient[];
+  /** Rinde N porciones -- un plato como una tarta se cocina entero y se come
+   * un pedazo, no todo junto. */
+  porciones?: number;
   meal?: MealKey;
   vecesUsada: number;
   createdAt: string;

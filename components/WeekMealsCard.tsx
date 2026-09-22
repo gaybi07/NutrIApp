@@ -5,7 +5,7 @@ import { DayEntry, emptyDay } from "@/lib/types";
 import { fmtDate } from "@/lib/calculations";
 import { Collapsible } from "@/components/Collapsible";
 import { SECTION_HELP } from "@/lib/helpText";
-import { MealsEditor, getMealsWithItems } from "@/components/MealsEditor";
+import { MealsEditor, getMealsWithItems, MealsEditorInventoryDelta } from "@/components/MealsEditor";
 
 const DOW_SHORT = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
@@ -17,11 +17,13 @@ export function WeekMealsCard({
   weekDays,
   onUpsert,
   openOnDesktop,
+  onInventoryDelta,
 }: {
   weekDates: string[];
   weekDays: Array<DayEntry | null>;
   onUpsert: (entry: DayEntry) => void;
   openOnDesktop?: boolean;
+  onInventoryDelta?: (deltas: MealsEditorInventoryDelta[]) => void;
 }) {
   const todayIso = fmtDate(new Date());
   const [selectedIndex, setSelectedIndex] = useState(() => Math.max(0, weekDates.indexOf(todayIso)));
@@ -58,6 +60,7 @@ export function WeekMealsCard({
         entry={selectedEntry}
         onUpsert={onUpsert}
         emptyMessage={`No tenés comidas cargadas el ${DOW_SHORT[selectedIndex]} ${selectedDay.getDate()}.`}
+        onInventoryDelta={onInventoryDelta}
       />
     </Collapsible>
   );

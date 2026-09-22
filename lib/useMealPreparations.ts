@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { MealKey, MealPreparation } from "@/lib/types";
+import { MealKey, MealPreparation, PreparationIngredient } from "@/lib/types";
 
 const KEY = "registro:mealPreparations:v1";
 
@@ -42,16 +42,31 @@ export function useMealPreparations() {
   }, []);
 
   const save = useCallback(
-    (nombre: string, categoria: string, ingredientes: string[], meal?: MealKey) => {
+    (
+      nombre: string,
+      categoria: string,
+      ingredientes: string[] | PreparationIngredient[],
+      meal?: MealKey,
+      porciones?: number
+    ) => {
       const trimmedName = nombre.trim();
       if (!trimmedName || ingredientes.length === 0) return;
+      // Puede venir solo con nombres (como siempre) o con detalle+cantidades
+      // (desglose nuevo, ver IngredientBreakdown) -- se guardan ambos: los
+      // nombres para que el fallback de "usePreparacion" siga funcionando
+      // igual que antes, el detalle para poder armar sin IA la próxima vez.
+      const hasDetail = typeof ingredientes[0] === "object";
+      const detalle = hasDetail ? (ingredientes as PreparationIngredient[]) : undefined;
+      const nombres = hasDetail ? (ingredientes as PreparationIngredient[]).map((i) => i.nombre) : (ingredientes as string[]);
       const now = new Date().toISOString();
       setPreparations((prev) => {
         const nueva: MealPreparation = {
           id: newId(),
           nombre: trimmedName,
           categoria: categoria.trim() || "Sin categoría",
-          ingredientes,
+          ingredientes: nombres,
+          ingredientesDetalle: detalle,
+          porciones,
           meal,
           vecesUsada: 0,
           createdAt: now,
@@ -59,6 +74,15 @@ export function useMealPreparations() {
         };
         return persist([...prev, nueva]);
       });
+    },
+    [persist]
+  );
+
+  const update = useCallback(
+    (id: string, patch: Partial<Pick<MealPreparation, "nombre" | "categoria" | "ingredientesDetalle" | "ingredientes" | "porciones">>) => {
+      setPreparations((prev) =>
+        persist(prev.map((p) => (p.id === id ? { ...p, ...patch, updatedAt: new Date().toISOString() } : p)))
+      );
     },
     [persist]
   );
@@ -79,5 +103,5 @@ export function useMealPreparations() {
     [persist]
   );
 
-  return { preparations, save, registerUse, remove };
+  return { preparations, save, update, registerUse, remove };
 }

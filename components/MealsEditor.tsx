@@ -2,10 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { DayEntry, MealKey, MealItem, MEAL_LABELS } from "@/lib/types";
-import { getMealItems, applyMealItems } from "@/lib/calculations";
+import { getMealItems, applyMealItems, unitsToGrams } from "@/lib/calculations";
 import { countDigits, MAX_DIGITS, normalizeNumberInput } from "@/lib/inputLimits";
+import { useFoods } from "@/lib/useFoods";
 
 const MEAL_ORDER: MealKey[] = ["des", "alm", "mer", "cen", "col"];
+
+export type MealsEditorInventoryDelta = {
+  itemId: string;
+  delta: number;
+  fallback?: NonNullable<MealItem["fuenteSnapshot"]> & { unit: NonNullable<MealItem["fuenteUnidad"]> };
+};
 
 /** ~4 kcal/g es un promedio razonable para una comida mixta (ni pura grasa
  * ni pura fibra) — sirve como estimación de partida para alimentos viejos
@@ -23,12 +30,20 @@ export function MealsEditor({
   entry,
   onUpsert,
   emptyMessage,
+  onInventoryDelta,
 }: {
   entry: DayEntry;
   onUpsert: (entry: DayEntry) => void;
   emptyMessage?: string;
+  /** Si un item viene de la Alacena (fuenteAlacenaId), editar sus gramos o
+   * borrarlo debe ajustar el stock por la diferencia -- delta>0 es "comiste
+   * más" (descontar), delta<0 es "comiste menos/borraste" (devolver). Sin
+   * esto, el stock quedaba fijo en lo que se cargó la primera vez aunque
+   * después se corrigiera la cantidad. */
+  onInventoryDelta?: (deltas: MealsEditorInventoryDelta[]) => void;
 }) {
   const mealsWithItems = getMealsWithItems(entry);
+  const { gramsPerUnit } = useFoods();
   // Colapsado por comida (Desayuno/Almuerzo/...), tipo acordeón -- si no, con
   // las 5 comidas del día abiertas a la vez queda todo "despegado" en una
   // lista larguísima. Arranca todo cerrado; al abrir una comida se cierra
@@ -74,14 +89,31 @@ export function MealsEditor({
   // proporción — así no hay que recalcular todo a mano si comiste más o
   // menos cantidad de lo que se había cargado. La primera vez que se carga
   // un valor (todavía no había gramos guardados) solo se guarda, sin reescalar.
+  // Para items "por unidad" (fuenteUnidad === "u.", ej. 1 milanesa) este
+  // campo no se usa -- ver updateUnidades más abajo, que es el que
+  // reconcilia stock para ese caso (cierra el hueco dejado a propósito en
+  // el arreglo del bug de la Alacena).
   const updateGramos = (meal: MealKey, itemId: string, newGramos: number) => {
     const items = getMealItems(entry, meal).map((item) => {
       if (item.id !== itemId) return item;
       const oldGramos = item.gramos;
-      if (!oldGramos || oldGramos <= 0 || newGramos <= 0) return { ...item, gramos: newGramos };
+      const canReconcile = item.fuenteAlacenaId && item.fuenteUnidad !== "u." && item.fuenteCantidad != null;
+      if (canReconcile) {
+        const delta = newGramos - (item.fuenteCantidad as number);
+        onInventoryDelta?.([
+          {
+            itemId: item.fuenteAlacenaId as string,
+            delta,
+            fallback: item.fuenteSnapshot ? { ...item.fuenteSnapshot, unit: item.fuenteUnidad as NonNullable<MealItem["fuenteUnidad"]> } : undefined,
+          },
+        ]);
+      }
+      const patchedFuente = canReconcile ? { fuenteCantidad: newGramos } : {};
+      if (!oldGramos || oldGramos <= 0 || newGramos <= 0) return { ...item, ...patchedFuente, gramos: newGramos };
       const ratio = newGramos / oldGramos;
       return {
         ...item,
+        ...patchedFuente,
         gramos: newGramos,
         kcal: Math.round(item.kcal * ratio),
         protein: Math.round(item.protein * ratio),
@@ -93,7 +125,55 @@ export function MealsEditor({
     onUpsert(applyMealItems(entry, meal, items));
   };
 
+  // Reescala igual que updateGramos, pero en unidades -- para items cargados
+  // "por unidad" desde la Alacena (fuenteUnidad === "u."). Cierra el hueco
+  // dejado a propósito al arreglar el bug de la Alacena: hasta que existía
+  // el peso-por-unidad (tabla foods), editar la cantidad de estos items no
+  // reconciliaba stock.
+  const updateUnidades = (meal: MealKey, itemId: string, newUnidades: number) => {
+    const items = getMealItems(entry, meal).map((item) => {
+      if (item.id !== itemId) return item;
+      const oldUnidades = item.fuenteCantidad ?? 0;
+      if (item.fuenteAlacenaId) {
+        onInventoryDelta?.([
+          {
+            itemId: item.fuenteAlacenaId,
+            delta: newUnidades - oldUnidades,
+            fallback: item.fuenteSnapshot ? { ...item.fuenteSnapshot, unit: "u." } : undefined,
+          },
+        ]);
+      }
+      const gpu = gramsPerUnit(item.nombre);
+      const gramos = gpu ? unitsToGrams(newUnidades, gpu) : item.gramos;
+      if (!oldUnidades || oldUnidades <= 0 || newUnidades <= 0) {
+        return { ...item, fuenteCantidad: newUnidades, gramos };
+      }
+      const ratio = newUnidades / oldUnidades;
+      return {
+        ...item,
+        fuenteCantidad: newUnidades,
+        gramos,
+        kcal: Math.round(item.kcal * ratio),
+        protein: Math.round(item.protein * ratio),
+        carbs: item.carbs != null ? Math.round(item.carbs * ratio) : item.carbs,
+        fat: item.fat != null ? Math.round(item.fat * ratio) : item.fat,
+        fiber: item.fiber != null ? Math.round(item.fiber * ratio) : item.fiber,
+      };
+    });
+    onUpsert(applyMealItems(entry, meal, items));
+  };
+
   const removeItem = (meal: MealKey, itemId: string) => {
+    const removed = getMealItems(entry, meal).find((item) => item.id === itemId);
+    if (removed?.fuenteAlacenaId && removed.fuenteCantidad != null) {
+      onInventoryDelta?.([
+        {
+          itemId: removed.fuenteAlacenaId,
+          delta: -removed.fuenteCantidad,
+          fallback: removed.fuenteSnapshot ? { ...removed.fuenteSnapshot, unit: removed.fuenteUnidad as NonNullable<MealItem["fuenteUnidad"]> } : undefined,
+        },
+      ]);
+    }
     const items = getMealItems(entry, meal).filter((item) => item.id !== itemId);
     onUpsert(applyMealItems(entry, meal, items));
   };
@@ -143,17 +223,37 @@ export function MealsEditor({
                 </div>
                 <div className="grid grid-cols-3 gap-1.5">
                   <div>
-                    <div className="mb-0.5 font-mono text-[8px] uppercase tracking-wide text-textMuted">Gramos</div>
-                    <input
-                      type="number"
-                      max="9999"
-                      placeholder="—"
-                      value={item.gramos ?? ""}
-                      onChange={(e) => {
-                        if (countDigits(e.target.value) <= MAX_DIGITS) updateGramos(meal, item.id, normalizeNumberInput(e.target));
-                      }}
-                      className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
-                    />
+                    <div className="mb-0.5 font-mono text-[8px] uppercase tracking-wide text-textMuted">
+                      {item.fuenteUnidad === "u." ? "Unidades" : "Gramos"}
+                    </div>
+                    {item.fuenteUnidad === "u." ? (
+                      <>
+                        <input
+                          type="number"
+                          max="999"
+                          placeholder="—"
+                          value={item.fuenteCantidad ?? ""}
+                          onChange={(e) => {
+                            if (countDigits(e.target.value) <= MAX_DIGITS) updateUnidades(meal, item.id, normalizeNumberInput(e.target));
+                          }}
+                          className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
+                        />
+                        {gramsPerUnit(item.nombre) && (
+                          <div className="mt-0.5 text-right font-mono text-[8px] text-textMuted">≈ {item.gramos ?? 0} g</div>
+                        )}
+                      </>
+                    ) : (
+                      <input
+                        type="number"
+                        max="9999"
+                        placeholder="—"
+                        value={item.gramos ?? ""}
+                        onChange={(e) => {
+                          if (countDigits(e.target.value) <= MAX_DIGITS) updateGramos(meal, item.id, normalizeNumberInput(e.target));
+                        }}
+                        className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
+                      />
+                    )}
                   </div>
                   <div>
                     <div className="mb-0.5 font-mono text-[8px] uppercase tracking-wide text-textMuted">Kcal</div>
