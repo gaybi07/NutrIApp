@@ -269,31 +269,35 @@ export function useSharedInventory(householdId: string | null) {
     [items, householdId, refetch]
   );
 
+  /** Descuenta por DELTA atómico en la base (RPC adjust_inventory_quantity),
+   * no por una cantidad absoluta calculada acá -- si esto se calculara a
+   * partir de `items` (el último snapshot leído), dos ediciones rápidas
+   * (ej. escribir "150" tecla por tecla en MealsEditor) podían pisarse entre
+   * sí porque cada una parte de un `items` que todavía no reflejaba el
+   * ajuste de la anterior. El RPC hace "quantity = quantity + delta" en un
+   * solo UPDATE del lado de Postgres, así no importa el orden en que
+   * lleguen ni si se solapan. */
   const consumeAmounts = useCallback(
     (amounts: Array<{ id: string; quantity: number }>) => {
       if (!supabase || !householdId) return;
-      const toDelete: string[] = [];
-      const toUpdate: Array<{ id: string; quantity: number }> = [];
-      items.forEach((item) => {
-        const amount = amounts.find((entry) => entry.id === item.id)?.quantity || 0;
-        if (!amount) return;
-        const next = Math.max(0, item.quantity - amount);
-        if (next <= 0) toDelete.push(item.id);
-        else toUpdate.push({ id: item.id, quantity: next });
-      });
+      const valid = amounts.filter((a) => a.quantity > 0);
+      if (valid.length === 0) return;
       (async () => {
-        if (toDelete.length > 0) await supabase!.from("inventory_items").delete().in("id", toDelete);
-        for (const u of toUpdate) await supabase!.from("inventory_items").update({ quantity: u.quantity }).eq("id", u.id);
+        await Promise.all(valid.map((a) => supabase!.rpc("adjust_inventory_quantity", { p_item_id: a.id, p_delta: -a.quantity })));
         await refetch();
       })();
     },
-    [items, householdId, refetch]
+    [householdId, refetch]
   );
 
   /** Contraparte de consumeAmounts — devuelve stock (comiste menos de lo
-   * cargado, o borraste una comida cargada desde la alacena). Si el producto
-   * ya no existe (consumeAmounts lo borró al llegar a 0), lo recrea a partir
-   * del "fallback" en vez de perder el ajuste. */
+   * cargado, o borraste una comida cargada desde la alacena), también por
+   * delta atómico. Si el producto ya no existe (consumeAmounts lo borró al
+   * llegar a 0 -- el RPC devuelve found=false), recién ahí recurre al
+   * "fallback" para recrearlo por nombre+unidad o insertarlo de nuevo; ese
+   * camino puntual (recrear algo que ya no existe) sigue teniendo una
+   * ventana de carrera chica si dos restauraciones concurrentes apuntan al
+   * mismo producto ya borrado -- caso raro, se acepta por ahora. */
   const restoreAmounts = useCallback(
     (
       entries: Array<{
@@ -309,53 +313,56 @@ export function useSharedInventory(householdId: string | null) {
       }>
     ) => {
       if (!supabase || !householdId) return;
-      const toUpdate: Array<{ id: string; quantity: number }> = [];
-      const toInsert: Array<{
-        name: string;
-        quantity: number;
-        unit: InventoryItem["unit"];
-        category?: InventoryCategory;
-        nutritionPer100g?: InventoryNutrition;
-        zona?: InventoryItem["zona"];
-      }> = [];
-
-      entries.forEach(({ id, quantity, fallback }) => {
-        if (quantity <= 0) return;
-        const existing = items.find((item) => item.id === id);
-        if (existing) {
-          toUpdate.push({ id, quantity: existing.quantity + quantity });
-          return;
-        }
-        if (!fallback) return;
-        const byName = items.find((item) => inventoryKey(item.name) === inventoryKey(fallback.name) && item.unit === fallback.unit);
-        if (byName) {
-          toUpdate.push({ id: byName.id, quantity: byName.quantity + quantity });
-          return;
-        }
-        toInsert.push({
-          name: fallback.name,
-          quantity,
-          unit: fallback.unit,
-          category: fallback.category || defaultCategoryForName(fallback.name),
-          nutritionPer100g: fallback.nutritionPer100g,
-          zona: fallback.zona,
-        });
-      });
+      const valid = entries.filter((e) => e.quantity > 0);
+      if (valid.length === 0) return;
 
       (async () => {
-        for (const u of toUpdate) await supabase!.from("inventory_items").update({ quantity: u.quantity }).eq("id", u.id);
-        if (toInsert.length > 0) {
-          await supabase!.from("inventory_items").insert(
-            toInsert.map((entry) => ({
-              household_id: householdId,
-              name: entry.name,
-              quantity: entry.quantity,
-              unit: entry.unit,
-              category: entry.category,
-              nutrition_per_100g: entry.nutritionPer100g || null,
-              zona: entry.zona || null,
-            }))
-          );
+        const needsFallback: typeof valid = [];
+        await Promise.all(
+          valid.map(async (entry) => {
+            const { data: found } = await supabase!.rpc("adjust_inventory_quantity", { p_item_id: entry.id, p_delta: entry.quantity });
+            if (!found && entry.fallback) needsFallback.push(entry);
+          })
+        );
+
+        if (needsFallback.length > 0) {
+          const toUpdate: Array<{ id: string; quantity: number }> = [];
+          const toInsert: Array<{
+            name: string;
+            quantity: number;
+            unit: InventoryItem["unit"];
+            category?: InventoryCategory;
+            nutritionPer100g?: InventoryNutrition;
+            zona?: InventoryItem["zona"];
+          }> = [];
+          needsFallback.forEach(({ quantity, fallback }) => {
+            if (!fallback) return;
+            const byName = items.find((item) => inventoryKey(item.name) === inventoryKey(fallback.name) && item.unit === fallback.unit);
+            if (byName) toUpdate.push({ id: byName.id, quantity: byName.quantity + quantity });
+            else
+              toInsert.push({
+                name: fallback.name,
+                quantity,
+                unit: fallback.unit,
+                category: fallback.category || defaultCategoryForName(fallback.name),
+                nutritionPer100g: fallback.nutritionPer100g,
+                zona: fallback.zona,
+              });
+          });
+          await Promise.all(toUpdate.map((u) => supabase!.from("inventory_items").update({ quantity: u.quantity }).eq("id", u.id)));
+          if (toInsert.length > 0) {
+            await supabase!.from("inventory_items").insert(
+              toInsert.map((entry) => ({
+                household_id: householdId,
+                name: entry.name,
+                quantity: entry.quantity,
+                unit: entry.unit,
+                category: entry.category,
+                nutrition_per_100g: entry.nutritionPer100g || null,
+                zona: entry.zona || null,
+              }))
+            );
+          }
         }
         await refetch();
       })();
