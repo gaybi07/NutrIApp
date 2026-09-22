@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { InventoryCategory, InventoryItem, InventoryNutrition } from "./types";
-import { inventoryKey, defaultUnitForName, defaultCategoryForName, parseInventoryText } from "./foodText";
+import { inventoryKey, defaultUnitForName, defaultCategoryForName, parseInventoryText, findRestoreTarget } from "./foodText";
 
 const INVENTORY_KEY = "registro:inventory:v1";
 
 // Movidos a lib/foodText.ts (sin "use client") para que las rutas de API
 // también los puedan usar del lado servidor -- se re-exportan acá tal cual
 // para no romper a nadie que ya los importaba de este archivo.
-export { inventoryKey, defaultCategoryForName, parseInventoryText };
+export { inventoryKey, defaultCategoryForName, parseInventoryText, findRestoreTarget };
 export type { ParsedInventoryEntry } from "./foodText";
 
 export function useInventory() {
@@ -209,17 +209,12 @@ export function useInventory() {
         const next = [...previous];
         entries.forEach(({ id, quantity, fallback }) => {
           if (quantity <= 0) return;
-          const existing = next.find((item) => item.id === id);
-          if (existing) {
-            existing.quantity += quantity;
+          const target = findRestoreTarget(next, id, fallback);
+          if (target) {
+            target.quantity += quantity;
             return;
           }
           if (!fallback) return;
-          const byName = next.find((item) => inventoryKey(item.name) === inventoryKey(fallback.name) && item.unit === fallback.unit);
-          if (byName) {
-            byName.quantity += quantity;
-            return;
-          }
           next.push({
             id: `${Date.now()}-${fallback.name}-${Math.random()}`,
             name: fallback.name,

@@ -85,74 +85,42 @@ export function MealsEditor({
     onUpsert(applyMealItems(entry, meal, items));
   };
 
-  // Cambiar los gramos reescala kcal/proteína/carbos/grasas/fibra en la misma
-  // proporción — así no hay que recalcular todo a mano si comiste más o
-  // menos cantidad de lo que se había cargado. La primera vez que se carga
-  // un valor (todavía no había gramos guardados) solo se guarda, sin reescalar.
-  // Para items "por unidad" (fuenteUnidad === "u.", ej. 1 milanesa) este
-  // campo no se usa -- ver updateUnidades más abajo, que es el que
-  // reconcilia stock para ese caso (cierra el hueco dejado a propósito en
-  // el arreglo del bug de la Alacena).
-  const updateGramos = (meal: MealKey, itemId: string, newGramos: number) => {
+  // Reescala kcal/proteína/carbos/grasas/fibra en la misma proporción al
+  // cambiar la cantidad -- así no hay que recalcular todo a mano si comiste
+  // más o menos de lo que se había cargado. Sirve tanto para "Gramos" (el
+  // caso normal) como para "Unidades" (items por unidad cargados desde la
+  // Alacena, ej. 1 milanesa) -- la única diferencia entre los dos es CUÁL
+  // campo guarda la cantidad "de verdad" (gramos vs. fuenteCantidad) y cómo
+  // se deriva el otro; antes eran dos funciones casi idénticas
+  // (updateGramos/updateUnidades) copiadas una de la otra.
+  const updateQuantity = (meal: MealKey, itemId: string, newValue: number) => {
     const items = getMealItems(entry, meal).map((item) => {
       if (item.id !== itemId) return item;
-      const oldGramos = item.gramos;
-      const canReconcile = item.fuenteAlacenaId && item.fuenteUnidad !== "u." && item.fuenteCantidad != null;
+      const isUnitBased = item.fuenteUnidad === "u.";
+      // Para items cargados desde la Alacena, la cantidad "de verdad" contra
+      // la que se compara es siempre fuenteCantidad (en gramos o en
+      // unidades, según corresponda) -- para el resto (IA, manual, etc.) no
+      // hay fuenteCantidad, así que se usa "gramos" como siempre.
+      const oldValue = item.fuenteCantidad ?? item.gramos;
+      const canReconcile = Boolean(item.fuenteAlacenaId) && oldValue != null;
       if (canReconcile) {
-        const delta = newGramos - (item.fuenteCantidad as number);
         onInventoryDelta?.([
           {
             itemId: item.fuenteAlacenaId as string,
-            delta,
+            delta: newValue - (oldValue as number),
             fallback: item.fuenteSnapshot ? { ...item.fuenteSnapshot, unit: item.fuenteUnidad as NonNullable<MealItem["fuenteUnidad"]> } : undefined,
           },
         ]);
       }
-      const patchedFuente = canReconcile ? { fuenteCantidad: newGramos } : {};
-      if (!oldGramos || oldGramos <= 0 || newGramos <= 0) return { ...item, ...patchedFuente, gramos: newGramos };
-      const ratio = newGramos / oldGramos;
+      const gpu = isUnitBased ? gramsPerUnit(item.nombre) : null;
+      const newGramos = isUnitBased ? (gpu ? unitsToGrams(newValue, gpu) : item.gramos) : newValue;
+      const patchedFuente = canReconcile ? { fuenteCantidad: newValue } : {};
+      if (!oldValue || oldValue <= 0 || newValue <= 0) return { ...item, ...patchedFuente, gramos: newGramos };
+      const ratio = newValue / oldValue;
       return {
         ...item,
         ...patchedFuente,
         gramos: newGramos,
-        kcal: Math.round(item.kcal * ratio),
-        protein: Math.round(item.protein * ratio),
-        carbs: item.carbs != null ? Math.round(item.carbs * ratio) : item.carbs,
-        fat: item.fat != null ? Math.round(item.fat * ratio) : item.fat,
-        fiber: item.fiber != null ? Math.round(item.fiber * ratio) : item.fiber,
-      };
-    });
-    onUpsert(applyMealItems(entry, meal, items));
-  };
-
-  // Reescala igual que updateGramos, pero en unidades -- para items cargados
-  // "por unidad" desde la Alacena (fuenteUnidad === "u."). Cierra el hueco
-  // dejado a propósito al arreglar el bug de la Alacena: hasta que existía
-  // el peso-por-unidad (tabla foods), editar la cantidad de estos items no
-  // reconciliaba stock.
-  const updateUnidades = (meal: MealKey, itemId: string, newUnidades: number) => {
-    const items = getMealItems(entry, meal).map((item) => {
-      if (item.id !== itemId) return item;
-      const oldUnidades = item.fuenteCantidad ?? 0;
-      if (item.fuenteAlacenaId) {
-        onInventoryDelta?.([
-          {
-            itemId: item.fuenteAlacenaId,
-            delta: newUnidades - oldUnidades,
-            fallback: item.fuenteSnapshot ? { ...item.fuenteSnapshot, unit: "u." } : undefined,
-          },
-        ]);
-      }
-      const gpu = gramsPerUnit(item.nombre);
-      const gramos = gpu ? unitsToGrams(newUnidades, gpu) : item.gramos;
-      if (!oldUnidades || oldUnidades <= 0 || newUnidades <= 0) {
-        return { ...item, fuenteCantidad: newUnidades, gramos };
-      }
-      const ratio = newUnidades / oldUnidades;
-      return {
-        ...item,
-        fuenteCantidad: newUnidades,
-        gramos,
         kcal: Math.round(item.kcal * ratio),
         protein: Math.round(item.protein * ratio),
         carbs: item.carbs != null ? Math.round(item.carbs * ratio) : item.carbs,
@@ -234,7 +202,7 @@ export function MealsEditor({
                           placeholder="—"
                           value={item.fuenteCantidad ?? ""}
                           onChange={(e) => {
-                            if (countDigits(e.target.value) <= MAX_DIGITS) updateUnidades(meal, item.id, normalizeNumberInput(e.target));
+                            if (countDigits(e.target.value) <= MAX_DIGITS) updateQuantity(meal, item.id, normalizeNumberInput(e.target));
                           }}
                           className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
                         />
@@ -249,7 +217,7 @@ export function MealsEditor({
                         placeholder="—"
                         value={item.gramos ?? ""}
                         onChange={(e) => {
-                          if (countDigits(e.target.value) <= MAX_DIGITS) updateGramos(meal, item.id, normalizeNumberInput(e.target));
+                          if (countDigits(e.target.value) <= MAX_DIGITS) updateQuantity(meal, item.id, normalizeNumberInput(e.target));
                         }}
                         className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
                       />

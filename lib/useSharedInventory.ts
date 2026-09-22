@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/browser";
 import { InventoryCategory, InventoryItem, InventoryNutrition } from "./types";
-import { inventoryKey, defaultCategoryForName, parseInventoryText } from "./useInventory";
+import { inventoryKey, defaultCategoryForName, parseInventoryText, findRestoreTarget } from "./useInventory";
 
 function rowToItem(row: Record<string, unknown>): InventoryItem {
   return {
@@ -335,9 +335,9 @@ export function useSharedInventory(householdId: string | null) {
             nutritionPer100g?: InventoryNutrition;
             zona?: InventoryItem["zona"];
           }> = [];
-          needsFallback.forEach(({ quantity, fallback }) => {
+          needsFallback.forEach(({ id, quantity, fallback }) => {
             if (!fallback) return;
-            const byName = items.find((item) => inventoryKey(item.name) === inventoryKey(fallback.name) && item.unit === fallback.unit);
+            const byName = findRestoreTarget(items, id, fallback);
             if (byName) toUpdate.push({ id: byName.id, quantity: byName.quantity + quantity });
             else
               toInsert.push({

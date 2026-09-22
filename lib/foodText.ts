@@ -4,7 +4,7 @@
 // la IA. Antes vivían en lib/useInventory.ts (que sí tiene "use client"), que
 // los sigue re-exportando para no romper a nadie que ya los importaba de ahí.
 
-import { InventoryCategory, InventoryItem } from "./types";
+import { InventoryCategory, InventoryItem, InventoryNutrition } from "./types";
 
 export function inventoryKey(name: string) {
   const normalized = name
@@ -99,6 +99,29 @@ export interface ParsedInventoryEntry {
   // — así se sabe cuándo es seguro dejar que la memoria de productos
   // pise la adivinanza con la unidad real que ya se le conoció antes.
   unitExplicit?: boolean;
+}
+
+export interface RestoreFallback {
+  name: string;
+  unit: InventoryItem["unit"];
+  category?: InventoryCategory;
+  nutritionPer100g?: InventoryNutrition;
+  zona?: InventoryItem["zona"];
+}
+
+/** A qué InventoryItem existente le corresponde sumarle stock devuelto --
+ * primero por id (el caso normal), y si no existe más (se borró al llegar a
+ * 0) por nombre+unidad normalizados, para no crear un duplicado si ya hay
+ * otro "Leche" con la misma unidad en la lista. Devuelve undefined cuando
+ * hay que insertar un producto nuevo desde el fallback. Antes esta misma
+ * lógica vivía copiada en useInventory.ts (local) y useSharedInventory.ts
+ * (compartida) -- una sola versión acá, cada hook solo decide CÓMO persistir
+ * el resultado (localStorage vs. Supabase). */
+export function findRestoreTarget(items: InventoryItem[], id: string, fallback?: RestoreFallback): InventoryItem | undefined {
+  const byId = items.find((item) => item.id === id);
+  if (byId) return byId;
+  if (!fallback) return undefined;
+  return items.find((item) => inventoryKey(item.name) === inventoryKey(fallback.name) && item.unit === fallback.unit);
 }
 
 export function parseInventoryText(text: string): ParsedInventoryEntry[] {
