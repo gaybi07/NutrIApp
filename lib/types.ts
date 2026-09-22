@@ -736,6 +736,27 @@ export interface Settings {
   workoutSuggestions?: Record<string, WorkoutSuggestion>; // clave `${routineId}::${nombre del ejercicio}`
 }
 
+/** Sugerencias de categoría al guardar una preparación -- no es una lista
+ * cerrada, el usuario puede escribir cualquier otra. */
+export const PREPARATION_CATEGORY_SUGGESTIONS = ["Almuerzos", "Cenas", "Meriendas", "Desayunos", "Viandas", "Repostería"];
+
+/** Combo de varios ingredientes que se repite (ej. "Milanesa con arroz y
+ * arvejas") -- guarda la ESTRUCTURA (qué lleva), no cantidades fijas: cada
+ * vez que se cocina puede ser una cantidad distinta, así que al reusarla
+ * solo se recuerdan los nombres de los ingredientes, no gramos. Vive en
+ * localStorage (lib/useMealPreparations.ts), es un hábito personal por
+ * dispositivo, igual que la memoria de comidas. */
+export interface MealPreparation {
+  id: string;
+  nombre: string;
+  categoria: string;
+  ingredientes: string[];
+  meal?: MealKey;
+  vecesUsada: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const MEAL_LABELS: Record<MealKey, string> = {
   des: "Desayuno",
   alm: "Almuerzo",

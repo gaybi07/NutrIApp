@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { DayEntry, InventoryItem, MealKey, MEAL_LABELS, MealItem, emptyDay } from "@/lib/types";
+import { DayEntry, InventoryItem, MealKey, MEAL_LABELS, MealItem, emptyDay, PREPARATION_CATEGORY_SUGGESTIONS } from "@/lib/types";
 import { countDigits, MAX_DIGITS, MAX_TEXT_LENGTH, normalizeNumberInput } from "@/lib/inputLimits";
 import { fmtDate, getMealItems, applyMealItems, suggestedMeal } from "@/lib/calculations";
 import { FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 import { useMealMemory } from "@/lib/useMealMemory";
+import { useMealPreparations } from "@/lib/useMealPreparations";
 import { parseInventoryText } from "@/lib/useInventory";
 import { useSpeechToText } from "@/lib/useSpeechToText";
 import { MealFromAlacena } from "@/components/MealFromAlacena";
@@ -111,6 +112,10 @@ export function AiEntryForm({
   } | null>(null);
   const [consumeResult, setConsumeResult] = useState<{ consumed: string[]; missing: string[] } | null>(null);
   const { memory: mealMemory, remember, findMatch } = useMealMemory();
+  const { preparations, save: savePreparation, registerUse: registerPreparationUse } = useMealPreparations();
+  const [savePrep, setSavePrep] = useState(false);
+  const [prepName, setPrepName] = useState("");
+  const [prepCategoria, setPrepCategoria] = useState("");
   const { supported: speechSupported, recording, toggle: toggleRecording } = useSpeechToText(
     (transcript) => setText((prev) => (prev ? `${prev} ${transcript}` : transcript)),
     () => setStatus("No pude escucharte, probá de nuevo o escribilo a mano.")
@@ -219,8 +224,14 @@ export function AiEntryForm({
     onUpsert(updated);
     const result = onConsumeInventory?.(p.ingredientes || text);
     remember(p.resumen || text, p.kcal, p.protein, p.carbs, p.fat, meal, p.fiber, p.ingredientes, p.items);
+    if (savePrep && prepName.trim() && p.items.length > 1) {
+      savePreparation(prepName, prepCategoria, p.items.map((i) => i.nombre), meal);
+    }
     setText("");
     setPreview(null);
+    setSavePrep(false);
+    setPrepName("");
+    setPrepCategoria("");
     setStatus(`Sumado a ${MEAL_LABELS[meal]} del ${fecha} ✓`);
     setConsumeResult(result && (result.consumed.length > 0 || result.missing.length > 0) ? result : null);
     setMeal(suggestedMeal(updated, new Date().getHours()));
@@ -266,6 +277,24 @@ export function AiEntryForm({
     }
     return combined.slice(0, MAX_SUGGESTIONS);
   }, [mealMemory, meal]);
+
+  // Preparaciones guardadas para esta comida (o sin comida asignada) --
+  // las más repetidas primero. Tocarlas completa el texto con la lista de
+  // ingredientes para que se agreguen las cantidades de esta vez, no
+  // dispara la IA sola.
+  const misPreparaciones = useMemo(
+    () =>
+      preparations
+        .filter((p) => !p.meal || p.meal === meal)
+        .sort((a, b) => b.vecesUsada - a.vecesUsada)
+        .slice(0, 6),
+    [preparations, meal]
+  );
+
+  const usePreparacion = (prepId: string, ingredientes: string[]) => {
+    setText(ingredientes.join(", "));
+    registerPreparationUse(prepId);
+  };
 
   // Tus favoritas de ESTA comida puntual, para cargar de un solo toque --
   // ya se sabe kcal/proteína/etc. de la última vez, no hace falta recalcular
@@ -517,6 +546,24 @@ export function AiEntryForm({
             </button>
           ))}
         </div>
+        {misPreparaciones.length > 0 && (
+          <div className="mt-2">
+            <div className="mb-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">Tus preparaciones</div>
+            <div className="flex flex-wrap gap-1.5">
+              {misPreparaciones.map((prep) => (
+                <button
+                  key={prep.id}
+                  type="button"
+                  onClick={() => usePreparacion(prep.id, prep.ingredientes)}
+                  className="rounded-full border border-gold/40 bg-gold/10 px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-wide text-gold hover:border-gold/60"
+                  title={prep.ingredientes.join(", ")}
+                >
+                  {prep.nombre} · {prep.categoria}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       <button
         onClick={() => handleCalc()}
@@ -615,6 +662,38 @@ export function AiEntryForm({
           {preview.ingredientes && (
             <div className="mb-2 text-[10px] text-textMuted">
               Se descuenta del inventario (si lo tenés cargado): {preview.ingredientes}
+            </div>
+          )}
+          {preview.items.length > 1 && (
+            <div className="mb-2 rounded-lg border border-dashed border-gold/40 bg-gold/5 p-2.5">
+              <label className="flex items-center gap-1.5 text-[12px] text-text">
+                <input type="checkbox" checked={savePrep} onChange={(e) => setSavePrep(e.target.checked)} />
+                Guardar como preparación (para volver a cargar esta combinación otro día)
+              </label>
+              {savePrep && (
+                <div className="mt-2 space-y-1.5">
+                  <input
+                    type="text"
+                    placeholder="Nombre, ej: Milanesa con arroz y arvejas"
+                    maxLength={MAX_TEXT_LENGTH}
+                    value={prepName}
+                    onChange={(e) => setPrepName(e.target.value)}
+                  />
+                  <input
+                    type="text"
+                    list="prep-categorias"
+                    placeholder="Categoría, ej: Almuerzos"
+                    maxLength={40}
+                    value={prepCategoria}
+                    onChange={(e) => setPrepCategoria(e.target.value)}
+                  />
+                  <datalist id="prep-categorias">
+                    {PREPARATION_CATEGORY_SUGGESTIONS.map((c) => (
+                      <option key={c} value={c} />
+                    ))}
+                  </datalist>
+                </div>
+              )}
             </div>
           )}
           <button
