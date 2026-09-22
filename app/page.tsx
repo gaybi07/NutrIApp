@@ -602,7 +602,14 @@ export default function Home() {
               </button>
             </div>
             <div className="flex-1 p-3">
-              <AiEntryForm days={days} onUpsert={upsertDay} onConsumeInventory={consumeByText} inventory={inventory} consumeAmounts={consumeAmounts} />
+              <AiEntryForm
+                days={days}
+                onUpsert={upsertDay}
+                onConsumeInventory={consumeByText}
+                inventory={inventory}
+                consumeAmounts={consumeAmounts}
+                disableAi={isBasico}
+              />
             </div>
           </div>
         </div>

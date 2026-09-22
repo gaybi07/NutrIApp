@@ -67,16 +67,24 @@ export function AiEntryForm({
   onConsumeInventory,
   inventory,
   consumeAmounts,
+  disableAi,
 }: {
   days: DayEntry[];
   onUpsert: (entry: DayEntry) => void;
   onConsumeInventory?: (text: string) => { consumed: string[]; missing: string[] } | void;
   inventory: InventoryItem[];
   consumeAmounts: (amounts: Array<{ id: string; quantity: number }>) => void;
+  /** Plan Básico -- ver migration_2026-09-21g_add_plan_gating.sql. Oculta
+   * la IA, la Alacena y "Buscar producto" (los tres dependen de IA o de
+   * Alacena, ambas Premium) y muestra una carga 100% manual en su lugar --
+   * no un botón deshabilitado, es el único camino real para básico. */
+  disableAi?: boolean;
 }) {
   const [fecha, setFecha] = useState(fmtDate(new Date()));
   const [meal, setMeal] = useState<MealKey>("des");
   const [mode, setMode] = useState<"ia" | "alacena" | "buscar">("ia");
+  const [manualDesc, setManualDesc] = useState("");
+  const [manualValues, setManualValues] = useState({ kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
@@ -179,16 +187,17 @@ export function AiEntryForm({
     }
   };
 
-  const handleSave = () => {
-    if (!preview) return;
+  const handleSave = (overridePreview?: NonNullable<typeof preview>) => {
+    const p = overridePreview || preview;
+    if (!p) return;
     const existing = days.find((d) => d.fecha === fecha) || emptyDay(fecha);
-    const nuevosAlimentos = preview.ingredientes ? parseInventoryText(preview.ingredientes).map((i) => i.name) : [];
+    const nuevosAlimentos = p.ingredientes ? parseInventoryText(p.ingredientes).map((i) => i.name) : [];
     const alimentosDelDia = Array.from(new Set([...(existing.alimentos || []), ...nuevosAlimentos]));
     // Si es un solo item, refleja cualquier ajuste manual que se haya hecho en la grilla de arriba antes de guardar.
     const rawItems =
-      preview.items.length === 1
-        ? [{ ...preview.items[0], kcal: preview.kcal, protein: preview.protein, carbs: preview.carbs, fat: preview.fat, fiber: preview.fiber }]
-        : preview.items;
+      p.items.length === 1
+        ? [{ ...p.items[0], kcal: p.kcal, protein: p.protein, carbs: p.carbs, fat: p.fat, fiber: p.fiber }]
+        : p.items;
     const nuevosItems: MealItem[] = rawItems.map((item, i) => ({
       ...item,
       id: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
@@ -196,8 +205,8 @@ export function AiEntryForm({
     const itemsActuales = getMealItems(existing, meal);
     const updated = { ...applyMealItems(existing, meal, [...itemsActuales, ...nuevosItems]), alimentos: alimentosDelDia };
     onUpsert(updated);
-    const result = onConsumeInventory?.(preview.ingredientes || text);
-    remember(preview.resumen || text, preview.kcal, preview.protein, preview.carbs, preview.fat, meal, preview.fiber, preview.ingredientes, preview.items);
+    const result = onConsumeInventory?.(p.ingredientes || text);
+    remember(p.resumen || text, p.kcal, p.protein, p.carbs, p.fat, meal, p.fiber, p.ingredientes, p.items);
     setText("");
     setPreview(null);
     setStatus(`Sumado a ${MEAL_LABELS[meal]} del ${fecha} ✓`);
@@ -205,6 +214,35 @@ export function AiEntryForm({
     setMeal(suggestedMeal(updated, new Date().getHours()));
     setTimeout(() => setStatus(""), 3500);
     setTimeout(() => setConsumeResult(null), 9000);
+  };
+
+  const handleManualSave = () => {
+    if (!manualDesc.trim()) {
+      setStatus("Escribí qué comiste primero");
+      return;
+    }
+    handleSave({
+      kcal: manualValues.kcal,
+      protein: manualValues.protein,
+      carbs: manualValues.carbs,
+      fat: manualValues.fat,
+      fiber: manualValues.fiber,
+      detalle: "",
+      resumen: manualDesc.trim(),
+      ingredientes: "",
+      items: [
+        {
+          nombre: manualDesc.trim(),
+          kcal: manualValues.kcal,
+          protein: manualValues.protein,
+          carbs: manualValues.carbs,
+          fat: manualValues.fat,
+          fiber: manualValues.fiber,
+        },
+      ],
+    });
+    setManualDesc("");
+    setManualValues({ kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
   };
 
   const mealSuggestions = useMemo(() => {
@@ -224,35 +262,37 @@ export function AiEntryForm({
     >
       <div className="font-display italic text-[15px] text-gold mb-2.5">✎ Cargar comida</div>
 
-      <div className="mb-2.5 flex gap-1 rounded-xl border border-border bg-bg/40 p-1">
-        <button
-          type="button"
-          onClick={() => setMode("ia")}
-          className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
-            mode === "ia" ? "bg-gold text-bg" : "text-textMuted"
-          }`}
-        >
-          Con IA
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("alacena")}
-          className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
-            mode === "alacena" ? "bg-gold text-bg" : "text-textMuted"
-          }`}
-        >
-          Desde Alacena
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("buscar")}
-          className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
-            mode === "buscar" ? "bg-gold text-bg" : "text-textMuted"
-          }`}
-        >
-          Buscar producto
-        </button>
-      </div>
+      {!disableAi && (
+        <div className="mb-2.5 flex gap-1 rounded-xl border border-border bg-bg/40 p-1">
+          <button
+            type="button"
+            onClick={() => setMode("ia")}
+            className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
+              mode === "ia" ? "bg-gold text-bg" : "text-textMuted"
+            }`}
+          >
+            Con IA
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("alacena")}
+            className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
+              mode === "alacena" ? "bg-gold text-bg" : "text-textMuted"
+            }`}
+          >
+            Desde Alacena
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("buscar")}
+            className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
+              mode === "buscar" ? "bg-gold text-bg" : "text-textMuted"
+            }`}
+          >
+            Buscar producto
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-2">
         <div>
@@ -269,7 +309,74 @@ export function AiEntryForm({
         </div>
       </div>
 
-      {mode === "alacena" && (
+      {disableAi && (
+        <div className="mt-2">
+          <label className="mb-1 flex items-center">Qué comiste</label>
+          <input
+            type="text"
+            maxLength={MAX_TEXT_LENGTH}
+            placeholder="Ej: 2 huevos con tostadas"
+            value={manualDesc}
+            onChange={(e) => setManualDesc(e.target.value)}
+          />
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <div>
+              <label>Kcal</label>
+              <input
+                type="number"
+                max="999999"
+                value={manualValues.kcal}
+                onChange={(e) => {
+                  if (countDigits(e.target.value) <= MAX_DIGITS) setManualValues((v) => ({ ...v, kcal: normalizeNumberInput(e.target) }));
+                }}
+              />
+            </div>
+            <div>
+              <label>Proteína (g)</label>
+              <input
+                type="number"
+                max="999999"
+                value={manualValues.protein}
+                onChange={(e) => {
+                  if (countDigits(e.target.value) <= MAX_DIGITS) setManualValues((v) => ({ ...v, protein: normalizeNumberInput(e.target) }));
+                }}
+              />
+            </div>
+            <div>
+              <label>Carbohidratos (g)</label>
+              <input
+                type="number"
+                max="999999"
+                value={manualValues.carbs}
+                onChange={(e) => {
+                  if (countDigits(e.target.value) <= MAX_DIGITS) setManualValues((v) => ({ ...v, carbs: normalizeNumberInput(e.target) }));
+                }}
+              />
+            </div>
+            <div>
+              <label>Grasas (g)</label>
+              <input
+                type="number"
+                max="999999"
+                value={manualValues.fat}
+                onChange={(e) => {
+                  if (countDigits(e.target.value) <= MAX_DIGITS) setManualValues((v) => ({ ...v, fat: normalizeNumberInput(e.target) }));
+                }}
+              />
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleManualSave}
+            className="mt-2.5 w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-bg"
+          >
+            Sumar a {MEAL_LABELS[meal]}
+          </button>
+          {status && <div className="text-center font-mono text-[11px] text-sage mt-2">{status}</div>}
+        </div>
+      )}
+
+      {!disableAi && mode === "alacena" && (
         <MealFromAlacena
           items={inventory}
           days={days}
@@ -281,7 +388,7 @@ export function AiEntryForm({
         />
       )}
 
-      {mode === "buscar" && (
+      {!disableAi && mode === "buscar" && (
         <MealFromSearch
           days={days}
           fecha={fecha}
@@ -291,7 +398,7 @@ export function AiEntryForm({
         />
       )}
 
-      {mode === "ia" && (
+      {!disableAi && mode === "ia" && (
       <>
       <div className="mt-2">
         <label className="mb-1 flex items-center">Contame qué comiste<InfoHint text={FIELD_HELP.comidaTexto} /></label>
@@ -429,7 +536,7 @@ export function AiEntryForm({
             </div>
           )}
           <button
-            onClick={handleSave}
+            onClick={() => handleSave()}
             className="w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-bg"
           >
             Sumar a {MEAL_LABELS[meal]}
