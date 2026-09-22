@@ -43,7 +43,10 @@ _Avoid_: Family, group
 ### Plan & Gating
 
 **Client Plan**:
-The subscription tier on a student/individual account — Básico, Premium, or Premium+. Premium vs Premium+ differ only in how many trainer links are allowed (1 vs 2); the feature set is otherwise identical.
+The subscription tier on a student/individual account — Básico, Premium, or Premium+.
+- **Básico**: no professional link at all (see below).
+- **Premium**: can link to one professional (today, only a Trainer exists — Nutritionist is not built yet).
+- **Premium+**: can link to a Trainer AND a Nutritionist simultaneously — one of each, at once. This is the intended distinction (decided 2026-09-22); it's **not implemented yet** — today `premium_plus` is only a type value and a DB check constraint, and `request_trainer_link()` hard-blocks any account (Premium or Premium+) from having more than one active Trainer Link, with no concept of a second, different professional. Building the Nutricionista role means generalizing this into a per-professional-type link count, not just relaxing a number.
 _Avoid_: Subscription, tier (when ambiguous with Trainer Plan Tier)
 
 **Básico**:
