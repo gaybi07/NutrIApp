@@ -10,10 +10,14 @@ export interface BreakdownRow {
   nombre: string;
   cantidad: number;
   unidad: "g" | "ml" | "u.";
-  macros: { kcal: number; protein: number; carbs: number; fat: number; fiber: number } | null; // null = alimento desconocido, sin macros todavía
+  // null = alimento desconocido, sin macros todavía. "gramos" viaja junto a
+  // las macros (no por separado) porque solo tiene sentido cuando se pudo
+  // resolver el alimento -- para un "u." sin gramosPorUnidad no hay gramos
+  // que mostrar, es exactamente el mismo caso en que macros es null.
+  macros: { kcal: number; protein: number; carbs: number; fat: number; fiber: number; gramos: number } | null;
 }
 
-function sumRows(rows: BreakdownRow[]) {
+export function sumRows(rows: BreakdownRow[]) {
   return rows.reduce(
     (acc, r) => ({
       kcal: acc.kcal + (r.macros?.kcal ?? 0),
@@ -21,8 +25,9 @@ function sumRows(rows: BreakdownRow[]) {
       carbs: acc.carbs + (r.macros?.carbs ?? 0),
       fat: acc.fat + (r.macros?.fat ?? 0),
       fiber: acc.fiber + (r.macros?.fiber ?? 0),
+      gramos: acc.gramos + (r.macros?.gramos ?? 0),
     }),
-    { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
+    { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, gramos: 0 }
   );
 }
 
@@ -52,12 +57,7 @@ export function IngredientBreakdown({
     return parseInventoryText(text).map((entry) => {
       const food = findFood(entry.name);
       const macros = food ? macrosForFoodQuantity(food, entry.quantity, entry.unit) : null;
-      return {
-        nombre: entry.name,
-        cantidad: entry.quantity,
-        unidad: entry.unit,
-        macros: macros ? { kcal: macros.kcal, protein: macros.protein, carbs: macros.carbs, fat: macros.fat, fiber: macros.fiber } : null,
-      };
+      return { nombre: entry.name, cantidad: entry.quantity, unidad: entry.unit, macros };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text, loaded]);

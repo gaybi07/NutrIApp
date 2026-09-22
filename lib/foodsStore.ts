@@ -74,30 +74,63 @@ export interface LearnFoodInput {
 }
 
 /** Da de alta lo que la IA acaba de calcular, para no tener que volver a
- * llamarla la próxima vez que aparezca el mismo alimento. Nunca pisa una
- * fila que ya existe (ignoreDuplicates) -- una estimación nueva no debe
- * degradar una fila curada/verificada o ya aprendida antes. Fire-and-forget:
- * un error acá no debe afectar la respuesta que ya se le mandó al usuario. */
+ * llamarla la próxima vez que aparezca el mismo alimento -- y si ya existe,
+ * suma el uso (así una fila "aprendido_ia" puede llegar a los 3 usos que
+ * pide resolveMealFromFoods para confiar en ella sin estar verificada) o la
+ * promueve a verificada si esta lectura es de mejor calidad (ej. una
+ * etiqueta real después de una estimación de la IA). Nunca pisa ni
+ * degrada una fila que YA está verificada -- ni lo intenta: la política de
+ * RLS de la tabla (`foods_update ... using (origen='aprendido_ia' and
+ * verificado=false)`) la rechazaría igual. Fire-and-forget: un error acá no
+ * debe afectar la respuesta que ya se le mandó al usuario. */
 export async function learnFoods(entries: LearnFoodInput[]): Promise<void> {
   const client = getFoodsClient();
-  if (!client || entries.length === 0) return;
+  const valid = entries.filter((e) => e.nombre && Number.isFinite(e.kcal) && e.kcal > 0);
+  if (!client || valid.length === 0) return;
   try {
-    const rows = entries
-      .filter((e) => e.nombre && Number.isFinite(e.kcal) && e.kcal > 0)
-      .map((e) => ({
+    const keys = Array.from(new Set(valid.map((e) => foodKey(e.nombre))));
+    const { data: existingRows } = await client.from("foods").select("nombre_key, veces_usado, verificado").in("nombre_key", keys);
+    const existing = new Map((existingRows || []).map((r) => [String(r.nombre_key), r]));
+
+    const toInsert: Record<string, unknown>[] = [];
+    const insertedThisCall = new Set<string>();
+    for (const e of valid) {
+      const key = foodKey(e.nombre);
+      if (insertedThisCall.has(key)) continue; // mismo alimento repetido en esta tanda -- ya se va a insertar una vez
+      const row = existing.get(key);
+      const base = {
         nombre: e.nombre,
-        nombre_key: foodKey(e.nombre),
         kcal: e.kcal,
         protein: e.protein,
         carbs: e.carbs,
         fat: e.fat,
         fiber: e.fiber,
-        gramos_por_unidad: e.gramosPorUnidad ?? null,
-        origen: e.origen ?? "aprendido_ia",
-        verificado: e.verificado ?? false,
-      }));
-    if (rows.length === 0) return;
-    await client.from("foods").upsert(rows, { onConflict: "nombre_key", ignoreDuplicates: true });
+        gramos_por_unidad: e.gramosPorUnidad ?? undefined,
+      };
+
+      if (!row) {
+        insertedThisCall.add(key);
+        toInsert.push({
+          ...base,
+          nombre_key: key,
+          gramos_por_unidad: e.gramosPorUnidad ?? null,
+          origen: e.origen ?? "aprendido_ia",
+          verificado: e.verificado ?? false,
+          veces_usado: 1,
+        });
+        continue;
+      }
+      if (row.verificado) continue; // ya es la fuente de verdad -- no tocar
+
+      const nextVecesUsado = Number(row.veces_usado ?? 0) + 1;
+      const patch: Record<string, unknown> = e.verificado
+        ? { ...base, verificado: true, origen: e.origen ?? "aprendido_ia" }
+        : { veces_usado: nextVecesUsado, ...(e.gramosPorUnidad != null ? { gramos_por_unidad: e.gramosPorUnidad } : {}) };
+      await client.from("foods").update(patch).eq("nombre_key", key);
+      existing.set(key, { ...row, veces_usado: nextVecesUsado, verificado: e.verificado ? true : row.verificado });
+    }
+
+    if (toInsert.length > 0) await client.from("foods").insert(toInsert);
   } catch (e) {
     console.error("Error guardando en foods", e);
   }

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { DayEntry, InventoryItem, MealKey, MEAL_LABELS, MealItem, emptyDay, PREPARATION_CATEGORY_SUGGESTIONS, PreparationIngredient } from "@/lib/types";
 import { countDigits, MAX_DIGITS, MAX_TEXT_LENGTH, normalizeNumberInput } from "@/lib/inputLimits";
-import { fmtDate, addDays, getMealItems, applyMealItems, suggestedMeal, macrosForFoodQuantity } from "@/lib/calculations";
+import { fmtDate, addDays, getMealItems, applyMealItems, suggestedMeal, macrosForFoodQuantity, sumMealItems } from "@/lib/calculations";
 import { FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 import { useMealMemory } from "@/lib/useMealMemory";
@@ -13,7 +13,7 @@ import { useSpeechToText } from "@/lib/useSpeechToText";
 import { useFoods } from "@/lib/useFoods";
 import { MealFromAlacena } from "@/components/MealFromAlacena";
 import { MealFromSearch } from "@/components/MealFromSearch";
-import { IngredientBreakdown, BreakdownRow } from "@/components/IngredientBreakdown";
+import { IngredientBreakdown, BreakdownRow, sumRows } from "@/components/IngredientBreakdown";
 
 const MAX_SUGGESTIONS = 6;
 
@@ -262,27 +262,9 @@ export function AiEntryForm({
   const handleBreakdownConfirm = (index: number, ingredientes: PreparationIngredient[], rows: BreakdownRow[], useCalculated: boolean) => {
     setBreakdowns((prev) => ({ ...prev, [index]: ingredientes }));
     if (useCalculated && preview) {
-      const sums = rows.reduce(
-        (acc, r) => ({
-          kcal: acc.kcal + (r.macros?.kcal ?? 0),
-          protein: acc.protein + (r.macros?.protein ?? 0),
-          carbs: acc.carbs + (r.macros?.carbs ?? 0),
-          fat: acc.fat + (r.macros?.fat ?? 0),
-          fiber: acc.fiber + (r.macros?.fiber ?? 0),
-        }),
-        { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
-      );
-      const items = preview.items.map((item, i) => (i === index ? { ...item, ...sums } : item));
-      const totals = items.reduce(
-        (acc, item) => ({
-          kcal: acc.kcal + item.kcal,
-          protein: acc.protein + item.protein,
-          carbs: acc.carbs + (item.carbs || 0),
-          fat: acc.fat + (item.fat || 0),
-          fiber: acc.fiber + (item.fiber || 0),
-        }),
-        { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
-      );
+      const sums = sumRows(rows);
+      const items = preview.items.map((item, i) => (i === index ? { ...item, ...sums, gramos: sums.gramos || undefined } : item));
+      const totals = sumMealItems(items as MealItem[]);
       setPreview({ ...preview, items, ...totals });
     }
     setBreakdownOpenIndex(null);
@@ -352,16 +334,7 @@ export function AiEntryForm({
         return macros ? { nombre: ing.nombre, ...macros } : null;
       });
       if (resueltos.every((r): r is NonNullable<typeof r> => r !== null)) {
-        const totals = resueltos.reduce(
-          (acc, r) => ({
-            kcal: acc.kcal + r.kcal,
-            protein: acc.protein + r.protein,
-            carbs: acc.carbs + r.carbs,
-            fat: acc.fat + r.fat,
-            fiber: acc.fiber + r.fiber,
-          }),
-          { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
-        );
+        const totals = sumMealItems(resueltos as MealItem[]);
         setPreview({
           ...totals,
           detalle: "",

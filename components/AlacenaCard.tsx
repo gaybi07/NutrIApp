@@ -190,6 +190,12 @@ export function AlacenaCard({
         nombre: scannedItem.name,
         ...nutricion,
         gramos: scannedItem.unit !== "u." ? amount : undefined,
+        // Igual que MealFromAlacena.tsx -- sin esto, editar o borrar esta
+        // comida después no reconcilia el stock (mismo bug, otra puerta).
+        fuenteAlacenaId: scannedItem.id,
+        fuenteCantidad: amount,
+        fuenteUnidad: scannedItem.unit,
+        fuenteSnapshot: { name: scannedItem.name, category: scannedItem.category, nutritionPer100g: scannedItem.nutritionPer100g, zona: scannedItem.zona },
       };
       const itemsActuales = getMealItems(todayEntry, meal);
       onUpsertDay(applyMealItems(todayEntry, meal, [...itemsActuales, nuevoItem]));

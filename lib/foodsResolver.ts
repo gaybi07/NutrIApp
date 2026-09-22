@@ -1,5 +1,7 @@
 import { parseInventoryText, foodKey } from "./foodText";
 import { lookupFoods, learnFoods, FoodRow } from "./foodsStore";
+import { macrosForFoodQuantity, sumMealItems } from "./calculations";
+import { MealItem } from "./types";
 
 /** Mismo formato que ya devuelve app/api/parse-meal/route.ts -- así
  * AiEntryForm no necesita ningún cambio para consumir una respuesta
@@ -19,19 +21,6 @@ export interface ParseMealResponse {
 
 const MIN_USES_UNVERIFIED = 3;
 
-function macrosForEntry(food: FoodRow, quantity: number, isUnit: boolean) {
-  const gramos = isUnit ? quantity * (food.gramosPorUnidad ?? 0) : quantity;
-  const factor = gramos / 100;
-  return {
-    gramos: Math.round(gramos),
-    kcal: Math.round(food.kcal * factor),
-    protein: Math.round(food.protein * factor),
-    carbs: Math.round(food.carbs * factor),
-    fat: Math.round(food.fat * factor),
-    fiber: Math.round(food.fiber * factor),
-  };
-}
-
 /**
  * Intenta armar la comida completa contra la tabla `foods`, SIN llamar a la
  * IA. Política a propósito conservadora: si CUALQUIER ingrediente no
@@ -45,33 +34,20 @@ export async function resolveMealFromFoods(text: string): Promise<ParseMealRespo
 
   const foods = await lookupFoods(parsed.map((p) => p.name));
 
-  const resolved: Array<{ entry: (typeof parsed)[number]; food: FoodRow }> = [];
+  const resolved: Array<{ entry: (typeof parsed)[number]; food: FoodRow; macros: NonNullable<ReturnType<typeof macrosForFoodQuantity>> }> = [];
   for (const entry of parsed) {
     if (entry.needsQuantity) return null; // envase sin tamaño conocido ("un paquete de...")
     const food = foods.get(foodKey(entry.name));
     if (!food) return null;
     const trusted = food.verificado || food.vecesUsado >= MIN_USES_UNVERIFIED;
     if (!trusted) return null;
-    if (entry.unit === "u." && food.gramosPorUnidad == null) return null; // no hay forma de convertir a gramos
-    resolved.push({ entry, food });
+    const macros = macrosForFoodQuantity(food, entry.quantity, entry.unit);
+    if (!macros) return null; // "u." sin gramosPorUnidad -- no hay forma de convertir
+    resolved.push({ entry, food, macros });
   }
 
-  const items = resolved.map(({ entry, food }) => {
-    const isUnit = entry.unit === "u.";
-    const { gramos, kcal, protein, carbs, fat, fiber } = macrosForEntry(food, entry.quantity, isUnit);
-    return { nombre: food.nombre, kcal, protein, carbs, fat, fiber, gramos };
-  });
-
-  const totals = items.reduce(
-    (acc, item) => ({
-      kcal: acc.kcal + item.kcal,
-      protein: acc.protein + item.protein,
-      carbs: acc.carbs + item.carbs,
-      fat: acc.fat + item.fat,
-      fiber: acc.fiber + item.fiber,
-    }),
-    { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
-  );
+  const items = resolved.map(({ food, macros }) => ({ nombre: food.nombre, ...macros }));
+  const totals = sumMealItems(items as MealItem[]);
 
   const resumen = items.map((i) => i.nombre).join(", ");
   return {
