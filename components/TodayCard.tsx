@@ -1,12 +1,18 @@
 "use client";
 
-import { DayEntry, INTENSITY_STYLES } from "@/lib/types";
+import { DayEntry, INTENSITY_STYLES, MealKey, MEAL_LABELS } from "@/lib/types";
 import { dayTotal, dayProt, dayGoal, getTrainingSessions } from "@/lib/calculations";
 import { SECTION_HELP } from "@/lib/helpText";
 import { Collapsible } from "@/components/Collapsible";
 
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const DOW = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+
+// Colación queda afuera de los 4 botones grandes -- sigue siendo la comida
+// "extra" que casi nadie carga todos los días, meterla acá solo agrega
+// ruido a lo que se quiere que sea más simple, no menos.
+const QUICK_MEALS: MealKey[] = ["des", "alm", "mer", "cen"];
+const MEAL_ICON: Record<MealKey, string> = { des: "🌅", alm: "🍽️", mer: "🍎", cen: "🌙", col: "🍫" };
 
 export function TodayCard({
   entry,
@@ -19,7 +25,9 @@ export function TodayCard({
   entry: DayEntry;
   goal: number;
   tdeeFallback: number;
-  onLogMeal: () => void;
+  /** Qué comida se tocó -- antes abría siempre el mismo formulario y ahí
+   * adentro había que elegir de un desplegable; ahora se sabe de entrada. */
+  onLogMeal: (meal: MealKey) => void;
   onLogSteps: () => void;
   onLogTraining: () => void;
 }) {
@@ -36,6 +44,7 @@ export function TodayCard({
   const intensidad = sessions.length === 1 ? sessions[0].intensidad : entry.entreno ? "moderado" : "ninguno";
   const trainingStyle = INTENSITY_STYLES[intensidad];
   const trainingLabel = sessions.length > 1 ? `${sessions.length} entrenamientos` : trainingStyle.label;
+  const mealKcal: Record<MealKey, number> = { des: entry.desK, alm: entry.almK, mer: entry.merK, cen: entry.cenK, col: entry.colK };
 
   return (
     <Collapsible
@@ -72,13 +81,24 @@ export function TodayCard({
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={onLogMeal}
-        className="w-full rounded-xl border border-gold/60 bg-gold px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-bg"
-      >
-        + Cargar comida
-      </button>
+      <div className="grid grid-cols-2 gap-2">
+        {QUICK_MEALS.map((meal) => {
+          const loaded = mealKcal[meal] > 0;
+          return (
+            <button
+              key={meal}
+              type="button"
+              onClick={() => onLogMeal(meal)}
+              className={`flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.08em] ${
+                loaded ? "border-sage/60 bg-sage/10 text-sage" : "border-gold/60 bg-gold text-bg"
+              }`}
+            >
+              <span className="text-sm leading-none">{MEAL_ICON[meal]}</span>
+              {loaded ? `${MEAL_LABELS[meal]} ✓` : MEAL_LABELS[meal]}
+            </button>
+          );
+        })}
+      </div>
       {/* Pasos y entrenamiento van cada uno en su propio botón -- antes
           compartían uno solo que, apenas cargabas el entrenamiento, dejaba
           de mostrar los pasos del todo (su texto pasaba a ser la intensidad

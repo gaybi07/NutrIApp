@@ -44,7 +44,7 @@ import { useSharedWeekPlan } from "@/lib/useSharedWeekPlan";
 import { useHousehold } from "@/lib/useHousehold";
 import { useTrainerApplication } from "@/lib/useTrainerApplication";
 import { useProductMemory } from "@/lib/useProductMemory";
-import { emptyDay, MealKey, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER, resolveOrder } from "@/lib/types";
+import { emptyDay, MealKey, MEAL_LABELS, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER, resolveOrder } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
 
 export default function Home() {
@@ -97,6 +97,10 @@ export default function Home() {
     | "tema" | "tamano-letra" | "solapas" | "herramientas" | "secciones" | "entrenador"
     | null
   >(null);
+  // Qué comida se tocó en Inicio (Desayuno/Almuerzo/etc.) para que el panel
+  // "ai" abra directo en esa comida, sin el desplegable de selección --
+  // null cuando se abre desde un lugar que no sabe cuál (ej. Macros).
+  const [aiMeal, setAiMeal] = useState<MealKey | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const trainerApplication = useTrainerApplication(authenticated, userEmail);
   const isApprovedTrainer = trainerApplication.application?.status === "aprobado";
@@ -374,7 +378,10 @@ export default function Home() {
           proteinTarget={proteinTargetForWeight(currentWeightKg)}
           weekDates={weekDates}
           weekDays={weekDays}
-          onLogMeal={() => setPanel("ai")}
+          onLogMeal={() => {
+            setAiMeal(null);
+            setPanel("ai");
+          }}
           weightKg={currentWeightKg}
           tdeeFallback={settings.tdeeFallback}
           onUpsert={upsertDay}
@@ -448,7 +455,10 @@ export default function Home() {
                         entry={todayEntry}
                         goal={settings.goal}
                         tdeeFallback={settings.tdeeFallback}
-                        onLogMeal={() => setPanel("ai")}
+                        onLogMeal={(meal) => {
+                          setAiMeal(meal);
+                          setPanel("ai");
+                        }}
                         onLogSteps={() => setPanel("pasos")}
                         onLogTraining={() => setPanel("entreno")}
                       />
@@ -593,7 +603,7 @@ export default function Home() {
             onClick={(event) => event.stopPropagation()}
           >
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-3 py-2.5">
-              <span className="font-display text-base text-text">Cargar comida</span>
+              <span className="font-display text-base text-text">{aiMeal ? `Cargar ${MEAL_LABELS[aiMeal]}` : "Cargar comida"}</span>
               <button
                 onClick={() => setPanel(null)}
                 className="rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
@@ -609,6 +619,7 @@ export default function Home() {
                 inventory={inventory}
                 consumeAmounts={consumeAmounts}
                 disableAi={isBasico}
+                initialMeal={aiMeal}
               />
             </div>
           </div>
@@ -844,7 +855,14 @@ export default function Home() {
             </button>
             <ToolsSettings
               onOpenCalc={() => setPanel("calc")}
-              onOpenAI={isBasico ? undefined : () => setPanel("ai")}
+              onOpenAI={
+                isBasico
+                  ? undefined
+                  : () => {
+                      setAiMeal(null);
+                      setPanel("ai");
+                    }
+              }
               onOpenDatos={() => setPanel("datos")}
             />
           </div>

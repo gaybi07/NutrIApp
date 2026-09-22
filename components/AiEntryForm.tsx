@@ -68,6 +68,7 @@ export function AiEntryForm({
   inventory,
   consumeAmounts,
   disableAi,
+  initialMeal,
 }: {
   days: DayEntry[];
   onUpsert: (entry: DayEntry) => void;
@@ -79,12 +80,21 @@ export function AiEntryForm({
    * Alacena, ambas Premium) y muestra una carga 100% manual en su lugar --
    * no un botón deshabilitado, es el único camino real para básico. */
   disableAi?: boolean;
+  /** Se tocó un botón de comida puntual en Inicio (Desayuno/Almuerzo/etc.) --
+   * ya no hace falta el desplegable de "¿cuál comida?", ya se sabe. */
+  initialMeal?: MealKey | null;
 }) {
   const [fecha, setFecha] = useState(fmtDate(new Date()));
-  const [meal, setMeal] = useState<MealKey>("des");
+  const [meal, setMeal] = useState<MealKey>(initialMeal || "des");
   const [mode, setMode] = useState<"ia" | "alacena" | "buscar">("ia");
   const [manualDesc, setManualDesc] = useState("");
   const [manualValues, setManualValues] = useState({ kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
+  // Alacena/Buscar producto quedan un escalón más escondidas por defecto --
+  // 3 pestañas del mismo tamaño compitiendo por atención era justo lo que
+  // hacía más difícil el paso a paso para alguien menos entrenado con la
+  // app; la carga con texto+calcular es el camino principal, el resto es
+  // "otras formas de cargar" bajo demanda.
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
@@ -108,8 +118,10 @@ export function AiEntryForm({
 
   // Al abrir el form (o cambiar de fecha) sugiere la comida que corresponde
   // según la hora, salteando las que ya estén cargadas ese día — no
-  // selecciona siempre Desayuno de entrada.
+  // selecciona siempre Desayuno de entrada. Si se llegó acá tocando un
+  // botón puntual en Inicio (initialMeal), esa elección manda y no se pisa.
   useEffect(() => {
+    if (initialMeal) return;
     const entry = days.find((d) => d.fecha === fecha);
     setMeal(suggestedMeal(entry, new Date().getHours()));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -255,6 +267,32 @@ export function AiEntryForm({
     return combined.slice(0, MAX_SUGGESTIONS);
   }, [mealMemory, meal]);
 
+  // Tus favoritas de ESTA comida puntual, para cargar de un solo toque --
+  // ya se sabe kcal/proteína/etc. de la última vez, no hace falta recalcular
+  // con IA ni revisar nada antes de guardar.
+  const favoritos = useMemo(
+    () =>
+      mealMemory
+        .filter((h) => h.count >= 3 && h.meal === meal)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 3),
+    [mealMemory, meal]
+  );
+
+  const handleQuickSave = (fav: (typeof favoritos)[number]) => {
+    handleSave({
+      kcal: fav.kcal,
+      protein: fav.protein,
+      carbs: fav.carbs,
+      fat: fav.fat,
+      fiber: fav.fiber,
+      detalle: "",
+      resumen: fav.text,
+      ingredientes: fav.ingredientes || "",
+      items: fav.items && fav.items.length > 0 ? fav.items : [{ nombre: fav.text, kcal: fav.kcal, protein: fav.protein, carbs: fav.carbs, fat: fav.fat, fiber: fav.fiber }],
+    });
+  };
+
   return (
     <div
       className="rounded-xl p-4 border border-gold"
@@ -262,7 +300,17 @@ export function AiEntryForm({
     >
       <div className="font-display italic text-[15px] text-gold mb-2.5">✎ Cargar comida</div>
 
-      {!disableAi && (
+      {!disableAi && !showMoreOptions && (
+        <button
+          type="button"
+          onClick={() => setShowMoreOptions(true)}
+          className="mb-2 font-mono text-[10px] uppercase tracking-wide text-textMuted underline"
+        >
+          Otras formas de cargar (Alacena / Buscar producto)
+        </button>
+      )}
+
+      {!disableAi && showMoreOptions && (
         <div className="mb-2.5 flex gap-1 rounded-xl border border-border bg-bg/40 p-1">
           <button
             type="button"
@@ -299,15 +347,49 @@ export function AiEntryForm({
           <label>Fecha</label>
           <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
         </div>
-        <div>
-          <label>Comida</label>
-          <select value={meal} onChange={(e) => setMeal(e.target.value as MealKey)}>
-            {Object.entries(MEAL_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>{v}</option>
-            ))}
-          </select>
-        </div>
+        {/* Si ya se sabe la comida (se tocó "Desayuno"/etc. en Inicio), no
+            hace falta preguntarla de nuevo -- un desplegable de más es un
+            paso de más para alguien a quien ya le cuesta seguir el resto. */}
+        {initialMeal ? (
+          <div>
+            <label>Comida</label>
+            <div className="flex h-[38px] items-center rounded-lg border border-border bg-bg/40 px-2.5 text-sm text-text">
+              {MEAL_LABELS[meal]}
+            </div>
+          </div>
+        ) : (
+          <div>
+            <label>Comida</label>
+            <select value={meal} onChange={(e) => setMeal(e.target.value as MealKey)}>
+              {Object.entries(MEAL_LABELS).map(([k, v]) => (
+                <option key={k} value={k}>{v}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
+
+      {favoritos.length > 0 && (
+        <div className="mt-2.5">
+          <label className="mb-1 flex items-center">Tus comidas frecuentes de {MEAL_LABELS[meal].toLowerCase()}</label>
+          <div className="flex flex-col gap-1.5">
+            {favoritos.map((fav) => (
+              <button
+                key={fav.text}
+                type="button"
+                onClick={() => handleQuickSave(fav)}
+                className="flex items-center justify-between gap-2 rounded-xl border border-sage/50 bg-sage/10 px-3 py-2.5 text-left"
+              >
+                <span className="text-sm font-semibold text-text">{fav.text}</span>
+                <span className="shrink-0 font-mono text-[10px] uppercase tracking-wide text-sage">
+                  {fav.kcal} kcal · toque para cargar
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="mt-1.5 text-center font-mono text-[9.5px] uppercase tracking-wide text-textMuted">— o algo distinto —</div>
+        </div>
+      )}
 
       {disableAi && (
         <div className="mt-2">
