@@ -33,6 +33,26 @@ export type ReviewedInventoryItem = {
   nutricion100g?: { kcal: number; protein: number; carbs: number; fat: number; fiber: number } | null;
 };
 
+/** Mismo pedido, contra Claude en vez de Gemini -- respaldo cuando Gemini
+ * está saturado (mismo patrón que parse-meal/parse-shopping). */
+async function reviewWithAnthropic(items: Array<{ id: string; name: string; quantity: number; unit: string }>, apiKey: string) {
+  const { default: Anthropic } = await import("@anthropic-ai/sdk");
+  const anthropic = new Anthropic({ apiKey });
+  const msg = await anthropic.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 4096,
+    system: SYSTEM_PROMPT,
+    messages: [{ role: "user", content: `Items: ${JSON.stringify(items)}` }],
+  });
+  const textBlock = msg.content.find((b) => b.type === "text");
+  if (!textBlock || textBlock.type !== "text") throw new Error("Respuesta vacía del modelo");
+  const clean = textBlock.text.replace(/```json|```/g, "").trim();
+  const start = clean.indexOf("{");
+  const end = clean.lastIndexOf("}");
+  if (start < 0 || end < start) throw new Error("La IA no devolvió un JSON válido");
+  return JSON.parse(clean.slice(start, end + 1));
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -42,11 +62,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No hay productos para revisar" }, { status: 400 });
     }
 
-    if (!process.env.GEMINI_API_KEY) {
-      return NextResponse.json({ error: "Falta GEMINI_API_KEY para revisar el inventario" }, { status: 503 });
+    let reviewed: { items?: ReviewedInventoryItem[] } | null = null;
+
+    // Gemini primero (gratis); si está saturado o falla y hay una key de
+    // Anthropic configurada, cae ahí en vez de fallar directo -- dos
+    // proveedores distintos como respaldo mutuo (mismo patrón que parse-meal).
+    if (process.env.GEMINI_API_KEY) {
+      try {
+        reviewed = (await callGeminiJson(SYSTEM_PROMPT, [{ text: `Items: ${JSON.stringify(items)}` }])) as { items?: ReviewedInventoryItem[] };
+      } catch (geminiError) {
+        if (!process.env.ANTHROPIC_API_KEY) {
+          if (geminiError instanceof GeminiRateLimitError) {
+            return NextResponse.json(
+              { error: "La IA está saturada — parece que hay mucha gente usándola a la vez. Esperá un minuto y probá de nuevo." },
+              { status: 429 }
+            );
+          }
+          throw geminiError;
+        }
+        console.error("Gemini falló revisando el inventario, cayendo a Anthropic:", geminiError);
+      }
     }
 
-    const reviewed = (await callGeminiJson(SYSTEM_PROMPT, [{ text: `Items: ${JSON.stringify(items)}` }])) as { items?: ReviewedInventoryItem[] };
+    if (!reviewed) {
+      if (!process.env.ANTHROPIC_API_KEY) {
+        return NextResponse.json({ error: "Configurá GEMINI_API_KEY o ANTHROPIC_API_KEY en .env.local" }, { status: 503 });
+      }
+      reviewed = (await reviewWithAnthropic(items, process.env.ANTHROPIC_API_KEY)) as { items?: ReviewedInventoryItem[] };
+    }
+
     if (!reviewed || !Array.isArray(reviewed.items)) {
       throw new Error("La IA no devolvió una lista de items válida");
     }
