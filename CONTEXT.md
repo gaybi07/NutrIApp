@@ -123,6 +123,22 @@ _Avoid_: Note, observation
 A generated weekly snapshot of a student's activity and incidents (Draft, Generated, or Sent), which survives even after the Trainer Link ends.
 _Avoid_: Weekly report (fine informally, but "Student Report" is the canonical entity)
 
+### Nutricionista ↔ Paciente
+
+Parallel to Trainer ↔ Student, reusing the same underlying tables/RPCs (`training_plans`/`assigned_sessions`, distinguished by a `disciplina` field) rather than a separate schema. "Paciente" replaces "Alumno" as the product-facing term for this relationship; "Nutricionista" replaces "Profe". Everything under Trainer ↔ Student above (Trainer Application, Invite Code, Link Request, Trainer Link, Trainer Comment, Student Report) applies as-is, just read with Nutricionista/Paciente in place of Profe/Alumno.
+
+**Nutritional Plan**:
+A Nutricionista's weekly schedule for one Paciente — the nutrition-side use of a Training Plan. Unlike a Training Plan (one fixed Trainer Routine per weekday), each day holds 2-3 **Meal Options** per Meal, not a single prescription.
+_Avoid_: Meal plan, diet plan
+
+**Meal Option**:
+One of 2-3 alternatives a Nutricionista offers for a given Meal (desayuno/almuerzo/merienda/cena/colación) on a given day of a Nutritional Plan — its own foods/macros plus a short rationale written by the Nutricionista explaining when/why to pick it (e.g. relative to training schedule or bedtime). The Nutricionista may draft this rationale with AI assistance, but must review and adjust it before it reaches the Paciente — it is never shown unreviewed.
+_Avoid_: Alternative, choice
+
+**Nutritional Session** *(the nutrition-side Assigned Session)*:
+One week's materialized instance of a Nutritional Plan, frozen at publish time like an Assigned Session — but unlike training (which freezes and executes per day), a Nutritional Session freezes and is evaluated per **week**: the Paciente picks a Meal Option per Meal as they log normally, and adherence for the whole week is scored once, in the Student Report, by comparing logged meals against the chosen Plan's options.
+_Avoid_: Weekly session
+
 ## AI Assistance
 
 **AI Cache**:
