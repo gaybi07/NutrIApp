@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { BarChart, Bar, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip } from "recharts";
-import { DayEntry, INTENSITY_STYLES, Routine, TrainingSchedule, Weekday, ActividadBlockId, DEFAULT_ACTIVIDAD_ORDER, resolveOrder, WorkoutSuggestion, MuscleGroup, GoalMode } from "@/lib/types";
+import { DayEntry, INTENSITY_STYLES, Routine, TrainingSchedule, Weekday, ActividadBlockId, DEFAULT_ACTIVIDAD_ORDER, resolveOrder, WorkoutSuggestion, MuscleGroup, GoalMode, AssignedSession, ExerciseEntry } from "@/lib/types";
 import { estimateTrainingCalories, getTrainingSessions, totalVolume, computeTrainingGoal } from "@/lib/calculations";
 import { useSectionOrder } from "@/lib/useSectionOrder";
 import { SortableSection } from "@/components/SortableSection";
@@ -94,6 +94,10 @@ export function ActividadTab({
   onSaveWorkoutSuggestions,
   onCreateAndAssignRoutine,
   isApprovedTrainer,
+  hasTrainerLink,
+  assignedSession,
+  onStartAssignedSession,
+  onCompleteAssignedSession,
   muscleGroupTrend,
   goalMode,
 }: {
@@ -118,6 +122,14 @@ export function ActividadTab({
   /** Mostrar la insignia de "entrenador certificado" arriba de todo -- solo
    * cuando tu postulación (Ajustes > Ser entrenador) está aprobada. */
   isApprovedTrainer?: boolean;
+  /** Todo esto es lado ALUMNO -- opcional y sin valor por defecto a
+   * propósito: sin vínculo con un profe, cada uno de estos queda undefined
+   * y LiveWorkout/RoutineManager se comportan exactamente igual que antes
+   * (Autoentrenador). */
+  hasTrainerLink?: boolean;
+  assignedSession?: AssignedSession | null;
+  onStartAssignedSession?: (sessionId: string) => void;
+  onCompleteAssignedSession?: (sessionId: string, ejercicios: ExerciseEntry[], duracionMinutos?: number) => Promise<{ ok: boolean; error?: string }>;
   muscleGroupTrend: Record<MuscleGroup, { actual: number; anterior: number }>;
   goalMode?: GoalMode;
 }) {
@@ -211,6 +223,9 @@ export function ActividadTab({
           onCreateAndAssignRoutine={onCreateAndAssignRoutine}
           suggestions={workoutSuggestions}
           onSaveSuggestions={onSaveWorkoutSuggestions}
+          assignedSession={assignedSession}
+          onStartAssignedSession={onStartAssignedSession}
+          onCompleteAssignedSession={onCompleteAssignedSession}
         />
       </Collapsible>
     ),
@@ -232,7 +247,15 @@ export function ActividadTab({
     ),
     volumenChart: <WeekBarChart title="Volumen entrenado (series × reps × peso)" data={volumeData} color={VOLUME_COLOR} unit="kg" neonClass="chart-neon-d" />,
     volumenGrupos: <MuscleGroupVolume trend={muscleGroupTrend} modo={goalMode} openOnDesktop />,
-    rutinas: <RoutineManager routines={routines} schedule={schedule} onSaveRoutines={onSaveRoutines} onSaveSchedule={onSaveSchedule} />,
+    rutinas: (
+      <RoutineManager
+        routines={routines}
+        schedule={schedule}
+        onSaveRoutines={onSaveRoutines}
+        onSaveSchedule={onSaveSchedule}
+        hasTrainerLink={hasTrainerLink}
+      />
+    ),
   };
 
   return (

@@ -43,6 +43,8 @@ import { useSharedPurchases } from "@/lib/useSharedPurchases";
 import { useSharedWeekPlan } from "@/lib/useSharedWeekPlan";
 import { useHousehold } from "@/lib/useHousehold";
 import { useTrainerApplication } from "@/lib/useTrainerApplication";
+import { useTrainerLink } from "@/lib/useTrainerLink";
+import { useMyAssignedSessions } from "@/lib/useAssignedSessions";
 import { useProductMemory } from "@/lib/useProductMemory";
 import { emptyDay, MealKey, MEAL_LABELS, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER, resolveOrder } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
@@ -118,6 +120,14 @@ export default function Home() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const trainerApplication = useTrainerApplication(authenticated, userEmail);
   const isApprovedTrainer = trainerApplication.application?.status === "aprobado";
+  // Lado ALUMNO (no confundir con isApprovedTrainer, que es el lado profe) --
+  // Boolean(link) es exactamente "¿tengo un profe vinculado activo?". Sin
+  // vínculo, useMyAssignedSessions ni siquiera consulta la base (mismo
+  // guard que useTrainerRoutinesForStudent) -- así un Autoentrenador no
+  // dispara ningún request nuevo.
+  const { link: trainerLink } = useTrainerLink(authenticated);
+  const hasTrainerLink = Boolean(trainerLink);
+  const assignedSessions = useMyAssignedSessions(authenticated, hasTrainerLink);
   useEscapeKey(() => setPanel(null), panel !== null);
 
   useEffect(() => {
@@ -440,6 +450,10 @@ export default function Home() {
             })
           }
           isApprovedTrainer={isApprovedTrainer}
+          hasTrainerLink={hasTrainerLink}
+          assignedSession={assignedSessions.todaySession}
+          onStartAssignedSession={assignedSessions.start}
+          onCompleteAssignedSession={assignedSessions.complete}
           muscleGroupTrend={muscleGroupTrend}
           goalMode={settings.calculatorProfile?.modo}
         />

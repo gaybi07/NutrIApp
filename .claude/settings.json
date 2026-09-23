@@ -5,7 +5,18 @@
       "Bash(curl -sf http://localhost:*)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git push origin main)"
+      "Bash(git push origin main)",
+      "Bash(xargs -I{} sh -c 'echo \"== {} ==\"; wc -l \"{}\"')",
+      "Read(//c/Users/gabih/.claude/plugins/marketplaces/mattpocock/skills/**)",
+      "Bash(xargs -I{} sh -c 'echo \"== {} ==\"; head -c 400 \"{}\"; echo')",
+      "Bash(find ~/.claude/plugins/marketplaces/mattpocock/skills -maxdepth 3)",
+      "Bash(cat .claude/settings.local.json 2>/dev/null | head -c 2000; echo; echo ---WAYFINDER---; cat ~/.claude/plugins/marketplaces/mattpocock/skills/engineering/wayfinder/SKILL.md 2>/dev/null | head -c 600)",
+      "Read(//c/Users/gabih/.claude/plugins/marketplaces/mattpocock/skills/engineering/wayfinder/**)",
+      "Read(//c/Users/gabih/.claude/plugins/cache/mattpocock/mattpocock-skills/1.2.3/skills/engineering/domain-modeling/**)",
+      "Bash(awk -F'=' '{print $1, \"len=\"length\\($2\\)}' .env.local)",
+      "Bash(npx --no-install vercel --version)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)"
     ]
   }
 }

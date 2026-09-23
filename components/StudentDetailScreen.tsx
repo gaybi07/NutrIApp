@@ -7,8 +7,9 @@ import { useStudentDetail } from "@/lib/useStudentDetail";
 import { useTrainerIncidents } from "@/lib/useRoutineIncidents";
 import { useTrainerComments } from "@/lib/useTrainerComments";
 import { useStudentReports } from "@/lib/useStudentReports";
+import { TrainingPlanBuilder } from "@/components/TrainingPlanBuilder";
 import { isoMonday, fmtDate, addDays, weekdayOf } from "@/lib/calculations";
-import { StudentMetrics, StudentDayDetail, RoutineIncident, RoutineIncidentType, Report, WeeklyReportMetrics } from "@/lib/types";
+import { StudentMetrics, StudentDayDetail, RoutineIncident, RoutineIncidentType, Report, WeeklyReportMetrics, WEEKDAY_LABELS_SHORT } from "@/lib/types";
 
 const INCIDENT_LABEL: Record<RoutineIncidentType, string> = {
   omitido: "Omitido",
@@ -19,20 +20,11 @@ const INCIDENT_LABEL: Record<RoutineIncidentType, string> = {
   ejercicio_fuera_de_plan: "Ejercicio fuera de plan",
 };
 
-const DOW_SHORT: Record<string, string> = {
-  lunes: "Lun",
-  martes: "Mar",
-  miercoles: "Mié",
-  jueves: "Jue",
-  viernes: "Vie",
-  sabado: "Sáb",
-  domingo: "Dom",
-};
-
-type Tab = "resumen" | "entrenamientos" | "incidencias" | "nutricion" | "peso" | "comentarios" | "reportes";
+type Tab = "resumen" | "plan" | "entrenamientos" | "incidencias" | "nutricion" | "peso" | "comentarios" | "reportes";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "resumen", label: "Resumen" },
+  { id: "plan", label: "Plan" },
   { id: "entrenamientos", label: "Entrenamientos" },
   { id: "incidencias", label: "Incidencias" },
   { id: "reportes", label: "Reportes" },
@@ -95,7 +87,7 @@ function EntrenamientosTab({ weekDates, week }: { weekDates: string[]; week: Stu
         return (
           <div key={fecha} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-bg/40 px-2.5 py-2">
             <div className="flex items-center gap-2">
-              <span className="w-8 font-mono text-[10px] uppercase tracking-wide text-textMuted">{DOW_SHORT[weekdayOf(fecha)]}</span>
+              <span className="w-8 font-mono text-[10px] uppercase tracking-wide text-textMuted">{WEEKDAY_LABELS_SHORT[weekdayOf(fecha)]}</span>
               <span className={`h-2 w-2 shrink-0 rounded-full ${trained ? "bg-sage" : "bg-textMuted/30"}`} />
               <span className="text-[12px] text-text">{trained ? "Entrenó" : "Sin entrenar"}</span>
             </div>
@@ -179,7 +171,7 @@ function NutricionTab({ weekDates, week }: { weekDates: string[]; week: StudentD
           const hasData = day && day.kcal > 0;
           return (
             <div key={fecha} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-bg/40 px-2.5 py-2">
-              <span className="w-8 font-mono text-[10px] uppercase tracking-wide text-textMuted">{DOW_SHORT[weekdayOf(fecha)]}</span>
+              <span className="w-8 font-mono text-[10px] uppercase tracking-wide text-textMuted">{WEEKDAY_LABELS_SHORT[weekdayOf(fecha)]}</span>
               {hasData ? (
                 <span className="font-mono text-[10px] text-text">
                   {Math.round(day!.kcal)} kcal · {Math.round(day!.proteina)}g P · {Math.round(day!.carbohidratos)}g C ·{" "}
@@ -496,6 +488,7 @@ export function StudentDetailScreen({
 
         <div className="flex-1 overflow-y-auto p-3">
           {tab === "resumen" && <ResumenTab metrics={metricsHook.metricsByStudent[studentId] ?? null} />}
+          {tab === "plan" && <TrainingPlanBuilder studentId={studentId} />}
           {tab === "entrenamientos" && <EntrenamientosTab weekDates={weekDates} week={detailHook.week} />}
           {tab === "incidencias" && (
             <IncidenciasTab

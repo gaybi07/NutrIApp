@@ -15,6 +15,7 @@ import {
   WorkoutVerdict,
   MuscleGroup,
   INTENSITY_STYLES,
+  AssignedSession,
 } from "@/lib/types";
 import { weekdayOf, getTrainingSessions, compareExerciseVolume, suggestNextSession } from "@/lib/calculations";
 import { clampNumber } from "@/lib/inputLimits";
@@ -29,6 +30,19 @@ function newId() {
 
 const INTENSITIES: TrainingIntensity[] = ["leve", "moderado", "exigente", "fallo"];
 const STORAGE_KEY = "registro:liveWorkout:v1";
+const PENDING_SYNC_KEY = "registro:liveWorkout:pendingSync:v1";
+
+type PendingSync = { sessionId: string; ejercicios: ExerciseEntry[]; minutos: number };
+
+function loadPendingSync(): PendingSync | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(PENDING_SYNC_KEY);
+    return raw ? (JSON.parse(raw) as PendingSync) : null;
+  } catch {
+    return null;
+  }
+}
 
 interface DraftSet {
   repeticiones: number;
@@ -63,6 +77,19 @@ interface LiveSession {
   startedAt: number;
   routineId?: string;
   exercises: DraftExercise[];
+  /** Si esta sesión viene de un AssignedSession (rutina asignada por el
+   * profe, ver lib/useAssignedSessions.ts) -- un draft viejo en
+   * localStorage de antes de este campo existir deserializa igual, queda
+   * simplemente undefined, así que no hace falta ninguna migración. */
+  assignedSessionId?: string;
+  /** Copiados de assignedSession AL ARRANCAR, no leídos de nuevo al
+   * finalizar -- el prop `assignedSession` es "la de HOY" y se recalcula en
+   * cada render; si el entrenamiento cruza la medianoche, para cuando se
+   * finaliza ya no es "hoy" y el prop pasa a null. Sin esta copia, las
+   * incidencias de esa sesión perderían a qué profe/rutina corresponden. */
+  assignedTrainerId?: string;
+  assignedRoutineNombre?: string;
+  assignedTrainerRoutineId?: string | null;
 }
 
 function loadStoredSession(fecha: string): LiveSession | null {
@@ -106,6 +133,9 @@ export function LiveWorkout({
   onCreateAndAssignRoutine,
   suggestions,
   onSaveSuggestions,
+  assignedSession,
+  onStartAssignedSession,
+  onCompleteAssignedSession,
 }: {
   entry: DayEntry;
   routines: Routine[];
@@ -119,6 +149,12 @@ export function LiveWorkout({
   onCreateAndAssignRoutine: (routine: Routine, weekday: Weekday) => void;
   suggestions: Record<string, WorkoutSuggestion>;
   onSaveSuggestions: (updates: Record<string, WorkoutSuggestion>) => void;
+  /** Todos opcionales y sin valor por defecto -- sin un vínculo activo con
+   * un profe (Autoentrenador), quedan undefined y esta pantalla se
+   * comporta exactamente igual que siempre. */
+  assignedSession?: AssignedSession | null;
+  onStartAssignedSession?: (sessionId: string) => void;
+  onCompleteAssignedSession?: (sessionId: string, ejercicios: ExerciseEntry[], duracionMinutos?: number) => Promise<{ ok: boolean; error?: string }>;
 }) {
   const scheduledRoutine = routines.find((r) => r.id === schedule[weekdayOf(entry.fecha)]);
   const [session, setSession] = useState<LiveSession | null>(() => loadStoredSession(entry.fecha));
@@ -129,7 +165,7 @@ export function LiveWorkout({
   // ejercicios ni series. Registrar reps/peso/esfuerzo por serie sigue
   // permitido siempre -- eso es ejecutar la rutina, no modificarla.
   const sessionRoutine = session ? routines.find((r) => r.id === session.routineId) : null;
-  const isAssignedRoutine = sessionRoutine?.origen === "asignada";
+  const isAssignedRoutine = Boolean(session?.assignedSessionId) || sessionRoutine?.origen === "asignada";
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [libraryTarget, setLibraryTarget] = useState<"new" | null>(null);
@@ -144,6 +180,18 @@ export function LiveWorkout({
   const [finishing, setFinishing] = useState(false);
   const [finalComment, setFinalComment] = useState("");
   const { recordMany } = useRoutineIncidents();
+  // Si complete_assigned_session falla justo al terminar, el entrenamiento
+  // YA se guardó en el historial personal (ver doFinish) -- esto solo
+  // guarda lo necesario para poder reintentar avisarle al profe, sin
+  // depender de que "session" siga abierta. Se persiste en localStorage
+  // (igual que la sesión en vivo) para no perder el aviso pendiente si se
+  // recarga la página antes de reintentar.
+  const [pendingSync, setPendingSync] = useState<PendingSync | null>(() => loadPendingSync());
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (pendingSync) window.localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(pendingSync));
+    else window.localStorage.removeItem(PENDING_SYNC_KEY);
+  }, [pendingSync]);
 
   const assignRoutineToday = (routineId: string) => {
     onSaveSchedule({ ...schedule, [weekdayOf(entry.fecha)]: routineId });
@@ -181,6 +229,43 @@ export function LiveWorkout({
       : [];
     setSession({ fecha: entry.fecha, startedAt: Date.now(), routineId: scheduledRoutine?.id, exercises });
     setOpenIndex(null);
+  };
+
+  /** Arranca una sesión asignada por el profe (AssignedSession) en vez de
+   * la rutina personal del día -- misma construcción de DraftExercise que
+   * startSession, a partir de routineSnapshot en vez de la rutina del
+   * schedule personal. Las sugerencias de peso se guardan con la clave del
+   * TrainerRoutine (assignedSession.routineId), no con la de la
+   * AssignedSession -- así se acumulan semana a semana para la misma
+   * rutina del profe, no se pierden cada vez que se publica una nueva. */
+  const startAssignedSession = () => {
+    if (!assignedSession) return;
+    const suggestionKeyBase = assignedSession.routineId;
+    const exercises: DraftExercise[] = assignedSession.routineSnapshot.map((e) => {
+      const key = suggestionKeyBase ? `${suggestionKeyBase}::${e.nombre}` : null;
+      const suggestion = key ? suggestions[key] : undefined;
+      const peso = suggestion?.pesoSugerido ?? e.peso;
+      return {
+        nombre: e.nombre,
+        plannedSeries: e.series,
+        plannedRepeticiones: e.repeticiones,
+        plannedPeso: e.peso,
+        suggestionNote: suggestion?.nota,
+        sets: Array.from({ length: e.series }, () => defaultSet(e.repeticiones, peso)),
+        grupoMuscular: e.grupoMuscular,
+      };
+    });
+    setSession({
+      fecha: entry.fecha,
+      startedAt: Date.now(),
+      assignedSessionId: assignedSession.id,
+      assignedTrainerId: assignedSession.trainerId,
+      assignedRoutineNombre: assignedSession.routineNombre,
+      assignedTrainerRoutineId: assignedSession.routineId,
+      exercises,
+    });
+    setOpenIndex(null);
+    onStartAssignedSession?.(assignedSession.id);
   };
 
   const cancelSession = () => {
@@ -291,6 +376,17 @@ export function LiveWorkout({
   const doFinish = (comentarioFinal: string) => {
     if (!session) return;
     const elapsedMinutes = Math.max(1, Math.round((Date.now() - session.startedAt) / 60000));
+    // Con una sesión asignada, sessionRoutine es null (no viene de
+    // routines/settings) -- estos resuelven a lo que corresponda según de
+    // dónde vino la sesión. Se leen de `session` (copiado AL ARRANCAR, ver
+    // startAssignedSession), no del prop `assignedSession` -- ese prop es
+    // "la de HOY" y se recalcula en cada render, así que si el
+    // entrenamiento cruza la medianoche ya no coincide con la sesión que
+    // se está cerrando.
+    const incidentTrainerId = session.assignedTrainerId ?? sessionRoutine?.trainerId;
+    const incidentRoutineId = session.assignedSessionId ?? session.routineId ?? "";
+    const incidentRoutineNombre = session.assignedRoutineNombre ?? sessionRoutine?.nombre ?? "";
+    const incidentTrainerRoutineId = session.assignedTrainerRoutineId ?? sessionRoutine?.trainerRoutineId ?? undefined;
     const finalExercises: ExerciseEntry[] = [];
     const reportItems: WorkoutReportItem[] = [];
     const suggestionUpdates: Record<string, WorkoutSuggestion> = {};
@@ -331,9 +427,9 @@ export function LiveWorkout({
         if (ex.esFueraDePlan) {
           incidents.push({
             fecha: entry.fecha,
-            routineId: session.routineId || "",
-            routineNombre: sessionRoutine?.nombre || "",
-            trainerRoutineId: sessionRoutine?.trainerRoutineId,
+            routineId: incidentRoutineId,
+            routineNombre: incidentRoutineNombre,
+            trainerRoutineId: incidentTrainerRoutineId,
             tipo: "ejercicio_fuera_de_plan",
             ejercicioNombre: ex.nombre,
             detalle: `${sets.length} serie${sets.length === 1 ? "" : "s"} realizada${sets.length === 1 ? "" : "s"}`,
@@ -342,9 +438,9 @@ export function LiveWorkout({
           if (ex.omitido) {
             incidents.push({
               fecha: entry.fecha,
-              routineId: session.routineId || "",
-              routineNombre: sessionRoutine?.nombre || "",
-              trainerRoutineId: sessionRoutine?.trainerRoutineId,
+              routineId: incidentRoutineId,
+              routineNombre: incidentRoutineNombre,
+              trainerRoutineId: incidentTrainerRoutineId,
               tipo: "omitido",
               ejercicioNombre: ex.nombre,
             });
@@ -352,9 +448,9 @@ export function LiveWorkout({
           if (ex.reemplazadoPor) {
             incidents.push({
               fecha: entry.fecha,
-              routineId: session.routineId || "",
-              routineNombre: sessionRoutine?.nombre || "",
-              trainerRoutineId: sessionRoutine?.trainerRoutineId,
+              routineId: incidentRoutineId,
+              routineNombre: incidentRoutineNombre,
+              trainerRoutineId: incidentTrainerRoutineId,
               tipo: "reemplazado",
               ejercicioNombre: ex.nombre,
               detalle: `Reemplazado por: ${ex.reemplazadoPor}`,
@@ -363,9 +459,9 @@ export function LiveWorkout({
           if (ex.comentario) {
             incidents.push({
               fecha: entry.fecha,
-              routineId: session.routineId || "",
-              routineNombre: sessionRoutine?.nombre || "",
-              trainerRoutineId: sessionRoutine?.trainerRoutineId,
+              routineId: incidentRoutineId,
+              routineNombre: incidentRoutineNombre,
+              trainerRoutineId: incidentTrainerRoutineId,
               tipo: "comentario",
               ejercicioNombre: ex.nombre,
               detalle: ex.comentario,
@@ -375,9 +471,9 @@ export function LiveWorkout({
             const extra = sets.length - ex.plannedSeries;
             incidents.push({
               fecha: entry.fecha,
-              routineId: session.routineId || "",
-              routineNombre: sessionRoutine?.nombre || "",
-              trainerRoutineId: sessionRoutine?.trainerRoutineId,
+              routineId: incidentRoutineId,
+              routineNombre: incidentRoutineNombre,
+              trainerRoutineId: incidentTrainerRoutineId,
               tipo: "serie_adicional",
               ejercicioNombre: ex.nombre,
               detalle: `${extra} serie${extra === 1 ? "" : "s"} de más (planificadas: ${ex.plannedSeries})`,
@@ -390,9 +486,9 @@ export function LiveWorkout({
     if (isAssignedRoutine && comentarioFinal.trim()) {
       incidents.push({
         fecha: entry.fecha,
-        routineId: session.routineId || "",
-        routineNombre: sessionRoutine?.nombre || "",
-        trainerRoutineId: sessionRoutine?.trainerRoutineId,
+        routineId: incidentRoutineId,
+        routineNombre: incidentRoutineNombre,
+        trainerRoutineId: incidentTrainerRoutineId,
         tipo: "comentario_final",
         detalle: comentarioFinal.trim(),
       });
@@ -411,13 +507,34 @@ export function LiveWorkout({
       entrenamientoReporte: newReport,
     });
     if (Object.keys(suggestionUpdates).length > 0) onSaveSuggestions(suggestionUpdates);
-    if (incidents.length > 0) recordMany(sessionRoutine?.trainerId, incidents);
+    if (incidents.length > 0) recordMany(incidentTrainerId, incidents);
+
+    // Doble guardado: lo de arriba (onFinish) ya quedó guardado en el
+    // historial personal SIEMPRE, pase lo que pase con la red -- avisarle
+    // al profe es un paso aparte, que puede fallar sin que el entrenamiento
+    // se pierda. Se guarda el snapshot en "pendingSync" en vez de dejarlo
+    // atado a `session` (que se limpia ya mismo) para que el botón de
+    // reintentar no necesite mantener la sesión en vivo abierta.
+    if (session.assignedSessionId && onCompleteAssignedSession) {
+      const sessionId = session.assignedSessionId;
+      onCompleteAssignedSession(sessionId, finalExercises, elapsedMinutes).then((res) => {
+        if (!res.ok) setPendingSync({ sessionId, ejercicios: finalExercises, minutos: elapsedMinutes });
+      });
+    }
 
     setReport(newReport);
     setSession(null);
     setOpenIndex(null);
     setFinishing(false);
     setFinalComment("");
+  };
+
+  const retrySync = () => {
+    if (!pendingSync || !onCompleteAssignedSession) return;
+    const { sessionId, ejercicios, minutos } = pendingSync;
+    onCompleteAssignedSession(sessionId, ejercicios, minutos).then((res) => {
+      if (res.ok) setPendingSync(null);
+    });
   };
 
   // Con rutina asignada, antes de cerrar de verdad se pide el comentario
@@ -433,6 +550,24 @@ export function LiveWorkout({
   return (
     <div className="mt-3 border-t border-border pt-3">
       <div className="collapsible-eyebrow mb-1 font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Fuerza</div>
+      {pendingSync && (
+        <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-rust/40 bg-rust/10 px-2.5 py-2 text-[11px] text-rust">
+          <span>Se guardó tu entrenamiento, pero no se pudo avisar a tu profe.</span>
+          <button type="button" onClick={retrySync} className="shrink-0 rounded-md border border-rust/50 px-2 py-1 font-mono text-[10px] uppercase">
+            Reintentar
+          </button>
+        </div>
+      )}
+      {!session && assignedSession && (
+        <div className="mb-2 rounded-xl border border-gold p-3" style={{ background: "linear-gradient(135deg, rgb(var(--color-accent) / 0.14), rgb(var(--color-surface)))" }}>
+          <div className="mb-1 font-mono text-[9px] uppercase tracking-[0.14em] text-gold">📋 Hoy te toca · asignado por tu profe</div>
+          <div className="mb-0.5 text-[15px] font-bold text-text">{assignedSession.routineNombre}</div>
+          <div className="mb-3 text-[12px] text-textMuted">{assignedSession.routineSnapshot.length} ejercicios</div>
+          <button type="button" onClick={startAssignedSession} className="w-full rounded-lg p-3 font-sans text-sm font-bold bg-gold text-bg">
+            ▶ Arrancar sesión asignada
+          </button>
+        </div>
+      )}
       {!session && (
         <>
           {scheduledRoutine ? (

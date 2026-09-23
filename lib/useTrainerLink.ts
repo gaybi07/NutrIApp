@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/browser";
-import { ExerciseEntry, TrainerLink, TrainerLinkRequest, TrainerRoutine, TrainerStudent } from "./types";
+import { ExerciseEntry, RoutineStatus, TrainerLink, TrainerLinkRequest, TrainerRoutine, TrainerStudent } from "./types";
 
 function routineFromRow(row: Record<string, unknown>): TrainerRoutine {
   return {
@@ -12,6 +12,10 @@ function routineFromRow(row: Record<string, unknown>): TrainerRoutine {
     ejercicios: (row.ejercicios as ExerciseEntry[]) || [],
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
+    // Antes se descartaba -- el planificador semanal (TrainingPlanBuilder)
+    // solo puede ofrecer rutinas "publicada" (publish_training_plan la
+    // rechaza si no lo está), así que necesita este campo del lado cliente.
+    status: row.status as RoutineStatus,
   };
 }
 

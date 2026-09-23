@@ -17,11 +17,15 @@ export function RoutineManager({
   schedule,
   onSaveRoutines,
   onSaveSchedule,
+  hasTrainerLink,
 }: {
   routines: Routine[];
   schedule: TrainingSchedule;
   onSaveRoutines: (routines: Routine[]) => void;
   onSaveSchedule: (schedule: TrainingSchedule) => void;
+  /** Sin vínculo con un profe (Autoentrenador), undefined -- la lista sigue
+   * siendo la de siempre, plana, sin secciones. */
+  hasTrainerLink?: boolean;
 }) {
   const [pickerDay, setPickerDay] = useState<Weekday | null>(null);
   // "new" = editor abierto para una rutina en blanco; una Routine puntual =
@@ -58,6 +62,50 @@ export function RoutineManager({
     onSaveRoutines(exists ? routines.map((r) => (r.id === cleaned.id ? cleaned : r)) : [...routines, cleaned]);
     setEditingRoutine(null);
   };
+
+  const renderRoutineRow = (routine: Routine) => {
+    const assigned = routine.origen === "asignada";
+    return (
+      <div key={routine.id} className="rounded-lg border border-border bg-bg/40 p-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-sm font-semibold">{routine.nombre}</div>
+          <div className="flex items-center gap-1.5">
+            {assigned ? (
+              <span className="rounded-full border border-gold/40 bg-gold/10 px-2 py-1 font-mono text-[9px] uppercase tracking-wide text-gold">
+                🔒 Asignada
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setEditingRoutine(routine)}
+                className="rounded-full border border-border px-2 py-1 font-mono text-[9px] uppercase tracking-wide text-textMuted"
+              >
+                Editar
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => deleteRoutine(routine.id)}
+              className="rounded-full border border-rust/50 px-2 py-1 font-mono text-[9px] uppercase tracking-wide text-rust"
+            >
+              Eliminar
+            </button>
+          </div>
+        </div>
+        <div className="mt-1.5 space-y-0.5">
+          {routine.ejercicios.map((e, i) => (
+            <div key={i} className="font-mono text-[10px] text-textMuted">
+              {e.nombre} · {e.series}x{e.repeticiones}
+              {e.peso ? ` · ${e.peso}kg` : ""}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const asignadas = routines.filter((r) => r.origen === "asignada");
+  const propias = routines.filter((r) => r.origen !== "asignada");
 
   return (
     <div>
@@ -104,49 +152,25 @@ export function RoutineManager({
           <div className="rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">
             Todavía no armaste ninguna rutina.
           </div>
-        ) : (
-          <div className="space-y-2">
-            {routines.map((routine) => {
-              const assigned = routine.origen === "asignada";
-              return (
-              <div key={routine.id} className="rounded-lg border border-border bg-bg/40 p-2.5">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="text-sm font-semibold">{routine.nombre}</div>
-                  <div className="flex items-center gap-1.5">
-                    {assigned ? (
-                      <span className="rounded-full border border-gold/40 bg-gold/10 px-2 py-1 font-mono text-[9px] uppercase tracking-wide text-gold">
-                        🔒 Asignada
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setEditingRoutine(routine)}
-                        className="rounded-full border border-border px-2 py-1 font-mono text-[9px] uppercase tracking-wide text-textMuted"
-                      >
-                        Editar
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => deleteRoutine(routine.id)}
-                      className="rounded-full border border-rust/50 px-2 py-1 font-mono text-[9px] uppercase tracking-wide text-rust"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                </div>
-                <div className="mt-1.5 space-y-0.5">
-                  {routine.ejercicios.map((e, i) => (
-                    <div key={i} className="font-mono text-[10px] text-textMuted">
-                      {e.nombre} · {e.series}x{e.repeticiones}
-                      {e.peso ? ` · ${e.peso}kg` : ""}
-                    </div>
-                  ))}
-                </div>
+        ) : hasTrainerLink ? (
+          <div className="space-y-3">
+            {asignadas.length > 0 && (
+              <div>
+                <div className="mb-1.5 font-mono text-[9px] uppercase tracking-wide text-gold">De tu profe</div>
+                <div className="space-y-2">{asignadas.map(renderRoutineRow)}</div>
               </div>
-              );
-            })}
+            )}
+            <div>
+              {asignadas.length > 0 && <div className="mb-1.5 font-mono text-[9px] uppercase tracking-wide text-textMuted">Tus rutinas</div>}
+              {propias.length > 0 ? (
+                <div className="space-y-2">{propias.map(renderRoutineRow)}</div>
+              ) : (
+                asignadas.length > 0 && <div className="text-[12px] text-textMuted">Todavía no armaste ninguna rutina propia.</div>
+              )}
+            </div>
           </div>
+        ) : (
+          <div className="space-y-2">{routines.map(renderRoutineRow)}</div>
         )}
       </Collapsible>
 

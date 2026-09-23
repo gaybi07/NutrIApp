@@ -115,6 +115,16 @@ export const WEEKDAY_LABELS: Record<Weekday, string> = {
   domingo: "Domingo",
 };
 
+export const WEEKDAY_LABELS_SHORT: Record<Weekday, string> = {
+  lunes: "Lun",
+  martes: "Mar",
+  miercoles: "Mié",
+  jueves: "Jue",
+  viernes: "Vie",
+  sabado: "Sáb",
+  domingo: "Dom",
+};
+
 /** Una serie individual, cargada en vivo durante un entrenamiento (peso/reps/cómo se sintió, por serie). */
 export interface ExerciseSetEntry {
   repeticiones: number;
