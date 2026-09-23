@@ -1,7 +1,7 @@
 # Pagos split en MercadoPago (comisión a Profe/Nutricionista)
 
 Type: research
-Status: open
+Status: resolved
 
 ## Question
 
@@ -14,3 +14,17 @@ El usuario confirmó que el Profe/Nutricionista recibe un % de lo que pagan sus 
 - Costo/comisión que cobra MercadoPago por usar esta función, si existe.
 
 Esto alimenta a [Estructura de precios](04-estructura-precios.md) (el % exacto y las reglas del split se definen ahí, una vez que se sepa qué es técnicamente posible).
+
+## Answer
+
+Investigación completa en [`research/05-mercadopago-split.md`](../research/05-mercadopago-split.md).
+
+**Es factible**: MercadoPago tiene "Split de Pagos" real y automático (modelo marketplace 1:1), confirmado disponible en Argentina, usando `application_fee`/`marketplace_fee` al momento del cobro — la plataforma y el profesional se quedan cada uno con su parte sin transferencias manuales.
+
+Complejidad media-alta, ojo con esto antes de prometerlo:
+- **Cada Profe/Nutricionista necesita su propia cuenta de MercadoPago** y completar un flujo de autorización OAuth ("Connect") — no alcanza con que tenga cuenta en la app.
+- **Los reembolsos solo se recuperan proporcionalmente de forma automática** — la plataforma tiene que construir su propia reconciliación para los casos raros.
+- **El tema impositivo/facturación en Argentina queda sin resolver por la propia documentación de MercadoPago** (quién le factura a quién, límites de monotributo, tratamiento AFIP) — la investigación lo marca explícitamente como algo que necesita un contador, no algo que se pueda asumir.
+- Una página de comisiones específica de Argentina dio error 403 al consultarla — hay que reverificarla a mano antes de fijar el % final en [Estructura de precios](04-estructura-precios.md).
+
+**Para el mapa**: viable técnicamente, pero el onboarding de cada profesional (OAuth + likely monotributo) y la parte impositiva son trabajo real aparte de la integración de pagos en sí — no es "prender un flag".

@@ -21,7 +21,9 @@ Orden de trabajo: **Nutricionista → Pagos → Empaquetado**.
 
 ## Decisions so far
 
-(vacío — recién arranca el mapa)
+- [Costos operativos](issues/03-costos-operativos.md): Supabase+Vercel son ~$45/mes fijos desde el día 1 (no escalan con uso). IA es marginal (~$0.18-24/mes según escala). MercadoPago cobra ~7.6% por acreditación instantánea. El piso de precio hay que pensarlo cubriendo el costo fijo total, no el costo marginal por usuario.
+- [Pagos split en MercadoPago](issues/05-mercadopago-split.md): factible (API de marketplace real, `application_fee`), pero cada profesional necesita su propia cuenta + OAuth "Connect", los reembolsos no se revierten solos del todo, y el tema impositivo en Argentina queda sin resolver por MercadoPago — necesita un contador antes de prometerlo.
+- [Empaquetado APK](issues/07-empaquetado-apk.md): arrancar con PWA/TWA (Bubblewrap) para el Android del grupo cerrado — no toca el código actual. Capacitor queda para más adelante, cuando se invierta en serio en iOS (ni PWA ni Capacitor dan iOS "gratis": Apple rechaza los wrappers de PWA).
 
 ## Not yet specified
 

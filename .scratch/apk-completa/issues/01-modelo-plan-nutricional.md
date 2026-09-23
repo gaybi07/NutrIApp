@@ -1,7 +1,7 @@
 # Modelo de datos del Plan Nutricional (Nutricionista ↔ Paciente)
 
 Type: grilling
-Status: open
+Status: claimed
 
 ## Question
 
