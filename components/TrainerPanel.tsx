@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useTrainerApplication, useTrainerAdmin } from "@/lib/useTrainerApplication";
 import { useTrainerLink, useTrainerStudents, useTrainerRoutines, useTrainerRoutinesForStudent } from "@/lib/useTrainerLink";
 import { useTrainerIncidents } from "@/lib/useRoutineIncidents";
-import { TrainerApplication, TrainerStatus, TrainerRoutine, TrainerLinkRequest, TrainerStudent, RoutineIncident, RoutineIncidentType, WeeklyReportMetrics, Routine } from "@/lib/types";
+import { TrainerApplication, TrainerStatus, TrainerRoutine, TrainerLinkRequest, TrainerStudent, RoutineIncident, RoutineIncidentType, WeeklyReportMetrics, Routine, ExerciseEntry } from "@/lib/types";
 import { RoutineEditorModal } from "@/components/RoutineEditorModal";
 import { StudentDetailScreen } from "@/components/StudentDetailScreen";
 import { useMyTrainerComments } from "@/lib/useTrainerComments";
@@ -175,7 +175,11 @@ function TrainerStudentsAndRoutines({ authenticated, maxStudents }: { authentica
   const studentsHook = useTrainerStudents(authenticated, true);
   const routinesHook = useTrainerRoutines(authenticated, true);
   const incidentsHook = useTrainerIncidents(authenticated, true);
-  const [editing, setEditing] = useState<TrainerRoutine | "new" | null>(null);
+  // El caso "duplicar" es un objeto sin id, con el nombre y ejercicios
+  // copiados -- al guardar, RoutineEditorModal/onSave lo tratan igual que
+  // una rutina nueva (sin id no hay update, hay insert), así no hace falta
+  // ningún camino especial en el hook de guardado.
+  const [editing, setEditing] = useState<TrainerRoutine | "new" | { nombre: string; ejercicios: ExerciseEntry[] } | null>(null);
   const [viewingStudent, setViewingStudent] = useState<TrainerStudent | null>(null);
 
   const copyInviteCode = async () => {
@@ -302,6 +306,13 @@ function TrainerStudentsAndRoutines({ authenticated, maxStudents }: { authentica
                 <div className="flex gap-1.5">
                   <button type="button" onClick={() => setEditing(r)} className="rounded-full border border-border px-2 py-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">
                     Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditing({ nombre: `${r.nombre} (copia)`, ejercicios: r.ejercicios.map((e) => ({ ...e })) })}
+                    className="rounded-full border border-gold/40 px-2 py-1 font-mono text-[9px] uppercase tracking-wide text-gold"
+                  >
+                    Duplicar
                   </button>
                   <button
                     type="button"
