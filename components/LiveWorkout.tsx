@@ -94,6 +94,12 @@ export interface LiveSession {
   assignedTrainerId?: string;
   assignedRoutineNombre?: string;
   assignedTrainerRoutineId?: string | null;
+  /** Si está pausado (ej. "voy al baño"), el momento en que se pausó -- el
+   * contador se congela ahí en vez de seguir sumando. Al reanudar,
+   * `startedAt` se corre hacia adelante por el tiempo que estuvo pausado
+   * (ver togglePause), así "ahora - startedAt" sigue dando el tiempo
+   * REALMENTE entrenado sin necesitar un acumulador aparte. */
+  pausedAt?: number;
 }
 
 function loadStoredSession(fecha: string): LiveSession | null {
@@ -200,6 +206,20 @@ export function LiveWorkout({
   const assignRoutineToday = (routineId: string) => {
     onSaveSchedule({ ...schedule, [weekdayOf(entry.fecha)]: routineId });
     setPlanningOpen(false);
+  };
+
+  const togglePause = () => {
+    setSession((prev) => {
+      if (!prev) return prev;
+      if (prev.pausedAt) {
+        // Reanudar: correr startedAt hacia adelante por lo que estuvo
+        // pausado, así el cálculo "ahora - startedAt" de siempre sigue
+        // dando el tiempo real entrenado, sin sumar el rato pausado.
+        const pausedMs = Date.now() - prev.pausedAt;
+        return { ...prev, startedAt: prev.startedAt + pausedMs, pausedAt: undefined };
+      }
+      return { ...prev, pausedAt: Date.now() };
+    });
   };
 
   useEffect(() => {
@@ -549,7 +569,8 @@ export function LiveWorkout({
     else doFinish("");
   };
 
-  const elapsedLabel = session ? formatElapsed(now - session.startedAt) : "0:00";
+  const elapsedLabel = session ? formatElapsed((session.pausedAt ?? now) - session.startedAt) : "0:00";
+  const isPaused = Boolean(session?.pausedAt);
 
   return (
     <div className="mt-3 border-t border-border pt-3">
@@ -677,10 +698,19 @@ export function LiveWorkout({
           )}
           <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border bg-bg/40 px-3 py-2">
             <div>
-              <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">Tiempo</div>
-              <div className="font-mono text-xl font-bold tabular-nums text-text">{elapsedLabel}</div>
+              <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">{isPaused ? "En pausa" : "Tiempo"}</div>
+              <div className={`font-mono text-xl font-bold tabular-nums ${isPaused ? "text-gold" : "text-text"}`}>{elapsedLabel}</div>
             </div>
             <div className="flex gap-1.5">
+              <button
+                type="button"
+                onClick={togglePause}
+                className={`rounded-lg border px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-wide ${
+                  isPaused ? "border-gold bg-gold text-bg" : "border-border text-textMuted"
+                }`}
+              >
+                {isPaused ? "▶ Seguir" : "⏸ Pausar"}
+              </button>
               <button
                 type="button"
                 onClick={cancelSession}
@@ -693,7 +723,7 @@ export function LiveWorkout({
                 onClick={handleFinish}
                 className="rounded-lg border border-gold/60 bg-gold px-3 py-1.5 font-mono text-[10px] uppercase tracking-wide text-bg"
               >
-                Finalizar entrenamiento
+                Finalizar
               </button>
             </div>
           </div>
