@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTOTIPO — Liquidaciones del profesional (descartable)</title>
+<style>
+  :root {
+    --bg: 15 23 42; --surface: 30 41 59; --surface2: 23 32 51; --text: 248 250 252; --text-muted: 156 163 175;
+    --gold: 52 211 153; --rust: 239 68 68; --sage: 16 185 129; --border: 51 65 85;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 16px 16px 90px; max-width: 480px; margin-inline: auto;
+    background: rgb(var(--bg)); color: rgb(var(--text));
+    font-family: -apple-system, system-ui, sans-serif; font-size: 14px;
+  }
+  .mono { font-family: "SF Mono", Menlo, monospace; }
+  .eyebrow { font-size: 9px; text-transform: uppercase; letter-spacing: 0.14em; color: rgb(var(--text-muted)); }
+  h1 { font-size: 15px; font-style: italic; color: rgb(var(--gold)); margin: 0 0 14px; font-family: Georgia, serif; }
+  .card { border: 1px solid rgb(var(--border)); border-radius: 12px; padding: 14px; background: rgb(var(--surface)); }
+  .row { display: flex; justify-content: space-between; align-items: center; }
+  .pill { border-radius: 99px; padding: 3px 9px; font-size: 10px; font-weight: 700; font-family: monospace; }
+  .pill-ok { background: rgb(var(--sage) / 0.18); color: rgb(var(--sage)); }
+  .pill-pending { background: rgb(var(--text-muted) / 0.18); color: rgb(var(--text-muted)); }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; color: rgb(var(--text-muted)); font-weight: 500; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; padding-bottom: 6px; }
+  td { padding: 7px 0; border-top: 1px solid rgb(var(--border)); }
+  .switcher {
+    position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+    background: rgb(var(--surface)); border: 1px solid rgb(var(--gold)); border-radius: 99px;
+    padding: 6px 8px; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 20px rgb(0 0 0 / 0.5);
+    font-family: monospace; font-size: 11px; z-index: 999;
+  }
+  .switcher button { background: none; border: none; color: rgb(var(--gold)); font-size: 16px; cursor: pointer; padding: 2px 6px; }
+  .switcher span { color: rgb(var(--text)); white-space: nowrap; }
+  .variant { display: none; }
+  .variant.active { display: block; }
+  .bar-track { height: 8px; border-radius: 99px; background: rgb(var(--border)); overflow: hidden; }
+  .bar-fill { height: 100%; background: rgb(var(--gold)); border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<div class="eyebrow">PROTOTIPO DESCARTABLE — no es código real</div>
+<h1>💳 Entrenador · Cuenta · Liquidaciones</h1>
+
+<!-- ============ VARIANTE A: número hero grande + desglose ============ -->
+<div class="variant active" id="A">
+  <div class="card" style="border-color: rgb(var(--gold)); background: linear-gradient(135deg, rgb(var(--gold) / 0.12), rgb(var(--surface))); margin-bottom: 12px;">
+    <div class="mono eyebrow" style="color: rgb(var(--gold));">ESTIMADO DE ESTE MES</div>
+    <div style="font-size: 34px; font-weight: 800; margin: 4px 0 2px;">$19.240</div>
+    <div style="font-size: 11px; color: rgb(var(--sage));">✓ Cubre tu cuota de $15.000 — te queda un plus de $4.240</div>
+  </div>
+  <div class="card mono" style="margin-bottom: 12px; font-size: 12px;">
+    <div class="row" style="margin-bottom: 8px;"><span>Cuota (tier 12 alumnos)</span><span style="color:rgb(var(--rust));">− $15.000</span></div>
+    <div class="row" style="margin-bottom: 8px;"><span>Split 50% · 8 alumnos Premium</span><span style="color:rgb(var(--sage));">+ $14.784</span></div>
+    <div class="row" style="margin-bottom: 8px;"><span>Split 50% · 2 alumnos Premium+</span><span style="color:rgb(var(--sage));">+ $7.392</span></div>
+    <div class="row" style="border-top: 1px solid rgb(var(--border)); padding-top: 8px; font-weight: 700;"><span>Total estimado</span><span>$19.240</span></div>
+  </div>
+  <div class="card">
+    <div class="eyebrow" style="margin-bottom: 8px;">HISTORIAL</div>
+    <table>
+      <tr><th>Mes</th><th>Monto</th><th>Estado</th></tr>
+      <tr><td>Ago 2026</td><td class="mono">$17.960</td><td><span class="pill pill-ok">Pagado</span></td></tr>
+      <tr><td>Jul 2026</td><td class="mono">$16.100</td><td><span class="pill pill-ok">Pagado</span></td></tr>
+      <tr><td>Jun 2026</td><td class="mono">$11.240</td><td><span class="pill pill-ok">Pagado</span></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ============ VARIANTE B: fila de stats compacta + tabla al frente ============ -->
+<div class="variant" id="B">
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px;">
+    <div class="card mono" style="text-align: center; padding: 10px;">
+      <div class="eyebrow">CUPO</div>
+      <div style="font-size: 16px; font-weight: 700; margin-top: 2px;">10/12</div>
+    </div>
+    <div class="card mono" style="text-align: center; padding: 10px;">
+      <div class="eyebrow">CUOTA</div>
+      <div style="font-size: 16px; font-weight: 700; margin-top: 2px;">$15.000</div>
+    </div>
+    <div class="card mono" style="text-align: center; padding: 10px; border-color: rgb(var(--sage));">
+      <div class="eyebrow" style="color: rgb(var(--sage));">TE QUEDA</div>
+      <div style="font-size: 16px; font-weight: 700; margin-top: 2px; color: rgb(var(--sage));">+$4.240</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="row" style="margin-bottom: 10px;">
+      <span class="eyebrow">LIQUIDACIONES</span>
+      <span class="mono" style="font-size: 11px; color: rgb(var(--text-muted));">split neto 50% · post-MP</span>
+    </div>
+    <table>
+      <tr><th>Mes</th><th>Cuota</th><th>Split</th><th>Neto</th><th></th></tr>
+      <tr><td class="mono">Sep 2026</td><td class="mono">$15.000</td><td class="mono">$22.176</td><td class="mono" style="color: rgb(var(--sage));">$7.176</td><td><span class="pill pill-pending">En curso</span></td></tr>
+      <tr><td class="mono">Ago 2026</td><td class="mono">$15.000</td><td class="mono">$20.400</td><td class="mono" style="color: rgb(var(--sage));">$5.400</td><td><span class="pill pill-ok">Pagado</span></td></tr>
+      <tr><td class="mono">Jul 2026</td><td class="mono">$10.000</td><td class="mono">$16.632</td><td class="mono" style="color: rgb(var(--sage));">$6.632</td><td><span class="pill pill-ok">Pagado</span></td></tr>
+      <tr><td class="mono">Jun 2026</td><td class="mono">$10.000</td><td class="mono">$13.860</td><td class="mono" style="color: rgb(var(--sage));">$3.860</td><td><span class="pill pill-ok">Pagado</span></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ============ VARIANTE C: cupo como protagonista, barra de progreso ============ -->
+<div class="variant" id="C">
+  <div class="card" style="margin-bottom: 12px;">
+    <div class="row" style="margin-bottom: 8px;">
+      <span class="eyebrow">TU CUPO</span>
+      <span class="mono" style="font-size: 12px; color: rgb(var(--gold));">tier $15.000 · hasta 12</span>
+    </div>
+    <div class="row" style="margin-bottom: 6px; align-items: baseline;">
+      <span style="font-size: 24px; font-weight: 800;">8</span>
+      <span class="mono" style="font-size: 11px; color: rgb(var(--text-muted));">de 12 alumnos vinculados</span>
+    </div>
+    <div class="bar-track"><div class="bar-fill" style="width: 66%;"></div></div>
+    <div class="mono" style="font-size: 10px; color: rgb(var(--text-muted)); margin-top: 6px;">4 lugares libres — cada uno que sumes con Premium te deja ~$1.848/mes más</div>
+  </div>
+  <div class="card" style="margin-bottom: 12px; border-color: rgb(var(--sage));">
+    <div class="row">
+      <div>
+        <div class="eyebrow" style="color: rgb(var(--sage));">ESTE MES CUBRÍS TU CUOTA</div>
+        <div class="mono" style="font-size: 12px; color: rgb(var(--text-muted)); margin-top: 2px;">$19.240 estimado vs. $15.000 de cuota</div>
+      </div>
+      <div style="font-size: 20px; font-weight: 800; color: rgb(var(--sage));">+$4.240</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="eyebrow" style="margin-bottom: 8px;">HISTORIAL</div>
+    <table>
+      <tr><th>Mes</th><th>Monto</th><th>Estado</th></tr>
+      <tr><td>Ago 2026</td><td class="mono">$17.960</td><td><span class="pill pill-ok">Pagado</span></td></tr>
+      <tr><td>Jul 2026</td><td class="mono">$16.100</td><td><span class="pill pill-ok">Pagado</span></td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="switcher mono">
+  <button onclick="cycle(-1)">‹</button>
+  <span id="label">A · número hero</span>
+  <button onclick="cycle(1)">›</button>
+</div>
+
+<script>
+  const variants = ['A', 'B', 'C'];
+  const names = { A: 'número hero', B: 'stats + tabla', C: 'cupo protagonista' };
+  let idx = 0;
+  function render() {
+    variants.forEach(v => document.getElementById(v).classList.toggle('active', v === variants[idx]));
+    document.getElementById('label').textContent = variants[idx] + ' · ' + names[variants[idx]];
+  }
+  function cycle(dir) {
+    idx = (idx + dir + variants.length) % variants.length;
+    render();
+  }
+  document.addEventListener('keydown', (e) => {
+    if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+    if (e.key === 'ArrowLeft') cycle(-1);
+    if (e.key === 'ArrowRight') cycle(1);
+  });
+</script>
+
+</body>
+</html>

@@ -43,14 +43,15 @@ _Avoid_: Family, group
 ### Plan & Gating
 
 **Client Plan**:
-The subscription tier on a student/individual account — Básico, Premium, or Premium+.
-- **Básico**: no professional link at all (see below).
+The subscription tier on a student/individual account — Básico, Autoentreno, Premium, or Premium+ (decided 2026-09-23; Autoentreno is **not implemented yet**, see below). Priced Básico ($0) < Premium ($4.500 ARS/mes) < Autoentreno ($6.000 ARS/mes) < Premium+ ($9.000 ARS/mes) — Autoentreno sits above Premium because it covers both disciplines (training AND nutrition) at once, just without a human professional behind either.
+- **Básico**: no professional link, no AI-generated plan, no reports — manual self-tracking only (see below).
+- **Autoentreno**: no Trainer Link of any kind (no human professional involved), but the AI generates a full weekly plan covering **both** disciplines — training routines and meal options — plus reports on adherence, the same shape a Premium+ user would get from two human professionals, generated instead of assigned. Priced above Premium precisely because it covers both disciplines; priced below Premium+ because there's no human review behind it. No revenue split applies (no professional to pay), which makes it high-margin for the app relative to its price. Unlike a Trainer/Nutricionista's plan, the AI's plan is **editable by hand** (not read-only) — and each week can start as a **copy of the previous week** (like the "Duplicar" pattern already built for Trainer Routines) so the user only tweaks what changed (e.g. bumping weights that felt too light) instead of regenerating from scratch.
 - **Premium**: can link to one professional (today, only a Trainer exists — Nutritionist is not built yet).
 - **Premium+**: can link to a Trainer AND a Nutritionist simultaneously — one of each, at once. This is the intended distinction (decided 2026-09-22); it's **not implemented yet** — today `premium_plus` is only a type value and a DB check constraint, and `request_trainer_link()` hard-blocks any account (Premium or Premium+) from having more than one active Trainer Link, with no concept of a second, different professional. Building the Nutricionista role means generalizing this into a per-professional-type link count, not just relaxing a number.
 _Avoid_: Subscription, tier (when ambiguous with Trainer Plan Tier)
 
 **Básico**:
-The default, unpaid Client Plan. Meal/activity/expense tabs and several dashboard blocks are locked; a Básico user also cannot link to a trainer.
+The default, unpaid Client Plan. Meal/activity/expense tabs and several dashboard blocks are locked; a Básico user also cannot link to a trainer, get an AI-generated plan, or see reports.
 _Avoid_: Free plan
 
 **Trainer Plan Tier**:

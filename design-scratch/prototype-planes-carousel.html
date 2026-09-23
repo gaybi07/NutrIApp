@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTOTIPO — Carrusel de planes (descartable)</title>
+<style>
+  :root {
+    --bg: 15 23 42; --surface: 30 41 59; --surface2: 23 32 51; --text: 248 250 252; --text-muted: 156 163 175;
+    --gold: 52 211 153; --rust: 239 68 68; --sage: 16 185 129; --border: 51 65 85;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 16px 16px 40px; max-width: 480px; margin-inline: auto;
+    background: rgb(var(--bg)); color: rgb(var(--text));
+    font-family: -apple-system, system-ui, sans-serif; font-size: 14px;
+  }
+  .mono { font-family: "SF Mono", Menlo, monospace; }
+  .eyebrow { font-size: 9px; text-transform: uppercase; letter-spacing: 0.14em; color: rgb(var(--text-muted)); }
+  h1 { font-size: 15px; font-style: italic; color: rgb(var(--gold)); margin: 0 0 14px; font-family: Georgia, serif; }
+  .btn { border-radius: 10px; padding: 11px; font-weight: 700; font-size: 13px; text-align: center; cursor: pointer; }
+  .btn-gold { background: rgb(var(--gold)); color: rgb(var(--bg)); }
+  .btn-outline { border: 1px solid rgb(var(--border)); color: rgb(var(--text-muted)); background: rgb(var(--surface2)); }
+
+  /* pill tabs, swipeable row */
+  .tabs { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px; padding-bottom: 2px; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex: 0 0 auto; padding: 8px 14px; border-radius: 99px; font-size: 12px; font-weight: 700;
+    border: 1px solid rgb(var(--border)); color: rgb(var(--text-muted)); background: rgb(var(--surface));
+    cursor: pointer; white-space: nowrap;
+  }
+  .tab.active { border-color: rgb(var(--gold)); color: rgb(var(--gold)); background: rgb(var(--gold) / 0.1); }
+
+  /* card deck, swipeable via scroll-snap, one full card per plan */
+  .deck { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; margin: 0 -16px; padding: 0 16px 4px; scrollbar-width: none; }
+  .deck::-webkit-scrollbar { display: none; }
+  .plan-card {
+    flex: 0 0 100%; scroll-snap-align: start; border: 1px solid rgb(var(--border)); border-radius: 14px;
+    padding: 16px; background: rgb(var(--surface));
+  }
+  .plan-card.featured { border-color: rgb(var(--gold)); background: linear-gradient(135deg, rgb(var(--gold) / 0.1), rgb(var(--surface))); }
+  .price-row { display: flex; align-items: baseline; gap: 6px; margin: 6px 0 14px; }
+  .price { font-size: 26px; font-weight: 800; }
+  .price-sub { font-size: 11px; color: rgb(var(--text-muted)); }
+  .inherits { font-size: 11px; color: rgb(var(--text-muted)); font-style: italic; margin-bottom: 8px; }
+  .feature { display: flex; gap: 8px; padding: 8px 0; border-top: 1px solid rgb(var(--border) / 0.6); }
+  .feature:first-of-type { border-top: none; }
+  .feature .icon { font-size: 13px; flex-shrink: 0; width: 16px; }
+  .feature .icon.check { color: rgb(var(--sage)); }
+  .feature .icon.dash { color: rgb(var(--text-muted)); }
+  .feature-text b { display: block; font-size: 12px; }
+  .feature-text span { font-size: 11px; color: rgb(var(--text-muted)); line-height: 1.4; }
+  .dots { display: flex; justify-content: center; gap: 6px; margin: 10px 0 14px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: rgb(var(--border)); }
+  .dot.active { background: rgb(var(--gold)); width: 16px; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="eyebrow">PROTOTIPO DESCARTABLE — no es código real</div>
+<h1>💎 Planes y suscripción</h1>
+
+<div class="tabs" id="tabs">
+  <div class="tab" data-i="0">Básico</div>
+  <div class="tab active" data-i="1">Premium</div>
+  <div class="tab" data-i="2">Autoentreno</div>
+  <div class="tab" data-i="3">Premium+</div>
+</div>
+
+<div class="deck" id="deck">
+
+  <!-- BÁSICO -->
+  <div class="plan-card">
+    <div class="eyebrow mono">BÁSICO</div>
+    <div class="price-row"><span class="price">$0</span><span class="price-sub">/mes, para siempre</span></div>
+    <div class="feature">
+      <span class="icon check">✓</span>
+      <div class="feature-text"><b>Registro diario a mano</b><span>Comidas, macros, peso, sueño, pasos y entrenamientos — todo lo cargás vos.</span></div>
+    </div>
+    <div class="feature">
+      <span class="icon check">✓</span>
+      <div class="feature-text"><b>Alacena personal</b><span>Inventario propio, escaneo de códigos y control de stock.</span></div>
+    </div>
+    <div class="feature">
+      <span class="icon dash">–</span>
+      <div class="feature-text"><b>Plan armado (por IA o por un profesional)</b><span>Ni la IA ni ningún profesional te organizan la semana — arrancás desde cero cada vez.</span></div>
+    </div>
+    <div class="feature">
+      <span class="icon dash">–</span>
+      <div class="feature-text"><b>Reportes de progreso</b><span>Sin reportes semanales ni seguimiento de adherencia.</span></div>
+    </div>
+  </div>
+
+  <!-- PREMIUM -->
+  <div class="plan-card featured">
+    <div class="eyebrow mono" style="color: rgb(var(--gold));">PREMIUM · MÁS ELEGIDO</div>
+    <div class="price-row"><span class="price">$4.500</span><span class="price-sub">/mes</span></div>
+    <div class="inherits">Incluye todo lo de Básico, más:</div>
+    <div class="feature">
+      <span class="icon check">✓</span>
+      <div class="feature-text"><b>Un Profe <u>o</u> un Nutricionista</b><span>Elegís con quién vincularte: entrenamiento o plan nutricional, no ambos.</span></div>
+    </div>
+    <div class="feature">
+      <span class="icon check">✓</span>
+      <div class="feature-text"><b>Plan semanal armado por tu profesional</b><span>Rutinas asignadas día por día, o un plan de comidas con opciones y macros.</span></div>
+    </div>
+    <div class="feature">
+      <span class="icon check">✓</span>
+      <div class="feature-text"><b>Seguimiento real</b><span>Tu profesional ve tu progreso semana a semana y te deja comentarios.</span></div>
+    </div>
+    <div class="btn btn-gold" style="margin-top: 14px;">Elegir Premium</div>
+  </div>
+
+  <!-- AUTOENTRENO -->
+  <div class="plan-card">
+    <div class="eyebrow mono">AUTOENTRENO</div>
+    <div class="price-row"><span class="price">$6.000</span><span class="price-sub">/mes</span></div>
+    <div class="inherits">Incluye todo lo de Básico, más:</div>
+    <div class="feature">
+      <span class="icon check">✓</span>
+      <div class="feature-text"><b>Plan semanal de entrenamiento por IA</b><span>Rutinas armadas y ajustadas automáticamente, sin que haya un Profe humano.</span></div>
+    </div>
+    <div class="feature">
+      <span class="icon check">✓</span>
+      <div class="feature-text"><b>Plan de comidas por IA</b><span>Opciones de comida con macros y explicación, generadas sin un Nutricionista humano.</span></div>
+    </div>
+    <div class="feature">
+      <span class="icon check">✓</span>
+      <div class="feature-text"><b>Reportes de adherencia</b><span>Igual que con un profesional, pero generados — no hay una persona revisándolo.</span></div>
+    </div>
+    <div class="btn btn-outline" style="margin-top: 14px;">Elegir Autoentreno</div>
+  </div>
+
+  <!-- PREMIUM+ -->
+  <div class="plan-card">
+    <div class="eyebrow mono">PREMIUM+</div>
+    <div class="price-row"><span class="price">$9.000</span><span class="price-sub">/mes</span></div>
+    <div class="inherits">Incluye todo lo de Premium, más:</div>
+    <div class="feature">
+      <span class="icon check">✓</span>
+      <div class="feature-text"><b>Profe <u>y</u> Nutricionista a la vez</b><span>Entrenamiento y alimentación coordinados, cada uno viendo su parte.</span></div>
+    </div>
+    <div class="feature">
+      <span class="icon check">✓</span>
+      <div class="feature-text"><b>Dos planes semanales en paralelo</b><span>Tu rutina de entrenamiento y tu plan de comidas, cada uno gestionado por su profesional.</span></div>
+    </div>
+    <div class="btn btn-outline" style="margin-top: 14px;">Elegir Premium+</div>
+  </div>
+
+</div>
+
+<div class="dots" id="dots">
+  <div class="dot"></div>
+  <div class="dot active"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+</div>
+
+<script>
+  const deck = document.getElementById('deck');
+  const tabs = [...document.querySelectorAll('.tab')];
+  const dots = [...document.querySelectorAll('.dot')];
+  const cards = [...document.querySelectorAll('.plan-card')];
+
+  function setActive(i) {
+    tabs.forEach((t, idx) => t.classList.toggle('active', idx === i));
+    dots.forEach((d, idx) => d.classList.toggle('active', idx === i));
+  }
+  tabs.forEach(t => t.addEventListener('click', () => {
+    const i = Number(t.dataset.i);
+    cards[i].scrollIntoView({ behavior: 'smooth', inline: 'start' });
+  }));
+  // sync tabs/dots to whichever card is snapped into view
+  let ticking = false;
+  deck.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const i = Math.round(deck.scrollLeft / deck.clientWidth);
+      setActive(Math.max(0, Math.min(cards.length - 1, i)));
+      ticking = false;
+    });
+  });
+</script>
+
+</body>
+</html>

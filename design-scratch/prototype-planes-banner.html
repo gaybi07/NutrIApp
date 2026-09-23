@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTOTIPO — Banner de planes (descartable)</title>
+<style>
+  :root {
+    --bg: 15 23 42; --surface: 30 41 59; --surface2: 23 32 51; --text: 248 250 252; --text-muted: 156 163 175;
+    --gold: 52 211 153; --rust: 239 68 68; --sage: 16 185 129; --border: 51 65 85;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 16px 16px 90px; max-width: 480px; margin-inline: auto;
+    background: rgb(var(--bg)); color: rgb(var(--text));
+    font-family: -apple-system, system-ui, sans-serif; font-size: 14px;
+  }
+  .mono { font-family: "SF Mono", Menlo, monospace; }
+  .eyebrow { font-size: 9px; text-transform: uppercase; letter-spacing: 0.14em; color: rgb(var(--text-muted)); }
+  h1 { font-size: 15px; font-style: italic; color: rgb(var(--gold)); margin: 0 0 14px; font-family: Georgia, serif; }
+  .card { border: 1px solid rgb(var(--border)); border-radius: 12px; padding: 14px; background: rgb(var(--surface)); }
+  .btn { border-radius: 10px; padding: 10px; font-weight: 700; font-size: 12px; text-align: center; cursor: pointer; }
+  .btn-gold { background: rgb(var(--gold)); color: rgb(var(--bg)); }
+  .btn-outline { border: 1px solid rgb(var(--border)); color: rgb(var(--text-muted)); background: rgb(var(--surface2)); }
+  .check { color: rgb(var(--sage)); }
+  .dash { color: rgb(var(--text-muted)); }
+  .switcher {
+    position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+    background: rgb(var(--surface)); border: 1px solid rgb(var(--gold)); border-radius: 99px;
+    padding: 6px 8px; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 20px rgb(0 0 0 / 0.5);
+    font-family: monospace; font-size: 11px; z-index: 999;
+  }
+  .switcher button { background: none; border: none; color: rgb(var(--gold)); font-size: 16px; cursor: pointer; padding: 2px 6px; }
+  .switcher span { color: rgb(var(--text)); white-space: nowrap; }
+  .variant { display: none; }
+  .variant.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="eyebrow">PROTOTIPO DESCARTABLE — no es código real</div>
+<h1>💎 Planes y suscripción</h1>
+
+<!-- ============ VARIANTE A: 3 tarjetas apiladas, comparación completa ============ -->
+<div class="variant active" id="A">
+  <div class="card" style="margin-bottom: 10px;">
+    <div class="mono eyebrow">BÁSICO</div>
+    <div style="font-size: 20px; font-weight: 800; margin: 4px 0 10px;">$0<span style="font-size:11px;color:rgb(var(--text-muted));font-weight:400;">/mes</span></div>
+    <div style="font-size: 12px; line-height: 1.9;">
+      <div><span class="check">✓</span> Comidas, peso, sueño</div>
+      <div><span class="check">✓</span> Alacena personal</div>
+      <div><span class="dash">–</span> Vínculo con Profe/Nutricionista</div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom: 10px; border-color: rgb(var(--gold)); background: linear-gradient(135deg, rgb(var(--gold) / 0.1), rgb(var(--surface)));">
+    <div class="mono eyebrow" style="color: rgb(var(--gold));">PREMIUM · MÁS ELEGIDO</div>
+    <div style="font-size: 20px; font-weight: 800; margin: 4px 0 10px;">$4.500<span style="font-size:11px;color:rgb(var(--text-muted));font-weight:400;">/mes</span></div>
+    <div style="font-size: 12px; line-height: 1.9;">
+      <div><span class="check">✓</span> Todo lo de Básico</div>
+      <div><span class="check">✓</span> Vínculo con un Profe <b>o</b> un Nutricionista</div>
+      <div><span class="check">✓</span> Plan semanal armado por tu profesional</div>
+    </div>
+    <div class="btn btn-gold" style="margin-top: 12px;">Elegir Premium</div>
+  </div>
+  <div class="card">
+    <div class="mono eyebrow">PREMIUM+</div>
+    <div style="font-size: 20px; font-weight: 800; margin: 4px 0 10px;">$9.000<span style="font-size:11px;color:rgb(var(--text-muted));font-weight:400;">/mes</span></div>
+    <div style="font-size: 12px; line-height: 1.9;">
+      <div><span class="check">✓</span> Todo lo de Premium</div>
+      <div><span class="check">✓</span> Profe <b>y</b> Nutricionista a la vez</div>
+    </div>
+    <div class="btn btn-outline" style="margin-top: 12px;">Elegir Premium+</div>
+  </div>
+</div>
+
+<!-- ============ VARIANTE B: banner compacto contextual (vos estás en X, esto te falta) ============ -->
+<div class="variant" id="B">
+  <div class="card" style="border-color: rgb(var(--gold)); background: linear-gradient(135deg, rgb(var(--gold) / 0.12), rgb(var(--surface))); margin-bottom: 14px;">
+    <div class="mono eyebrow" style="color: rgb(var(--gold));">📋 HOY ESTÁS EN BÁSICO</div>
+    <div style="font-size: 14px; font-weight: 700; margin: 6px 0 4px;">Sumá un profesional que te siga de cerca</div>
+    <div style="font-size: 12px; color: rgb(var(--text-muted)); margin-bottom: 12px;">Con Premium tu Profe o Nutricionista te arma el plan semanal y ve tu progreso.</div>
+    <div class="btn btn-gold">Ver planes desde $4.500/mes</div>
+  </div>
+  <div style="text-align: center; font-size: 11px; color: rgb(var(--text-muted)); cursor: pointer; text-decoration: underline;">
+    Comparar Premium vs. Premium+ →
+  </div>
+</div>
+
+<!-- ============ VARIANTE C: tabla horizontal compacta, 3 columnas ============ -->
+<div class="variant" id="C">
+  <div class="card mono" style="font-size: 11px;">
+    <table style="width: 100%; border-collapse: collapse;">
+      <tr style="border-bottom: 1px solid rgb(var(--border));">
+        <td style="padding: 6px 4px;"></td>
+        <td style="padding: 6px 4px; text-align: center;">Básico</td>
+        <td style="padding: 6px 4px; text-align: center; color: rgb(var(--gold)); font-weight: 700;">Premium</td>
+        <td style="padding: 6px 4px; text-align: center;">Premium+</td>
+      </tr>
+      <tr style="border-bottom: 1px solid rgb(var(--border));">
+        <td style="padding: 6px 4px;">Registro diario</td>
+        <td style="padding: 6px 4px; text-align: center;" class="check">✓</td>
+        <td style="padding: 6px 4px; text-align: center;" class="check">✓</td>
+        <td style="padding: 6px 4px; text-align: center;" class="check">✓</td>
+      </tr>
+      <tr style="border-bottom: 1px solid rgb(var(--border));">
+        <td style="padding: 6px 4px;">Profe <b>o</b> Nutricionista</td>
+        <td style="padding: 6px 4px; text-align: center;" class="dash">–</td>
+        <td style="padding: 6px 4px; text-align: center;" class="check">✓</td>
+        <td style="padding: 6px 4px; text-align: center;" class="check">✓</td>
+      </tr>
+      <tr style="border-bottom: 1px solid rgb(var(--border));">
+        <td style="padding: 6px 4px;">Profe <b>y</b> Nutricionista</td>
+        <td style="padding: 6px 4px; text-align: center;" class="dash">–</td>
+        <td style="padding: 6px 4px; text-align: center;" class="dash">–</td>
+        <td style="padding: 6px 4px; text-align: center;" class="check">✓</td>
+      </tr>
+      <tr>
+        <td style="padding: 8px 4px 2px; font-weight: 700;">Precio</td>
+        <td style="padding: 8px 4px 2px; text-align: center; font-weight: 700;">$0</td>
+        <td style="padding: 8px 4px 2px; text-align: center; font-weight: 700; color: rgb(var(--gold));">$4.500</td>
+        <td style="padding: 8px 4px 2px; text-align: center; font-weight: 700;">$9.000</td>
+      </tr>
+    </table>
+  </div>
+  <div class="btn btn-gold" style="margin-top: 12px;">Elegir Premium</div>
+</div>
+
+<div class="switcher mono">
+  <button onclick="cycle(-1)">‹</button>
+  <span id="label">A · 3 tarjetas apiladas</span>
+  <button onclick="cycle(1)">›</button>
+</div>
+
+<script>
+  const variants = ['A', 'B', 'C'];
+  const names = { A: '3 tarjetas apiladas', B: 'banner contextual compacto', C: 'tabla comparativa' };
+  let idx = 0;
+  function render() {
+    variants.forEach(v => document.getElementById(v).classList.toggle('active', v === variants[idx]));
+    document.getElementById('label').textContent = variants[idx] + ' · ' + names[variants[idx]];
+  }
+  function cycle(dir) {
+    idx = (idx + dir + variants.length) % variants.length;
+    render();
+  }
+  document.addEventListener('keydown', (e) => {
+    if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+    if (e.key === 'ArrowLeft') cycle(-1);
+    if (e.key === 'ArrowRight') cycle(1);
+  });
+</script>
+
+</body>
+</html>
