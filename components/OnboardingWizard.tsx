@@ -26,6 +26,10 @@ const MODULE_INFO: Record<MainTab, { label: string; description: string }> = {
     label: "Gastos",
     description: "Historial de lo que gastaste en el súper — precio, marca y fecha de cada compra.",
   },
+  // "entrenador" no es una solapa opcional -- aparece sola al aprobarse la
+  // postulación (ver app/page.tsx), nunca se ofrece a elegir en este wizard.
+  // Entrada solo para satisfacer Record<MainTab, ...>, nunca se lee.
+  entrenador: { label: "Entrenador", description: "" },
 };
 
 const ACTIVITY_LEVELS: Record<ActivityLevel, { label: string; pasos: number; description: string }> = {

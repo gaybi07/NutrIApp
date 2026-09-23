@@ -163,9 +163,14 @@ export default function Home() {
   };
   const macrosHidden = isBasico ? [...(settings.macrosHidden || []), ...PLAN_LOCKED_MACROS_BLOCKS] : settings.macrosHidden || [];
 
+  // "entrenador" no es una preferencia (no vive en settings.enabledTabs, no
+  // se puede ocultar desde Ajustes > Solapas) -- aparece sola cuando la
+  // postulación está aprobada, se apaga sola si se te vence/retiran el rol,
+  // igual que PLAN_LOCKED_TABS pero al revés (agrega en vez de sacar).
   const enabledTabs = resolveOrder(settings.enabledTabs, DEFAULT_ENABLED_TABS).filter(
     (tab) => tab === "inicio" || !isBasico || !PLAN_LOCKED_TABS.includes(tab)
   );
+  if (isApprovedTrainer) enabledTabs.push("entrenador");
   useEffect(() => {
     if (activeTab !== "inicio" && !enabledTabs.includes(activeTab)) setActiveTab("inicio");
   }, [activeTab, enabledTabs]);
@@ -463,6 +468,17 @@ export default function Home() {
       )}
 
       {activeTab === "gastos" && <PurchaseHistoryCard purchases={purchases} removePurchase={removePurchase} />}
+
+      {activeTab === "entrenador" && (
+        <div className="mx-auto max-w-lg">
+          <TrainerPanel
+            authenticated={authenticated}
+            userEmail={userEmail}
+            routines={settings.routines || []}
+            onSaveRoutines={(routines) => saveSettings({ ...settings, routines })}
+          />
+        </div>
+      )}
 
       {activeTab === "inicio" && (
       <div className="mx-auto max-w-lg lg:max-w-6xl 2xl:max-w-[1800px]">

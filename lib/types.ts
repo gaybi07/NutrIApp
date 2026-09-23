@@ -598,7 +598,7 @@ export interface DayEntry {
 export type WeekPlan = Record<string, Partial<Record<MealKey, string>>>; // fecha -> comida -> título de receta
 
 /** Las solapas de arriba que se pueden prender/apagar desde Preferencias — "inicio" no está acá porque siempre está fija. */
-export type MainTab = "inicio" | "comidas" | "macros" | "actividad" | "gastos";
+export type MainTab = "inicio" | "comidas" | "macros" | "actividad" | "gastos" | "entrenador";
 
 export const OPTIONAL_TABS: MainTab[] = ["macros", "comidas", "actividad", "gastos"];
 export const DEFAULT_ENABLED_TABS: MainTab[] = ["inicio", "comidas", "macros", "actividad", "gastos"];

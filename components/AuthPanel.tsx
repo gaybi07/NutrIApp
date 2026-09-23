@@ -25,9 +25,9 @@ export function AuthPanel({
   onOpenSections?: () => void;
   onOpenTools?: () => void;
   onOpenTrainer?: () => void;
-  /** Cambia el texto del ítem de menú: "Ser entrenador" mientras no está
-   * aprobado (todavía no lo es, tiene sentido invitarlo a postularse),
-   * "Entrenador" una vez aprobado (ya lo es, ya no aplica invitarlo). */
+  /** Una vez aprobado, este ítem del menú desaparece del todo -- ya
+   * gestiona todo desde la solapa "Entrenador" (al lado de Inicio/Macros/
+   * etc.), no hace falta seguir "postulándose" a algo que ya es. */
   isApprovedTrainer?: boolean;
   /** Contenido opcional que ocupa toda la fila de arriba, a la izquierda del
    * botón de ajustes (⚙) -- pensado para la navegación de semana y el
@@ -160,7 +160,7 @@ export function AuthPanel({
               >
                 Herramientas
               </button>
-              {isSupabaseConfigured && onOpenTrainer && (
+              {isSupabaseConfigured && onOpenTrainer && !isApprovedTrainer && (
                 <button
                   type="button"
                   onClick={() => {
@@ -169,7 +169,7 @@ export function AuthPanel({
                   }}
                   className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
                 >
-                  {isApprovedTrainer ? "Entrenador" : "Ser entrenador"}
+                  Ser entrenador
                 </button>
               )}
               {userEmail ? (

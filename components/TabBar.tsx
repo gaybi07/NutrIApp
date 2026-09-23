@@ -10,6 +10,7 @@ const TABS: { id: MainTab; label: string }[] = [
   { id: "macros", label: "Macros" },
   { id: "actividad", label: "Entreno" },
   { id: "gastos", label: "Gastos" },
+  { id: "entrenador", label: "Entrenador" },
 ];
 
 export function TabBar({
