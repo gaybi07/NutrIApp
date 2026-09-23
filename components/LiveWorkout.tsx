@@ -29,7 +29,11 @@ function newId() {
 }
 
 const INTENSITIES: TrainingIntensity[] = ["leve", "moderado", "exigente", "fallo"];
-const STORAGE_KEY = "registro:liveWorkout:v1";
+// Exportados para GlobalWorkoutTimer (app/page.tsx) -- lee el mismo
+// localStorage desde afuera de este componente, para mostrar un contador
+// fijo aunque LiveWorkout esté desmontado (se sale de la pestaña Actividad).
+export const LIVE_WORKOUT_STORAGE_KEY = "registro:liveWorkout:v1";
+const STORAGE_KEY = LIVE_WORKOUT_STORAGE_KEY;
 const PENDING_SYNC_KEY = "registro:liveWorkout:pendingSync:v1";
 
 type PendingSync = { sessionId: string; ejercicios: ExerciseEntry[]; minutos: number };
@@ -72,7 +76,7 @@ interface DraftExercise {
   comentario?: string;
 }
 
-interface LiveSession {
+export interface LiveSession {
   fecha: string;
   startedAt: number;
   routineId?: string;
@@ -108,7 +112,7 @@ function defaultSet(repeticiones: number, peso?: number): DraftSet {
   return { repeticiones, peso, intensidad: undefined };
 }
 
-function formatElapsed(ms: number): string {
+export function formatElapsed(ms: number): string {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
   const h = Math.floor(totalSeconds / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
