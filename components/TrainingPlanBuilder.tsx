@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Weekday, WEEKDAY_LABELS_SHORT } from "@/lib/types";
 import { isoMonday, fmtDate, addDays } from "@/lib/calculations";
 import { useTrainerRoutines } from "@/lib/useTrainerLink";
-import { useTrainingPlan, useStudentAssignedSessions } from "@/lib/useTrainingPlans";
+import { useTrainingPlan, useStudentAssignedSessions, useStudentExecutions } from "@/lib/useTrainingPlans";
 
 const WEEKDAYS_LMV: Weekday[] = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
 
@@ -42,6 +42,9 @@ export function TrainingPlanBuilder({ studentId }: { studentId: string }) {
     sessions.forEach((s) => map.set(s.fechaPlanificada, s));
     return map;
   }, [sessions]);
+  const completedSessionIds = useMemo(() => sessions.filter((s) => s.status === "completada").map((s) => s.id), [sessions]);
+  const { executionsBySession } = useStudentExecutions(true, completedSessionIds);
+  const [expandedFecha, setExpandedFecha] = useState<string | null>(null);
 
   const weekLabel = `${weekStart} al ${fmtDate(addDays(new Date(`${weekStart}T00:00:00`), 6))}`;
 
@@ -84,32 +87,70 @@ export function TrainingPlanBuilder({ studentId }: { studentId: string }) {
             const fecha = fmtDate(addDays(new Date(`${weekStart}T00:00:00`), i));
             const session = sessionByFecha.get(fecha);
             const badge = session ? STATUS_BADGE[session.status] : null;
+            const execution = session ? executionsBySession[session.id] : undefined;
+            const canExpand = session?.status === "completada" && execution;
+            const expanded = expandedFecha === fecha;
             return (
-              <div
-                key={weekday}
-                className={`flex items-center gap-2 rounded-lg border px-2 py-2 ${
-                  days[weekday] ? "border-gold/40 bg-gold/5" : "border-border bg-bg/40"
-                }`}
-              >
-                <div className="w-9 shrink-0 font-mono text-[10px] uppercase tracking-wide text-textMuted">
-                  {WEEKDAY_LABELS_SHORT[weekday]}
-                </div>
-                <select
-                  value={days[weekday] ?? ""}
-                  onChange={(e) => setDay(weekday, e.target.value || null)}
-                  className="min-w-0 flex-1 rounded-md border border-border bg-surface px-1.5 py-1 text-[12px]"
+              <div key={weekday}>
+                <div
+                  className={`flex items-center gap-2 rounded-lg border px-2 py-2 ${
+                    days[weekday] ? "border-gold/40 bg-gold/5" : "border-border bg-bg/40"
+                  }`}
                 >
-                  <option value="">— Descanso —</option>
-                  {publishedRoutines.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.nombre}
-                    </option>
-                  ))}
-                </select>
-                {badge && (
-                  <span className={`shrink-0 rounded-full border px-2 py-0.5 font-mono text-[8.5px] uppercase tracking-wide ${badge.cls}`}>
-                    {badge.label}
-                  </span>
+                  <div className="w-9 shrink-0 font-mono text-[10px] uppercase tracking-wide text-textMuted">
+                    {WEEKDAY_LABELS_SHORT[weekday]}
+                  </div>
+                  <select
+                    value={days[weekday] ?? ""}
+                    onChange={(e) => setDay(weekday, e.target.value || null)}
+                    className="min-w-0 flex-1 rounded-md border border-border bg-surface px-1.5 py-1 text-[12px]"
+                  >
+                    <option value="">— Descanso —</option>
+                    {publishedRoutines.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.nombre}
+                      </option>
+                    ))}
+                  </select>
+                  {badge && (
+                    <button
+                      type="button"
+                      disabled={!canExpand}
+                      onClick={() => setExpandedFecha(expanded ? null : fecha)}
+                      className={`shrink-0 rounded-full border px-2 py-0.5 font-mono text-[8.5px] uppercase tracking-wide ${badge.cls} ${canExpand ? "cursor-pointer" : ""}`}
+                    >
+                      {badge.label}
+                      {canExpand ? (expanded ? " ▾" : " ▸") : ""}
+                    </button>
+                  )}
+                </div>
+                {expanded && execution && session && (
+                  <div className="mt-1 ml-9 rounded-lg border border-dashed border-gold/40 bg-gold/5 p-2 text-[11px]">
+                    <div className="mb-1 font-mono text-[8.5px] uppercase tracking-wide text-textMuted">
+                      Planificado vs. hecho de verdad{execution.duracionMinutos ? ` · ${execution.duracionMinutos} min` : ""}
+                    </div>
+                    {session.routineSnapshot.map((planned, idx) => {
+                      const real = execution.ejercicios[idx];
+                      return (
+                        <div key={idx} className="mb-1 flex items-center justify-between gap-2">
+                          <span className="min-w-0 truncate text-text">{planned.nombre}</span>
+                          <span className="shrink-0 text-textMuted">
+                            {planned.series}x{planned.repeticiones}{planned.peso ? `@${planned.peso}kg` : ""}
+                            {real ? (
+                              <>
+                                {" → "}
+                                <span className="text-sage">
+                                  {real.series}x{real.repeticiones}{real.peso ? `@${real.peso}kg` : ""}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-rust"> → no lo hizo</span>
+                            )}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             );

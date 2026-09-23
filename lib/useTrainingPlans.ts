@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/browser";
-import { AssignedSession, ExerciseEntry, TrainingPlan, Weekday } from "./types";
+import { AssignedSession, ExerciseEntry, TrainingPlan, Weekday, WorkoutExecution } from "./types";
 import { fmtDate, addDays } from "./calculations";
 
 function planFromRow(row: Record<string, unknown>): TrainingPlan {
@@ -140,6 +140,56 @@ export function useTrainingPlan(authenticated: boolean, studentId: string | null
   }, [saveDraft, refetch]);
 
   return { plan, days, loaded, busy, status, setDay, saveDraft, publish };
+}
+
+function executionFromRow(row: Record<string, unknown>): WorkoutExecution {
+  return {
+    id: row.id as string,
+    sessionId: row.session_id as string,
+    studentId: row.student_id as string,
+    trainerId: row.trainer_id as string,
+    ejercicios: (row.ejercicios as ExerciseEntry[]) || [],
+    duracionMinutos: (row.duracion_minutos as number) ?? null,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+/** Lado ENTRENADOR, solo lectura: lo que el alumno hizo DE VERDAD (peso/reps
+ * reales) en cada sesión completada -- para mostrar al lado del
+ * routineSnapshot planificado. Solo trae algo si sessionIds no está vacío
+ * (evita un "in ()" inválido). */
+export function useStudentExecutions(authenticated: boolean, sessionIds: string[]) {
+  const [executionsBySession, setExecutionsBySession] = useState<Record<string, WorkoutExecution>>({});
+  const [loaded, setLoaded] = useState(false);
+  const key = sessionIds.join(",");
+
+  const refetch = useCallback(async () => {
+    if (!supabase || sessionIds.length === 0) {
+      setExecutionsBySession({});
+      setLoaded(true);
+      return;
+    }
+    const { data } = await supabase.from("workout_executions").select("*").in("session_id", sessionIds);
+    const map: Record<string, WorkoutExecution> = {};
+    (data || []).forEach((row) => {
+      const exec = executionFromRow(row);
+      map[exec.sessionId] = exec;
+    });
+    setExecutionsBySession(map);
+    setLoaded(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+
+  useEffect(() => {
+    if (authenticated) refetch();
+    else {
+      setExecutionsBySession({});
+      setLoaded(true);
+    }
+  }, [authenticated, refetch]);
+
+  return { executionsBySession, loaded };
 }
 
 /** Lado ENTRENADOR, solo lectura: el estado real (planificada/en_curso/
