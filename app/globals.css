@@ -415,3 +415,9 @@ html[data-font-size="grande"] .text-\[15px\] { font-size: 19px; }
 [data-theme="neon"] .chart-neon-b { fill: #ffe000 !important; stroke: #ffe000 !important; background-color: #ffe000 !important; }
 [data-theme="neon"] .chart-neon-c { fill: #c77dff !important; stroke: #c77dff !important; background-color: #c77dff !important; }
 [data-theme="neon"] .chart-neon-d { fill: #ff6b35 !important; stroke: #ff6b35 !important; background-color: #ff6b35 !important; }
+
+/* Carrusel de solapas (TabBar) -- sin barra de scroll visible en
+   Chrome/Safari (scrollbarWidth:none, seteado inline, ya cubre Firefox). */
+.tabbar-scroll::-webkit-scrollbar {
+  display: none;
+}
