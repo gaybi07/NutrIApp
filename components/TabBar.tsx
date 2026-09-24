@@ -11,6 +11,7 @@ const TABS: { id: MainTab; label: string }[] = [
   { id: "actividad", label: "Entreno" },
   { id: "gastos", label: "Gastos" },
   { id: "entrenador", label: "Entrenador" },
+  { id: "nutricionista", label: "Nutricion" },
 ];
 
 export function TabBar({
