@@ -346,7 +346,15 @@ export function NutricionistaPanel({ authenticated, userEmail }: { authenticated
               key={app.id}
               app={app}
               busy={admin.busyId === app.id}
-              onReview={(decision, note) => admin.review(app.id, decision, note)}
+              onReview={async (decision, note) => {
+                await admin.review(app.id, decision, note);
+                // Si te acabás de aprobar/rechazar a vos mismo (caso de
+                // prueba: sos el único admin probando el flujo), `own`
+                // sigue con el estado viejo hasta que se le pide de nuevo --
+                // sin esto, el panel se queda mostrando "pendiente" aunque
+                // ya te hayas aprobado.
+                if (app.userId === own.application?.userId) await own.refetch();
+              }}
               onView={() => viewAdminCertificate(app.certificatePath)}
             />
           ))}

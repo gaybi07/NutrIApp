@@ -701,7 +701,10 @@ export function TrainerPanel({
                   key={app.id}
                   app={app}
                   busy={admin.busyId === app.id}
-                  onReview={(decision, note) => admin.review(app.id, decision, note)}
+                  onReview={async (decision, note) => {
+                    await admin.review(app.id, decision, note);
+                    if (app.userId === own.application?.userId) await own.refetch();
+                  }}
                   onView={() => viewAdminCertificate(app.certificatePath)}
                 />
               ))}
@@ -775,7 +778,10 @@ export function TrainerPanel({
                     key={app.id}
                     app={app}
                     busy={admin.busyId === app.id}
-                    onReview={(decision, note) => admin.review(app.id, decision, note)}
+                    onReview={async (decision, note) => {
+                      await admin.review(app.id, decision, note);
+                      if (app.userId === own.application?.userId) await own.refetch();
+                    }}
                     onView={() => viewAdminCertificate(app.certificatePath)}
                   />
                 ))}
