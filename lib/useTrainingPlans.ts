@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/browser";
-import { AssignedSession, ExerciseEntry, TrainingPlan, Weekday, WorkoutExecution } from "./types";
+import { AssignedSession, Disciplina, ExerciseEntry, TrainingPlan, Weekday, WorkoutExecution } from "./types";
 import { fmtDate, addDays } from "./calculations";
 
 function planFromRow(row: Record<string, unknown>): TrainingPlan {
@@ -16,6 +16,7 @@ function planFromRow(row: Record<string, unknown>): TrainingPlan {
     publishedAt: (row.published_at as string) ?? null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
+    disciplina: (row.disciplina as Disciplina) ?? "fuerza",
   };
 }
 
@@ -36,6 +37,7 @@ function sessionFromRow(row: Record<string, unknown>): AssignedSession {
     completedAt: (row.completed_at as string) ?? null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
+    disciplina: (row.disciplina as Disciplina) ?? "fuerza",
   };
 }
 
@@ -45,7 +47,7 @@ function sessionFromRow(row: Record<string, unknown>): AssignedSession {
  * saveDraft()/publish() -- evita un round-trip a la base por cada click en
  * el desplegable de un día.
  */
-export function useTrainingPlan(authenticated: boolean, studentId: string | null, weekStart: string) {
+export function useTrainingPlan(authenticated: boolean, studentId: string | null, weekStart: string, disciplina: Disciplina = "fuerza") {
   const [plan, setPlan] = useState<TrainingPlan | null>(null);
   const [days, setDays] = useState<Partial<Record<Weekday, string>>>({});
   const [loaded, setLoaded] = useState(false);
@@ -64,12 +66,13 @@ export function useTrainingPlan(authenticated: boolean, studentId: string | null
       .select("*")
       .eq("student_id", studentId)
       .eq("week_start", weekStart)
+      .eq("disciplina", disciplina)
       .maybeSingle();
     const found = data ? planFromRow(data) : null;
     setPlan(found);
     setDays(found?.days || {});
     setLoaded(true);
-  }, [studentId, weekStart]);
+  }, [studentId, weekStart, disciplina]);
 
   useEffect(() => {
     if (authenticated && studentId) refetch();
@@ -106,8 +109,8 @@ export function useTrainingPlan(authenticated: boolean, studentId: string | null
     const { data, error } = await supabase
       .from("training_plans")
       .upsert(
-        { trainer_id: user.id, student_id: studentId, week_start: weekStart, days },
-        { onConflict: "trainer_id,student_id,week_start" }
+        { trainer_id: user.id, student_id: studentId, week_start: weekStart, days, disciplina },
+        { onConflict: "trainer_id,student_id,week_start,disciplina" }
       )
       .select("id")
       .single();
@@ -119,7 +122,7 @@ export function useTrainingPlan(authenticated: boolean, studentId: string | null
     setStatus("Borrador guardado ✓");
     await refetch();
     return (data?.id as string) ?? null;
-  }, [studentId, weekStart, days, refetch]);
+  }, [studentId, weekStart, days, disciplina, refetch]);
 
   const publish = useCallback(async () => {
     setBusy(true);
@@ -195,7 +198,7 @@ export function useStudentExecutions(authenticated: boolean, sessionIds: string[
 /** Lado ENTRENADOR, solo lectura: el estado real (planificada/en_curso/
  * completada/vencida) de cada día ya publicado de un alumno, para pintar el
  * badge de cada fila del planificador. */
-export function useStudentAssignedSessions(authenticated: boolean, studentId: string | null, weekStart: string) {
+export function useStudentAssignedSessions(authenticated: boolean, studentId: string | null, weekStart: string, disciplina: Disciplina = "fuerza") {
   const [sessions, setSessions] = useState<AssignedSession[]>([]);
   const [loaded, setLoaded] = useState(false);
 
@@ -210,12 +213,13 @@ export function useStudentAssignedSessions(authenticated: boolean, studentId: st
       .from("assigned_sessions")
       .select("*")
       .eq("student_id", studentId)
+      .eq("disciplina", disciplina)
       .gte("fecha_planificada", weekStart)
       .lte("fecha_planificada", weekEnd)
       .order("fecha_planificada", { ascending: true });
     setSessions((data || []).map(sessionFromRow));
     setLoaded(true);
-  }, [studentId, weekStart]);
+  }, [studentId, weekStart, disciplina]);
 
   useEffect(() => {
     if (authenticated && studentId) refetch();

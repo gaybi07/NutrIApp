@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/browser";
-import { ExerciseEntry, RoutineStatus, TrainerLink, TrainerLinkRequest, TrainerRoutine, TrainerStudent } from "./types";
+import { Disciplina, ExerciseEntry, RoutineStatus, TrainerLink, TrainerLinkRequest, TrainerRoutine, TrainerStudent } from "./types";
 
 function routineFromRow(row: Record<string, unknown>): TrainerRoutine {
   return {
@@ -30,6 +30,7 @@ function requestFromRow(row: Record<string, unknown>): TrainerLinkRequest {
     respondedAt: (row.responded_at as string) ?? null,
     responseNote: (row.response_note as string) ?? null,
     createdAt: row.created_at as string,
+    disciplina: (row.disciplina as Disciplina) ?? "fuerza",
   };
 }
 
@@ -40,7 +41,7 @@ function requestFromRow(row: Record<string, unknown>): TrainerLinkRequest {
  * migration_2026-09-21b) que queda "pendiente" hasta que el entrenador la
  * acepta o la rechaza. `leave` desvincula un vínculo ya aceptado.
  */
-export function useTrainerLink(authenticated: boolean) {
+export function useTrainerLink(authenticated: boolean, disciplina: Disciplina = "fuerza") {
   const [link, setLink] = useState<TrainerLink | null>(null);
   const [myRequest, setMyRequest] = useState<TrainerLinkRequest | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -66,12 +67,14 @@ export function useTrainerLink(authenticated: boolean) {
         .from("trainer_links")
         .select("trainer_id, trainer_email, created_at, status, ended_at")
         .eq("student_id", user.id)
+        .eq("disciplina", disciplina)
         .eq("status", "activo")
         .maybeSingle(),
       supabase
         .from("trainer_link_requests")
         .select("*")
         .eq("student_id", user.id)
+        .eq("disciplina", disciplina)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
@@ -84,6 +87,7 @@ export function useTrainerLink(authenticated: boolean) {
             createdAt: linkRow.created_at,
             status: linkRow.status,
             endedAt: linkRow.ended_at,
+            disciplina,
           }
         : null
     );
@@ -92,7 +96,7 @@ export function useTrainerLink(authenticated: boolean) {
     // si ya está vinculado, mostrar la última solicitud resuelta no aporta nada.
     setMyRequest(requestRow && (requestRow.status === "pendiente" || !linkRow) ? requestFromRow(requestRow) : null);
     setLoaded(true);
-  }, []);
+  }, [disciplina]);
 
   useEffect(() => {
     if (authenticated) refetch();
@@ -127,11 +131,11 @@ export function useTrainerLink(authenticated: boolean) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (user) await supabase.from("trainer_links").delete().eq("student_id", user.id);
+    if (user) await supabase.from("trainer_links").delete().eq("student_id", user.id).eq("disciplina", disciplina);
     setLink(null);
-    setStatus("Te desvinculaste de tu entrenador.");
+    setStatus(disciplina === "nutricion" ? "Te desvinculaste de tu nutricionista." : "Te desvinculaste de tu entrenador.");
     setBusy(false);
-  }, [link]);
+  }, [link, disciplina]);
 
   return { link, myRequest, loaded, busy, status, join, leave };
 }
@@ -144,7 +148,7 @@ export function useTrainerLink(authenticated: boolean) {
  * `respond_trainer_link_request` (RPC, migration_2026-09-21b), que crea el
  * vínculo y resuelve la solicitud en una sola transacción.
  */
-export function useTrainerStudents(authenticated: boolean, enabled: boolean) {
+export function useTrainerStudents(authenticated: boolean, enabled: boolean, disciplina: Disciplina = "fuerza") {
   const [students, setStudents] = useState<TrainerStudent[]>([]);
   const [pendingRequests, setPendingRequests] = useState<TrainerLinkRequest[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -162,18 +166,20 @@ export function useTrainerStudents(authenticated: boolean, enabled: boolean) {
       supabase
         .from("trainer_links")
         .select("student_id, student_email, created_at")
+        .eq("disciplina", disciplina)
         .eq("status", "activo")
         .order("created_at", { ascending: false }),
       supabase
         .from("trainer_link_requests")
         .select("*")
+        .eq("disciplina", disciplina)
         .eq("status", "pendiente")
         .order("created_at", { ascending: false }),
     ]);
     setStudents((studentRows || []).map((r) => ({ studentId: r.student_id, studentEmail: r.student_email, createdAt: r.created_at })));
     setPendingRequests((requestRows || []).map(requestFromRow));
     setLoaded(true);
-  }, [enabled]);
+  }, [enabled, disciplina]);
 
   useEffect(() => {
     if (authenticated && enabled) refetch();
@@ -197,6 +203,7 @@ export function useTrainerStudents(authenticated: boolean, enabled: boolean) {
       .from("trainer_invites")
       .select("code")
       .eq("trainer_id", user.id)
+      .eq("disciplina", disciplina)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -205,7 +212,7 @@ export function useTrainerStudents(authenticated: boolean, enabled: boolean) {
       setBusy(false);
       return;
     }
-    const { data, error } = await supabase.rpc("generate_trainer_invite_code");
+    const { data, error } = await supabase.rpc("generate_trainer_invite_code", { p_disciplina: disciplina });
     if (error) {
       setStatus(error.message);
       setBusy(false);
@@ -213,17 +220,17 @@ export function useTrainerStudents(authenticated: boolean, enabled: boolean) {
     }
     setInviteCode((data as string) || null);
     setBusy(false);
-  }, []);
+  }, [disciplina]);
 
   const removeStudent = useCallback(
     async (studentId: string) => {
       if (!supabase) return;
       setBusy(true);
-      await supabase.from("trainer_links").delete().eq("student_id", studentId);
+      await supabase.from("trainer_links").delete().eq("student_id", studentId).eq("disciplina", disciplina);
       await refetch();
       setBusy(false);
     },
-    [refetch]
+    [refetch, disciplina]
   );
 
   const respond = useCallback(

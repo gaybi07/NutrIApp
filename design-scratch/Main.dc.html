@@ -1,0 +1,418 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&display=swap");
+
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    a { color: #8a5a2b; }
+    a:hover { color: #6b431e; }
+
+    .eyebrow {
+      font-family: "Cinzel", Georgia, "Times New Roman", serif;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #9c6b1f;
+      font-weight: 600;
+    }
+    .title-serif {
+      font-family: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+      color: #2b2118;
+    }
+    .title-caps {
+      font-family: "Cinzel", Georgia, serif;
+      color: #2b2118;
+    }
+    .card {
+      background: #fbf6ea;
+      background-image:
+        repeating-linear-gradient(115deg, rgba(154,120,68,0.05) 0px, rgba(154,120,68,0.05) 1px, transparent 1px, transparent 46px),
+        repeating-linear-gradient(25deg, rgba(120,90,50,0.04) 0px, rgba(120,90,50,0.04) 1px, transparent 1px, transparent 63px);
+      border: 1px solid rgba(140,100,50,0.28);
+      border-radius: 16px;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 6px 14px rgba(80,55,20,0.10);
+    }
+    .divider {
+      display: flex; align-items: center; gap: 10px; margin: 4px 0 14px 0;
+    }
+    .divider::before, .divider::after {
+      content: ""; flex: 1 1 auto; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(156,107,31,0.45), transparent);
+    }
+  </style>
+</helmet>
+
+<div style="width: 390px; min-height: 2900px; background: linear-gradient(180deg, #f3ead4 0%, #ede1c6 55%, #e8dabc 100%); padding: 22px 18px 60px 18px; font-family: 'Cormorant Garamond', Georgia, serif;">
+
+  <!-- Friso: Partenon, cipreses y constelacion -->
+  <svg width="354" height="154" viewBox="0 0 390 170" style="display: block; margin: 0 auto 6px auto; overflow: visible;">
+    <!-- constelacion -->
+    <g stroke="#9c6b1f" stroke-width="0.8" opacity="0.55" fill="none">
+      <polyline points="110,45 130,20 160,12 190,18 215,40"/>
+    </g>
+    <g fill="#9c6b1f" opacity="0.75">
+      <circle cx="110" cy="45" r="1.6"/><circle cx="130" cy="20" r="1.6"/><circle cx="160" cy="12" r="1.8"/>
+      <circle cx="190" cy="18" r="1.6"/><circle cx="215" cy="40" r="1.6"/>
+      <circle cx="70" cy="50" r="1.3" opacity="0.6"/><circle cx="330" cy="55" r="1.3" opacity="0.6"/>
+      <circle cx="255" cy="22" r="1.2" opacity="0.5"/>
+    </g>
+    <!-- luna -->
+    <path d="M45,18 A13,13 0 1 0 45,44 A9.5,9.5 0 1 1 45,18 Z" fill="{{accent}}" opacity="0.8"/>
+    <!-- sol -->
+    <g stroke="#c9962f" stroke-width="1.4" opacity="0.85">
+      <line x1="350" y1="14" x2="350" y2="8"/><line x1="350" y1="36" x2="350" y2="42"/>
+      <line x1="339" y1="25" x2="333" y2="25"/><line x1="361" y1="25" x2="367" y2="25"/>
+      <line x1="342" y1="17" x2="337" y2="12"/><line x1="358" y1="33" x2="363" y2="38"/>
+      <line x1="358" y1="17" x2="363" y2="12"/><line x1="342" y1="33" x2="337" y2="38"/>
+    </g>
+    <circle cx="350" cy="25" r="8" fill="#c9962f"/>
+    <!-- cipreses -->
+    <g fill="#3f6b45">
+      <path d="M20,150 C13,132 13,105 20,92 C27,105 27,132 20,150 Z"/>
+      <path d="M370,150 C363,130 363,100 370,86 C377,100 377,130 370,150 Z"/>
+    </g>
+    <rect x="18.5" y="149" width="3" height="6" fill="#5a4a30"/>
+    <rect x="368.5" y="149" width="3" height="6" fill="#5a4a30"/>
+    <!-- partenon -->
+    <rect x="20" y="150" width="350" height="2" fill="#8a5a2b" opacity="0.3"/>
+    <rect x="45" y="142" width="300" height="8" fill="#a8763a"/>
+    <rect x="55" y="100" width="280" height="6" fill="#a8763a"/>
+    <polygon points="195,72 335,100 55,100" fill="#a8763a" opacity="0.9"/>
+    <polygon points="195,84 315,100 75,100" fill="#f3ead4" opacity="0.5"/>
+    <g fill="#a8763a">
+      <rect x="63" y="104" width="9" height="4"/><rect x="65" y="106" width="5" height="36"/>
+      <rect x="103" y="104" width="9" height="4"/><rect x="105" y="106" width="5" height="36"/>
+      <rect x="143" y="104" width="9" height="4"/><rect x="145" y="106" width="5" height="36"/>
+      <rect x="183" y="104" width="9" height="4"/><rect x="185" y="106" width="5" height="36"/>
+      <rect x="223" y="104" width="9" height="4"/><rect x="225" y="106" width="5" height="36"/>
+      <rect x="263" y="104" width="9" height="4"/><rect x="265" y="106" width="5" height="36"/>
+      <rect x="303" y="104" width="9" height="4"/><rect x="305" y="106" width="5" height="36"/>
+    </g>
+  </svg>
+
+  <!-- Wordmark -->
+  <div style="text-align: center; padding: 0 0 16px 0; display: flex; align-items: center; justify-content: center; gap: 10px;">
+    <svg width="14" height="22" viewBox="0 0 16 24"><rect x="2" y="2" width="12" height="3" fill="#8a5a2b"/><rect x="5" y="5" width="6" height="15" fill="#8a5a2b"/><rect x="2" y="20" width="12" height="3" fill="#8a5a2b"/></svg>
+    <div>
+      <div style="font-family: 'Cinzel', serif; font-weight: 700; font-size: 27px; letter-spacing: 0.28em; color: {{accent}};">ARETÉ</div>
+      <div style="margin-top: 4px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: #7a6a4e;">disciplina digna de los dioses</div>
+    </div>
+    <svg width="14" height="22" viewBox="0 0 16 24"><rect x="2" y="2" width="12" height="3" fill="#8a5a2b"/><rect x="5" y="5" width="6" height="15" fill="#8a5a2b"/><rect x="2" y="20" width="12" height="3" fill="#8a5a2b"/></svg>
+  </div>
+
+  <!-- Nav pills -->
+  <div style="display: flex; gap: 6px; padding: 6px; border-radius: 999px; border: 1px solid rgba(140,100,50,0.3); background: rgba(255,255,255,0.35); margin-bottom: 14px;">
+    <div style="flex: 1; text-align: center; padding: 7px 0; border-radius: 999px; background: {{accent}}; color: #2b2118; font-family: 'Cinzel', serif; font-size: 9.5px; letter-spacing: 0.1em; font-weight: 600;">ÁGORA</div>
+    <div style="flex: 1; text-align: center; padding: 7px 0; font-family: 'Cinzel', serif; font-size: 9.5px; letter-spacing: 0.1em; color: #8a7452;">BANQUETE</div>
+    <div style="flex: 1; text-align: center; padding: 7px 0; font-family: 'Cinzel', serif; font-size: 9.5px; letter-spacing: 0.1em; color: #8a7452;">ELEMENTA</div>
+    <div style="flex: 1; text-align: center; padding: 7px 0; font-family: 'Cinzel', serif; font-size: 9.5px; letter-spacing: 0.1em; color: #8a7452;">PALESTRA</div>
+  </div>
+
+  <!-- Week bar -->
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px; border-radius: 12px; border: 1px solid rgba(140,100,50,0.3); background: rgba(255,255,255,0.4); margin-bottom: 16px;">
+    <div style="width: 30px; height: 30px; border-radius: 999px; border: 1px solid rgba(140,100,50,0.4); display: flex; align-items: center; justify-content: center; color: #8a5a2b; font-size: 14px;">‹</div>
+    <div style="text-align: center;">
+      <div class="eyebrow" style="font-size: 9px;">Hebdómada</div>
+      <div class="title-serif" style="font-weight: 600; font-size: 15px; line-height: 1.1;">14 – 20 de septiembre</div>
+    </div>
+    <div style="width: 30px; height: 30px; border-radius: 999px; border: 1px solid rgba(140,100,50,0.4); display: flex; align-items: center; justify-content: center; color: #8a5a2b; font-size: 14px;">›</div>
+  </div>
+
+  <!-- HOY -->
+  <div class="card" style="padding: 16px; margin-bottom: 16px;">
+    <div style="display: flex; align-items: center; gap: 6px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b5432f" stroke-width="2"><circle cx="12" cy="14" r="6"/><path d="M16.2 9.8 20 6M20 6h-4M20 6v4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="eyebrow">Día de Marte</div>
+    </div>
+    <div class="title-serif" style="font-size: 26px; font-weight: 600; margin: 2px 0 12px 0;">15 de septiembre</div>
+
+    <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px;">
+      <span style="font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 34px; color: {{accent}}; line-height: 1;">1.850</span>
+      <span class="eyebrow" style="font-size: 9px; color: #8a7452;">de 2.200 · néctar consumido</span>
+    </div>
+    <div style="height: 9px; border-radius: 999px; background: rgba(140,100,50,0.15); border: 1px solid rgba(140,100,50,0.25); overflow: hidden; margin-bottom: 14px;">
+      <div style="width: 84%; height: 100%; background: linear-gradient(90deg, #c9962f, {{accent}});"></div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-bottom: 14px; text-align: center;">
+      <div>
+        <div class="eyebrow" style="font-size: 8.5px;">Reserva</div>
+        <div class="title-serif" style="font-weight: 600; font-size: 17px;">350</div>
+      </div>
+      <div>
+        <div class="eyebrow" style="font-size: 8.5px;">Fuerza</div>
+        <div class="title-serif" style="font-weight: 600; font-size: 17px;">92 g</div>
+      </div>
+      <div>
+        <div class="eyebrow" style="font-size: 8.5px;">Senda</div>
+        <div class="title-serif" style="font-weight: 600; font-size: 17px;">6.240</div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 0; border-radius: 999px; background: {{accent}};">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2b2118" stroke-width="1.6"><path d="M12 3c3 2 4 5 3 9-1 4-4 6-3 9" stroke-linecap="round"/><path d="M12 3c-3 2-4 5-3 9 1 4 4 6 3 9" stroke-linecap="round"/></svg>
+        <span style="font-family: 'Cinzel', serif; font-size: 9.5px; letter-spacing: 0.08em; color: #2b2118; font-weight: 600;">OFRECER</span>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 0; border-radius: 999px; border: 1px solid rgba(140,100,50,0.5);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a5a2b" stroke-width="1.6"><circle cx="12" cy="12" r="7"/><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+        <span style="font-family: 'Cinzel', serif; font-size: 9.5px; letter-spacing: 0.08em; color: #8a5a2b; font-weight: 600;">PALESTRA</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- BANQUETE DE HOY -->
+  <div class="card" style="padding: 16px; margin-bottom: 16px;">
+    <div class="eyebrow">Banquete de hoy</div>
+    <div class="title-serif" style="font-size: 19px; font-weight: 600; margin: 2px 0 12px 0;">Lo que ofreciste</div>
+    <sc-for list="{{mealItems}}" as="meal" hint-placeholder-count="3">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(140,100,50,0.15);">
+        <div>
+          <div class="title-serif" style="font-size: 14.5px; font-weight: 600;">{{meal.name}}</div>
+          <div style="font-size: 11px; color: #8a7452;">{{meal.detail}}</div>
+        </div>
+        <div class="title-serif" style="font-size: 14px; font-weight: 600; color: #9c6b1f; white-space: nowrap;">{{meal.kcal}}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- ORACULO -->
+  <div class="card" style="padding: 16px; margin-bottom: 16px;">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <div class="eyebrow">Consulta semanal</div>
+      <div style="font-family: 'Cinzel', serif; font-size: 8.5px; letter-spacing: 0.1em; color: #b5432f;">SIN PROFETIZAR</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; margin: 6px 0 12px 0;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#9c6b1f" stroke-width="1.5"><path d="M12 3v3M5 8l14 0M5 8 3 13h5l-2.5-5M19 8l2 5h-5l2.5-5M8 13v2a4 4 0 0 0 8 0v-2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="title-serif" style="font-size: 19px; font-weight: 600;">El oráculo del peso</div>
+    </div>
+    <div style="font-size: 13px; line-height: 1.4; color: #6b5a3e; padding: 10px 12px; border-radius: 10px; background: rgba(156,107,31,0.08); border: 1px dashed rgba(156,107,31,0.35); margin-bottom: 12px;">
+      Aún no te presentaste ante el oráculo esta semana. Ofrecé tu peso para conocer el rumbo de tu destino.
+    </div>
+    <div style="text-align: center; padding: 10px 0; border-radius: 999px; background: {{accent}}; font-family: 'Cinzel', serif; font-size: 9.5px; letter-spacing: 0.08em; color: #2b2118; font-weight: 600;">CONSULTAR EL ORÁCULO</div>
+  </div>
+
+  <!-- SEÑALES DEL OLIMPO -->
+  <div class="card" style="padding: 16px; margin-bottom: 16px;">
+    <div class="eyebrow">Semana</div>
+    <div class="title-serif" style="font-size: 19px; font-weight: 600; margin: 2px 0 12px 0;">Señales del Olimpo</div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px;">
+      <sc-for list="{{indicatorTiles}}" as="tile" hint-placeholder-count="8">
+        <div style="padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(140,100,50,0.2);">
+          <div class="eyebrow" style="font-size: 8px; line-height: 1.3;">{{tile.label}}</div>
+          <div class="title-serif" style="font-size: 19px; font-weight: 600; margin: 3px 0;">{{tile.value}}</div>
+          <div style="font-size: 9.5px; color: #8a7452;">{{tile.sub}}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- CRONICA SOLAR -->
+  <div class="card" style="padding: 16px; margin-bottom: 16px;">
+    <div class="eyebrow">Semana</div>
+    <div class="title-serif" style="font-size: 19px; font-weight: 600; margin: 2px 0 12px 0;">Crónica de Helios</div>
+    <svg width="326" height="150" viewBox="0 0 300 150" style="display: block; margin: 0 auto;">
+      <line x1="0" y1="30" x2="300" y2="30" stroke="#9c6b1f" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
+      <polygon points="0,45 50,37.5 100,51 150,24 200,7.5 250,36 300,60 300,140 0,140" fill="#b5432f" opacity="0.14"/>
+      <polyline points="0,45 50,37.5 100,51 150,24 200,7.5 250,36 300,60" fill="none" stroke="#b5432f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <sc-for list="{{chartDots}}" as="d" hint-placeholder-count="7">
+        <circle cx="{{d.x}}" cy="{{d.y}}" r="3.5" fill="#fbf6ea" stroke="#b5432f" stroke-width="2"/>
+      </sc-for>
+    </svg>
+    <div style="display: flex; justify-content: space-between; margin-top: 8px; padding: 0 2px;">
+      <sc-for list="{{dayGods}}" as="g" hint-placeholder-count="7">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 3px;">
+          <div style="width: 16px; height: 16px; border-radius: 999px; background: {{g.color}}; color: #fff; font-size: 8.5px; font-family: 'Cinzel', serif; display: flex; align-items: center; justify-content: center;">{{g.letter}}</div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display: flex; gap: 14px; justify-content: center; margin-top: 10px;">
+      <div style="display: flex; align-items: center; gap: 5px; font-size: 9.5px; color: #8a7452;"><span style="width: 10px; height: 2px; background: #9c6b1f; display: inline-block;"></span>Designio</div>
+      <div style="display: flex; align-items: center; gap: 5px; font-size: 9.5px; color: #8a7452;"><span style="width: 10px; height: 2px; background: #b5432f; display: inline-block;"></span>Ofrendado</div>
+    </div>
+  </div>
+
+  <!-- BANQUETE SEMANAL -->
+  <div class="card" style="padding: 16px; margin-bottom: 16px;">
+    <div class="eyebrow">Semana</div>
+    <div class="title-serif" style="font-size: 19px; font-weight: 600; margin: 2px 0 12px 0;">El banquete semanal</div>
+    <div style="display: flex; justify-content: space-between; gap: 4px;">
+      <sc-for list="{{dayPills}}" as="p" hint-placeholder-count="7">
+        <div style="flex: 1; text-align: center; padding: 8px 0; border-radius: 10px; background: {{p.bg}}; border: 1px solid rgba(140,100,50,0.25);">
+          <div style="font-family: 'Cinzel', serif; font-size: 9px; color: {{p.textColor}};">{{p.letter}}</div>
+          <div class="title-serif" style="font-size: 13px; font-weight: 600; color: {{p.textColor}};">{{p.date}}</div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="margin-top: 12px; font-size: 12px; color: #8a7452; text-align: center;">No hay ofrendas registradas el martes.</div>
+  </div>
+
+  <!-- ANALES -->
+  <div class="card" style="padding: 16px;">
+    <div class="eyebrow">Registro pormenorizado</div>
+    <div class="title-serif" style="font-size: 19px; font-weight: 600; margin: 2px 0 12px 0;">Las tablillas de la semana</div>
+    <div style="border-radius: 10px; border: 1px solid rgba(140,100,50,0.3); overflow: hidden;">
+      <div style="display: grid; grid-template-columns: 0.8fr 1fr 1fr 1fr; background: rgba(156,107,31,0.12); padding: 7px 10px;">
+        <div style="font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.08em; color: #6b5a3e;">DÍA</div>
+        <div style="font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.08em; color: #6b5a3e;">KCAL</div>
+        <div style="font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.08em; color: #6b5a3e;">SENDA</div>
+        <div style="font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.08em; color: #6b5a3e;">RITO</div>
+      </div>
+      <sc-for list="{{tableRows}}" as="row" hint-placeholder-count="7">
+        <div style="display: grid; grid-template-columns: 0.8fr 1fr 1fr 1fr; padding: 7px 10px; border-top: 1px solid rgba(140,100,50,0.15); align-items: center;">
+          <div style="display: flex; align-items: center; gap: 5px;">
+            <div style="width: 14px; height: 14px; border-radius: 999px; background: {{row.color}}; color: #fff; font-size: 7px; font-family: 'Cinzel', serif; display: flex; align-items: center; justify-content: center;">{{row.letter}}</div>
+          </div>
+          <div class="title-serif" style="font-size: 13px;">{{row.kcal}}</div>
+          <div class="title-serif" style="font-size: 13px;">{{row.pasos}}</div>
+          <div style="font-size: 11px; color: #8a7452;">{{row.rito}}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- REPARTO CELESTIAL -->
+  <div class="card" style="padding: 16px; margin-top: 16px;">
+    <div class="eyebrow">Boludeces del Olimpo</div>
+    <div class="title-serif" style="font-size: 19px; font-weight: 600; margin: 2px 0 4px 0;">El reparto celestial</div>
+    <div style="font-size: 11.5px; color: #8a7452; margin-bottom: 12px;">Cada día de la semana, un dios distinto vela por vos.</div>
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 6px; text-align: center;">
+
+      <div style="width: 76px;">
+        <div style="width: 30px; height: 30px; margin: 0 auto 4px auto; border-radius: 999px; background: #8a8fa3; display: flex; align-items: center; justify-content: center;">
+          <svg width="14" height="14" viewBox="0 0 14 14"><path d="M9,2 A5,5 0 1 0 9,12 A3.6,3.6 0 1 1 9,2 Z" fill="#fff"/></svg>
+        </div>
+        <div style="font-family: 'Cinzel', serif; font-size: 8px; color: #6b5a3e;">LUNA</div>
+        <div style="font-size: 8.5px; color: #a0906e;">lunes</div>
+      </div>
+
+      <div style="width: 76px;">
+        <div style="width: 30px; height: 30px; margin: 0 auto 4px auto; border-radius: 999px; background: #b5432f; display: flex; align-items: center; justify-content: center;">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round"><line x1="3" y1="11" x2="10" y2="4"/><polyline points="7,4 10,4 10,7"/></svg>
+        </div>
+        <div style="font-family: 'Cinzel', serif; font-size: 8px; color: #6b5a3e;">MARTE</div>
+        <div style="font-size: 8.5px; color: #a0906e;">martes</div>
+      </div>
+
+      <div style="width: 76px;">
+        <div style="width: 30px; height: 30px; margin: 0 auto 4px auto; border-radius: 999px; background: #3f8f83; display: flex; align-items: center; justify-content: center;">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,9 7,3 12,9"/></svg>
+        </div>
+        <div style="font-family: 'Cinzel', serif; font-size: 8px; color: #6b5a3e;">MERCURIO</div>
+        <div style="font-size: 8.5px; color: #a0906e;">miércoles</div>
+      </div>
+
+      <div style="width: 76px;">
+        <div style="width: 30px; height: 30px; margin: 0 auto 4px auto; border-radius: 999px; background: #5b5aa6; display: flex; align-items: center; justify-content: center;">
+          <svg width="14" height="14" viewBox="0 0 14 14"><polygon points="8,2 4,8 7,8 6,12 11,5 8,5" fill="#fff"/></svg>
+        </div>
+        <div style="font-family: 'Cinzel', serif; font-size: 8px; color: #6b5a3e;">JÚPITER</div>
+        <div style="font-size: 8.5px; color: #a0906e;">jueves</div>
+      </div>
+
+      <div style="width: 76px;">
+        <div style="width: 30px; height: 30px; margin: 0 auto 4px auto; border-radius: 999px; background: #c06a8a; display: flex; align-items: center; justify-content: center;">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#fff" stroke-width="1.3"><circle cx="7" cy="5" r="3.2"/><line x1="7" y1="8.2" x2="7" y2="13"/><line x1="4.5" y1="11" x2="9.5" y2="11"/></svg>
+        </div>
+        <div style="font-family: 'Cinzel', serif; font-size: 8px; color: #6b5a3e;">VENUS</div>
+        <div style="font-size: 8.5px; color: #a0906e;">viernes</div>
+      </div>
+
+      <div style="width: 76px;">
+        <div style="width: 30px; height: 30px; margin: 0 auto 4px auto; border-radius: 999px; background: #5a5a5a; display: flex; align-items: center; justify-content: center;">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#fff" stroke-width="1.3" stroke-linejoin="round"><path d="M4,2 L10,2 L5,7 L10,12 L4,12 L9,7 Z"/></svg>
+        </div>
+        <div style="font-family: 'Cinzel', serif; font-size: 8px; color: #6b5a3e;">SATURNO</div>
+        <div style="font-size: 8.5px; color: #a0906e;">sábado</div>
+      </div>
+
+      <div style="width: 76px;">
+        <div style="width: 30px; height: 30px; margin: 0 auto 4px auto; border-radius: 999px; background: #c9962f; display: flex; align-items: center; justify-content: center;">
+          <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="3" fill="#fff"/><g stroke="#fff" stroke-width="1.2"><line x1="7" y1="0.5" x2="7" y2="2.2"/><line x1="7" y1="11.8" x2="7" y2="13.5"/><line x1="0.5" y1="7" x2="2.2" y2="7"/><line x1="11.8" y1="7" x2="13.5" y2="7"/></g></svg>
+        </div>
+        <div style="font-family: 'Cinzel', serif; font-size: 8px; color: #6b5a3e;">SOL</div>
+        <div style="font-size: 8.5px; color: #a0906e;">domingo</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- COLOFON -->
+  <div class="divider" style="margin-top: 22px;">
+    <svg width="20" height="20" viewBox="0 0 20 20" style="flex: none;">
+      <path d="M10,3 C6,6 5,10 8,13 M10,3 C14,6 15,10 12,13" fill="none" stroke="#9c6b1f" stroke-width="1.2" stroke-linecap="round"/>
+      <path d="M8,13 C9,14.5 11,14.5 12,13" fill="none" stroke="#9c6b1f" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div style="text-align: center; font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.18em; color: #9c6b1f; padding-bottom: 4px;">PER ASPERA AD ASTRA</div>
+  <div style="text-align: center; font-style: italic; font-size: 11.5px; color: #a0906e;">a través de las dificultades, hacia las estrellas</div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"accent": {"editor": "color", "default": "#b7862b", "options": ["#b7862b", "#9c6b1f", "#a8763a", "#8a5a2b"], "section": "Tema"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const accent = this.props.accent ?? "#b7862b";
+
+    return {
+      accent,
+      mealItems: [
+        { name: "Desayuno", detail: "Higos, miel y yogur", kcal: "320 kcal" },
+        { name: "Almuerzo", detail: "Pollo asado con vegetales", kcal: "610 kcal" },
+        { name: "Cena", detail: "Pescado con aceitunas", kcal: "480 kcal" },
+      ],
+      indicatorTiles: [
+        { label: "Energía de Helios", value: "1.850", sub: "prom. kcal/día" },
+        { label: "Designio divino", value: "2.200", sub: "objetivo diario" },
+        { label: "Peso sagrado", value: "78,4 kg", sub: "último registro" },
+        { label: "Fuerza de Hércules", value: "128 g", sub: "proteína prom." },
+        { label: "Tributo quemado", value: "2.410", sub: "gasto estimado" },
+        { label: "Senda de Ulises", value: "6.240", sub: "pasos prom." },
+        { label: "Gracia divina", value: "-350", sub: "déficit prom." },
+        { label: "Favor acumulado", value: "-2.450", sub: "déficit semanal" },
+      ],
+      chartDots: [
+        { x: 0, y: 45 }, { x: 50, y: 37.5 }, { x: 100, y: 51 }, { x: 150, y: 24 },
+        { x: 200, y: 7.5 }, { x: 250, y: 36 }, { x: 300, y: 60 },
+      ],
+      dayGods: [
+        { letter: "L", color: "#8a8fa3" },
+        { letter: "M", color: "#b5432f" },
+        { letter: "X", color: "#3f8f83" },
+        { letter: "J", color: "#5b5aa6" },
+        { letter: "V", color: "#c06a8a" },
+        { letter: "S", color: "#5a5a5a" },
+        { letter: "D", color: "#c9962f" },
+      ],
+      dayPills: [
+        { letter: "LUN", date: "14", bg: "rgba(255,255,255,0.5)", textColor: "#6b5a3e" },
+        { letter: "MAR", date: "15", bg: accent, textColor: "#2b2118" },
+        { letter: "MIÉ", date: "16", bg: "rgba(255,255,255,0.5)", textColor: "#6b5a3e" },
+        { letter: "JUE", date: "17", bg: "rgba(255,255,255,0.5)", textColor: "#6b5a3e" },
+        { letter: "VIE", date: "18", bg: "rgba(255,255,255,0.5)", textColor: "#6b5a3e" },
+        { letter: "SÁB", date: "19", bg: "rgba(255,255,255,0.5)", textColor: "#6b5a3e" },
+        { letter: "DOM", date: "20", bg: "rgba(255,255,255,0.5)", textColor: "#6b5a3e" },
+      ],
+      tableRows: [
+        { letter: "L", color: "#8a8fa3", kcal: "1.900", pasos: "6.100", rito: "—" },
+        { letter: "M", color: "#b5432f", kcal: "2.050", pasos: "7.200", rito: "Fuerza · 45m" },
+        { letter: "X", color: "#3f8f83", kcal: "1.780", pasos: "5.400", rito: "—" },
+        { letter: "J", color: "#5b5aa6", kcal: "2.320", pasos: "8.100", rito: "Fuerza · 60m" },
+        { letter: "V", color: "#c06a8a", kcal: "2.650", pasos: "4.200", rito: "—" },
+        { letter: "S", color: "#5a5a5a", kcal: "2.080", pasos: "9.600", rito: "Aeróbico · 40m" },
+        { letter: "D", color: "#c9962f", kcal: "1.600", pasos: "3.100", rito: "—" },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

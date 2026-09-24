@@ -35,6 +35,7 @@ const TAB_LABELS: Record<MainTab, string> = {
   // No es una solapa que se elija apagar/prender acá (ver comentario en
   // OPTIONAL_TABS) -- entrada solo para satisfacer Record<MainTab, ...>.
   entrenador: "Entrenador",
+  nutricionista: "Nutricionista",
 };
 
 /** Elegir el tema (oscuro/claro/neón) — separado del resto de Preferencias

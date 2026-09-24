@@ -26,11 +26,13 @@ import { MealMemoryImport } from "@/components/MealMemoryImport";
 import { TodayCard } from "@/components/TodayCard";
 import { PurchaseHistoryCard } from "@/components/PurchaseHistoryCard";
 import { WeekMealsCard } from "@/components/WeekMealsCard";
+import { MealsEditor } from "@/components/MealsEditor";
 import { TrainingEntryForm } from "@/components/TrainingEntryForm";
 import { StepsEntryForm } from "@/components/StepsEntryForm";
 import { SleepEntryForm } from "@/components/SleepEntryForm";
 import { ThemeSettings, FontSizeSettings, TabsSettings, ToolsSettings, SectionsSettings } from "@/components/Preferences";
 import { TrainerPanel } from "@/components/TrainerPanel";
+import { NutricionistaPanel } from "@/components/NutricionistaPanel";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
 import { AppTour } from "@/components/AppTour";
 import { TipPopup } from "@/components/TipPopup";
@@ -112,6 +114,7 @@ export default function Home() {
   const [panel, setPanel] = useState<
     | "calc" | "ai" | "pasos" | "entreno" | "sueno" | "datos" | "planificador"
     | "tema" | "tamano-letra" | "solapas" | "herramientas" | "secciones" | "entrenador"
+    | "nutricionista" | "ver-comidas"
     | null
   >(null);
   // Qué comida se tocó en Inicio (Desayuno/Almuerzo/etc.) para que el panel
@@ -121,6 +124,8 @@ export default function Home() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const trainerApplication = useTrainerApplication(authenticated, userEmail);
   const isApprovedTrainer = trainerApplication.application?.status === "aprobado";
+  const nutricionistaApplication = useTrainerApplication(authenticated, userEmail, "nutricion");
+  const isApprovedNutricionista = nutricionistaApplication.application?.status === "aprobado";
   // Lado ALUMNO (no confundir con isApprovedTrainer, que es el lado profe) --
   // Boolean(link) es exactamente "¿tengo un profe vinculado activo?". Sin
   // vínculo, useMyAssignedSessions ni siquiera consulta la base (mismo
@@ -171,6 +176,7 @@ export default function Home() {
     (tab) => tab === "inicio" || !isBasico || !PLAN_LOCKED_TABS.includes(tab)
   );
   if (isApprovedTrainer) enabledTabs.push("entrenador");
+  if (isApprovedNutricionista) enabledTabs.push("nutricionista");
   useEffect(() => {
     if (activeTab !== "inicio" && !enabledTabs.includes(activeTab)) setActiveTab("inicio");
   }, [activeTab, enabledTabs]);
@@ -356,6 +362,8 @@ export default function Home() {
           onOpenTools={() => setPanel("herramientas")}
           onOpenTrainer={isBasico ? undefined : () => setPanel("entrenador")}
           isApprovedTrainer={isApprovedTrainer}
+          onOpenNutricionista={isBasico ? undefined : () => setPanel("nutricionista")}
+          isApprovedNutricionista={isApprovedNutricionista}
           centerContent={
             <div className="flex w-full min-w-0 items-center justify-between gap-1">
               <button
@@ -480,6 +488,12 @@ export default function Home() {
         </div>
       )}
 
+      {activeTab === "nutricionista" && (
+        <div className="mx-auto max-w-lg">
+          <NutricionistaPanel authenticated={authenticated} userEmail={userEmail} />
+        </div>
+      )}
+
       {activeTab === "inicio" && (
       <div className="mx-auto max-w-lg lg:max-w-6xl 2xl:max-w-[1800px]">
         {/* En PC (>=1024px) los bloques se acomodan solos en columnas tipo
@@ -506,6 +520,7 @@ export default function Home() {
                           setAiMeal(meal);
                           setPanel("ai");
                         }}
+                        onViewMeals={() => setPanel("ver-comidas")}
                         onLogSteps={() => setPanel("pasos")}
                         onLogTraining={() => setPanel("entreno")}
                       />
@@ -748,6 +763,29 @@ export default function Home() {
         </div>
       )}
 
+      {panel === "ver-comidas" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>
+          <div
+            className="relative my-4 max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-3 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              onClick={() => setPanel(null)}
+              className="absolute right-3 top-3 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+            >
+              Cerrar
+            </button>
+            <div className="mb-3 font-display text-base text-text">Comidas de hoy</div>
+            <MealsEditor
+              entry={todayEntry}
+              onUpsert={upsertDay}
+              emptyMessage="Todavía no cargaste comidas hoy."
+              onInventoryDelta={handleMealInventoryDelta}
+            />
+          </div>
+        </div>
+      )}
+
       {panel === "planificador" && (
         <div
           className="fixed inset-0 z-50 bg-bg sm:flex sm:items-center sm:justify-center sm:bg-bg/80 sm:p-4 sm:backdrop-blur-sm"
@@ -890,6 +928,23 @@ export default function Home() {
               routines={settings.routines || []}
               onSaveRoutines={(routines) => saveSettings({ ...settings, routines })}
             />
+          </div>
+        </div>
+      )}
+
+      {panel === "nutricionista" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>
+          <div
+            className="relative my-4 max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-3 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              onClick={() => setPanel(null)}
+              className="absolute right-3 top-3 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+            >
+              Cerrar
+            </button>
+            <NutricionistaPanel authenticated={authenticated} userEmail={userEmail} />
           </div>
         </div>
       )}

@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTOTIPO — Planificador semanal (descartable)</title>
+<style>
+  :root {
+    --bg: 15 23 42; --surface: 30 41 59; --text: 248 250 252; --text-muted: 156 163 175;
+    --gold: 52 211 153; --rust: 239 68 68; --sage: 16 185 129; --border: 51 65 85;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 16px 16px 90px; max-width: 480px; margin-inline: auto;
+    background: rgb(var(--bg)); color: rgb(var(--text));
+    font-family: -apple-system, system-ui, sans-serif; font-size: 14px;
+  }
+  .mono { font-family: "SF Mono", Menlo, monospace; }
+  .eyebrow { font-size: 9px; text-transform: uppercase; letter-spacing: 0.14em; color: rgb(var(--text-muted)); }
+  h1 { font-size: 15px; font-style: italic; color: rgb(var(--gold)); margin: 0 0 14px; font-family: Georgia, serif; }
+  select {
+    width: 100%; background: rgb(var(--surface)); color: rgb(var(--text));
+    border: 1px solid rgb(var(--border)); border-radius: 8px; padding: 8px; font-size: 13px;
+  }
+  .btn {
+    border-radius: 10px; padding: 11px; font-weight: 700; font-size: 13px; text-align: center;
+    border: 1px solid transparent; cursor: pointer;
+  }
+  .btn-gold { background: rgb(var(--gold)); color: rgb(var(--bg)); }
+  .btn-outline { background: rgb(var(--surface)); border-color: rgb(var(--border)); color: rgb(var(--text)); }
+  .badge { font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 7px; border-radius: 99px; font-family: monospace; }
+  .badge-planificada { background: rgb(var(--border) / 0.5); color: rgb(var(--text-muted)); }
+  .badge-en_curso { background: rgb(var(--gold) / 0.15); color: rgb(var(--gold)); border: 1px solid rgb(var(--gold) / 0.4); }
+  .badge-completada { background: rgb(var(--sage) / 0.15); color: rgb(var(--sage)); }
+  .badge-vencida { background: rgb(var(--rust) / 0.15); color: rgb(var(--rust)); }
+  .switcher {
+    position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+    background: rgb(var(--surface)); border: 1px solid rgb(var(--gold)); border-radius: 99px;
+    padding: 6px 8px; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 20px rgb(0 0 0 / 0.5);
+    font-family: monospace; font-size: 11px; z-index: 999;
+  }
+  .switcher button { background: none; border: none; color: rgb(var(--gold)); font-size: 16px; cursor: pointer; padding: 2px 6px; }
+  .switcher span { color: rgb(var(--text)); white-space: nowrap; }
+  .variant { display: none; }
+  .variant.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="eyebrow">PROTOTIPO DESCARTABLE — no es código real</div>
+<h1>✎ Planificador semanal</h1>
+
+<!-- ============ VARIANTE A: lista vertical de 7 filas ============ -->
+<div class="variant active" id="A">
+  <div class="mono eyebrow" style="margin-bottom:10px;">‹ Semana del 22 al 28 de sep. › &nbsp;·&nbsp; <span style="color:rgb(var(--text-muted))">borrador</span></div>
+  <div style="display:flex; flex-direction:column; gap:6px;">
+    <!-- fila -->
+    <div style="display:flex; align-items:center; gap:8px; padding:10px; border:1px solid rgb(var(--border)); border-radius:10px; background:rgb(var(--surface) / 0.5);">
+      <div class="mono" style="width:34px; font-size:10px; text-transform:uppercase; color:rgb(var(--text-muted));">LUN</div>
+      <select style="flex:1;"><option>Pecho y tríceps</option></select>
+      <span class="badge badge-completada">completada</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px; padding:10px; border:1px solid rgb(var(--border)); border-radius:10px; background:rgb(var(--surface) / 0.5);">
+      <div class="mono" style="width:34px; font-size:10px; text-transform:uppercase; color:rgb(var(--text-muted));">MAR</div>
+      <select style="flex:1;"><option>— Descanso —</option></select>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px; padding:10px; border:1px solid rgb(var(--gold)); border-radius:10px; background:rgb(var(--gold) / 0.06);">
+      <div class="mono" style="width:34px; font-size:10px; text-transform:uppercase; color:rgb(var(--text-muted));">MIÉ</div>
+      <select style="flex:1;"><option>Espalda y bíceps</option></select>
+      <span class="badge badge-en_curso">en curso</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px; padding:10px; border:1px solid rgb(var(--border)); border-radius:10px; background:rgb(var(--surface) / 0.5);">
+      <div class="mono" style="width:34px; font-size:10px; text-transform:uppercase; color:rgb(var(--text-muted));">JUE</div>
+      <select style="flex:1;"><option>Piernas</option></select>
+      <span class="badge badge-planificada">planificada</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px; padding:10px; border:1px solid rgb(var(--rust) / 0.4); border-radius:10px; background:rgb(var(--rust) / 0.05);">
+      <div class="mono" style="width:34px; font-size:10px; text-transform:uppercase; color:rgb(var(--text-muted));">VIE</div>
+      <select style="flex:1;"><option>Hombros</option></select>
+      <span class="badge badge-vencida">vencida</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px; padding:10px; border:1px solid rgb(var(--border)); border-radius:10px; background:rgb(var(--surface) / 0.5);">
+      <div class="mono" style="width:34px; font-size:10px; text-transform:uppercase; color:rgb(var(--text-muted));">SÁB</div>
+      <select style="flex:1;"><option>— Descanso —</option></select>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px; padding:10px; border:1px solid rgb(var(--border)); border-radius:10px; background:rgb(var(--surface) / 0.5);">
+      <div class="mono" style="width:34px; font-size:10px; text-transform:uppercase; color:rgb(var(--text-muted));">DOM</div>
+      <select style="flex:1;"><option>— Descanso —</option></select>
+    </div>
+  </div>
+  <div style="display:flex; gap:8px; margin-top:14px;">
+    <div class="btn btn-outline" style="flex:1;">Guardar borrador</div>
+    <div class="btn btn-gold" style="flex:1;">Publicar</div>
+  </div>
+  <div class="mono" style="font-size:9px; color:rgb(var(--text-muted)); margin-top:8px; text-align:center;">
+    Publicar de nuevo no pisa los días que tu alumno ya movió o completó.
+  </div>
+</div>
+
+<!-- ============ VARIANTE B: tabla compacta (7 filas, más densa) ============ -->
+<div class="variant" id="B">
+  <div class="mono eyebrow" style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+    <span>‹ 22–28 SEP ›</span>
+    <span style="color:rgb(var(--gold));">BORRADOR</span>
+  </div>
+  <div style="border:1px solid rgb(var(--border)); border-radius:10px; overflow:hidden;">
+    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+      <tbody>
+        <tr style="border-bottom:1px solid rgb(var(--border));">
+          <td class="mono" style="padding:8px 6px; width:32px; color:rgb(var(--text-muted)); font-size:10px;">LUN</td>
+          <td style="padding:6px;"><select style="border:none; background:none; padding:2px; width:100%;"><option>Pecho y tríceps</option></select></td>
+          <td style="padding:6px; text-align:right;"><span class="badge badge-completada">✓</span></td>
+        </tr>
+        <tr style="border-bottom:1px solid rgb(var(--border));">
+          <td class="mono" style="padding:8px 6px; color:rgb(var(--text-muted)); font-size:10px;">MAR</td>
+          <td style="padding:6px;"><select style="border:none; background:none; padding:2px; width:100%; color:rgb(var(--text-muted));"><option>— Descanso —</option></select></td>
+          <td></td>
+        </tr>
+        <tr style="border-bottom:1px solid rgb(var(--border)); background:rgb(var(--gold) / 0.06);">
+          <td class="mono" style="padding:8px 6px; color:rgb(var(--text-muted)); font-size:10px;">MIÉ</td>
+          <td style="padding:6px;"><select style="border:none; background:none; padding:2px; width:100%;"><option>Espalda y bíceps</option></select></td>
+          <td style="padding:6px; text-align:right;"><span class="badge badge-en_curso">●</span></td>
+        </tr>
+        <tr style="border-bottom:1px solid rgb(var(--border));">
+          <td class="mono" style="padding:8px 6px; color:rgb(var(--text-muted)); font-size:10px;">JUE</td>
+          <td style="padding:6px;"><select style="border:none; background:none; padding:2px; width:100%;"><option>Piernas</option></select></td>
+          <td style="padding:6px; text-align:right;"><span class="badge badge-planificada">·</span></td>
+        </tr>
+        <tr style="border-bottom:1px solid rgb(var(--border));">
+          <td class="mono" style="padding:8px 6px; color:rgb(var(--text-muted)); font-size:10px;">VIE</td>
+          <td style="padding:6px;"><select style="border:none; background:none; padding:2px; width:100%;"><option>Hombros</option></select></td>
+          <td style="padding:6px; text-align:right;"><span class="badge badge-vencida">!</span></td>
+        </tr>
+        <tr style="border-bottom:1px solid rgb(var(--border));">
+          <td class="mono" style="padding:8px 6px; color:rgb(var(--text-muted)); font-size:10px;">SÁB</td>
+          <td style="padding:6px;"><select style="border:none; background:none; padding:2px; width:100%; color:rgb(var(--text-muted));"><option>— Descanso —</option></select></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="mono" style="padding:8px 6px; color:rgb(var(--text-muted)); font-size:10px;">DOM</td>
+          <td style="padding:6px;"><select style="border:none; background:none; padding:2px; width:100%; color:rgb(var(--text-muted));"><option>— Descanso —</option></select></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="display:flex; gap:8px; margin-top:12px;">
+    <div class="btn btn-outline" style="flex:1;">Borrador</div>
+    <div class="btn btn-gold" style="flex:1;">Publicar</div>
+  </div>
+</div>
+
+<!-- ============ VARIANTE C: card por día, en carrusel horizontal ============ -->
+<div class="variant" id="C">
+  <div class="mono eyebrow" style="margin-bottom:10px;">Semana del 22 al 28 de septiembre</div>
+  <div style="display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; margin: 0 -16px; padding-left:16px; padding-right:16px;">
+    <div style="min-width:120px; border:1px solid rgb(var(--border)); border-radius:12px; padding:12px; background:rgb(var(--surface));">
+      <div class="mono" style="font-size:9px; color:rgb(var(--text-muted)); text-transform:uppercase;">Lunes 22</div>
+      <div style="font-size:12px; font-weight:600; margin:6px 0;">Pecho y tríceps</div>
+      <span class="badge badge-completada">completada</span>
+    </div>
+    <div style="min-width:120px; border:1px solid rgb(var(--border)); border-radius:12px; padding:12px; background:rgb(var(--surface));">
+      <div class="mono" style="font-size:9px; color:rgb(var(--text-muted)); text-transform:uppercase;">Martes 23</div>
+      <div style="font-size:12px; color:rgb(var(--text-muted)); margin:6px 0;">Descanso</div>
+    </div>
+    <div style="min-width:120px; border:1.5px solid rgb(var(--gold)); border-radius:12px; padding:12px; background:rgb(var(--gold) / 0.08);">
+      <div class="mono" style="font-size:9px; color:rgb(var(--text-muted)); text-transform:uppercase;">Miércoles 24</div>
+      <div style="font-size:12px; font-weight:600; margin:6px 0;">Espalda y bíceps</div>
+      <span class="badge badge-en_curso">en curso</span>
+    </div>
+    <div style="min-width:120px; border:1px solid rgb(var(--border)); border-radius:12px; padding:12px; background:rgb(var(--surface));">
+      <div class="mono" style="font-size:9px; color:rgb(var(--text-muted)); text-transform:uppercase;">Jueves 25</div>
+      <div style="font-size:12px; font-weight:600; margin:6px 0;">Piernas</div>
+      <span class="badge badge-planificada">planificada</span>
+    </div>
+    <div style="min-width:120px; border:1px solid rgb(var(--rust) / 0.4); border-radius:12px; padding:12px; background:rgb(var(--rust) / 0.05);">
+      <div class="mono" style="font-size:9px; color:rgb(var(--text-muted)); text-transform:uppercase;">Viernes 26</div>
+      <div style="font-size:12px; font-weight:600; margin:6px 0;">Hombros</div>
+      <span class="badge badge-vencida">vencida</span>
+    </div>
+  </div>
+  <div class="mono" style="font-size:10px; color:rgb(var(--text-muted)); margin:10px 0; text-align:center;">← deslizá para ver el resto de la semana →</div>
+  <div style="border:1px dashed rgb(var(--border)); border-radius:10px; padding:12px; margin-top:8px;">
+    <div class="mono" style="font-size:9px; text-transform:uppercase; color:rgb(var(--text-muted)); margin-bottom:6px;">Editar día seleccionado (Miércoles)</div>
+    <select><option>Espalda y bíceps</option></select>
+  </div>
+  <div style="display:flex; gap:8px; margin-top:12px;">
+    <div class="btn btn-outline" style="flex:1;">Guardar borrador</div>
+    <div class="btn btn-gold" style="flex:1;">Publicar</div>
+  </div>
+</div>
+
+<div class="switcher">
+  <button onclick="cycle(-1)">‹</button>
+  <span id="label">A — Lista vertical</span>
+  <button onclick="cycle(1)">›</button>
+</div>
+
+<script>
+  const variants = [
+    { id: "A", label: "A — Lista vertical (7 filas)" },
+    { id: "B", label: "B — Tabla compacta" },
+    { id: "C", label: "C — Carrusel de cards por día" },
+  ];
+  let idx = 0;
+  function render() {
+    variants.forEach((v) => document.getElementById(v.id).classList.remove("active"));
+    document.getElementById(variants[idx].id).classList.add("active");
+    document.getElementById("label").textContent = variants[idx].label;
+  }
+  function cycle(dir) {
+    idx = (idx + dir + variants.length) % variants.length;
+    render();
+  }
+  document.addEventListener("keydown", (e) => {
+    if (["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
+    if (e.key === "ArrowLeft") cycle(-1);
+    if (e.key === "ArrowRight") cycle(1);
+  });
+</script>
+
+</body>
+</html>

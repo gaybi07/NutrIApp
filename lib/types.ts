@@ -1,4 +1,29 @@
 export type MealKey = "des" | "alm" | "mer" | "cen" | "col";
+
+/** Una alternativa de comida dentro de un Plan Nutricional (ticket 01 del
+ * mapa apk-completa): 2-3 de estas por comida, cada una con su propia
+ * explicación de cuándo/por qué elegirla (ej. según horario de entreno o de
+ * acostarse) -- escrita por el Nutricionista, la IA solo puede sugerir un
+ * borrador que el profesional revisa antes de publicar. */
+export interface MealOption {
+  nombre: string;
+  kcal: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  explicacion: string;
+}
+
+/** Las Meal Options de un día, por comida -- vive dentro de
+ * `TrainingPlan.days[weekday]` cuando `disciplina === "nutricion"` (mismo
+ * jsonb que fuerza usa para un id de TrainerRoutine, forma distinta). */
+export type DayMealOptions = Partial<Record<MealKey, MealOption[]>>;
+
+/** Fuerza (Profe/Alumno) o nutrición (Nutricionista/Paciente) -- reusan el
+ * mismo esqueleto de tablas (trainer_applications/trainer_links/
+ * training_plans/assigned_sessions/reports), distinguidas por este campo.
+ * Ver migration_2026-09-24_add_disciplina.sql y CONTEXT.md. */
+export type Disciplina = "fuerza" | "nutricion";
 export type TrainingIntensity = "leve" | "moderado" | "exigente" | "fallo";
 export type GoalMode = "perder" | "recomponer" | "aumentar";
 
@@ -204,6 +229,9 @@ export interface TrainerApplication {
   reviewNote: string | null;
   trainerPlan?: TrainerPlanTier;
   maxStudents?: number;
+  /** Opcional para no romper objetos ya construidos sin este campo -- default
+   * "fuerza" en la base (migration_2026-09-24_add_disciplina.sql). */
+  disciplina?: Disciplina;
 }
 
 /** Estado del vínculo -- ver migration_2026-09-21_add_trainer_module.sql.
@@ -220,6 +248,8 @@ export interface TrainerLink {
   createdAt: string;
   status?: TrainerLinkStatus;
   endedAt?: string | null;
+  /** Opcional, default "fuerza" -- ver Disciplina. */
+  disciplina?: Disciplina;
 }
 
 /** Lo que ve el lado ENTRENADOR de un vínculo: uno de sus alumnos. */
@@ -328,6 +358,8 @@ export interface TrainerLinkRequest {
   respondedAt: string | null;
   responseNote: string | null;
   createdAt: string;
+  /** Opcional, default "fuerza" -- ver Disciplina. */
+  disciplina?: Disciplina;
 }
 
 /** Solo una rutina "publicada" es asignable en un TrainingPlan -- "borrador"
@@ -371,6 +403,8 @@ export interface TrainingPlan {
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Opcional, default "fuerza" -- ver Disciplina. */
+  disciplina?: Disciplina;
 }
 
 /** Instancia concreta y fechada de un entrenamiento -- lo único que el
@@ -407,6 +441,8 @@ export interface AssignedSession {
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Opcional, default "fuerza" -- ver Disciplina. */
+  disciplina?: Disciplina;
 }
 
 /** Lo que realmente pasó al ejecutar una AssignedSession -- 0..1 respecto a
@@ -598,7 +634,7 @@ export interface DayEntry {
 export type WeekPlan = Record<string, Partial<Record<MealKey, string>>>; // fecha -> comida -> título de receta
 
 /** Las solapas de arriba que se pueden prender/apagar desde Preferencias — "inicio" no está acá porque siempre está fija. */
-export type MainTab = "inicio" | "comidas" | "macros" | "actividad" | "gastos" | "entrenador";
+export type MainTab = "inicio" | "comidas" | "macros" | "actividad" | "gastos" | "entrenador" | "nutricionista";
 
 export const OPTIONAL_TABS: MainTab[] = ["macros", "comidas", "actividad", "gastos"];
 export const DEFAULT_ENABLED_TABS: MainTab[] = ["inicio", "comidas", "macros", "actividad", "gastos"];

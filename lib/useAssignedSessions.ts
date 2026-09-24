@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/browser";
-import { AssignedSession, ExerciseEntry } from "./types";
+import { AssignedSession, Disciplina, ExerciseEntry } from "./types";
 import { fmtDate, isoMonday, addDays } from "./calculations";
 
 function sessionFromRow(row: Record<string, unknown>): AssignedSession {
@@ -22,6 +22,7 @@ function sessionFromRow(row: Record<string, unknown>): AssignedSession {
     completedAt: (row.completed_at as string) ?? null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
+    disciplina: (row.disciplina as Disciplina) ?? "fuerza",
   };
 }
 
@@ -33,7 +34,7 @@ const OPEN_STATUSES: AssignedSession["status"][] = ["planificada", "movida", "en
  * la consulta de una -- mismo patrón guard que useTrainerRoutinesForStudent
  * -- así un Autoentrenador nunca dispara ni un solo request nuevo.
  */
-export function useMyAssignedSessions(authenticated: boolean, hasTrainerLink: boolean) {
+export function useMyAssignedSessions(authenticated: boolean, hasTrainerLink: boolean, disciplina: Disciplina = "fuerza") {
   const [sessions, setSessions] = useState<AssignedSession[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [status, setStatus] = useState("");
@@ -59,13 +60,14 @@ export function useMyAssignedSessions(authenticated: boolean, hasTrainerLink: bo
       .from("assigned_sessions")
       .select("*")
       .eq("student_id", user.id)
+      .eq("disciplina", disciplina)
       .gte("fecha_planificada", weekStart)
       .lte("fecha_planificada", weekEnd)
       .neq("status", "cancelada")
       .order("fecha_planificada", { ascending: true });
     setSessions((data || []).map(sessionFromRow));
     setLoaded(true);
-  }, [hasTrainerLink]);
+  }, [hasTrainerLink, disciplina]);
 
   useEffect(() => {
     if (authenticated) refetch();

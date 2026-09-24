@@ -48,6 +48,9 @@ function AdminRow({
         <span className="text-sm font-semibold text-text">{app.userEmail}</span>
         <span className={`font-mono text-[10px] ${style.color}`}>{style.label}</span>
       </div>
+      <div className="mt-0.5 font-mono text-[10px] uppercase tracking-wide text-textMuted">
+        {app.disciplina === "nutricion" ? "Nutricionista" : "Entrenador"}
+      </div>
       <button type="button" onClick={onView} className="mt-1.5 font-mono text-[11px] text-textMuted underline">
         Ver comprobante
       </button>
@@ -226,6 +229,19 @@ function TrainerStudentsAndRoutines({
   };
 
   const unseenIncidents = incidentsHook.incidents.filter((i) => !i.vistoPorEntrenador).length;
+
+  // Las 3 consultas (alumnos, rutinas, incidencias) son independientes y
+  // resuelven en momentos distintos -- sin este gate único, el dashboard se
+  // dibuja de entrada con todo en cero y cada StatTile "salta" a su valor
+  // real por separado a medida que responde, lo que se ve como que carga
+  // una versión vieja/incompleta y se va actualizando de a partes.
+  if (!studentsHook.loaded || !routinesHook.loaded || !incidentsHook.loaded) {
+    return (
+      <div className="mt-5 border-t border-border pt-3">
+        <div className="text-[12px] text-textMuted">Cargando...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-5 border-t border-border pt-3">

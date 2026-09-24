@@ -13,6 +13,8 @@ export function AuthPanel({
   onOpenTools,
   onOpenTrainer,
   isApprovedTrainer,
+  onOpenNutricionista,
+  isApprovedNutricionista,
   centerContent,
 }: {
   onAuthChange?: (authenticated: boolean) => void;
@@ -29,6 +31,10 @@ export function AuthPanel({
    * gestiona todo desde la solapa "Entrenador" (al lado de Inicio/Macros/
    * etc.), no hace falta seguir "postulándose" a algo que ya es. */
   isApprovedTrainer?: boolean;
+  onOpenNutricionista?: () => void;
+  /** Igual que isApprovedTrainer, pero del lado Nutricionista -- una vez
+   * aprobado, la solapa "Nutricionista" lo reemplaza. */
+  isApprovedNutricionista?: boolean;
   /** Contenido opcional que ocupa toda la fila de arriba, a la izquierda del
    * botón de ajustes (⚙) -- pensado para la navegación de semana y el
    * resumen de peso/racha (ya no se muestra el nombre de la cuenta acá). */
@@ -170,6 +176,18 @@ export function AuthPanel({
                   className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
                 >
                   Ser entrenador
+                </button>
+              )}
+              {isSupabaseConfigured && onOpenNutricionista && !isApprovedNutricionista && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenNutricionista();
+                  }}
+                  className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
+                >
+                  Ser nutricionista
                 </button>
               )}
               {userEmail ? (

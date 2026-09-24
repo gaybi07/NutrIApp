@@ -30,6 +30,8 @@ const MODULE_INFO: Record<MainTab, { label: string; description: string }> = {
   // postulación (ver app/page.tsx), nunca se ofrece a elegir en este wizard.
   // Entrada solo para satisfacer Record<MainTab, ...>, nunca se lee.
   entrenador: { label: "Entrenador", description: "" },
+  // Mismo caso que "entrenador" -- ver comentario arriba.
+  nutricionista: { label: "Nutricionista", description: "" },
 };
 
 const ACTIVITY_LEVELS: Record<ActivityLevel, { label: string; pasos: number; description: string }> = {

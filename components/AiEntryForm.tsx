@@ -118,6 +118,14 @@ export function AiEntryForm({
   const [breakdownOpenIndex, setBreakdownOpenIndex] = useState<number | null>(null);
   const [breakdowns, setBreakdowns] = useState<Record<number, PreparationIngredient[]>>({});
   const { findFood } = useFoods();
+
+  // Lo que ya está cargado en la comida/fecha elegidas -- se recalcula cada
+  // vez que cambia `fecha`, `meal` o `days`, así que refleja al instante lo
+  // que se acaba de guardar sin tener que cerrar y reabrir el formulario.
+  const entryForFecha = days.find((d) => d.fecha === fecha);
+  const yaCargado = entryForFecha ? getMealItems(entryForFecha, meal) : [];
+  const yaCargadoTotales = sumMealItems(yaCargado);
+
   const { supported: speechSupported, recording, toggle: toggleRecording } = useSpeechToText(
     (transcript) => setText((prev) => (prev ? `${prev} ${transcript}` : transcript)),
     () => setStatus("No pude escucharte, probá de nuevo o escribilo a mano.")
@@ -484,6 +492,18 @@ export function AiEntryForm({
           </div>
         )}
       </div>
+
+      {yaCargado.length > 0 && (
+        <div className="mt-2.5 rounded-xl border border-border bg-bg/40 p-2.5">
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
+              Ya cargado en {MEAL_LABELS[meal].toLowerCase()}
+            </span>
+            <span className="shrink-0 font-mono text-[10px] text-textMuted">{Math.round(yaCargadoTotales.kcal)} kcal</span>
+          </div>
+          <div className="text-sm text-text">{yaCargado.map((i) => i.nombre).join(", ")}</div>
+        </div>
+      )}
 
       {recientes.length > 0 && (
         <div className="mt-2.5">

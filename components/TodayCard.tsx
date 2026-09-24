@@ -8,10 +8,7 @@ import { Collapsible } from "@/components/Collapsible";
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const DOW = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 
-// Colación queda afuera de los 4 botones grandes -- sigue siendo la comida
-// "extra" que casi nadie carga todos los días, meterla acá solo agrega
-// ruido a lo que se quiere que sea más simple, no menos.
-const QUICK_MEALS: MealKey[] = ["des", "alm", "mer", "cen"];
+const QUICK_MEALS: MealKey[] = ["des", "alm", "mer", "cen", "col"];
 const MEAL_ICON: Record<MealKey, string> = { des: "🌅", alm: "🍽️", mer: "🍎", cen: "🌙", col: "🍫" };
 
 export function TodayCard({
@@ -19,6 +16,7 @@ export function TodayCard({
   goal,
   tdeeFallback,
   onLogMeal,
+  onViewMeals,
   onLogSteps,
   onLogTraining,
 }: {
@@ -28,6 +26,10 @@ export function TodayCard({
   /** Qué comida se tocó -- antes abría siempre el mismo formulario y ahí
    * adentro había que elegir de un desplegable; ahora se sabe de entrada. */
   onLogMeal: (meal: MealKey) => void;
+  /** Ver/editar lo ya cargado hoy, colapsado por comida -- mismo componente
+   * que "Modificar comidas de la semana", pero sin tener que bajar hasta esa
+   * sección ni elegir el día (ya se sabe que es hoy). */
+  onViewMeals: () => void;
   onLogSteps: () => void;
   onLogTraining: () => void;
 }) {
@@ -81,7 +83,7 @@ export function TodayCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {QUICK_MEALS.map((meal) => {
           const loaded = mealKcal[meal] > 0;
           return (
@@ -99,6 +101,13 @@ export function TodayCard({
           );
         })}
       </div>
+      <button
+        type="button"
+        onClick={onViewMeals}
+        className="mt-2 w-full rounded-xl border border-border bg-transparent px-3 py-2 font-mono text-[10px] uppercase tracking-[0.1em] text-textMuted"
+      >
+        📋 Ver comidas cargadas
+      </button>
       {/* Pasos y entrenamiento van cada uno en su propio botón -- antes
           compartían uno solo que, apenas cargabas el entrenamiento, dejaba
           de mostrar los pasos del todo (su texto pasaba a ser la intensidad

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/browser";
-import { TrainerApplication, TrainerStatus } from "./types";
+import { Disciplina, TrainerApplication, TrainerStatus } from "./types";
 
 /** Único admin de la app (vos) -- el que revisa a mano los comprobantes.
  * Coincide con la policy de RLS en migration_2026-09-17_add_trainer_applications.sql. */
@@ -24,6 +24,7 @@ function fromRow(row: Record<string, unknown>): TrainerApplication {
     reviewNote: (row.review_note as string) ?? null,
     trainerPlan: (row.trainer_plan as TrainerApplication["trainerPlan"]) ?? "gratis",
     maxStudents: (row.max_students as number) ?? 1,
+    disciplina: (row.disciplina as Disciplina) ?? "fuerza",
   };
 }
 
@@ -33,7 +34,7 @@ function fromRow(row: Record<string, unknown>): TrainerApplication {
  * revisa a mano. Podés volver a postularte (pisa el mismo archivo y la misma
  * fila) mientras esté pendiente o si te rechazaron.
  */
-export function useTrainerApplication(authenticated: boolean, userEmail: string | null) {
+export function useTrainerApplication(authenticated: boolean, userEmail: string | null, disciplina: Disciplina = "fuerza") {
   const [application, setApplication] = useState<TrainerApplication | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -52,10 +53,15 @@ export function useTrainerApplication(authenticated: boolean, userEmail: string 
       setLoaded(true);
       return;
     }
-    const { data } = await supabase.from("trainer_applications").select("*").eq("user_id", user.id).maybeSingle();
+    const { data } = await supabase
+      .from("trainer_applications")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("disciplina", disciplina)
+      .maybeSingle();
     setApplication(data ? fromRow(data) : null);
     setLoaded(true);
-  }, []);
+  }, [disciplina]);
 
   useEffect(() => {
     if (authenticated) refetch();
@@ -87,7 +93,9 @@ export function useTrainerApplication(authenticated: boolean, userEmail: string 
         return;
       }
       const ext = file.name.split(".").pop() || "pdf";
-      const path = `${user.id}/certificado.${ext}`;
+      // Subcarpeta por disciplina -- una misma persona puede postularse a las
+      // dos, y cada comprobante tiene que quedar guardado por separado.
+      const path = `${user.id}/${disciplina}/certificado.${ext}`;
       const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true });
       if (uploadError) {
         setStatus(`No se pudo subir el archivo: ${uploadError.message}`);
@@ -104,8 +112,9 @@ export function useTrainerApplication(authenticated: boolean, userEmail: string 
             status: "pendiente",
             reviewed_at: null,
             review_note: null,
+            disciplina,
           },
-          { onConflict: "user_id" }
+          { onConflict: "user_id,disciplina" }
         )
         .select()
         .single();
@@ -118,7 +127,7 @@ export function useTrainerApplication(authenticated: boolean, userEmail: string 
       setStatus("Comprobante enviado — queda pendiente de revisión ✓");
       setBusy(false);
     },
-    [userEmail]
+    [userEmail, disciplina]
   );
 
   const certificateSignedUrl = useCallback(async (): Promise<string | null> => {

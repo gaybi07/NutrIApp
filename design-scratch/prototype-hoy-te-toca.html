@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTOTIPO — "Hoy te toca" (descartable)</title>
+<style>
+  :root {
+    --bg: 15 23 42; --surface: 30 41 59; --text: 248 250 252; --text-muted: 156 163 175;
+    --gold: 52 211 153; --rust: 239 68 68; --sage: 16 185 129; --border: 51 65 85;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 16px 16px 90px; max-width: 480px; margin-inline: auto;
+    background: rgb(var(--bg)); color: rgb(var(--text));
+    font-family: -apple-system, system-ui, sans-serif; font-size: 14px;
+  }
+  .mono { font-family: "SF Mono", Menlo, monospace; }
+  .eyebrow { font-size: 9px; text-transform: uppercase; letter-spacing: 0.14em; color: rgb(var(--text-muted)); }
+  h1 { font-size: 15px; font-style: italic; color: rgb(var(--gold)); margin: 0 0 14px; font-family: Georgia, serif; }
+  .btn { border-radius: 10px; padding: 11px; font-weight: 700; font-size: 13px; text-align: center; cursor: pointer; }
+  .btn-gold { background: rgb(var(--gold)); color: rgb(var(--bg)); }
+  .btn-outline { border: 1px solid rgb(var(--border)); color: rgb(var(--text-muted)); background: rgb(var(--surface)); }
+  .normal-controls {
+    border: 1px dashed rgb(var(--border)); border-radius: 12px; padding: 16px; text-align: center;
+    color: rgb(var(--text-muted)); font-size: 12px; margin-top: 12px;
+  }
+  .switcher {
+    position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+    background: rgb(var(--surface)); border: 1px solid rgb(var(--gold)); border-radius: 99px;
+    padding: 6px 8px; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 20px rgb(0 0 0 / 0.5);
+    font-family: monospace; font-size: 11px; z-index: 999;
+  }
+  .switcher button { background: none; border: none; color: rgb(var(--gold)); font-size: 16px; cursor: pointer; padding: 2px 6px; }
+  .switcher span { color: rgb(var(--text)); white-space: nowrap; }
+  .variant { display: none; }
+  .variant.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="eyebrow">PROTOTIPO DESCARTABLE — no es código real</div>
+<h1>🏋 Actividad · Entreno</h1>
+
+<!-- ============ VARIANTE A: banner grande y urgente ============ -->
+<div class="variant active" id="A">
+  <div style="border: 1.5px solid rgb(var(--gold)); border-radius: 14px; padding: 16px; background: linear-gradient(135deg, rgb(var(--gold) / 0.14), rgb(var(--surface))); margin-bottom: 14px;">
+    <div class="mono eyebrow" style="color: rgb(var(--gold)); margin-bottom: 6px;">📋 HOY TE TOCA · ASIGNADO POR TU PROFE</div>
+    <div style="font-size: 17px; font-weight: 700; margin-bottom: 4px;">Espalda y bíceps</div>
+    <div style="font-size: 12px; color: rgb(var(--text-muted)); margin-bottom: 14px;">6 ejercicios · ~50 min estimados</div>
+    <div class="btn btn-gold">Arrancar sesión asignada</div>
+  </div>
+  <div class="normal-controls">
+    — o entrená algo distinto por tu cuenta —<br>
+    <span style="text-decoration:underline; color:rgb(var(--text)); cursor:pointer;">Elegir otra rutina</span>
+  </div>
+</div>
+
+<!-- ============ VARIANTE B: tarjeta chica, no invasiva, arriba de los controles normales ============ -->
+<div class="variant" id="B">
+  <div style="display:flex; align-items:center; gap:10px; border:1px solid rgb(var(--gold) / 0.5); border-radius:12px; padding:10px 12px; background:rgb(var(--gold) / 0.06); margin-bottom:12px;">
+    <div style="flex:1; min-width:0;">
+      <div class="mono" style="font-size:8.5px; text-transform:uppercase; color:rgb(var(--gold)); margin-bottom:2px;">De tu profe · hoy</div>
+      <div style="font-size:13px; font-weight:600;">Espalda y bíceps <span style="color:rgb(var(--text-muted)); font-weight:400;">· 6 ejercicios</span></div>
+    </div>
+    <div class="btn btn-gold" style="padding:8px 14px; font-size:11px; white-space:nowrap;">Arrancar</div>
+  </div>
+  <div style="border:1px solid rgb(var(--border)); border-radius:12px; padding:16px;">
+    <div class="mono eyebrow" style="margin-bottom:8px;">Entreno libre</div>
+    <div style="font-size:13px; color:rgb(var(--text-muted));">Elegí una rutina para arrancar, o registrá algo sin planificar.</div>
+    <div class="btn btn-outline" style="margin-top:10px;">Elegir rutina</div>
+  </div>
+</div>
+
+<!-- ============ VARIANTE C: colapsable -- arranca chica, se puede minimizar si no interesa hoy ============ -->
+<div class="variant" id="C">
+  <div id="c-expanded" style="border:1px solid rgb(var(--gold)); border-radius:12px; padding:14px; background:rgb(var(--surface)); margin-bottom:12px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <div class="mono eyebrow" style="color:rgb(var(--gold));">Asignado por tu profe</div>
+        <div style="font-size:14px; font-weight:600; margin-top:4px;">Espalda y bíceps · 6 ejercicios</div>
+      </div>
+      <button onclick="collapse()" style="background:none; border:none; color:rgb(var(--text-muted)); font-size:16px; cursor:pointer;" aria-label="Minimizar">︿</button>
+    </div>
+    <div class="btn btn-gold" style="margin-top:10px;">Arrancar</div>
+  </div>
+  <div id="c-collapsed" style="display:none; margin-bottom:12px;">
+    <button onclick="expand()" style="width:100%; display:flex; align-items:center; justify-content:space-between; background:rgb(var(--surface)); border:1px dashed rgb(var(--gold) / 0.6); border-radius:10px; padding:8px 12px; color:rgb(var(--text-muted)); font-size:11px; cursor:pointer;">
+      <span>📋 Tenés algo asignado para hoy — tocá para verlo</span>
+      <span style="color:rgb(var(--gold));">﹀</span>
+    </button>
+  </div>
+  <div class="normal-controls" style="border-style:solid;">
+    Entreno libre de siempre, sin cambios<br>
+    <span style="text-decoration:underline; color:rgb(var(--text)); cursor:pointer;">Elegir rutina</span>
+  </div>
+</div>
+
+<div class="switcher">
+  <button onclick="cycle(-1)">‹</button>
+  <span id="label">A — Banner grande</span>
+  <button onclick="cycle(1)">›</button>
+</div>
+
+<script>
+  const variants = [
+    { id: "A", label: "A — Banner grande y urgente" },
+    { id: "B", label: "B — Tarjeta chica, no invasiva" },
+    { id: "C", label: "C — Colapsable" },
+  ];
+  let idx = 0;
+  function render() {
+    variants.forEach((v) => document.getElementById(v.id).classList.remove("active"));
+    document.getElementById(variants[idx].id).classList.add("active");
+    document.getElementById("label").textContent = variants[idx].label;
+  }
+  function cycle(dir) {
+    idx = (idx + dir + variants.length) % variants.length;
+    render();
+  }
+  function collapse() {
+    document.getElementById("c-expanded").style.display = "none";
+    document.getElementById("c-collapsed").style.display = "block";
+  }
+  function expand() {
+    document.getElementById("c-expanded").style.display = "block";
+    document.getElementById("c-collapsed").style.display = "none";
+  }
+  document.addEventListener("keydown", (e) => {
+    if (["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
+    if (e.key === "ArrowLeft") cycle(-1);
+    if (e.key === "ArrowRight") cycle(1);
+  });
+</script>
+
+</body>
+</html>
