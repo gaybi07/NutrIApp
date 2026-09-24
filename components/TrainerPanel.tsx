@@ -29,7 +29,7 @@ function newId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function AdminRow({
+export function AdminRow({
   app,
   busy,
   onReview,
@@ -639,6 +639,16 @@ export function TrainerPanel({
   const admin = useTrainerAdmin(authenticated, userEmail);
   const fileRef = useRef<HTMLInputElement>(null);
   const isApprovedTrainer = own.application?.status === "aprobado";
+
+  // Mientras `own` todavía no resolvió, `own.application` es null y por lo
+  // tanto isApprovedTrainer da false -- sin este gate, un entrenador YA
+  // aprobado ve primero (por una fracción de segundo) la pantalla de
+  // "postularme" y recién después salta al dashboard real cuando `own`
+  // termina de cargar. Ese salto de una pantalla entera a otra es lo que se
+  // percibe como "carga muchas pantallas hasta que llega la última".
+  if (!own.loaded) {
+    return <div className="text-[12px] text-textMuted">Cargando...</div>;
+  }
 
   const handlePick = () => fileRef.current?.click();
   const handleFile = (event: React.ChangeEvent<HTMLInputElement>) => {

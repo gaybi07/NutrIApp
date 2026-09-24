@@ -1,10 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useTrainerApplication } from "@/lib/useTrainerApplication";
+import { useTrainerApplication, useTrainerAdmin } from "@/lib/useTrainerApplication";
 import { useTrainerLink, useTrainerStudents } from "@/lib/useTrainerLink";
 import { TrainerLinkRequest, TrainerStatus, TrainerStudent } from "@/lib/types";
 import { NutritionPlanBuilder } from "@/components/NutritionPlanBuilder";
+import { AdminRow } from "@/components/TrainerPanel";
 
 const STATUS_STYLE: Record<TrainerStatus, { label: string; color: string }> = {
   pendiente: { label: "Pendiente de revisión", color: "text-gold" },
@@ -296,8 +297,16 @@ function NutricionistaPatientsAndPlan({
  */
 export function NutricionistaPanel({ authenticated, userEmail }: { authenticated: boolean; userEmail: string | null }) {
   const own = useTrainerApplication(authenticated, userEmail, "nutricion");
+  const admin = useTrainerAdmin(authenticated, userEmail);
   const fileRef = useRef<HTMLInputElement>(null);
   const isApproved = own.application?.status === "aprobado";
+
+  // Mismo motivo que el gate equivalente en TrainerPanel.tsx: sin esto, un
+  // Nutricionista ya aprobado ve primero la pantalla de "postularme" y
+  // recién salta al panel real cuando `own` termina de cargar.
+  if (!own.loaded) {
+    return <div className="text-[12px] text-textMuted">Cargando...</div>;
+  }
 
   const handlePick = () => fileRef.current?.click();
   const handleFile = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -310,6 +319,41 @@ export function NutricionistaPanel({ authenticated, userEmail }: { authenticated
     const url = await own.certificateSignedUrl();
     if (url) window.open(url, "_blank", "noopener,noreferrer");
   };
+
+  const viewAdminCertificate = async (path: string) => {
+    const url = await admin.signedUrlFor(path);
+    if (url) window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  // Mismo panel de revisión que TrainerPanel.tsx (única cuenta admin, ver
+  // TRAINER_ADMIN_EMAIL), filtrado acá a postulaciones de Nutricionista --
+  // buscarlo solo desde Entrenador no era intuitivo si lo que querés
+  // aprobar es justamente un Nutricionista.
+  const nutricionistaApplications = admin.applications.filter((a) => a.disciplina === "nutricion");
+  const adminReview = admin.isAdmin && (
+    <div className="mt-5 border-t border-border pt-3">
+      <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Revisión (admin)</div>
+      {!admin.loaded ? (
+        <div className="text-[12px] text-textMuted">Cargando...</div>
+      ) : nutricionistaApplications.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">
+          No hay postulaciones de Nutricionista todavía.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {nutricionistaApplications.map((app) => (
+            <AdminRow
+              key={app.id}
+              app={app}
+              busy={admin.busyId === app.id}
+              onReview={(decision, note) => admin.review(app.id, decision, note)}
+              onView={() => viewAdminCertificate(app.certificatePath)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
   const accountTab = (
     <div className="space-y-4">
@@ -324,6 +368,7 @@ export function NutricionistaPanel({ authenticated, userEmail }: { authenticated
         </div>
       )}
       <OwnPatientLinkSection authenticated={authenticated} />
+      {adminReview}
     </div>
   );
 
@@ -371,6 +416,7 @@ export function NutricionistaPanel({ authenticated, userEmail }: { authenticated
         <div className="mt-5 border-t border-border pt-3">
           <OwnPatientLinkSection authenticated={authenticated} />
         </div>
+        {adminReview}
       </div>
     );
   }
