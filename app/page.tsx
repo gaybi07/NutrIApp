@@ -214,11 +214,22 @@ export default function Home() {
   const todayKcal = dayTotal(todayEntry);
 
   const currentWeightKg = useMemo(() => {
-    const lastDailyWeight = [...days].sort((a, b) => b.fecha.localeCompare(a.fecha)).find((d) => d.pesoKg)?.pesoKg;
-    if (lastDailyWeight) return lastDailyWeight;
+    // El único DayEntry con pesoKg suele ser el del día del onboarding (ver
+    // más abajo, OnboardingWizard.onComplete) -- nadie vuelve a escribir ahí
+    // después, así que ese valor queda "congelado" para siempre. Si se lo
+    // prioriza a ciegas sobre settings.weeklyWeights (que sí se actualiza
+    // semana a semana desde el bloque "peso"), el peso actual nunca avanza
+    // aunque cargues pesos nuevos -- hay que comparar fechas de verdad y
+    // quedarse con el más reciente de los dos, no asumir que "el día" siempre gana.
+    const lastDaily = [...days].sort((a, b) => b.fecha.localeCompare(a.fecha)).find((d) => d.pesoKg);
     const weekKeys = Object.keys(settings.weeklyWeights || {}).sort();
-    const lastWeeklyWeight = weekKeys.length ? settings.weeklyWeights![weekKeys[weekKeys.length - 1]] : undefined;
-    if (lastWeeklyWeight) return lastWeeklyWeight;
+    const lastWeeklyKey = weekKeys.length ? weekKeys[weekKeys.length - 1] : undefined;
+    const lastWeeklyWeight = lastWeeklyKey ? settings.weeklyWeights![lastWeeklyKey] : undefined;
+    if (lastDaily && lastWeeklyKey && lastWeeklyWeight != null) {
+      return lastDaily.fecha >= lastWeeklyKey ? lastDaily.pesoKg! : lastWeeklyWeight;
+    }
+    if (lastDaily) return lastDaily.pesoKg!;
+    if (lastWeeklyWeight != null) return lastWeeklyWeight;
     const profileWeight = settings.calculatorProfile?.actual ? Number(settings.calculatorProfile.actual) : undefined;
     return profileWeight || 75;
   }, [days, settings]);

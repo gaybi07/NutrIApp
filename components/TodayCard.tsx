@@ -83,6 +83,11 @@ export function TodayCard({
         </div>
       </div>
 
+      {/* Tamaño fijo (h-16, mismo padding/tipografía siempre) para las 5 --
+          antes el texto pasaba de "Desayuno" a "Desayuno ✓" al cargarlo, lo
+          que alargaba esa etiqueta y hacía que el botón cambiara de tamaño
+          (y de paso quedara distinto a los demás). El check ahora es una
+          marca aparte en la esquina, nunca toca el largo del texto. */}
       <div className="grid grid-cols-3 gap-2">
         {QUICK_MEALS.map((meal) => {
           const loaded = mealKcal[meal] > 0;
@@ -91,12 +96,15 @@ export function TodayCard({
               key={meal}
               type="button"
               onClick={() => onLogMeal(meal)}
-              className={`flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.08em] ${
+              className={`relative flex h-16 flex-col items-center justify-center gap-1 rounded-xl border font-mono text-[10px] uppercase tracking-[0.06em] ${
                 loaded ? "border-sage/60 bg-sage/10 text-sage" : "border-gold/60 bg-gold text-bg"
               }`}
             >
+              {loaded && (
+                <span className="absolute right-1.5 top-1.5 text-[9px] leading-none">✓</span>
+              )}
               <span className="text-sm leading-none">{MEAL_ICON[meal]}</span>
-              {loaded ? `${MEAL_LABELS[meal]} ✓` : MEAL_LABELS[meal]}
+              <span>{MEAL_LABELS[meal]}</span>
             </button>
           );
         })}

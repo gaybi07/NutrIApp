@@ -557,6 +557,9 @@ export function calcGoalDeficit(
 
 export interface GoalProgressInfo {
   metaKg: number;
+  /** Peso con el que se armó el objetivo (calculatorProfile.actual) -- 0 en
+   * "recomponer", que no tiene punto de partida de peso relevante. */
+  actualKg: number;
   modo: "perder" | "aumentar" | "recomponer";
   fechaObjetivo: string;
   diasRestantes: number; // negativo si la fecha ya pasó
@@ -589,6 +592,7 @@ export function computeGoalProgress(
   if (profile.modo === "recomponer") {
     return {
       metaKg: 0,
+      actualKg: 0,
       modo: "recomponer",
       fechaObjetivo: "",
       diasRestantes: 0,
@@ -624,6 +628,7 @@ export function computeGoalProgress(
 
   return {
     metaKg: meta,
+    actualKg: actual,
     modo,
     fechaObjetivo: profile.fecha,
     diasRestantes,

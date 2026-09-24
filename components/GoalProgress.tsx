@@ -17,7 +17,7 @@ function fmtDateAr(iso: string) {
 }
 
 export function GoalProgress({ progress, openOnDesktop }: { progress: GoalProgressInfo; openOnDesktop?: boolean }) {
-  const { modo, metaKg, fechaObjetivo, diasRestantes, kgTotalPlan, kgYaLogrados, kgRestantes, kgPorSemanaNecesario, ritmoRealSemanal, yaLlego, proteinTargetG, goalKcal } =
+  const { modo, metaKg, fechaObjetivo, diasRestantes, kgTotalPlan, kgYaLogrados, kgRestantes, kgPorSemanaNecesario, ritmoRealSemanal, yaLlego, proteinTargetG, goalKcal, actualKg } =
     progress;
 
   // "Recomponer" no tiene una meta de peso (no hay dirección clara: el
@@ -85,6 +85,10 @@ export function GoalProgress({ progress, openOnDesktop }: { progress: GoalProgre
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-bg">
             <div className="h-full rounded-full bg-gold" style={{ width: `${pct}%` }} />
+          </div>
+          <div className="mt-1 flex items-center justify-between font-mono text-[9px] text-textMuted">
+            <span>Empezaste en {fmt(actualKg)}kg</span>
+            <span>Meta: {fmt(metaKg)}kg</span>
           </div>
 
           <div className="mt-3 grid grid-cols-2 gap-2 text-center">
