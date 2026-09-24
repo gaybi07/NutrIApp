@@ -110,6 +110,11 @@ export function AiEntryForm({
   const { memory: mealMemory, remember, findMatch } = useMealMemory();
   const { preparations, save: savePreparation, registerUse: registerPreparationUse } = useMealPreparations();
   const [savePrep, setSavePrep] = useState(false);
+  // Las sugerencias (comidas frecuentes + preparaciones guardadas) empiezan
+  // colapsadas -- antes quedaban siempre abiertas entre el texto y "Calcular
+  // con IA", empujando ese botón bien abajo y haciendo fácil no darse cuenta
+  // de que estaba ahí.
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [prepName, setPrepName] = useState("");
   const [prepCategoria, setPrepCategoria] = useState("");
   // Desglose de un item compuesto (ej. "Milanesa" → pollo+huevo+pan rallado)
@@ -663,34 +668,55 @@ export function AiEntryForm({
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {mealSuggestions.map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              onClick={() => setText(suggestion)}
-              className="rounded-full border border-border bg-bg px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-wide text-textMuted hover:border-gold/60"
-            >
-              {suggestion}
-            </button>
-          ))}
-        </div>
-        {misPreparaciones.length > 0 && (
+        {(mealSuggestions.length > 0 || misPreparaciones.length > 0) && (
           <div className="mt-2">
-            <div className="mb-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">Tus preparaciones</div>
-            <div className="flex flex-wrap gap-1.5">
-              {misPreparaciones.map((prep) => (
-                <button
-                  key={prep.id}
-                  type="button"
-                  onClick={() => usePreparacion(prep)}
-                  className="rounded-full border border-gold/40 bg-gold/10 px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-wide text-gold hover:border-gold/60"
-                  title={prep.ingredientes.join(", ")}
-                >
-                  {prep.nombre} · {prep.categoria}
-                </button>
-              ))}
-            </div>
+            <button
+              type="button"
+              onClick={() => setShowSuggestions((v) => !v)}
+              className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-wide text-textMuted underline"
+            >
+              💡 Sugerencias {showSuggestions ? "▲" : "▼"}
+            </button>
+            {showSuggestions && (
+              <div className="mt-1.5 rounded-lg border border-dashed border-border p-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {mealSuggestions.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onClick={() => {
+                        setText(suggestion);
+                        setShowSuggestions(false);
+                      }}
+                      className="rounded-full border border-border bg-bg px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-wide text-textMuted hover:border-gold/60"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+                {misPreparaciones.length > 0 && (
+                  <div className="mt-2">
+                    <div className="mb-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">Tus preparaciones</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {misPreparaciones.map((prep) => (
+                        <button
+                          key={prep.id}
+                          type="button"
+                          onClick={() => {
+                            usePreparacion(prep);
+                            setShowSuggestions(false);
+                          }}
+                          className="rounded-full border border-gold/40 bg-gold/10 px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-wide text-gold hover:border-gold/60"
+                          title={prep.ingredientes.join(", ")}
+                        >
+                          {prep.nombre} · {prep.categoria}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
