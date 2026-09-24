@@ -587,7 +587,14 @@ export function computeGoalProgress(
   currentWeightKg: number,
   weightTrendKg: number | null,
   proteinTargetG: number,
-  goalKcal: number
+  goalKcal: number,
+  /** El peso con el que arrancó el plan de VERDAD (el primer peso semanal
+   * cargado), NO `profile.actual` -- ese campo se pisa cada vez que se
+   * vuelve a correr la calculadora (por ej. para ajustar las kcal a mitad
+   * de camino), así que como "punto de partida" para medir el progreso
+   * real queda mintiendo con el peso más reciente en vez del inicial. Si no
+   * hay historial todavía, cae a `profile.actual` como siempre. */
+  startingWeightKg?: number
 ): GoalProgressInfo | null {
   if (profile.modo === "recomponer") {
     return {
@@ -607,7 +614,7 @@ export function computeGoalProgress(
     };
   }
   if (profile.modo !== "perder" && profile.modo !== "aumentar") return null;
-  const actual = Number(profile.actual);
+  const actual = startingWeightKg ?? Number(profile.actual);
   const meta = Number(profile.meta);
   if (!actual || !meta || actual === meta) return null;
 
@@ -844,6 +851,25 @@ export function addDays(d: Date, n: number): Date {
  * compacto (ej. la franja fija de arriba), para que ambos muestren siempre
  * la misma racha.
  */
+/** El primer peso que se cargó de verdad, mirando tanto `weeklyWeights`
+ * (clave = lunes de esa semana) como el `pesoKg` de cualquier DayEntry --
+ * es el ancla correcta para "cuánto avancé desde que empecé", a diferencia
+ * de `calculatorProfile.actual`, que se pisa cada vez que se vuelve a
+ * correr la calculadora. */
+export function earliestLoggedWeight(days: { fecha: string; pesoKg?: number }[], weeklyWeights: Record<string, number> | undefined): number | null {
+  const weekKeys = Object.keys(weeklyWeights || {}).sort();
+  const earliestWeeklyKey = weekKeys[0];
+  const earliestWeekly = earliestWeeklyKey ? { fecha: earliestWeeklyKey, peso: weeklyWeights![earliestWeeklyKey] } : null;
+
+  const daysWithWeight = days.filter((d) => d.pesoKg != null).sort((a, b) => a.fecha.localeCompare(b.fecha));
+  const earliestDaily = daysWithWeight[0] ? { fecha: daysWithWeight[0].fecha, peso: daysWithWeight[0].pesoKg! } : null;
+
+  if (earliestWeekly && earliestDaily) {
+    return earliestWeekly.fecha <= earliestDaily.fecha ? earliestWeekly.peso : earliestDaily.peso;
+  }
+  return (earliestWeekly || earliestDaily)?.peso ?? null;
+}
+
 export function weightStreak(weights: Record<string, number>, weekKey: string): number {
   let streak = 0;
   let cursor = weekKey;

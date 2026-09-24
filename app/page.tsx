@@ -6,7 +6,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { SortableSection } from "@/components/SortableSection";
 import { useSectionOrder } from "@/lib/useSectionOrder";
 import { useLocalDays } from "@/lib/useLocalDays";
-import { isoMonday, addDays, fmtDate, summarizeWeek, proteinTargetForWeight, getMealItems, applyMealItems, dayTotal, weightStreak, computeGoalProgress, computeFoodTrainingInsight, computeMuscleGroupVolumeTrend } from "@/lib/calculations";
+import { isoMonday, addDays, fmtDate, summarizeWeek, proteinTargetForWeight, getMealItems, applyMealItems, dayTotal, weightStreak, computeGoalProgress, earliestLoggedWeight, computeFoodTrainingInsight, computeMuscleGroupVolumeTrend } from "@/lib/calculations";
 import { GoalProgress } from "@/components/GoalProgress";
 import { TabBar, MainTab } from "@/components/TabBar";
 import { MacrosTab } from "@/components/MacrosTab";
@@ -250,9 +250,10 @@ export default function Home() {
       currentWeightKg,
       weightTrend,
       proteinTargetForWeight(currentWeightKg),
-      settings.goal
+      settings.goal,
+      earliestLoggedWeight(days, settings.weeklyWeights) ?? undefined
     );
-  }, [settings.calculatorProfile, currentWeightKg, weightTrend, settings.goal]);
+  }, [settings.calculatorProfile, currentWeightKg, weightTrend, settings.goal, days, settings.weeklyWeights]);
 
   const muscleGroupTrend = useMemo(
     () => computeMuscleGroupVolumeTrend(days, weekDates),
@@ -539,11 +540,13 @@ export default function Home() {
                   );
                 }
                 if (blockId === "peso") {
-                  // Una vez cargado el peso de la semana que se está viendo, todo
-                  // el bloque desaparece (no solo se achica) hasta la semana que
-                  // viene -- pedido explícito: no tiene sentido seguir mostrando
-                  // un "cargar peso" ya resuelto.
-                  if (settings.weeklyWeights?.[fmtDate(monday)] != null) return null;
+                  // Antes, una vez cargado el peso de la semana, TODO el bloque
+                  // desaparecía -- pero WeeklyWeight ya se achica solo a una fila
+                  // compacta en ese caso (nada de cartel grande de "pendiente"),
+                  // y ahí es donde vive el historial completo de pesos -- si se
+                  // sigue ocultando el bloque entero, el historial nunca se
+                  // llega a ver. Se deja siempre montado; WeeklyWeight decide su
+                  // propio tamaño según haya o no peso cargado esta semana.
                   return (
                     <SortableSection key="peso" id="peso" onHide={() => hideInicioBlock("peso")} dragDisabledOnDesktop>
                       <WeeklyWeight

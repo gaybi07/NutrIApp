@@ -22,7 +22,14 @@ export function WeeklyWeight({
   const savedWeight = weights[weekKey];
   const [value, setValue] = useState(savedWeight ? String(savedWeight) : "");
   const [open, setOpen] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   useEscapeKey(() => setOpen(false), open);
+
+  // Todo el historial, no solo la semana pasada -- antes acá solo se veía
+  // el delta contra la semana anterior, sin forma de repasar las demás.
+  const history = Object.entries(weights)
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([wk, peso], i, arr) => ({ weekKey: wk, peso, prevPeso: arr[i + 1]?.[1] ?? null }));
 
   useEffect(() => {
     setValue(savedWeight ? String(savedWeight) : "");
@@ -102,26 +109,59 @@ export function WeeklyWeight({
   }
 
   return (
-    <section className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-bg/30 px-3 py-2">
-      <div className="flex items-baseline gap-2">
-        <span className="font-sans font-bold text-2xl leading-none text-text">{savedWeight.toFixed(1)}</span>
-        <span className="font-mono text-[9.5px] uppercase tracking-wide text-textMuted">kg esta semana</span>
+    <section className="mb-4 rounded-xl border border-border/60 bg-bg/30 px-3 py-2">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-baseline gap-2">
+          <span className="font-sans font-bold text-2xl leading-none text-text">{savedWeight.toFixed(1)}</span>
+          <span className="font-mono text-[9.5px] uppercase tracking-wide text-textMuted">kg esta semana</span>
+        </div>
+        <div className="flex items-center gap-2.5">
+          {delta != null && (
+            <span className={`font-mono text-[11px] ${deltaIsGood == null ? "text-textMuted" : deltaIsGood ? "text-sage" : "text-rust"}`}>
+              {delta > 0 ? "▲" : delta < 0 ? "▼" : "="} {Math.abs(delta).toFixed(1)} kg
+            </span>
+          )}
+          {streak >= 2 && <span className="font-mono text-[11px] text-gold">🔥 {streak}</span>}
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="font-mono text-[9px] uppercase tracking-wide text-textMuted underline"
+          >
+            Editar
+          </button>
+        </div>
       </div>
-      <div className="flex items-center gap-2.5">
-        {delta != null && (
-          <span className={`font-mono text-[11px] ${deltaIsGood == null ? "text-textMuted" : deltaIsGood ? "text-sage" : "text-rust"}`}>
-            {delta > 0 ? "▲" : delta < 0 ? "▼" : "="} {Math.abs(delta).toFixed(1)} kg
-          </span>
-        )}
-        {streak >= 2 && <span className="font-mono text-[11px] text-gold">🔥 {streak}</span>}
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="font-mono text-[9px] uppercase tracking-wide text-textMuted underline"
-        >
-          Editar
-        </button>
-      </div>
+      {history.length > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={() => setShowHistory((v) => !v)}
+            className="mt-1.5 font-mono text-[9px] uppercase tracking-wide text-textMuted underline"
+          >
+            {showHistory ? "Ocultar historial" : `Ver historial (${history.length} semanas)`}
+          </button>
+          {showHistory && (
+            <div className="mt-2 space-y-1 border-t border-dashed border-border pt-2">
+              {history.map(({ weekKey: wk, peso, prevPeso }) => {
+                const d = prevPeso != null ? Math.round((peso - prevPeso) * 10) / 10 : null;
+                const dGood = d == null || d === 0 ? null : wantsDown ? d < 0 : wantsUp ? d > 0 : null;
+                const date = new Date(`${wk}T00:00:00`);
+                return (
+                  <div key={wk} className="flex items-center justify-between font-mono text-[11px]">
+                    <span className="text-textMuted">
+                      {date.getDate()}/{date.getMonth() + 1}
+                    </span>
+                    <span className="text-text">{peso.toFixed(1)}kg</span>
+                    <span className={dGood == null ? "text-textMuted" : dGood ? "text-sage" : "text-rust"}>
+                      {d == null ? "—" : `${d > 0 ? "▲" : d < 0 ? "▼" : "="} ${Math.abs(d).toFixed(1)}kg`}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
       {modal}
     </section>
   );
