@@ -17,6 +17,7 @@ export function TodayCard({
   tdeeFallback,
   onLogMeal,
   onViewMeals,
+  onLogSupplements,
   onLogSteps,
   onLogTraining,
 }: {
@@ -30,6 +31,7 @@ export function TodayCard({
    * que "Modificar comidas de la semana", pero sin tener que bajar hasta esa
    * sección ni elegir el día (ya se sabe que es hoy). */
   onViewMeals: () => void;
+  onLogSupplements: () => void;
   onLogSteps: () => void;
   onLogTraining: () => void;
 }) {
@@ -108,6 +110,20 @@ export function TodayCard({
             </button>
           );
         })}
+        {/* Al lado de Colación a propósito -- mismo tamaño fijo que las 5
+            comidas, pero no suma kcal/macros: es un check de "lo tomé hoy",
+            no algo que pase por la carga de comidas. */}
+        <button
+          type="button"
+          onClick={onLogSupplements}
+          className={`relative flex h-16 flex-col items-center justify-center gap-1 rounded-xl border font-mono text-[10px] uppercase tracking-[0.06em] ${
+            (entry.suplementos?.length || 0) > 0 ? "border-sage/60 bg-sage/10 text-sage" : "border-gold/60 bg-gold text-bg"
+          }`}
+        >
+          {(entry.suplementos?.length || 0) > 0 && <span className="absolute right-1.5 top-1.5 text-[9px] leading-none">✓</span>}
+          <span className="text-sm leading-none">💊</span>
+          <span>Suplementos</span>
+        </button>
       </div>
       <button
         type="button"

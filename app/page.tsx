@@ -27,6 +27,7 @@ import { TodayCard } from "@/components/TodayCard";
 import { PurchaseHistoryCard } from "@/components/PurchaseHistoryCard";
 import { WeekMealsCard } from "@/components/WeekMealsCard";
 import { MealsEditor } from "@/components/MealsEditor";
+import { SupplementsPanel } from "@/components/SupplementsPanel";
 import { TrainingEntryForm } from "@/components/TrainingEntryForm";
 import { StepsEntryForm } from "@/components/StepsEntryForm";
 import { SleepEntryForm } from "@/components/SleepEntryForm";
@@ -114,7 +115,7 @@ export default function Home() {
   const [panel, setPanel] = useState<
     | "calc" | "ai" | "pasos" | "entreno" | "sueno" | "datos" | "planificador"
     | "tema" | "tamano-letra" | "solapas" | "herramientas" | "secciones" | "entrenador"
-    | "nutricionista" | "ver-comidas"
+    | "nutricionista" | "ver-comidas" | "suplementos"
     | null
   >(null);
   // Qué comida se tocó en Inicio (Desayuno/Almuerzo/etc.) para que el panel
@@ -533,6 +534,7 @@ export default function Home() {
                           setPanel("ai");
                         }}
                         onViewMeals={() => setPanel("ver-comidas")}
+                        onLogSupplements={() => setPanel("suplementos")}
                         onLogSteps={() => setPanel("pasos")}
                         onLogTraining={() => setPanel("entreno")}
                       />
@@ -796,6 +798,23 @@ export default function Home() {
               emptyMessage="Todavía no cargaste comidas hoy."
               onInventoryDelta={handleMealInventoryDelta}
             />
+          </div>
+        </div>
+      )}
+
+      {panel === "suplementos" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>
+          <div
+            className="relative my-4 max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-3 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              onClick={() => setPanel(null)}
+              className="absolute right-3 top-3 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+            >
+              Cerrar
+            </button>
+            <SupplementsPanel entry={todayEntry} onUpsert={upsertDay} />
           </div>
         </div>
       )}

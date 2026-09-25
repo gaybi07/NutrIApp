@@ -636,7 +636,30 @@ export interface DayEntry {
   merItems?: MealItem[];
   cenItems?: MealItem[];
   colItems?: MealItem[];
+  /** Suplementos tomados ese día -- aparte de las comidas a propósito: no
+   * suman kcal/macros, es solo un check de "lo tomé hoy" con su dosis
+   * habitual, no algo que la IA tenga que calcular. */
+  suplementos?: SupplementEntry[];
 }
+
+/** Un suplemento tomado un día puntual -- `nombre` coincide con
+ * SUPPLEMENT_CATALOG cuando viene de ahí, pero también admite uno libre
+ * (cargado a mano, "+ Otro"). */
+export interface SupplementEntry {
+  nombre: string;
+  dosis: string;
+}
+
+/** Básicos de toma diaria más comunes, con su dosis habitual ya puesta --
+ * tocar el botón alcanza, sin tener que escribir nada (a pedido explícito:
+ * "que sea tocar el botón y solo la dosis diaria recomendada"). */
+export const SUPPLEMENT_CATALOG: { nombre: string; dosis: string }[] = [
+  { nombre: "Creatina", dosis: "5 g" },
+  { nombre: "Magnesio", dosis: "400 mg" },
+  { nombre: "Omega 3", dosis: "1000 mg" },
+  { nombre: "Vitamina D", dosis: "2000 UI" },
+  { nombre: "Multivitamínico", dosis: "1 comprimido" },
+];
 
 export type WeekPlan = Record<string, Partial<Record<MealKey, string>>>; // fecha -> comida -> título de receta
 
