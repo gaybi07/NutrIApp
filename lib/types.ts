@@ -797,12 +797,26 @@ export function resolveOrder<T>(order: T[] | undefined, fallback: T[]): T[] {
   return [...known, ...missing];
 }
 
-/** Básico (gratis) / Premium / Premium+ -- ver migration_2026-09-21g_add_plan_gating.sql.
- * Sin `plan` guardado todavía (cuentas viejas) se trata como "basico". La
- * diferencia entre Premium y Premium+ es solo el número de cupos de
- * vínculo profesional (1 vs. 2) -- las herramientas que desbloquea el pago
- * son las mismas en los dos. */
-export type ClientPlan = "basico" | "premium" | "premium_plus";
+/** Básico (gratis) / Premium / Autoentreno / Premium+ -- ver
+ * migration_2026-09-21g_add_plan_gating.sql (basico/premium/premium_plus
+ * originales) + migration_2026-09-26_add_billing.sql (agrega autoentreno,
+ * decisión de precios del ticket 04 del mapa apk-completa). Sin `plan`
+ * guardado todavía (cuentas viejas) se trata como "basico". Premium vs.
+ * Premium+ es el número de cupos de vínculo profesional (1 vs. 2);
+ * Autoentreno no tiene ningún vínculo -- el plan armado por IA reemplaza al
+ * profesional, no se combina con Premium/Premium+. */
+export type ClientPlan = "basico" | "premium" | "autoentreno" | "premium_plus";
+
+/** Precios mensuales en ARS, decisión final del ticket 04 (2026-09-24) --
+ * única fuente de verdad para el checkout de MercadoPago y para cualquier
+ * pantalla que muestre precios (evita que se desincronicen). Básico no
+ * cobra, no tiene entrada acá -- ver `subscriptions`, que solo existe para
+ * los 3 planes pagos. */
+export const PLAN_PRICES_ARS: Record<"premium" | "autoentreno" | "premium_plus", number> = {
+  premium: 4500,
+  autoentreno: 6000,
+  premium_plus: 9000,
+};
 
 export interface Settings {
   goal: number; // kcal objetivo diario de consumo

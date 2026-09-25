@@ -15,6 +15,7 @@ export function AuthPanel({
   isApprovedTrainer,
   onOpenNutricionista,
   isApprovedNutricionista,
+  onOpenPlanes,
   centerContent,
 }: {
   onAuthChange?: (authenticated: boolean) => void;
@@ -35,6 +36,7 @@ export function AuthPanel({
   /** Igual que isApprovedTrainer, pero del lado Nutricionista -- una vez
    * aprobado, la solapa "Nutricionista" lo reemplaza. */
   isApprovedNutricionista?: boolean;
+  onOpenPlanes?: () => void;
   /** Contenido opcional que ocupa toda la fila de arriba, a la izquierda del
    * botón de ajustes (⚙) -- pensado para la navegación de semana y el
    * resumen de peso/racha (ya no se muestra el nombre de la cuenta acá). */
@@ -188,6 +190,18 @@ export function AuthPanel({
                   className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
                 >
                   Ser nutricionista
+                </button>
+              )}
+              {isSupabaseConfigured && onOpenPlanes && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenPlanes();
+                  }}
+                  className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
+                >
+                  💎 Planes
                 </button>
               )}
               {userEmail ? (
