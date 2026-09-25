@@ -71,7 +71,7 @@ function PendingRequestRow({
  * pacientes. Sin adopción de plan todavía (eso es la fase siguiente: ver el
  * Plan Nutricional dentro de la carga de comidas) -- por ahora solo el
  * estado del vínculo, igual de útil para probar que el backend anda. */
-function OwnPatientLinkSection({ authenticated }: { authenticated: boolean }) {
+export function OwnPatientLinkSection({ authenticated }: { authenticated: boolean }) {
   const linkHook = useTrainerLink(authenticated, "nutricion");
   const [code, setCode] = useState("");
 

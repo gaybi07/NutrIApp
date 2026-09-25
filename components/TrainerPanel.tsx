@@ -466,7 +466,7 @@ function TrainerStudentsAndRoutines({
   );
 }
 
-function StudentLinkSection({
+export function StudentLinkSection({
   authenticated,
   routines,
   onSaveRoutines,

@@ -16,6 +16,7 @@ export function AuthPanel({
   onOpenNutricionista,
   isApprovedNutricionista,
   onOpenPlanes,
+  onOpenLinkToProfessional,
   centerContent,
 }: {
   onAuthChange?: (authenticated: boolean) => void;
@@ -37,6 +38,7 @@ export function AuthPanel({
    * aprobado, la solapa "Nutricionista" lo reemplaza. */
   isApprovedNutricionista?: boolean;
   onOpenPlanes?: () => void;
+  onOpenLinkToProfessional?: () => void;
   /** Contenido opcional que ocupa toda la fila de arriba, a la izquierda del
    * botón de ajustes (⚙) -- pensado para la navegación de semana y el
    * resumen de peso/racha (ya no se muestra el nombre de la cuenta acá). */
@@ -202,6 +204,18 @@ export function AuthPanel({
                   className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
                 >
                   💎 Planes
+                </button>
+              )}
+              {isSupabaseConfigured && onOpenLinkToProfessional && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenLinkToProfessional();
+                  }}
+                  className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
+                >
+                  Vincularme a un profesional
                 </button>
               )}
               {userEmail ? (

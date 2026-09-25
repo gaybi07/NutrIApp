@@ -683,10 +683,11 @@ export const FONT_SIZE_OPTIONS: { value: FontSize; label: string; description: s
  * arrastrándolos (mantener apretado en cualquier parte del bloque, como
  * mover íconos en la pantalla de inicio del celular) — si no personalizó
  * nada todavía, se usa el orden por default de cada solapa. */
-export type InicioBlockId = "hoy" | "peso" | "objetivo" | "seguimiento" | "comidasSemana";
+export type InicioBlockId = "hoy" | "peso" | "vinculo" | "objetivo" | "seguimiento" | "comidasSemana";
 export const DEFAULT_INICIO_ORDER: InicioBlockId[] = [
   "hoy",
   "peso",
+  "vinculo",
   "objetivo",
   "seguimiento",
   "comidasSemana",
@@ -694,6 +695,7 @@ export const DEFAULT_INICIO_ORDER: InicioBlockId[] = [
 export const INICIO_BLOCK_LABELS: Record<InicioBlockId, string> = {
   hoy: "Hoy",
   peso: "Peso de esta semana",
+  vinculo: "Vincularme a un profesional",
   objetivo: "Tu objetivo",
   // Antes eran tres bloques separados (Indicadores, Kcal por día y Tabla de
   // la semana) -- se unificaron en uno solo a pedido del usuario, con las
