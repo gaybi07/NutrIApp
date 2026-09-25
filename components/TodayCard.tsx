@@ -15,6 +15,7 @@ export function TodayCard({
   entry,
   goal,
   tdeeFallback,
+  pesoKg,
   onLogMeal,
   onViewMeals,
   onLogSupplements,
@@ -24,6 +25,9 @@ export function TodayCard({
   entry: DayEntry;
   goal: number;
   tdeeFallback: number;
+  /** Peso real para escalar el ajuste de gasto por pasos (ver
+   * estimateGasto) -- sin esto cae al fallback fijo de siempre. */
+  pesoKg: number;
   /** Qué comida se tocó -- antes abría siempre el mismo formulario y ahí
    * adentro había que elegir de un desplegable; ahora se sabe de entrada. */
   onLogMeal: (meal: MealKey) => void;
@@ -39,7 +43,7 @@ export function TodayCard({
   const dowLabel = DOW[today.getDay()];
   const dowCapitalized = dowLabel.charAt(0).toUpperCase() + dowLabel.slice(1);
   const consumed = dayTotal(entry);
-  const adjustedGoal = dayGoal(entry, goal, tdeeFallback);
+  const adjustedGoal = dayGoal(entry, goal, tdeeFallback, pesoKg);
   const remaining = Math.max(0, adjustedGoal - consumed);
   const protein = dayProt(entry);
   const over = consumed > adjustedGoal;

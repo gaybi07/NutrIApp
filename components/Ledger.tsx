@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { DayEntry, emptyDay, TrainingIntensity, INTENSITY_STYLES } from "@/lib/types";
-import { dayTotal, dayProt, dayDeficit, estimateTrainingCalories } from "@/lib/calculations";
+import { dayTotal, dayProt, dayDeficit, estimateTrainingCalories, resolveWeightForDate, DEFAULT_PESO_KG } from "@/lib/calculations";
 import { Collapsible } from "@/components/Collapsible";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 import { SECTION_HELP, FIELD_HELP } from "@/lib/helpText";
@@ -26,6 +26,8 @@ export function Ledger({
   variant = "actividad",
   openOnDesktop,
   bare,
+  weeklyWeights,
+  fallbackWeightKg = DEFAULT_PESO_KG,
 }: {
   weekDates: string[];
   weekDays: (DayEntry | null)[];
@@ -38,6 +40,10 @@ export function Ledger({
    * bloque ya colapsable (ej. "Seguimiento semanal" en Inicio, junto con
    * Indicadores y el gráfico), en vez de tener su propia tarjeta aparte. */
   bare?: boolean;
+  /** Para resolver el peso real de CADA día (ver resolveWeightForDate) y que
+   * el déficit no use siempre el mismo peso fijo. */
+  weeklyWeights?: Record<string, number>;
+  fallbackWeightKg?: number;
 }) {
   const anyData = weekDays.some((d) => d);
   const [activeDate, setActiveDate] = useState<string | null>(null);
@@ -91,7 +97,7 @@ export function Ledger({
           const dateObj = new Date(`${fecha}T00:00:00`);
           const total = d ? dayTotal(d) : null;
           const prot = d ? dayProt(d) : null;
-          const deficit = d ? dayDeficit(d, tdeeFallback) : null;
+          const deficit = d ? dayDeficit(d, tdeeFallback, resolveWeightForDate(fecha, weekDays.filter((x): x is DayEntry => !!x), weeklyWeights, fallbackWeightKg)) : null;
           const intensidad = d?.entreno ? d.entrenoIntensidad || "moderado" : "ninguno";
           const trainingStyle = INTENSITY_STYLES[intensidad];
           const overClass = total !== null ? (total > goal ? "text-rust" : "text-sage") : "";

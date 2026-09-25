@@ -204,7 +204,6 @@ export default function Home() {
   const weekDates = useMemo(() => [...Array(7)].map((_, i) => fmtDate(addDays(monday, i))), [monday]);
   const weekDays = useMemo(() => weekDates.map((f) => days.find((d) => d.fecha === f) || null), [weekDates, days]);
   const presentDays = useMemo(() => weekDays.filter((d): d is NonNullable<typeof d> => !!d), [weekDays]);
-  const summary = useMemo(() => summarizeWeek(presentDays, settings.tdeeFallback, settings.goal), [presentDays, settings]);
 
   const sunday = addDays(monday, 6);
 
@@ -236,6 +235,11 @@ export default function Home() {
   }, [days, settings]);
 
   const proteinTargetG = useMemo(() => proteinTargetForWeight(currentWeightKg), [currentWeightKg]);
+
+  const summary = useMemo(
+    () => summarizeWeek(presentDays, settings.tdeeFallback, settings.goal, settings.weeklyWeights, currentWeightKg, days),
+    [presentDays, settings, currentWeightKg, days]
+  );
 
   const weightTrend = useMemo(() => {
     const currentWeight = settings.weeklyWeights?.[fmtDate(monday)];
@@ -529,6 +533,7 @@ export default function Home() {
                         entry={todayEntry}
                         goal={settings.goal}
                         tdeeFallback={settings.tdeeFallback}
+                        pesoKg={currentWeightKg}
                         onLogMeal={(meal) => {
                           setAiMeal(meal);
                           setPanel("ai");
@@ -585,6 +590,8 @@ export default function Home() {
                           goal={settings.goal}
                           avgGoal={summary.avgGoal || settings.goal}
                           avgGasto={settings.tdeeFallback}
+                          weeklyWeights={settings.weeklyWeights}
+                          fallbackWeightKg={currentWeightKg}
                         />
                         <div className="my-3 border-t border-dashed border-border" />
                         <Ledger
@@ -595,6 +602,8 @@ export default function Home() {
                           onUpsert={upsertDay}
                           variant="actividad"
                           bare
+                          weeklyWeights={settings.weeklyWeights}
+                          fallbackWeightKg={currentWeightKg}
                         />
                       </Collapsible>
                     </SortableSection>

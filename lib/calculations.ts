@@ -285,20 +285,71 @@ export function macroTargets(goalKcal: number, proteinTargetG: number, modo?: Go
   };
 }
 
+/** Peso de referencia cuando no hay ningún dato real (ni de ese día, ni
+ * semanal, ni de la calculadora) -- mismo valor que ya se usaba como
+ * fallback en app/page.tsx (currentWeightKg). */
+export const DEFAULT_PESO_KG = 75;
+
+/** Kcal quemadas por paso, por kg de peso corporal -- ~0,04 kcal/kg cada 100
+ * pasos es la estimación estándar de gasto caminando (fuente: aproximación
+ * conversacional habitual, no una tabla clínica; ver comentario de
+ * estimateGasto). Antes era un coeficiente fijo (0.04 kcal/paso) igual para
+ * cualquier persona -- alguien de 100kg y alguien de 50kg quemaban "lo
+ * mismo" por paso, lo cual no tiene sentido: caminar cuesta más caro
+ * metabólicamente cuanto más pesás. */
+const STEP_KCAL_PER_KG = 0.0004;
+
 /**
  * Estima el gasto calórico diario (TDEE) en base a pasos + si hubo entrenamiento.
  * Si el día no tiene pasos cargados, cae al valor de referencia de settings.
  *
- * IMPORTANTE (ver spec de producto, sección 2.3): estos umbrales son una
- * aproximación conversacional para un caso puntual. En una versión real,
- * reemplazar por una fórmula calibrada por usuario (Mifflin-St Jeor + factor
- * de actividad), usando peso/altura/edad/sexo reales.
+ * 5.000 pasos es el "piso neutral" -- se asume que ese movimiento mínimo ya
+ * está adentro de `tdeeFallback` (que hoy usa un factor de actividad fijo
+ * de sedentario, 1.2x el metabolismo basal). Por arriba o por debajo de esa
+ * marca, el ajuste ahora escala con el peso de la persona (`pesoKg`) en vez
+ * de ser un coeficiente fijo para cualquiera -- y el techo/piso del ajuste
+ * escala igual, así alguien más pesado no se queda pisando el límite antes
+ * que alguien liviano solo porque camina lo mismo.
+ *
+ * `pesoKg` es opcional para no romper ningún llamado viejo (cae a
+ * DEFAULT_PESO_KG) -- pero para que el número sea real hay que pasar el
+ * peso de ESE día puntual (ver `resolveWeightForDate`), no siempre el peso
+ * de hoy, sobre todo mirando hacia atrás en el historial.
  */
-export function estimateGasto(d: DayEntry, tdeeFallback: number): number {
+export function estimateGasto(d: DayEntry, tdeeFallback: number, pesoKg: number = DEFAULT_PESO_KG): number {
   const pasos = Math.max(0, d.pasos || 0);
-  const ajustePasos = pasos > 0 ? Math.max(-150, Math.min(350, (pasos - 5000) * 0.04)) : 0;
+  const stepCoef = pesoKg * STEP_KCAL_PER_KG;
+  // Sin techo a propósito -- caminar mucho de verdad (>15-20k pasos) suma
+  // proporcional, sin plancharse. El piso de abajo se mantiene: un día muy
+  // sedentario no resta más de lo que ya restaba, para no exagerar el
+  // castigo por un día flojo.
+  const pisoMagnitude = pesoKg * 4;
+  const ajustePasos = pasos > 0 ? Math.max(-pisoMagnitude, (pasos - 5000) * stepCoef) : 0;
   const ajusteEntrenamiento = estimateTrainingCalories(d);
   return Math.round(Math.max(0, tdeeFallback + ajustePasos + ajusteEntrenamiento));
+}
+
+/**
+ * Peso a usar para el gasto de UN día puntual -- el propio (si ese
+ * DayEntry.pesoKg está cargado), sino el peso semanal cargado esa semana o
+ * la más reciente ANTERIOR a esa fecha (no una futura -- no tendría sentido
+ * usar un peso que todavía no tenías), sino la más antigua que exista (mejor
+ * que asumir el peso de HOY para un día de hace meses), sino el fallback.
+ */
+export function resolveWeightForDate(
+  fecha: string,
+  days: DayEntry[],
+  weeklyWeights: Record<string, number> | undefined,
+  fallback: number = DEFAULT_PESO_KG
+): number {
+  const ownDay = days.find((d) => d.fecha === fecha);
+  if (ownDay?.pesoKg) return ownDay.pesoKg;
+  const weekKeys = Object.keys(weeklyWeights || {}).sort();
+  if (weekKeys.length === 0) return fallback;
+  const weekOf = fmtDate(isoMonday(fecha));
+  const atOrBefore = [...weekKeys].reverse().find((k) => k <= weekOf);
+  if (atOrBefore) return weeklyWeights![atOrBefore];
+  return weeklyWeights![weekKeys[0]];
 }
 
 /** Estima el gasto adicional de todas las sesiones del día, sin contar el reposo. */
@@ -420,13 +471,13 @@ export function weekdayOf(fecha: string): Weekday {
 }
 
 /** Ajusta el objetivo base con la actividad registrada en ese día. */
-export function dayGoal(d: DayEntry, goal: number, tdeeFallback: number): number {
-  return Math.round(Math.max(0, goal + estimateGasto(d, tdeeFallback) - tdeeFallback));
+export function dayGoal(d: DayEntry, goal: number, tdeeFallback: number, pesoKg?: number): number {
+  return Math.round(Math.max(0, goal + estimateGasto(d, tdeeFallback, pesoKg) - tdeeFallback));
 }
 
 /** Déficit (positivo) o superávit (negativo) de un día dado. */
-export function dayDeficit(d: DayEntry, tdeeFallback: number): number {
-  return estimateGasto(d, tdeeFallback) - dayTotal(d);
+export function dayDeficit(d: DayEntry, tdeeFallback: number, pesoKg?: number): number {
+  return estimateGasto(d, tdeeFallback, pesoKg) - dayTotal(d);
 }
 
 export interface WeekSummary {
@@ -441,17 +492,31 @@ export interface WeekSummary {
   deficitAcumulado: number;
 }
 
-export function summarizeWeek(days: DayEntry[], tdeeFallback: number, goal: number): WeekSummary {
+/** `weeklyWeights`/`allDays`/`fallbackWeightKg` son opcionales para no romper
+ * llamadas viejas -- sin ellos, cae al peso fijo de siempre (DEFAULT_PESO_KG),
+ * mismo comportamiento que antes de que el gasto por pasos escalara con el
+ * peso real. Pasándolos, cada día de la semana usa SU peso resuelto (ver
+ * resolveWeightForDate), no el de hoy -- así mirar hacia atrás en el
+ * historial usa el peso que tenías en ese momento, no el actual. */
+export function summarizeWeek(
+  days: DayEntry[],
+  tdeeFallback: number,
+  goal: number,
+  weeklyWeights?: Record<string, number>,
+  fallbackWeightKg: number = DEFAULT_PESO_KG,
+  allDays: DayEntry[] = days
+): WeekSummary {
   const present = days.filter((d) => dayTotal(d) > 0);
   const n = present.length || 1;
+  const pesoFor = (d: DayEntry) => resolveWeightForDate(d.fecha, allDays, weeklyWeights, fallbackWeightKg);
   const avgKcal = Math.round(present.reduce((a, d) => a + dayTotal(d), 0) / n);
   const avgProt = Math.round(present.reduce((a, d) => a + dayProt(d), 0) / n);
   const avgSteps = Math.round(present.reduce((a, d) => a + (d.pasos || 0), 0) / n);
-  const gastos = present.map((d) => estimateGasto(d, tdeeFallback));
+  const gastos = present.map((d) => estimateGasto(d, tdeeFallback, pesoFor(d)));
   const avgGasto = Math.round(gastos.reduce((a, b) => a + b, 0) / (gastos.length || 1));
-  const avgGoal = Math.round(present.reduce((a, d) => a + dayGoal(d, goal, tdeeFallback), 0) / n);
+  const avgGoal = Math.round(present.reduce((a, d) => a + dayGoal(d, goal, tdeeFallback, pesoFor(d)), 0) / n);
   const trainedDays = present.filter((d) => d.entreno).length;
-  const deficitAcumulado = present.reduce((a, d) => a + dayDeficit(d, tdeeFallback), 0);
+  const deficitAcumulado = present.reduce((a, d) => a + dayDeficit(d, tdeeFallback, pesoFor(d)), 0);
   const avgDeficit = Math.round(deficitAcumulado / (present.length || 1));
   return { avgKcal, avgProt, avgSteps, avgGasto, avgGoal, avgDeficit, trainedDays, totalDays: present.length, deficitAcumulado };
 }

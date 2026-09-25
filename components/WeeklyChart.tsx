@@ -2,7 +2,7 @@
 
 import { ComposedChart, Bar, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { DayEntry, TrainingSession, INTENSITY_STYLES } from "@/lib/types";
-import { dayGoal, estimateGasto, dayDeficit, getTrainingSessions } from "@/lib/calculations";
+import { dayGoal, estimateGasto, dayDeficit, getTrainingSessions, resolveWeightForDate, DEFAULT_PESO_KG } from "@/lib/calculations";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 const COLORS = { des: "#E88D67", alm: "rgb(var(--color-accent))", mer: "#C9A227", cen: "#B5533C", col: "#8B5CF6" };
@@ -67,17 +67,24 @@ export function WeeklyChart({
   goal,
   avgGoal,
   avgGasto,
+  weeklyWeights,
+  fallbackWeightKg = DEFAULT_PESO_KG,
 }: {
   weekDates: string[];
   weekDays: (DayEntry | null)[];
   goal: number;
   avgGoal: number;
   avgGasto: number;
+  /** Para resolver el peso real de CADA día (ver resolveWeightForDate). */
+  weeklyWeights?: Record<string, number>;
+  fallbackWeightKg?: number;
 }) {
+  const knownDays = weekDays.filter((x): x is DayEntry => !!x);
   const data: ChartRow[] = weekDates.map((fecha, i) => {
     const d = weekDays[i];
     const dow = DOW[new Date(`${fecha}T00:00:00`).getDay()];
     if (!d) return { dow, des: 0, alm: 0, mer: 0, cen: 0, col: 0, pasos: 0, sessions: [], goal, gasto: avgGasto, deficit: 0 };
+    const pesoKg = resolveWeightForDate(fecha, knownDays, weeklyWeights, fallbackWeightKg);
     return {
       dow,
       des: d.desK,
@@ -87,9 +94,9 @@ export function WeeklyChart({
       col: d.colK || 0,
       pasos: d.pasos || 0,
       sessions: getTrainingSessions(d),
-      goal: dayGoal(d, goal, avgGasto),
-      gasto: estimateGasto(d, avgGasto),
-      deficit: dayDeficit(d, avgGasto),
+      goal: dayGoal(d, goal, avgGasto, pesoKg),
+      gasto: estimateGasto(d, avgGasto, pesoKg),
+      deficit: dayDeficit(d, avgGasto, pesoKg),
     };
   });
 
