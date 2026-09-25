@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { DayEntry, InventoryItem, MealKey, MEAL_LABELS, MealItem, emptyDay, PREPARATION_CATEGORY_SUGGESTIONS, PreparationIngredient } from "@/lib/types";
+import { DayEntry, InventoryItem, MealKey, MEAL_LABELS, MealItem, emptyDay, PreparationIngredient } from "@/lib/types";
 import { countDigits, MAX_DIGITS, MAX_TEXT_LENGTH, normalizeNumberInput } from "@/lib/inputLimits";
-import { fmtDate, addDays, getMealItems, applyMealItems, suggestedMeal, macrosForFoodQuantity, sumMealItems } from "@/lib/calculations";
+import { fmtDate, addDays, getMealItems, applyMealItems, suggestedMeal, macrosForFoodQuantity, sumMealItems, tagGroup } from "@/lib/calculations";
+import { SavePreparationToggle } from "@/components/SavePreparationToggle";
 import { FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 import { useMealMemory } from "@/lib/useMealMemory";
@@ -232,10 +233,15 @@ export function AiEntryForm({
       p.items.length === 1
         ? [{ ...p.items[0], kcal: p.kcal, protein: p.protein, carbs: p.carbs, fat: p.fat, fiber: p.fiber }]
         : p.items;
-    const nuevosItems: MealItem[] = rawItems.map((item, i) => ({
+    let nuevosItems: MealItem[] = rawItems.map((item, i) => ({
       ...item,
       id: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
     }));
+    // Con nombre puesto, estos items quedan tageados como un solo plato --
+    // MealsEditor los muestra colapsados en una sola línea en vez de una
+    // tarjeta por ingrediente (independiente de si además se guarda como
+    // preparación reusable, más abajo).
+    if (savePrep && prepName.trim()) nuevosItems = tagGroup(nuevosItems, prepName.trim());
     const itemsActuales = getMealItems(existing, meal);
     const updated = { ...applyMealItems(existing, meal, [...itemsActuales, ...nuevosItems]), alimentos: alimentosDelDia };
     onUpsert(updated);
@@ -834,36 +840,14 @@ export function AiEntryForm({
             </div>
           )}
           {preview.items.length > 0 && (
-            <div className="mb-2 rounded-lg border border-dashed border-gold/40 bg-gold/5 p-2.5">
-              <label className="flex items-center gap-1.5 text-[12px] text-text">
-                <input type="checkbox" checked={savePrep} onChange={(e) => setSavePrep(e.target.checked)} />
-                Guardar como preparación (para volver a cargar esta combinación otro día)
-              </label>
-              {savePrep && (
-                <div className="mt-2 space-y-1.5">
-                  <input
-                    type="text"
-                    placeholder="Nombre, ej: Milanesa con arroz y arvejas"
-                    maxLength={MAX_TEXT_LENGTH}
-                    value={prepName}
-                    onChange={(e) => setPrepName(e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    list="prep-categorias"
-                    placeholder="Categoría, ej: Almuerzos"
-                    maxLength={40}
-                    value={prepCategoria}
-                    onChange={(e) => setPrepCategoria(e.target.value)}
-                  />
-                  <datalist id="prep-categorias">
-                    {PREPARATION_CATEGORY_SUGGESTIONS.map((c) => (
-                      <option key={c} value={c} />
-                    ))}
-                  </datalist>
-                </div>
-              )}
-            </div>
+            <SavePreparationToggle
+              open={savePrep}
+              onToggleOpen={() => setSavePrep((v) => !v)}
+              nombre={prepName}
+              onChangeNombre={setPrepName}
+              categoria={prepCategoria}
+              onChangeCategoria={setPrepCategoria}
+            />
           )}
           <button
             onClick={() => handleSave()}

@@ -585,6 +585,13 @@ export interface MealItem {
     nutritionPer100g?: InventoryNutrition;
     zona?: InventoryZone;
   };
+  /** Si este item viene de una preparación nombrada ("+ Agregar a
+   * preparaciones"), todos los items de ese plato comparten el mismo
+   * grupoId -- MealsEditor los muestra como una sola línea colapsada
+   * (grupoNombre + kcal total) en vez de una tarjeta por ingrediente. Un
+   * item cargado suelto no tiene grupo. */
+  grupoId?: string;
+  grupoNombre?: string;
 }
 
 export interface DayEntry {

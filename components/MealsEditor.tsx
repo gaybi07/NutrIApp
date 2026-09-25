@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { DayEntry, MealKey, MealItem, MEAL_LABELS } from "@/lib/types";
-import { getMealItems, applyMealItems, unitsToGrams } from "@/lib/calculations";
+import { getMealItems, applyMealItems, unitsToGrams, groupMealItems, tagGroup, sumMealItems } from "@/lib/calculations";
 import { countDigits, MAX_DIGITS, normalizeNumberInput } from "@/lib/inputLimits";
 import { useFoods } from "@/lib/useFoods";
+import { useMealPreparations } from "@/lib/useMealPreparations";
 
 const MEAL_ORDER: MealKey[] = ["des", "alm", "mer", "cen", "col"];
 
@@ -51,6 +52,30 @@ export function MealsEditor({
   // una comida por vez.
   const [openMeal, setOpenMeal] = useState<MealKey | null>(null);
   const toggleMeal = (meal: MealKey) => setOpenMeal((prev) => (prev === meal ? null : meal));
+  // Grupos ("preparaciones" ya nombradas, ver grupoId en MealItem) que están
+  // desglosados -- por defecto todos colapsados, cada uno se abre por separado.
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const toggleGroup = (grupoId: string) => setOpenGroups((prev) => ({ ...prev, [grupoId]: !prev[grupoId] }));
+  const { save: savePreparation } = useMealPreparations();
+
+  // Nombrar retroactivamente lo que ya está cargado suelto en una comida --
+  // todos los items sin grupo de esa comida pasan a compartir un grupoId
+  // nuevo y se muestran colapsados de ahí en más.
+  const groupLooseItems = (meal: MealKey) => {
+    const nombre = window.prompt("¿Cómo se llama esta preparación?");
+    if (!nombre || !nombre.trim()) return;
+    const items = getMealItems(entry, meal);
+    const loose = items.filter((item) => !item.grupoId);
+    const grouped = items.filter((item) => item.grupoId);
+    const tagged = tagGroup(loose, nombre.trim());
+    onUpsert(applyMealItems(entry, meal, [...grouped, ...tagged]));
+    savePreparation(
+      nombre.trim(),
+      "",
+      loose.map((item) => ({ nombre: item.nombre, cantidad: item.gramos ?? 1, unidad: (item.gramos != null ? "g" : "u.") as "g" | "u." })),
+      meal
+    );
+  };
 
   // Los alimentos cargados antes de que existiera el campo "gramos" (o que la
   // IA no haya podido estimar) se completan solos con una estimación a
@@ -131,6 +156,122 @@ export function MealsEditor({
     onUpsert(applyMealItems(entry, meal, items));
   };
 
+  // Tarjeta editable de un solo item -- se usa tanto para un item suelto
+  // como para cada item dentro de una preparación ya desglosada (mismos
+  // campos, nada cambia salvo de dónde se llama).
+  const renderItemCard = (item: MealItem, meal: MealKey) => (
+    <div key={item.id} className="rounded-lg border border-border bg-bg/50 px-2 py-2">
+      <div className="mb-1.5 flex items-center gap-1.5">
+        <span className="min-w-0 flex-1 truncate text-[12px] text-text">{item.nombre}</span>
+        <button
+          type="button"
+          onClick={() => removeItem(meal, item.id)}
+          aria-label={`Borrar ${item.nombre}`}
+          className="rounded-full border border-rust/50 px-1.5 py-0.5 font-mono text-[12px] leading-none text-rust"
+        >
+          ×
+        </button>
+      </div>
+      <div className="grid grid-cols-3 gap-1.5">
+        <div>
+          <div className="mb-0.5 font-mono text-[8px] uppercase tracking-wide text-textMuted">
+            {item.fuenteUnidad === "u." ? "Unidades" : "Gramos"}
+          </div>
+          {item.fuenteUnidad === "u." ? (
+            <>
+              <input
+                type="number"
+                max="999"
+                placeholder="—"
+                value={item.fuenteCantidad ?? ""}
+                onChange={(e) => {
+                  if (countDigits(e.target.value) <= MAX_DIGITS) updateQuantity(meal, item.id, normalizeNumberInput(e.target));
+                }}
+                className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
+              />
+              {gramsPerUnit(item.nombre) && (
+                <div className="mt-0.5 text-right font-mono text-[8px] text-textMuted">≈ {item.gramos ?? 0} g</div>
+              )}
+            </>
+          ) : (
+            <input
+              type="number"
+              max="9999"
+              placeholder="—"
+              value={item.gramos ?? ""}
+              onChange={(e) => {
+                if (countDigits(e.target.value) <= MAX_DIGITS) updateQuantity(meal, item.id, normalizeNumberInput(e.target));
+              }}
+              className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
+            />
+          )}
+        </div>
+        <div>
+          <div className="mb-0.5 font-mono text-[8px] uppercase tracking-wide text-textMuted">Kcal</div>
+          <input
+            type="number"
+            max="999999"
+            value={item.kcal}
+            onChange={(e) => {
+              if (countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { kcal: normalizeNumberInput(e.target) });
+            }}
+            className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
+          />
+        </div>
+        <div>
+          <div className="mb-0.5 font-mono text-[8px] uppercase tracking-wide text-textMuted">Proteína (g)</div>
+          <input
+            type="number"
+            max="999999"
+            value={item.protein}
+            onChange={(e) => {
+              if (countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { protein: normalizeNumberInput(e.target) });
+            }}
+            className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
+          />
+        </div>
+      </div>
+      <div className="mt-1.5 grid grid-cols-3 gap-1.5">
+        <div>
+          <div className="mb-0.5 font-mono text-[8px] uppercase tracking-wide text-textMuted">Carbos (g)</div>
+          <input
+            type="number"
+            max="999999"
+            value={item.carbs ?? 0}
+            onChange={(e) => {
+              if (countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { carbs: normalizeNumberInput(e.target) });
+            }}
+            className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
+          />
+        </div>
+        <div>
+          <div className="mb-0.5 font-mono text-[8px] uppercase tracking-wide text-textMuted">Grasas (g)</div>
+          <input
+            type="number"
+            max="999999"
+            value={item.fat ?? 0}
+            onChange={(e) => {
+              if (countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { fat: normalizeNumberInput(e.target) });
+            }}
+            className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
+          />
+        </div>
+        <div>
+          <div className="mb-0.5 font-mono text-[8px] uppercase tracking-wide text-textMuted">Fibra (g)</div>
+          <input
+            type="number"
+            max="999999"
+            value={item.fiber ?? 0}
+            onChange={(e) => {
+              if (countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { fiber: normalizeNumberInput(e.target) });
+            }}
+            className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
+          />
+        </div>
+      </div>
+    </div>
+  );
+
   const removeItem = (meal: MealKey, itemId: string) => {
     const removed = getMealItems(entry, meal).find((item) => item.id === itemId);
     if (removed?.fuenteAlacenaId && removed.fuenteCantidad != null) {
@@ -176,122 +317,39 @@ export function MealsEditor({
           </div>
           {open && (
           <div className="flex flex-col gap-1.5 px-2.5 pb-2.5">
-            {items.map((item) => (
-              <div key={item.id} className="rounded-lg border border-border bg-bg/50 px-2 py-2">
-                <div className="mb-1.5 flex items-center gap-1.5">
-                  <span className="min-w-0 flex-1 truncate text-[12px] text-text">{item.nombre}</span>
+            {groupMealItems(items).map((group) => {
+              if (!group.grupoId) return renderItemCard(group.items[0], meal);
+              const groupOpen = Boolean(openGroups[group.grupoId]);
+              const totals = sumMealItems(group.items);
+              return (
+                <div key={group.grupoId} className="rounded-lg border border-gold/40 bg-gold/5">
                   <button
                     type="button"
-                    onClick={() => removeItem(meal, item.id)}
-                    aria-label={`Borrar ${item.nombre}`}
-                    className="rounded-full border border-rust/50 px-1.5 py-0.5 font-mono text-[12px] leading-none text-rust"
+                    onClick={() => toggleGroup(group.grupoId as string)}
+                    className="flex w-full items-center justify-between gap-2 px-2 py-2 text-left"
                   >
-                    ×
+                    <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-text">{group.grupoNombre}</span>
+                    <span className="shrink-0 font-mono text-[10px] text-textMuted">
+                      {Math.round(totals.kcal)} kcal {groupOpen ? "▲" : "▼"}
+                    </span>
                   </button>
-                </div>
-                <div className="grid grid-cols-3 gap-1.5">
-                  <div>
-                    <div className="mb-0.5 font-mono text-[8px] uppercase tracking-wide text-textMuted">
-                      {item.fuenteUnidad === "u." ? "Unidades" : "Gramos"}
+                  {groupOpen && (
+                    <div className="flex flex-col gap-1.5 border-t border-gold/30 p-1.5">
+                      {group.items.map((item) => renderItemCard(item, meal))}
                     </div>
-                    {item.fuenteUnidad === "u." ? (
-                      <>
-                        <input
-                          type="number"
-                          max="999"
-                          placeholder="—"
-                          value={item.fuenteCantidad ?? ""}
-                          onChange={(e) => {
-                            if (countDigits(e.target.value) <= MAX_DIGITS) updateQuantity(meal, item.id, normalizeNumberInput(e.target));
-                          }}
-                          className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
-                        />
-                        {gramsPerUnit(item.nombre) && (
-                          <div className="mt-0.5 text-right font-mono text-[8px] text-textMuted">≈ {item.gramos ?? 0} g</div>
-                        )}
-                      </>
-                    ) : (
-                      <input
-                        type="number"
-                        max="9999"
-                        placeholder="—"
-                        value={item.gramos ?? ""}
-                        onChange={(e) => {
-                          if (countDigits(e.target.value) <= MAX_DIGITS) updateQuantity(meal, item.id, normalizeNumberInput(e.target));
-                        }}
-                        className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
-                      />
-                    )}
-                  </div>
-                  <div>
-                    <div className="mb-0.5 font-mono text-[8px] uppercase tracking-wide text-textMuted">Kcal</div>
-                    <input
-                      type="number"
-                      max="999999"
-                      value={item.kcal}
-                      onChange={(e) => {
-                        if (countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { kcal: normalizeNumberInput(e.target) });
-                      }}
-                      className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
-                    />
-                  </div>
-                  <div>
-                    <div className="mb-0.5 font-mono text-[8px] uppercase tracking-wide text-textMuted">Proteína (g)</div>
-                    <input
-                      type="number"
-                      max="999999"
-                      value={item.protein}
-                      onChange={(e) => {
-                        if (countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { protein: normalizeNumberInput(e.target) });
-                      }}
-                      className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
-                    />
-                  </div>
+                  )}
                 </div>
-                {/* Carbos/grasas/fibra no se mostraban acá -- si la IA
-                    devolvía un valor absurdo (ej. un cero de más) no había
-                    forma de corregirlo sin borrar y volver a cargar la
-                    comida entera. */}
-                <div className="mt-1.5 grid grid-cols-3 gap-1.5">
-                  <div>
-                    <div className="mb-0.5 font-mono text-[8px] uppercase tracking-wide text-textMuted">Carbos (g)</div>
-                    <input
-                      type="number"
-                      max="999999"
-                      value={item.carbs ?? 0}
-                      onChange={(e) => {
-                        if (countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { carbs: normalizeNumberInput(e.target) });
-                      }}
-                      className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
-                    />
-                  </div>
-                  <div>
-                    <div className="mb-0.5 font-mono text-[8px] uppercase tracking-wide text-textMuted">Grasas (g)</div>
-                    <input
-                      type="number"
-                      max="999999"
-                      value={item.fat ?? 0}
-                      onChange={(e) => {
-                        if (countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { fat: normalizeNumberInput(e.target) });
-                      }}
-                      className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
-                    />
-                  </div>
-                  <div>
-                    <div className="mb-0.5 font-mono text-[8px] uppercase tracking-wide text-textMuted">Fibra (g)</div>
-                    <input
-                      type="number"
-                      max="999999"
-                      value={item.fiber ?? 0}
-                      onChange={(e) => {
-                        if (countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { fiber: normalizeNumberInput(e.target) });
-                      }}
-                      className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
+            {items.filter((item) => !item.grupoId).length > 1 && (
+              <button
+                type="button"
+                onClick={() => groupLooseItems(meal)}
+                className="mt-0.5 rounded-lg border border-dashed border-gold/40 px-2.5 py-1.5 font-mono text-[9px] uppercase tracking-wide text-gold"
+              >
+                + Agregar a preparaciones
+              </button>
+            )}
           </div>
           )}
         </div>

@@ -12,8 +12,10 @@ import {
   INVENTORY_CATEGORY_LABELS,
   emptyDay,
 } from "@/lib/types";
-import { getMealItems, applyMealItems, nutritionForAmount, unitsToGrams } from "@/lib/calculations";
+import { getMealItems, applyMealItems, nutritionForAmount, unitsToGrams, tagGroup } from "@/lib/calculations";
 import { useFoods } from "@/lib/useFoods";
+import { useMealPreparations } from "@/lib/useMealPreparations";
+import { SavePreparationToggle } from "@/components/SavePreparationToggle";
 
 type BasketEntry = { itemId: string; amount: number };
 
@@ -52,6 +54,10 @@ export function MealFromAlacena({
   // que se escribe, convirtiéndolo ANTES de entrar a la canasta.
   const [unitMode, setUnitMode] = useState<Record<string, boolean>>({});
   const { gramsPerUnit } = useFoods();
+  const { save: savePreparation } = useMealPreparations();
+  const [savePrep, setSavePrep] = useState(false);
+  const [prepName, setPrepName] = useState("");
+  const [prepCategoria, setPrepCategoria] = useState("");
 
   const usable = useMemo(() => items.filter((i) => i.nutritionPer100g && i.quantity > 0), [items]);
   const missingCount = items.length - usable.length;
@@ -102,7 +108,7 @@ export function MealFromAlacena({
   const confirm = () => {
     if (basketDetails.length === 0) return;
     const existing = days.find((d) => d.fecha === fecha) || emptyDay(fecha);
-    const nuevosItems: MealItem[] = basketDetails.map((b, i) => ({
+    let nuevosItems: MealItem[] = basketDetails.map((b, i) => ({
       id: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
       nombre: b.item.name,
       kcal: b.nutrition.kcal,
@@ -119,6 +125,15 @@ export function MealFromAlacena({
       fuenteUnidad: b.item.unit,
       fuenteSnapshot: { name: b.item.name, category: b.item.category, nutritionPer100g: b.item.nutritionPer100g, zona: b.item.zona },
     }));
+    if (savePrep && prepName.trim()) {
+      nuevosItems = tagGroup(nuevosItems, prepName.trim());
+      savePreparation(
+        prepName,
+        prepCategoria,
+        basketDetails.map((b) => ({ nombre: b.item.name, cantidad: b.amount, unidad: b.item.unit })),
+        meal
+      );
+    }
     const alimentosDelDia = Array.from(new Set([...(existing.alimentos || []), ...basketDetails.map((b) => b.item.name)]));
     const itemsActuales = getMealItems(existing, meal);
     const updated = { ...applyMealItems(existing, meal, [...itemsActuales, ...nuevosItems]), alimentos: alimentosDelDia };
@@ -128,6 +143,9 @@ export function MealFromAlacena({
     setStatus(`Sumado a ${MEAL_LABELS[meal]} ✓ — descontado de tu alacena`);
     setBasket([]);
     setDrafts({});
+    setSavePrep(false);
+    setPrepName("");
+    setPrepCategoria("");
     setTimeout(() => setStatus(""), 4000);
   };
 
@@ -250,9 +268,19 @@ export function MealFromAlacena({
               </div>
             ))}
           </div>
-          <div className="mt-2 font-mono text-[11px] text-textMuted">
+          <div className="mt-2 mb-2 font-mono text-[11px] text-textMuted">
             Total: <span className="text-text">{totals.kcal} kcal · {totals.protein}g prot</span>
           </div>
+          {basketDetails.length > 1 && (
+            <SavePreparationToggle
+              open={savePrep}
+              onToggleOpen={() => setSavePrep((v) => !v)}
+              nombre={prepName}
+              onChangeNombre={setPrepName}
+              categoria={prepCategoria}
+              onChangeCategoria={setPrepCategoria}
+            />
+          )}
           <button
             type="button"
             onClick={confirm}

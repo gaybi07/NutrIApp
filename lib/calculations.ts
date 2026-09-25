@@ -199,6 +199,36 @@ export function sumMealItems(items: MealItem[]): { kcal: number; protein: number
   );
 }
 
+/** Marca un conjunto de items como un solo plato nombrado -- mismo grupoId
+ * nuevo para todos, así MealsEditor los puede mostrar colapsados en una
+ * sola línea en vez de una tarjeta por ingrediente. */
+export function tagGroup(items: MealItem[], nombre: string): MealItem[] {
+  const grupoId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return items.map((item) => ({ ...item, grupoId, grupoNombre: nombre }));
+}
+
+/** Agrupa una lista de items por `grupoId`, preservando el orden -- items
+ * sueltos (sin grupoId) quedan cada uno en su propio grupo (`grupoId:
+ * null`), items que comparten grupoId quedan juntos en uno solo. */
+export function groupMealItems(items: MealItem[]): { grupoId: string | null; grupoNombre?: string; items: MealItem[] }[] {
+  const groups: { grupoId: string | null; grupoNombre?: string; items: MealItem[] }[] = [];
+  const byGrupoId = new Map<string, { grupoId: string | null; grupoNombre?: string; items: MealItem[] }>();
+  for (const item of items) {
+    if (!item.grupoId) {
+      groups.push({ grupoId: null, items: [item] });
+      continue;
+    }
+    let group = byGrupoId.get(item.grupoId);
+    if (!group) {
+      group = { grupoId: item.grupoId, grupoNombre: item.grupoNombre, items: [] };
+      byGrupoId.set(item.grupoId, group);
+      groups.push(group);
+    }
+    group.items.push(item);
+  }
+  return groups;
+}
+
 /** Reemplaza los items de una comida y recalcula sus totales agregados (K/P/C/G/F) a partir de ellos. */
 export function applyMealItems(entry: DayEntry, meal: MealKey, items: MealItem[]): DayEntry {
   const sums = sumMealItems(items);

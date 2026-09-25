@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { DayEntry, InventoryNutrition, MealItem, MealKey, MEAL_LABELS, emptyDay } from "@/lib/types";
-import { getMealItems, applyMealItems, nutritionForAmount } from "@/lib/calculations";
+import { getMealItems, applyMealItems, nutritionForAmount, tagGroup } from "@/lib/calculations";
+import { useMealPreparations } from "@/lib/useMealPreparations";
+import { SavePreparationToggle } from "@/components/SavePreparationToggle";
 
 type OffResult = {
   name: string;
@@ -39,6 +41,10 @@ export function MealFromSearch({
   const [searchStatus, setSearchStatus] = useState("");
   const [basket, setBasket] = useState<BasketEntry[]>([]);
   const [status, setStatus] = useState("");
+  const { save: savePreparation } = useMealPreparations();
+  const [savePrep, setSavePrep] = useState(false);
+  const [prepName, setPrepName] = useState("");
+  const [prepCategoria, setPrepCategoria] = useState("");
 
   const search = async () => {
     if (!query.trim()) return;
@@ -89,7 +95,7 @@ export function MealFromSearch({
   const confirm = () => {
     if (basketDetails.length === 0) return;
     const existing = days.find((d) => d.fecha === fecha) || emptyDay(fecha);
-    const nuevosItems: MealItem[] = basketDetails.map((b, i) => ({
+    let nuevosItems: MealItem[] = basketDetails.map((b, i) => ({
       id: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
       nombre: b.name,
       kcal: b.nutrition.kcal,
@@ -99,6 +105,15 @@ export function MealFromSearch({
       fiber: b.nutrition.fiber,
       gramos: b.amountG,
     }));
+    if (savePrep && prepName.trim()) {
+      nuevosItems = tagGroup(nuevosItems, prepName.trim());
+      savePreparation(
+        prepName,
+        prepCategoria,
+        basketDetails.map((b) => ({ nombre: b.name, cantidad: b.amountG, unidad: "g" as const })),
+        meal
+      );
+    }
     const alimentosDelDia = Array.from(new Set([...(existing.alimentos || []), ...basketDetails.map((b) => b.name)]));
     const itemsActuales = getMealItems(existing, meal);
     const updated = { ...applyMealItems(existing, meal, [...itemsActuales, ...nuevosItems]), alimentos: alimentosDelDia };
@@ -108,6 +123,9 @@ export function MealFromSearch({
     setBasket([]);
     setResults([]);
     setQuery("");
+    setSavePrep(false);
+    setPrepName("");
+    setPrepCategoria("");
     setTimeout(() => setStatus(""), 4000);
   };
 
@@ -181,9 +199,19 @@ export function MealFromSearch({
               </div>
             ))}
           </div>
-          <div className="mt-2 font-mono text-[11px] text-textMuted">
+          <div className="mt-2 mb-2 font-mono text-[11px] text-textMuted">
             Total: <span className="text-text">{totals.kcal} kcal · {totals.protein}g prot</span>
           </div>
+          {basketDetails.length > 1 && (
+            <SavePreparationToggle
+              open={savePrep}
+              onToggleOpen={() => setSavePrep((v) => !v)}
+              nombre={prepName}
+              onChangeNombre={setPrepName}
+              categoria={prepCategoria}
+              onChangeCategoria={setPrepCategoria}
+            />
+          )}
           <button type="button" onClick={confirm} className="mt-2 w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-bg">
             Sumar a {MEAL_LABELS[meal]}
           </button>
