@@ -565,6 +565,10 @@ export function LiveWorkout({
   // final (opcional) -- con rutina personal, "Finalizar" sigue haciendo
   // exactamente lo mismo que siempre (sin paso extra).
   const handleFinish = () => {
+    // Sin esto, el pop-up del ejercicio que hubiera quedado abierto seguiría
+    // ahí detrás del modal de "Finalizar" (mismo tipo de overlay, uno atrás
+    // del otro).
+    setOpenIndex(null);
     if (isAssignedRoutine) setFinishing(true);
     else doFinish("");
   };
@@ -739,12 +743,6 @@ export function LiveWorkout({
               const doneCount = ex.sets.filter((s) => s.intensidad != null).length;
               const complete = ex.sets.length > 0 && doneCount === ex.sets.length;
               const open = openIndex === i;
-              // En una rutina asignada, un ejercicio planificado no se puede
-              // sacar de la sesión ni perder series por debajo de lo fijado
-              // -- solo uno agregado en vivo (esFueraDePlan) es plenamente
-              // libre, igual que en una rutina personal.
-              const canRemoveExercise = !isAssignedRoutine || ex.esFueraDePlan;
-              const canRemoveSetBelow = (setIndex: number) => !isAssignedRoutine || ex.esFueraDePlan || setIndex >= ex.plannedSeries;
               return (
                 <div key={i} className="overflow-hidden rounded-lg border border-border bg-bg/40">
                   <button
@@ -764,12 +762,44 @@ export function LiveWorkout({
                       )}
                     </div>
                     <span className="shrink-0 font-mono text-[10px] text-textMuted">
-                      {doneCount}/{ex.sets.length} series {open ? "▲" : "▼"}
+                      {doneCount}/{ex.sets.length} series {open ? "●" : "›"}
                     </span>
                   </button>
+                </div>
+              );
+            })}
+          </div>
 
-                  {open && (
-                    <div className="border-t border-border p-2.5">
+          {/* Pop-up del ejercicio abierto -- flota sobre la pantalla en vez de
+              empujar la lista hacia abajo (antes se desglosaba inline acá
+              mismo). La lista de arriba se queda quieta siempre; solo cambia
+              CÓMO se muestra el detalle, la lógica de openIndex/auto-cierre
+              (más abajo, ver el useEffect que lo pone en null solo) no cambia. */}
+          {openIndex != null && session.exercises[openIndex] && (
+            <div
+              className="fixed inset-0 z-[68] flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm"
+              onClick={() => setOpenIndex(null)}
+            >
+              <div
+                className="max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-2xl border border-border bg-surface p-3 shadow-2xl"
+                onClick={(event) => event.stopPropagation()}
+              >
+                {(() => {
+                  const i = openIndex;
+                  const ex = session.exercises[i];
+                  const canRemoveExercise = !isAssignedRoutine || ex.esFueraDePlan;
+                  const canRemoveSetBelow = (setIndex: number) => !isAssignedRoutine || ex.esFueraDePlan || setIndex >= ex.plannedSeries;
+                  return (
+                    <>
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <div className={`truncate text-base font-bold ${ex.omitido ? "text-textMuted line-through" : "text-text"}`}>
+                          {ex.nombre}
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <div className="font-mono text-[8px] uppercase tracking-wide text-textMuted">{isPaused ? "En pausa" : "Tiempo"}</div>
+                          <div className={`font-mono text-sm font-bold tabular-nums ${isPaused ? "text-gold" : "text-text"}`}>{elapsedLabel}</div>
+                        </div>
+                      </div>
                       {ex.suggestionNote && (
                         <div className="mb-2 rounded-lg border border-gold/30 bg-gold/10 px-2 py-1.5 text-[11px] text-textMuted">
                           💡 {ex.suggestionNote}
@@ -909,12 +939,19 @@ export function LiveWorkout({
                           </button>
                         </div>
                       )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                      <button
+                        type="button"
+                        onClick={() => setOpenIndex(null)}
+                        className="mt-2 w-full rounded-lg border border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted"
+                      >
+                        Cerrar
+                      </button>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
 
           <div className="mt-2 grid grid-cols-2 gap-1.5">
             <button
