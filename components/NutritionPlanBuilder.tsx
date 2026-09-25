@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DayMealOptions, MEAL_LABELS, MealKey, MealOption, Weekday, WEEKDAY_LABELS_SHORT } from "@/lib/types";
 import { isoMonday, fmtDate, addDays } from "@/lib/calculations";
 import { useNutritionPlan } from "@/lib/useNutritionPlan";
@@ -78,12 +78,67 @@ export function NutritionPlanBuilder({ studentId }: { studentId: string }) {
     updateMeal(mealKey, current.filter((_, i) => i !== index));
   };
 
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
+  const [importStatus, setImportStatus] = useState("");
+
+  // Lee el PDF/Word/Excel que el Nutricionista ya usaba con este paciente y
+  // lo convierte en Meal Options -- nunca publica solo, solo llena el
+  // borrador de esta semana para que se revise/retoque antes de publicar
+  // (mismo botón "Publicar" de siempre).
+  const handleImportFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setImporting(true);
+    setImportStatus("Leyendo tu archivo...");
+    try {
+      const fileDataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("No se pudo leer el archivo"));
+        reader.readAsDataURL(file);
+      });
+      const res = await fetch("/api/parse-nutrition-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileDataUrl, mimeType: file.type }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "No pude leer el archivo.");
+      let dias = 0;
+      for (const weekday of WEEKDAYS_LMV) {
+        if (data[weekday]) {
+          setDay(weekday, data[weekday]);
+          dias++;
+        }
+      }
+      setImportStatus(dias > 0 ? `Se cargaron ${dias} día${dias === 1 ? "" : "s"} — revisá y ajustá antes de publicar ✓` : "No encontré días reconocibles en el archivo.");
+    } catch (e) {
+      setImportStatus(e instanceof Error ? e.message : "No pude leer el archivo. Probá con otro, o cargalo a mano.");
+    } finally {
+      setImporting(false);
+      setTimeout(() => setImportStatus(""), 6000);
+    }
+  };
+
   if (!loaded) {
     return <div className="text-[12px] text-textMuted">Cargando planificador...</div>;
   }
 
   return (
     <div>
+      <input ref={fileRef} type="file" accept=".pdf,.docx,.xlsx" onChange={handleImportFile} className="hidden" />
+      <button
+        type="button"
+        onClick={() => fileRef.current?.click()}
+        disabled={importing}
+        className="mb-3 w-full rounded-lg border border-dashed border-gold/50 bg-gold/5 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold disabled:opacity-50"
+      >
+        {importing ? "Leyendo tu archivo..." : "📄 Importar desde PDF, Word o Excel"}
+      </button>
+      {importStatus && <div className="mb-3 text-center text-[11px] text-textMuted">{importStatus}</div>}
+
       <div className="mb-3 flex items-center justify-between">
         <button
           type="button"
