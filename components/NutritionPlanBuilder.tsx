@@ -102,7 +102,7 @@ export function NutritionPlanBuilder({ studentId }: { studentId: string }) {
       const res = await fetch("/api/parse-nutrition-plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileDataUrl, mimeType: file.type }),
+        body: JSON.stringify({ fileDataUrl, mimeType: file.type, fileName: file.name }),
       });
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "No pude leer el archivo.");

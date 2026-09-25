@@ -84,12 +84,33 @@ async function extractXlsxText(buffer: Buffer): Promise<string> {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { fileDataUrl, mimeType } = body as { fileDataUrl?: string; mimeType?: string };
-    if (!fileDataUrl || !mimeType) return NextResponse.json({ error: "Falta el archivo" }, { status: 400 });
+    const { fileDataUrl, mimeType: rawMimeType, fileName } = body as { fileDataUrl?: string; mimeType?: string; fileName?: string };
+    if (!fileDataUrl) return NextResponse.json({ error: "Falta el archivo" }, { status: 400 });
 
     const match = fileDataUrl.match(/^data:([^;]+);base64,(.*)$/);
     if (!match) return NextResponse.json({ error: "El archivo no tiene un formato válido" }, { status: 400 });
     const base64 = match[2];
+
+    // El navegador no siempre manda el mimeType exacto que esperamos para
+    // Word/Excel (a veces llega vacío o genérico, según el sistema operativo
+    // y sus asociaciones de archivo) -- si no matchea ninguno de los 3
+    // conocidos, se usa la extensión del nombre del archivo como respaldo
+    // antes de rechazarlo. El data: URL (match[1]) es la tercera fuente,
+    // por si acaso.
+    const KNOWN = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ];
+    let mimeType = rawMimeType && KNOWN.includes(rawMimeType) ? rawMimeType : undefined;
+    if (!mimeType && KNOWN.includes(match[1])) mimeType = match[1];
+    if (!mimeType && fileName) {
+      const ext = fileName.toLowerCase().split(".").pop();
+      if (ext === "pdf") mimeType = "application/pdf";
+      else if (ext === "docx") mimeType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+      else if (ext === "xlsx") mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    }
+    if (!mimeType) mimeType = rawMimeType || "";
     if (Buffer.byteLength(base64, "base64") > MAX_SIZE_BYTES) {
       return NextResponse.json({ error: "El archivo pesa demasiado (máx. 10MB)." }, { status: 400 });
     }
