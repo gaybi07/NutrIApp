@@ -51,6 +51,7 @@ function toDay(row: Record<string, unknown>): DayEntry {
     merItems: (row.mer_items as DayEntry["merItems"]) || undefined,
     cenItems: (row.cen_items as DayEntry["cenItems"]) || undefined,
     colItems: (row.col_items as DayEntry["colItems"]) || undefined,
+    suplementos: (row.suplementos as DayEntry["suplementos"]) || undefined,
   };
 }
 
@@ -102,6 +103,7 @@ function toDayRow(day: DayEntry, userId: string) {
     mer_items: day.merItems || [],
     cen_items: day.cenItems || [],
     col_items: day.colItems || [],
+    suplementos: day.suplementos || [],
   };
 }
 
@@ -166,15 +168,26 @@ export async function PUT(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
 
   const body = await req.json();
+
+  // Si la columna `suplementos` (nueva) todavía no existe porque no se
+  // corrió la migración, no queremos que TODO el guardado del día falle por
+  // esa sola columna -- se reintenta sin ella, igual que ya se hace abajo
+  // para user_settings.
+  const upsertDaysRows = async (rows: ReturnType<typeof toDayRow>[]) => {
+    let { error } = await supabase.from("days").upsert(rows);
+    if (error?.message?.includes("does not exist")) {
+      ({ error } = await supabase.from("days").upsert(rows.map(({ suplementos, ...rest }) => rest)));
+    }
+    return error;
+  };
+
   if (Array.isArray(body.days)) {
-    const { error } = await supabase
-      .from("days")
-      .upsert(body.days.map((day: DayEntry) => toDayRow(day, user.id)));
+    const error = await upsertDaysRows(body.days.map((day: DayEntry) => toDayRow(day, user.id)));
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
   if (body.day) {
-    const { error } = await supabase.from("days").upsert(toDayRow(body.day as DayEntry, user.id));
+    const error = await upsertDaysRows([toDayRow(body.day as DayEntry, user.id)]);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
