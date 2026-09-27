@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { DayMealOptions, MEAL_LABELS, MealKey, MealOption, Weekday, WEEKDAY_LABELS_SHORT } from "@/lib/types";
+import { DayMealOptions, MEAL_LABELS, MealKey, MealOption, MealOptionIngredient, Weekday, WEEKDAY_LABELS_SHORT } from "@/lib/types";
 import { isoMonday, fmtDate, addDays } from "@/lib/calculations";
 import { useNutritionPlan } from "@/lib/useNutritionPlan";
 
@@ -76,6 +76,30 @@ export function NutritionPlanBuilder({ studentId }: { studentId: string }) {
   const removeOption = (mealKey: MealKey, index: number) => {
     const current = selectedDay?.[mealKey] || [];
     updateMeal(mealKey, current.filter((_, i) => i !== index));
+  };
+
+  const addIngredient = (mealKey: MealKey, optIdx: number) => {
+    const current = selectedDay?.[mealKey] || [];
+    const opt = current[optIdx];
+    if (!opt) return;
+    const ingredientes = [...(opt.ingredientes || []), { name: "", quantity: 0, unit: "g" as const }];
+    updateOption(mealKey, optIdx, { ingredientes });
+  };
+
+  const updateIngredient = (mealKey: MealKey, optIdx: number, ingIdx: number, patch: Partial<MealOptionIngredient>) => {
+    const current = selectedDay?.[mealKey] || [];
+    const opt = current[optIdx];
+    if (!opt) return;
+    const ingredientes = (opt.ingredientes || []).map((ing, i) => (i === ingIdx ? { ...ing, ...patch } : ing));
+    updateOption(mealKey, optIdx, { ingredientes });
+  };
+
+  const removeIngredient = (mealKey: MealKey, optIdx: number, ingIdx: number) => {
+    const current = selectedDay?.[mealKey] || [];
+    const opt = current[optIdx];
+    if (!opt) return;
+    const ingredientes = (opt.ingredientes || []).filter((_, i) => i !== ingIdx);
+    updateOption(mealKey, optIdx, { ingredientes: ingredientes.length > 0 ? ingredientes : undefined });
   };
 
   const fileRef = useRef<HTMLInputElement>(null);
@@ -273,6 +297,60 @@ export function NutritionPlanBuilder({ studentId }: { studentId: string }) {
                           rows={2}
                           className="mt-1.5 w-full text-[12px]"
                         />
+
+                        <div className="mt-1.5 border-t border-dashed border-border pt-1.5">
+                          <div className="mb-1 flex items-center justify-between">
+                            <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">🧺 Ingredientes (opcional)</span>
+                            <button
+                              type="button"
+                              onClick={() => addIngredient(mealKey, idx)}
+                              className="font-mono text-[9px] uppercase tracking-wide text-gold"
+                            >
+                              + Ingrediente
+                            </button>
+                          </div>
+                          {(opt.ingredientes?.length || 0) > 0 && (
+                            <div className="space-y-1">
+                              {opt.ingredientes!.map((ing, ingIdx) => (
+                                <div key={ingIdx} className="flex items-center gap-1">
+                                  <input
+                                    type="text"
+                                    placeholder="Ingrediente (ej: papa)"
+                                    value={ing.name}
+                                    onChange={(e) => updateIngredient(mealKey, idx, ingIdx, { name: e.target.value })}
+                                    className="min-w-0 flex-1 text-[11px]"
+                                  />
+                                  <input
+                                    type="number"
+                                    placeholder="cant."
+                                    value={ing.quantity || ""}
+                                    onChange={(e) => updateIngredient(mealKey, idx, ingIdx, { quantity: Number(e.target.value) || 0 })}
+                                    className="w-14 shrink-0 text-[11px]"
+                                  />
+                                  <select
+                                    value={ing.unit}
+                                    onChange={(e) => updateIngredient(mealKey, idx, ingIdx, { unit: e.target.value as MealOptionIngredient["unit"] })}
+                                    className="w-14 shrink-0 text-[11px]"
+                                  >
+                                    <option value="g">g</option>
+                                    <option value="ml">ml</option>
+                                    <option value="u.">u.</option>
+                                  </select>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeIngredient(mealKey, idx, ingIdx)}
+                                    className="shrink-0 font-mono text-[10px] text-rust"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <div className="mt-1 text-[9px] text-textMuted">
+                            Cargá los ingredientes o preparaciones que uses (ej: pollo, arroz, o directo "puré") — así tu paciente puede armar la lista de compras.
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>

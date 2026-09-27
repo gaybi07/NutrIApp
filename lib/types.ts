@@ -1,5 +1,12 @@
 export type MealKey = "des" | "alm" | "mer" | "cen" | "col";
 
+/** Un ingrediente real de supermercado (nunca un sub-plato como "puré" --
+ * eso a su vez son papa/leche/manteca/queso) -- mismo shape que
+ * `RecipeIngredient` (lib/recipes.ts), reexportado acá para que
+ * `MealOption` lo use sin que `lib/recipes.ts` (que sí importa de este
+ * archivo) se convierta en una dependencia circular. */
+export type MealOptionIngredient = { name: string; quantity: number; unit: InventoryItem["unit"] };
+
 /** Una alternativa de comida dentro de un Plan Nutricional (ticket 01 del
  * mapa apk-completa): 2-3 de estas por comida, cada una con su propia
  * explicación de cuándo/por qué elegirla (ej. según horario de entreno o de
@@ -12,6 +19,11 @@ export interface MealOption {
   carbs: number;
   fat: number;
   explicacion: string;
+  /** Opcional -- si el Nutricionista los carga (o la IA los extrajo de un
+   * archivo importado), permite que esta opción sume a la lista de compras
+   * del Paciente al importar el plan a WeekPlanner. Sin esto, la opción
+   * sigue funcionando igual, solo que no aporta a la lista de compras. */
+  ingredientes?: MealOptionIngredient[];
 }
 
 /** Las Meal Options de un día, por comida -- vive dentro de

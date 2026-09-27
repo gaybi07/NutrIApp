@@ -918,6 +918,8 @@ export default function Home() {
                 onSave={saveWeekPlan}
                 dailyGoal={settings.goal}
                 proteinTargetG={proteinTargetG}
+                authenticated={authenticated}
+                hasNutricionistaLink={hasNutricionistaLink}
               />
             </div>
           </div>

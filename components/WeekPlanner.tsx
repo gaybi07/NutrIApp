@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { InventoryItem, MealKey, MEAL_LABELS, WeekPlan } from "@/lib/types";
+import { InventoryItem, MealKey, MealOption, MEAL_LABELS, WeekPlan, WEEKDAYS } from "@/lib/types";
 import { isoMonday, addDays, fmtDate } from "@/lib/calculations";
 import { Recipe, RecipeIngredient, RECIPES } from "@/lib/recipes";
 import { inventoryKey } from "@/lib/useInventory";
 import { useMealMemory, MealMemoryEntry } from "@/lib/useMealMemory";
+import { useMyNutritionPlan } from "@/lib/useMyNutritionPlan";
 import { SECTION_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
 
@@ -201,17 +202,22 @@ export function WeekPlanner({
   onSave,
   dailyGoal,
   proteinTargetG,
+  authenticated,
+  hasNutricionistaLink,
 }: {
   items: InventoryItem[];
   weekPlan: WeekPlan;
   onSave: (plan: WeekPlan) => void;
   dailyGoal: number;
   proteinTargetG: number;
+  authenticated: boolean;
+  hasNutricionistaLink: boolean;
 }) {
   const [pickerFor, setPickerFor] = useState<{ fecha: string; meal: MealKey } | null>(null);
   const [customText, setCustomText] = useState("");
   const [showExport, setShowExport] = useState(false);
   const [copyStatus, setCopyStatus] = useState("");
+  const [importStatus, setImportStatus] = useState("");
   const { memory: mealMemory } = useMealMemory();
 
   useEffect(() => {
@@ -219,6 +225,67 @@ export function WeekPlanner({
   }, [pickerFor]);
 
   const nextWeekDates = useMemo(() => getNextWeekDates(), []);
+
+  const myPlan = useMyNutritionPlan(authenticated, hasNutricionistaLink, nextWeekDates[0]);
+
+  // Opciones del Plan Nutricional del paciente, por fecha de la semana que
+  // viene -- se resuelve el weekday de cada fecha (WEEKDAYS[date.getDay()])
+  // porque el plan se guarda por nombre de día, no por fecha puntual.
+  const planOptionsByDate = useMemo(() => {
+    const map = new Map<string, Partial<Record<MealKey, MealOption[]>>>();
+    for (const fecha of nextWeekDates) {
+      const weekday = WEEKDAYS[new Date(`${fecha}T00:00:00`).getDay()];
+      const day = myPlan.days[weekday];
+      if (day) map.set(fecha, day);
+    }
+    return map;
+  }, [myPlan.days, nextWeekDates]);
+
+  const hasPlanToImport = planOptionsByDate.size > 0;
+
+  // Ingredientes de las Meal Options del plan importado, indexados por
+  // nombre -- así una vez que su nombre queda asignado en weekPlan (igual
+  // que el título de una receta del catálogo), shoppingList los encuentra
+  // sin necesitar un estado paralelo que se pierda al recargar la página.
+  const importedIngredients = useMemo(() => {
+    const map = new Map<string, RecipeIngredient[]>();
+    for (const day of planOptionsByDate.values()) {
+      for (const meal of MEAL_KEYS) {
+        for (const opt of day[meal] || []) {
+          if (opt.ingredientes && opt.ingredientes.length > 0) map.set(opt.nombre, opt.ingredientes);
+        }
+      }
+    }
+    return map;
+  }, [planOptionsByDate]);
+
+  const importNutritionPlan = () => {
+    const next: WeekPlan = { ...weekPlan };
+    let autoFilled = 0;
+    let needsChoice = 0;
+    for (const [fecha, day] of planOptionsByDate.entries()) {
+      const dayPlan = { ...(next[fecha] || {}) };
+      for (const meal of MEAL_KEYS) {
+        const options = day[meal];
+        if (!options || options.length === 0) continue;
+        if (dayPlan[meal] !== undefined) continue; // no pisar algo ya elegido
+        if (options.length === 1) {
+          dayPlan[meal] = options[0].nombre;
+          autoFilled++;
+        } else {
+          needsChoice++;
+        }
+      }
+      if (Object.keys(dayPlan).length > 0) next[fecha] = dayPlan;
+    }
+    onSave(next);
+    setImportStatus(
+      needsChoice > 0
+        ? `Se cargaron ${autoFilled} comida${autoFilled === 1 ? "" : "s"} — ${needsChoice} tenían más de una opción, elegí cuál en cada "+ Elegir".`
+        : `Se cargaron ${autoFilled} comida${autoFilled === 1 ? "" : "s"} de tu plan nutricional ✓`
+    );
+    setTimeout(() => setImportStatus(""), 6000);
+  };
 
   const assign = (fecha: string, meal: MealKey, recipeTitle: string | null) => {
     const next: WeekPlan = { ...weekPlan };
@@ -231,8 +298,12 @@ export function WeekPlanner({
     setPickerFor(null);
   };
 
-  const selectedRecipes = useMemo(() => {
-    const list: Recipe[] = [];
+  // Ingredientes de todo lo elegido para la semana -- de la receta del
+  // catálogo si el título matchea una, o de una Meal Option importada del
+  // Plan Nutricional si no (importedIngredients), lo que sea que se
+  // encuentre primero. Nada más queda sin ingredientes con cantidad.
+  const selectedIngredientLists = useMemo(() => {
+    const lists: RecipeIngredient[][] = [];
     for (const fecha of nextWeekDates) {
       const dayPlan = weekPlan[fecha];
       if (!dayPlan) continue;
@@ -240,16 +311,22 @@ export function WeekPlanner({
         const title = dayPlan[meal];
         if (!title) continue;
         const recipe = RECIPES.find((r) => r.title === title);
-        if (recipe) list.push(recipe);
+        if (recipe) lists.push(recipe.ingredients);
+        else {
+          const imported = importedIngredients.get(title);
+          if (imported) lists.push(imported);
+        }
       }
     }
-    return list;
-  }, [weekPlan, nextWeekDates]);
+    return lists;
+  }, [weekPlan, nextWeekDates, importedIngredients]);
+
+  const plannedCount = useMemo(() => selectedIngredientLists.length, [selectedIngredientLists]);
 
   const shoppingList = useMemo(() => {
     const totals = new Map<string, { name: string; quantity: number; unit: InventoryItem["unit"] }>();
-    for (const recipe of selectedRecipes) {
-      for (const ing of recipe.ingredients) {
+    for (const ingredients of selectedIngredientLists) {
+      for (const ing of ingredients) {
         const key = `${ing.name}|${ing.unit}`;
         const existing = totals.get(key);
         if (existing) existing.quantity += ing.quantity;
@@ -263,7 +340,7 @@ export function WeekPlanner({
         return { ...needed, missing: Math.max(0, needed.quantity - have) };
       })
       .filter((entry) => entry.missing > 0);
-  }, [selectedRecipes, items]);
+  }, [selectedIngredientLists, items]);
 
   // Comidas planificadas que NO son del catálogo (escritas a mano o elegidas
   // de "tu memoria") no tienen ingredientes con cantidad, así que no se
@@ -279,6 +356,7 @@ export function WeekPlanner({
         const title = dayPlan[meal];
         if (!isFilled(title)) continue;
         if (RECIPES.some((r) => r.title === title)) continue;
+        if (importedIngredients.has(title as string)) continue;
         titles.add(title as string);
       }
     }
@@ -292,9 +370,8 @@ export function WeekPlanner({
         return { title, note: `tenés ${stock.quantity}${stock.unit === "u." ? " u." : stock.unit}, puede no alcanzar` };
       })
       .filter((entry): entry is { title: string; note: string } => entry !== null);
-  }, [weekPlan, nextWeekDates, items]);
+  }, [weekPlan, nextWeekDates, items, importedIngredients]);
 
-  const plannedCount = selectedRecipes.length;
   const totalPlannedCount = useMemo(() => countPlannedMeals(weekPlan), [weekPlan]);
 
   const shoppingListText = useMemo(() => {
@@ -330,6 +407,11 @@ export function WeekPlanner({
     return RECIPES.filter((r) => r.meals.includes(pickerFor.meal)).slice(0, Math.max(0, MAX_PICKER_SUGGESTIONS - personalSuggestions.length));
   }, [pickerFor, personalSuggestions.length]);
 
+  const planSuggestions: MealOption[] = useMemo(() => {
+    if (!pickerFor) return [];
+    return planOptionsByDate.get(pickerFor.fecha)?.[pickerFor.meal] || [];
+  }, [pickerFor, planOptionsByDate]);
+
   return (
     <div>
       <div className="mb-3 flex items-center justify-between gap-2">
@@ -341,6 +423,19 @@ export function WeekPlanner({
           {totalPlannedCount} {totalPlannedCount === 1 ? "comida" : "comidas"}
         </div>
       </div>
+
+      {hasPlanToImport && (
+        <div className="mb-3">
+          <button
+            type="button"
+            onClick={importNutritionPlan}
+            className="w-full rounded-lg border border-dashed border-sage/50 bg-sage/5 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-sage"
+          >
+            🥗 Importar plan nutricional a la semana
+          </button>
+          {importStatus && <div className="mt-1.5 text-center text-[11px] text-textMuted">{importStatus}</div>}
+        </div>
+      )}
 
       <div className="space-y-2">
         {nextWeekDates.map((fecha) => (
@@ -519,7 +614,31 @@ export function WeekPlanner({
                 );
               })()}
 
-              {personalSuggestions.length === 0 && catalogSuggestions.length === 0 && (
+              {planSuggestions.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="font-mono text-[9px] uppercase tracking-wide text-sage">Tu plan nutricional</div>
+                  {planSuggestions.map((opt) => (
+                    <button
+                      key={`plan-${opt.nombre}`}
+                      type="button"
+                      onClick={() => assign(pickerFor.fecha, pickerFor.meal, opt.nombre)}
+                      className="w-full rounded-lg border border-sage/50 bg-sage/5 p-2.5 text-left"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-sm font-semibold">{opt.nombre}</div>
+                        <div className="font-mono text-[9px] uppercase tracking-wide text-sage">Nutricionista</div>
+                      </div>
+                      <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">
+                        {opt.kcal} kcal · {opt.protein}g prot
+                        {!opt.ingredientes?.length && " · sin ingredientes cargados (no suma a la lista de compras)"}
+                      </div>
+                      {opt.explicacion && <div className="mt-1 text-[11px] text-textMuted">{opt.explicacion}</div>}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {personalSuggestions.length === 0 && catalogSuggestions.length === 0 && planSuggestions.length === 0 && (
                 <div className="rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">
                   Todavía no hay recetas ni comidas guardadas para {MEAL_LABELS[pickerFor.meal].toLowerCase()}.
                 </div>

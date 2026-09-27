@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callGeminiJson, GeminiRateLimitError } from "@/lib/geminiClient";
-import { DayMealOptions, MealKey, MealOption, Weekday } from "@/lib/types";
+import { DayMealOptions, MealKey, MealOption, MealOptionIngredient, Weekday } from "@/lib/types";
 
 export const maxDuration = 60;
 
@@ -15,7 +15,18 @@ Días válidos (claves, en minúscula, sin tildes): lunes, martes, miercoles, ju
 Comidas válidas (claves): des (desayuno), alm (almuerzo), mer (merienda), cen (cena), col (colación).
 
 Para cada comida de cada día que el documento mencione, devolvé un array de "opciones" -- si el documento da una sola alternativa para esa comida, devolvé un array de UN solo elemento (no inventes opciones de más). Cada opción:
-{"nombre": "<qué es, ej: Milanesa con puré>", "kcal": <entero>, "protein": <entero, gramos>, "carbs": <entero, gramos>, "fat": <entero, gramos>, "explicacion": "<por qué o cuándo elegir esta opción si el documento lo aclara, sino texto vacío>"}
+{"nombre": "<qué es, ej: Milanesa con puré>", "kcal": <entero>, "protein": <entero, gramos>, "carbs": <entero, gramos>, "fat": <entero, gramos>, "explicacion": "<por qué o cuándo elegir esta opción si el documento lo aclara, sino texto vacío>", "ingredientes": [{"name": "<ingrediente real de supermercado>", "quantity": <número>, "unit": "g"|"ml"|"u."}]}
+
+Sobre "ingredientes": la mayoría de los planes de Nutricionista SÍ dan este desglose, aunque no se note a primera vista -- cada renglón de alimento con su cantidad dentro de una comida es un ingrediente. Por ejemplo, si el documento tiene esta comida:
+"Almuerzo – 450 kcal
+Pechuga de pollo a la plancha (130 g)
+Arroz cocido (120 g)
+Ensalada de tomate, zanahoria y lechuga
+1 cucharadita de aceite de oliva
+1 fruta"
+Eso se convierte en {"nombre": "Pechuga de pollo a la plancha con arroz y ensalada", "ingredientes": [{"name":"pechuga de pollo","quantity":130,"unit":"g"},{"name":"arroz","quantity":120,"unit":"g"},{"name":"tomate","quantity":100,"unit":"g"},{"name":"zanahoria","quantity":50,"unit":"g"},{"name":"lechuga","quantity":50,"unit":"g"},{"name":"aceite de oliva","quantity":5,"unit":"ml"},{"name":"fruta","quantity":1,"unit":"u."}], ...} -- estimá una cantidad razonable para lo que no trae número exacto (ej. "ensalada de tomate y lechuga" sin gramos) en vez de omitirlo.
+
+Una preparación conocida (puré, guiso, salsa, etc.) que el documento menciona sin desglosarla en sus componentes (ej. "Milanesa con puré" sin decir de qué es el puré) también podés listarla directo como un ingrediente más -- {"name":"puré","quantity":150,"unit":"g"} -- no hace falta forzarla a papa/leche/manteca/queso salvo que el documento mismo ya te dé ese desglose, en cuyo caso usalo tal cual. Omití el campo "ingredientes" completo únicamente si la comida es un solo renglón sin ningún desglose de alimentos ni preparaciones (ej. "Almuerzo: como algo liviano").
 
 Si el documento no da macros exactos para una comida, estimalos igual (no dejes 0 salvo que sea realmente 0). Si un día o una comida no aparece en el documento, NO incluyas esa clave (ni un array vacío).
 
@@ -31,6 +42,21 @@ function isValidWeekday(k: string): k is Weekday {
 }
 function isValidMealKey(k: string): k is MealKey {
   return (MEAL_KEYS as string[]).includes(k);
+}
+
+const VALID_UNITS = ["g", "ml", "u."];
+function sanitizeIngredientes(raw: unknown): MealOptionIngredient[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const cleaned = raw
+    .map((i: Partial<MealOptionIngredient>) => {
+      const name = typeof i?.name === "string" ? i.name.trim() : "";
+      const unit = VALID_UNITS.includes(i?.unit as string) ? (i!.unit as MealOptionIngredient["unit"]) : "g";
+      const quantity = Number(i?.quantity) || 0;
+      if (!name || quantity <= 0) return null;
+      return { name, quantity, unit };
+    })
+    .filter((i): i is MealOptionIngredient => i !== null);
+  return cleaned.length > 0 ? cleaned : undefined;
 }
 
 /** Filtra cualquier clave que la IA se haya inventado (día/comida que no
@@ -49,6 +75,7 @@ function sanitize(parsed: ParsedPlan): Partial<Record<Weekday, DayMealOptions>> 
         carbs: Number(o.carbs) || 0,
         fat: Number(o.fat) || 0,
         explicacion: o.explicacion || "",
+        ingredientes: sanitizeIngredientes(o.ingredientes),
       }));
     }
     if (Object.keys(day).length > 0) out[dayKey] = day;
