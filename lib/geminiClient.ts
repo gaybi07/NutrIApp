@@ -75,7 +75,15 @@ export async function callGeminiJson(systemPrompt: string, userParts: GeminiPart
           }),
         });
 
-        if (response.status === 429) {
+        // 429 (cuota) y 503 (modelo sobrecargado, "high demand") son los dos
+        // casos momentáneos -- suelen resolverse solos en un reintento corto
+        // o pasando a la próxima key, a diferencia de un rechazo real de la
+        // solicitud. Sin este chequeo, una sobrecarga transitoria de Gemini
+        // se propagaba como un error genérico que cada ruta terminaba
+        // mostrando como "no pude leer/entender esto" -- confuso cuando el
+        // archivo/input era válido y el problema era solo que Gemini estaba
+        // saturado en ese momento.
+        if (response.status === 429 || response.status === 503) {
           sawRateLimit = true;
           lastError = new GeminiRateLimitError();
           if (attempt === 0) {
