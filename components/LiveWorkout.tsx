@@ -185,6 +185,7 @@ export function LiveWorkout({
   // botón "Ver reporte" de más abajo, a pedido del usuario.
   const [report, setReport] = useState<WorkoutReport | null>(null);
   const [planningOpen, setPlanningOpen] = useState(false);
+  const [unplannedOpen, setUnplannedOpen] = useState(false);
   const [creatingRoutine, setCreatingRoutine] = useState(false);
   // Solo se usa para rutinas asignadas -- ver handleFinish/confirmFinish.
   const [finishing, setFinishing] = useState(false);
@@ -234,24 +235,39 @@ export function LiveWorkout({
     else window.localStorage.removeItem(STORAGE_KEY);
   }, [session]);
 
+  const buildExercisesFromRoutine = (routine: Routine): DraftExercise[] =>
+    routine.ejercicios.map((e) => {
+      const key = `${routine.id}::${e.nombre}`;
+      const suggestion = suggestions[key];
+      const peso = suggestion?.pesoSugerido ?? e.peso;
+      return {
+        nombre: e.nombre,
+        plannedSeries: e.series,
+        plannedRepeticiones: e.repeticiones,
+        plannedPeso: e.peso,
+        suggestionNote: suggestion?.nota,
+        sets: Array.from({ length: e.series }, () => defaultSet(e.repeticiones, peso)),
+        grupoMuscular: e.grupoMuscular,
+      };
+    });
+
   const startSession = () => {
-    const exercises: DraftExercise[] = scheduledRoutine
-      ? scheduledRoutine.ejercicios.map((e) => {
-          const key = `${scheduledRoutine.id}::${e.nombre}`;
-          const suggestion = suggestions[key];
-          const peso = suggestion?.pesoSugerido ?? e.peso;
-          return {
-            nombre: e.nombre,
-            plannedSeries: e.series,
-            plannedRepeticiones: e.repeticiones,
-            plannedPeso: e.peso,
-            suggestionNote: suggestion?.nota,
-            sets: Array.from({ length: e.series }, () => defaultSet(e.repeticiones, peso)),
-            grupoMuscular: e.grupoMuscular,
-          };
-        })
-      : [];
+    const exercises = scheduledRoutine ? buildExercisesFromRoutine(scheduledRoutine) : [];
     setSession({ fecha: entry.fecha, startedAt: Date.now(), routineId: scheduledRoutine?.id, exercises });
+    setOpenIndex(null);
+  };
+
+  /** "Entrenar sin planificar" -- arranca una sesión hoy sin tocar
+   * `schedule` (a diferencia de "Cargar rutina", que asigna la rutina al
+   * día de la semana para siempre). Con `routineId` carga los ejercicios de
+   * esa rutina como punto de partida (editable libre, no es una rutina
+   * asignada); sin él, arranca vacía para ir sumando ejercicios sobre la
+   * marcha con "+ Agregar ejercicio"/"Desde biblioteca". */
+  const startUnplanned = (routineId?: string) => {
+    const routine = routineId ? routines.find((r) => r.id === routineId) : undefined;
+    const exercises = routine ? buildExercisesFromRoutine(routine) : [];
+    setSession({ fecha: entry.fecha, startedAt: Date.now(), routineId: routine?.id, exercises });
+    setUnplannedOpen(false);
     setOpenIndex(null);
   };
 
@@ -625,6 +641,17 @@ export function LiveWorkout({
               📋 Cargar rutina
             </button>
           )}
+          {/* Independiente de si hay rutina planificada para hoy o no --
+              entrenar hoy sin tocar la planificación semanal (a diferencia
+              de "Cargar rutina", que asigna esa rutina al día de la semana
+              para siempre). */}
+          <button
+            type="button"
+            onClick={() => setUnplannedOpen(true)}
+            className="mt-2 w-full rounded-lg border border-dashed border-gold/50 px-3 py-2.5 font-mono text-[10px] uppercase tracking-wide text-gold"
+          >
+            🏋️ Entrenar sin planificar
+          </button>
           {entry.entrenamientoReporte && (
             <button
               type="button"
@@ -673,6 +700,52 @@ export function LiveWorkout({
               type="button"
               onClick={() => setPlanningOpen(false)}
               className="mt-2 w-full rounded-lg border border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {unplannedOpen && (
+        <div className="fixed inset-0 z-[65] flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setUnplannedOpen(false)}>
+          <div
+            className="max-h-[80vh] w-full max-w-sm overflow-y-auto rounded-2xl border border-border bg-surface p-4 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-1 font-display text-lg text-text">Entrenar sin planificar</div>
+            <div className="mb-3 text-[11px] text-textMuted">
+              No cambia tu planificación semanal -- solo arranca un entrenamiento para hoy.
+            </div>
+            <button
+              type="button"
+              onClick={() => startUnplanned()}
+              className="mb-3 w-full rounded-lg p-3 font-sans text-sm font-bold bg-gold text-bg"
+            >
+              ▶ Empezar vacío y sumar ejercicios sobre la marcha
+            </button>
+            {routines.length > 0 && (
+              <>
+                <div className="mb-1.5 font-mono text-[9px] uppercase tracking-wide text-textMuted">O partir de una rutina tuya</div>
+                <div className="space-y-1.5">
+                  {routines.map((r) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => startUnplanned(r.id)}
+                      className="w-full rounded-lg border border-border bg-bg/40 p-2.5 text-left"
+                    >
+                      <div className="text-sm font-semibold text-text">{r.nombre}</div>
+                      <div className="mt-0.5 font-mono text-[9px] uppercase tracking-wide text-textMuted">{r.ejercicios.length} ejercicios</div>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={() => setUnplannedOpen(false)}
+              className="mt-3 w-full rounded-lg border border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted"
             >
               Cerrar
             </button>
