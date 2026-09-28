@@ -2,18 +2,18 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Registro",
-  description: "Registro nutricional y de entrenamiento",
+  title: "Morphy",
+  description: "Morphy — Planificá. Medí. Evolucioná.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Registro",
+    title: "Morphy",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1C1B18",
+  themeColor: "#15141B",
   width: "device-width",
   initialScale: 1,
 };

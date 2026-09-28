@@ -31,7 +31,7 @@ export async function createSubscription({
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const response = await preApproval.create({
     body: {
-      reason: `registro-app · ${PLAN_LABELS[plan]}`,
+      reason: `Morphy · ${PLAN_LABELS[plan]}`,
       external_reference: userId,
       payer_email: email,
       back_url: appUrl,
@@ -55,7 +55,7 @@ export async function getSubscription(preapprovalId: string) {
 }
 
 export const PLAN_LABELS: Record<PaidPlan, string> = {
-  premium: "Premium",
-  autoentreno: "Autoentreno",
-  premium_plus: "Premium+",
+  premium: "Coach o Nutrition",
+  autoentreno: "Morphy+",
+  premium_plus: "Complete",
 };

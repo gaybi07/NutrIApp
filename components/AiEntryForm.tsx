@@ -450,7 +450,7 @@ export function AiEntryForm({
       <div className="mb-2.5 flex gap-1 rounded-xl border border-border bg-bg/40 p-1">
         <button
           type="button"
-          onClick={() => (disableAi ? setStatus("🔒 Con IA es Premium — actualizá tu plan para desbloquearlo.") : setMode("ia"))}
+          onClick={() => (disableAi ? setStatus("🔒 Con IA requiere un plan pago — actualizá tu plan para desbloquearlo.") : setMode("ia"))}
           className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
             disableAi ? "text-textMuted/50" : mode === "ia" ? "bg-gold text-bg" : "text-textMuted"
           }`}
@@ -459,7 +459,7 @@ export function AiEntryForm({
         </button>
         <button
           type="button"
-          onClick={() => (disableAi ? setStatus("🔒 Desde Alacena es Premium — actualizá tu plan para desbloquearlo.") : setMode("alacena"))}
+          onClick={() => (disableAi ? setStatus("🔒 Desde Alacena requiere un plan pago — actualizá tu plan para desbloquearlo.") : setMode("alacena"))}
           className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
             disableAi ? "text-textMuted/50" : mode === "alacena" ? "bg-gold text-bg" : "text-textMuted"
           }`}
@@ -468,7 +468,7 @@ export function AiEntryForm({
         </button>
         <button
           type="button"
-          onClick={() => (disableAi ? setStatus("🔒 Buscar producto es Premium — actualizá tu plan para desbloquearlo.") : setMode("buscar"))}
+          onClick={() => (disableAi ? setStatus("🔒 Buscar producto requiere un plan pago — actualizá tu plan para desbloquearlo.") : setMode("buscar"))}
           className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
             disableAi ? "text-textMuted/50" : mode === "buscar" ? "bg-gold text-bg" : "text-textMuted"
           }`}

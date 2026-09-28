@@ -3,46 +3,48 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Paleta oscura (default) — también sirve de red de seguridad antes de que
-   se aplique el atributo data-theme, y cuando Settings.theme todavía no
-   está cargado. Fijada según la guía de diseño (slate + verde esmeralda):
-   --color-sage hace de color "Éxito" y --color-rust de "Error", ambos fijos
-   entre temas — no cambian entre oscuro/claro a propósito. */
+/* Paleta Morphy (default) — violeta #7557E8 + mint #5DD6A8, fondos
+   #15141B (oscuro) / #F7F7FA (claro), de la identidad de marca. También
+   sirve de red de seguridad antes de que se aplique el atributo
+   data-theme, y cuando Settings.theme todavía no está cargado.
+   --color-sage hace de color "Éxito" (mint) y --color-rust de "Error"
+   (rojo estándar, no es parte de la paleta de marca), ambos fijos entre
+   temas -- no cambian entre oscuro/claro a propósito. */
 :root {
-  --color-bg: 15 23 42;
-  --color-surface: 30 41 59;
-  --color-surface-alt: 40 53 72;
+  --color-bg: 21 20 27;
+  --color-surface: 36 35 46;
+  --color-surface-alt: 46 45 58;
   --color-text: 248 250 252;
   --color-text-muted: 156 163 175;
-  --color-accent: 52 211 153;
+  --color-accent: 117 87 232;
   --color-rust: 239 68 68;
-  --color-sage: 16 185 129;
-  --color-border: 51 65 85;
+  --color-sage: 93 214 168;
+  --color-border: 58 56 72;
   --color-carbs: 245 158 11;
 }
 
 [data-theme="oscuro"] {
-  --color-bg: 15 23 42;
-  --color-surface: 30 41 59;
-  --color-surface-alt: 40 53 72;
+  --color-bg: 21 20 27;
+  --color-surface: 36 35 46;
+  --color-surface-alt: 46 45 58;
   --color-text: 248 250 252;
   --color-text-muted: 156 163 175;
-  --color-accent: 52 211 153;
+  --color-accent: 117 87 232;
   --color-rust: 239 68 68;
-  --color-sage: 16 185 129;
-  --color-border: 51 65 85;
+  --color-sage: 93 214 168;
+  --color-border: 58 56 72;
   --color-carbs: 245 158 11;
 }
 
 [data-theme="claro"] {
-  --color-bg: 249 250 251;
+  --color-bg: 247 247 250;
   --color-surface: 255 255 255;
   --color-surface-alt: 243 244 246;
   --color-text: 17 24 39;
   --color-text-muted: 107 114 128;
-  --color-accent: 16 185 129;
+  --color-accent: 117 87 232;
   --color-rust: 239 68 68;
-  --color-sage: 16 185 129;
+  --color-sage: 93 214 168;
   --color-border: 229 231 235;
   --color-carbs: 245 158 11;
 }

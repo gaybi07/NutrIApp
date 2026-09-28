@@ -24,9 +24,9 @@ export function LinkToProfessional({
 }) {
   return (
     <div>
-      <div className="font-display italic text-lg text-gold mb-1">Vincularme a un profesional</div>
+      <div className="font-display italic text-lg text-gold mb-1">Tu equipo Morphy</div>
       <div className="mb-3 text-xs text-textMuted">
-        Pedile el código a tu Profe o Nutricionista -- podés vincularte a los dos a la vez si tu plan lo permite.
+        Pedile el código a tu Entrenador o Nutricionista -- podés vincularte a los dos a la vez si tu plan lo permite.
       </div>
       <StudentLinkSection authenticated={authenticated} routines={routines} onSaveRoutines={onSaveRoutines} />
       <div className="mt-5 border-t border-border pt-3">

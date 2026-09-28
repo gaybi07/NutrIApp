@@ -19,11 +19,14 @@ import {
   ACTIVIDAD_BLOCK_LABELS,
 } from "@/lib/types";
 
+// Neón y Olimpo quedan en stand-by (a pedido, tras definir la identidad de
+// marca Morphy) -- el código de esos temas sigue entero en globals.css, solo
+// se dejan de ofrecer acá. Si alguien ya los tenía elegidos, la app los
+// sigue renderizando igual (ver document.documentElement.setAttribute en
+// app/page.tsx); simplemente no se puede volver a elegirlos desde acá.
 const THEME_OPTIONS: { value: ThemeMode; label: string; description: string }[] = [
   { value: "oscuro", label: "Oscuro", description: "Fondo oscuro, como está ahora." },
   { value: "claro", label: "Claro", description: "Fondo blanco, look más liviano." },
-  { value: "neon", label: "Neón", description: "Todo en negros y grises, con detalles de letras, botones y gráficos en verde, rosa y amarillo flúor." },
-  { value: "olimpo", label: "Olimpo", description: "Mármol, oro y bronce, con tipografía clásica romana. Un look, no cambia ningún texto de la app." },
 ];
 
 const TAB_LABELS: Record<MainTab, string> = {

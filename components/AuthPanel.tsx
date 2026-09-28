@@ -257,8 +257,8 @@ export function AuthPanel({
 
   return (
     <div className="border border-border rounded-xl p-4">
-      <div className="font-display italic text-lg text-gold mb-1">Bienvenida a Registro</div>
-      <div className="text-xs text-textMuted mb-4">Creá tu cuenta o ingresá para ver tus registros.</div>
+      <div className="font-display italic text-lg text-gold mb-1">Bienvenida a Morphy</div>
+      <div className="text-xs text-textMuted mb-4">Planificá. Medí. Evolucioná.</div>
       <button
         type="button"
         onClick={signInWithGoogle}

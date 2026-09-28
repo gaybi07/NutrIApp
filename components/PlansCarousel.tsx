@@ -5,7 +5,10 @@ import { ClientPlan, PLAN_PRICES_ARS } from "@/lib/types";
 
 type PlanId = ClientPlan;
 const PLAN_IDS: PlanId[] = ["basico", "premium", "autoentreno", "premium_plus"];
-const PLAN_TAB_LABEL: Record<PlanId, string> = { basico: "Básico", premium: "Premium", autoentreno: "Autoentreno", premium_plus: "Premium+" };
+// Nomenclatura de marca Morphy -- "premium" no cambió de comportamiento (te
+// vinculás a un Entrenador O una Nutricionista, vos elegís), así que su
+// nombre comercial cubre las dos posibilidades en vez de fijar una.
+const PLAN_TAB_LABEL: Record<PlanId, string> = { basico: "Free", premium: "Coach·Nutrition", autoentreno: "Morphy+", premium_plus: "Complete" };
 
 function fmtPrice(n: number) {
   return n.toLocaleString("es-AR");
@@ -72,7 +75,7 @@ export function PlansCarousel({ currentPlan }: { currentPlan: ClientPlan }) {
       <div ref={deckRef} className="-mx-3 flex gap-3 overflow-x-auto px-3 pb-1" style={{ scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
         {/* BÁSICO */}
         <div ref={(el) => { cardRefs.current[0] = el; }} className="shrink-0 basis-full rounded-2xl border border-border bg-surface p-4" style={{ scrollSnapAlign: "start" }}>
-          <div className="font-mono text-[10px] uppercase tracking-wide text-textMuted">BÁSICO</div>
+          <div className="font-mono text-[10px] uppercase tracking-wide text-textMuted">MORPHY FREE</div>
           <div className="my-1.5 flex items-baseline gap-1.5">
             <span className="text-2xl font-extrabold text-text">$0</span>
             <span className="text-[11px] text-textMuted">/mes, para siempre</span>
@@ -89,13 +92,13 @@ export function PlansCarousel({ currentPlan }: { currentPlan: ClientPlan }) {
           className="shrink-0 basis-full rounded-2xl border border-gold bg-gradient-to-br from-gold/10 to-surface p-4"
           style={{ scrollSnapAlign: "start" }}
         >
-          <div className="font-mono text-[10px] uppercase tracking-wide text-gold">PREMIUM · MÁS ELEGIDO</div>
+          <div className="font-mono text-[10px] uppercase tracking-wide text-gold">MORPHY COACH O NUTRITION · MÁS ELEGIDO</div>
           <div className="my-1.5 flex items-baseline gap-1.5">
             <span className="text-2xl font-extrabold text-text">${fmtPrice(PLAN_PRICES_ARS.premium)}</span>
             <span className="text-[11px] text-textMuted">/mes</span>
           </div>
-          <div className="mb-2 text-[11px] italic text-textMuted">Incluye todo lo de Básico, más:</div>
-          <Feature check nombre="Un Profe o un Nutricionista" detalle="Elegís con quién vincularte: entrenamiento o plan nutricional, no ambos." />
+          <div className="mb-2 text-[11px] italic text-textMuted">Incluye todo lo de Morphy Free, más:</div>
+          <Feature check nombre="Un Entrenador o una Nutricionista" detalle="Elegís con quién vincularte: entrenamiento o plan nutricional, no ambos." />
           <Feature check nombre="Plan semanal armado por tu profesional" detalle="Rutinas asignadas día por día, o un plan de comidas con opciones y macros." />
           <Feature check nombre="Seguimiento real" detalle="Tu profesional ve tu progreso semana a semana y te deja comentarios." />
           <button
@@ -104,19 +107,19 @@ export function PlansCarousel({ currentPlan }: { currentPlan: ClientPlan }) {
             onClick={() => elegir("premium")}
             className="mt-3 w-full rounded-lg bg-gold p-2.5 font-sans text-sm font-bold text-bg disabled:opacity-50"
           >
-            {currentPlan === "premium" ? "Tu plan actual" : busyPlan === "premium" ? "Redirigiendo..." : "Elegir Premium"}
+            {currentPlan === "premium" ? "Tu plan actual" : busyPlan === "premium" ? "Redirigiendo..." : "Elegir Coach o Nutrition"}
           </button>
         </div>
 
         {/* AUTOENTRENO */}
         <div ref={(el) => { cardRefs.current[2] = el; }} className="shrink-0 basis-full rounded-2xl border border-border bg-surface p-4" style={{ scrollSnapAlign: "start" }}>
-          <div className="font-mono text-[10px] uppercase tracking-wide text-textMuted">AUTOENTRENO</div>
+          <div className="font-mono text-[10px] uppercase tracking-wide text-textMuted">MORPHY+</div>
           <div className="my-1.5 flex items-baseline gap-1.5">
             <span className="text-2xl font-extrabold text-text">${fmtPrice(PLAN_PRICES_ARS.autoentreno)}</span>
             <span className="text-[11px] text-textMuted">/mes</span>
           </div>
-          <div className="mb-2 text-[11px] italic text-textMuted">Incluye todo lo de Básico, más:</div>
-          <Feature check nombre="Plan semanal de entrenamiento por IA" detalle="Rutinas armadas y ajustadas automáticamente, sin que haya un Profe humano." />
+          <div className="mb-2 text-[11px] italic text-textMuted">Incluye todo lo de Morphy Free, más:</div>
+          <Feature check nombre="Plan semanal de entrenamiento por IA" detalle="Rutinas armadas y ajustadas automáticamente, sin que haya un Entrenador humano." />
           <Feature check nombre="Plan de comidas por IA" detalle="Opciones de comida con macros y explicación, sin un Nutricionista humano." />
           <Feature check nombre="Reportes de adherencia" detalle="Igual que con un profesional, pero generados." />
           <button
@@ -125,19 +128,19 @@ export function PlansCarousel({ currentPlan }: { currentPlan: ClientPlan }) {
             onClick={() => elegir("autoentreno")}
             className="mt-3 w-full rounded-lg border border-border bg-bg/60 p-2.5 font-sans text-sm font-bold text-text disabled:opacity-50"
           >
-            {currentPlan === "autoentreno" ? "Tu plan actual" : busyPlan === "autoentreno" ? "Redirigiendo..." : "Elegir Autoentreno"}
+            {currentPlan === "autoentreno" ? "Tu plan actual" : busyPlan === "autoentreno" ? "Redirigiendo..." : "Elegir Morphy+"}
           </button>
         </div>
 
         {/* PREMIUM+ */}
         <div ref={(el) => { cardRefs.current[3] = el; }} className="shrink-0 basis-full rounded-2xl border border-border bg-surface p-4" style={{ scrollSnapAlign: "start" }}>
-          <div className="font-mono text-[10px] uppercase tracking-wide text-textMuted">PREMIUM+</div>
+          <div className="font-mono text-[10px] uppercase tracking-wide text-textMuted">MORPHY COMPLETE</div>
           <div className="my-1.5 flex items-baseline gap-1.5">
             <span className="text-2xl font-extrabold text-text">${fmtPrice(PLAN_PRICES_ARS.premium_plus)}</span>
             <span className="text-[11px] text-textMuted">/mes</span>
           </div>
-          <div className="mb-2 text-[11px] italic text-textMuted">Incluye todo lo de Premium, más:</div>
-          <Feature check nombre="Profe y Nutricionista a la vez" detalle="Entrenamiento y alimentación coordinados, cada uno viendo su parte." />
+          <div className="mb-2 text-[11px] italic text-textMuted">Incluye todo lo de Coach o Nutrition, más:</div>
+          <Feature check nombre="Entrenador y Nutricionista a la vez" detalle="Entrenamiento y alimentación coordinados, cada uno viendo su parte." />
           <Feature check nombre="Dos planes semanales en paralelo" detalle="Tu rutina de entrenamiento y tu plan de comidas, cada uno con su profesional." />
           <button
             type="button"
@@ -145,7 +148,7 @@ export function PlansCarousel({ currentPlan }: { currentPlan: ClientPlan }) {
             onClick={() => elegir("premium_plus")}
             className="mt-3 w-full rounded-lg border border-border bg-bg/60 p-2.5 font-sans text-sm font-bold text-text disabled:opacity-50"
           >
-            {currentPlan === "premium_plus" ? "Tu plan actual" : busyPlan === "premium_plus" ? "Redirigiendo..." : "Elegir Premium+"}
+            {currentPlan === "premium_plus" ? "Tu plan actual" : busyPlan === "premium_plus" ? "Redirigiendo..." : "Elegir Morphy Complete"}
           </button>
         </div>
       </div>
