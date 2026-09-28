@@ -7,6 +7,7 @@ import { useEscapeKey } from "@/lib/useEscapeKey";
 import { clampNumber } from "@/lib/inputLimits";
 import { FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
+import { Flame } from "lucide-react";
 
 export function WeeklyWeight({
   weekKey,
@@ -121,7 +122,12 @@ export function WeeklyWeight({
               {delta > 0 ? "▲" : delta < 0 ? "▼" : "="} {Math.abs(delta).toFixed(1)} kg
             </span>
           )}
-          {streak >= 2 && <span className="font-mono text-[11px] text-gold">🔥 {streak}</span>}
+          {streak >= 2 && (
+            <span className="flex items-center gap-0.5 font-mono text-[11px] text-gold">
+              <Flame size={16} strokeWidth={1.8} />
+              {streak}
+            </span>
+          )}
           <button
             type="button"
             onClick={() => setOpen(true)}

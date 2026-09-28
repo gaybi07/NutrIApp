@@ -55,6 +55,7 @@ import { useMyAssignedSessions } from "@/lib/useAssignedSessions";
 import { useProductMemory } from "@/lib/useProductMemory";
 import { emptyDay, MealKey, MEAL_LABELS, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER, resolveOrder } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
+import { TriangleAlert, Flame } from "lucide-react";
 
 export default function Home() {
   const { days, settings, loaded, syncError, upsertDay, saveDays, saveSettings } = useLocalDays();
@@ -350,8 +351,9 @@ export default function Home() {
     <main>
       <GlobalWorkoutTimer onOpen={() => setActiveTab("actividad")} hidden={activeTab === "actividad"} />
       {syncError && (
-        <div className="mb-4 rounded-xl border border-rust/40 bg-rust/10 px-3 py-2 text-[11px] text-rust">
-          ⚠ {syncError}
+        <div className="mb-4 flex items-center gap-1.5 rounded-xl border border-rust/40 bg-rust/10 px-3 py-2 text-[11px] text-rust">
+          <TriangleAlert size={16} strokeWidth={1.8} />
+          {syncError}
         </div>
       )}
 
@@ -417,7 +419,12 @@ export default function Home() {
                         {weightTrend > 0 ? "▲" : "▼"}
                       </span>
                     )}
-                    {weightStreakCount >= 2 && <span className="shrink-0 text-gold">🔥{weightStreakCount}</span>}
+                    {weightStreakCount >= 2 && (
+                      <span className="shrink-0 flex items-center gap-0.5 text-gold">
+                        <Flame size={16} strokeWidth={1.8} />
+                        {weightStreakCount}
+                      </span>
+                    )}
                   </>
                 )}
               </div>

@@ -16,6 +16,7 @@ import { MuscleGroupVolume } from "@/components/MuscleGroupVolume";
 import { DailySteps } from "@/components/DailySteps";
 import { Collapsible } from "@/components/Collapsible";
 import { LiveWorkout } from "@/components/LiveWorkout";
+import { Award } from "lucide-react";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 const STEPS_COLOR = "#8A9A7C";
@@ -262,7 +263,7 @@ export function ActividadTab({
     <>
       {isApprovedTrainer && (
         <div className="mb-3 flex items-center gap-1.5 rounded-full border border-gold/50 bg-gold/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wide text-gold">
-          🏅 Sos entrenador certificado
+          <Award size={16} strokeWidth={1.8} className="shrink-0" /> Sos entrenador certificado
         </div>
       )}
       <DndContext sensors={drag.sensors} collisionDetection={drag.collisionDetection} onDragStart={drag.handleDragStart} onDragEnd={drag.handleDragEnd} onDragCancel={drag.handleDragCancel}>

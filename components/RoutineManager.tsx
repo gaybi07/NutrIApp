@@ -5,6 +5,7 @@ import { Routine, TrainingSchedule, Weekday, WEEKDAY_LABELS } from "@/lib/types"
 import { SECTION_HELP } from "@/lib/helpText";
 import { Collapsible } from "@/components/Collapsible";
 import { RoutineEditorModal } from "@/components/RoutineEditorModal";
+import { Lock } from "lucide-react";
 
 const ORDERED_WEEKDAYS: Weekday[] = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
 
@@ -71,8 +72,8 @@ export function RoutineManager({
           <div className="text-sm font-semibold">{routine.nombre}</div>
           <div className="flex items-center gap-1.5">
             {assigned ? (
-              <span className="rounded-full border border-gold/40 bg-gold/10 px-2 py-1 font-mono text-[9px] uppercase tracking-wide text-gold">
-                🔒 Asignada
+              <span className="flex items-center gap-0.5 rounded-full border border-gold/40 bg-gold/10 px-2 py-1 font-mono text-[9px] uppercase tracking-wide text-gold">
+                <Lock size={16} strokeWidth={1.8} className="shrink-0" /> Asignada
               </span>
             ) : (
               <button

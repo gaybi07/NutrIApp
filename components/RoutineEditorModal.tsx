@@ -5,6 +5,7 @@ import { ExerciseEntry, MuscleGroup, MUSCLE_GROUP_LABELS } from "@/lib/types";
 import { clampNumber } from "@/lib/inputLimits";
 import { ExercisePicker } from "@/components/ExercisePicker";
 import { LibraryExercise, muscleGroupFor } from "@/lib/exerciseLibrary";
+import { Search } from "lucide-react";
 
 const MUSCLE_GROUPS: MuscleGroup[] = ["pecho", "espalda", "hombros", "piernas", "brazos", "core"];
 
@@ -85,7 +86,7 @@ export function RoutineEditorModal({
                   className="ml-2 shrink-0 rounded-md border border-border px-1.5 py-1 text-[12px]"
                   aria-label="Buscar en la biblioteca de ejercicios"
                 >
-                  🔍
+                  <Search size={16} strokeWidth={1.8} />
                 </button>
                 <button type="button" onClick={() => removeExercise(i)} className="ml-1 shrink-0 font-mono text-[11px] text-rust" aria-label="Quitar ejercicio">
                   ×
@@ -146,8 +147,8 @@ export function RoutineEditorModal({
           <button type="button" onClick={addExercise} className="rounded-lg border border-dashed border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted">
             + Agregar ejercicio
           </button>
-          <button type="button" onClick={() => setLibraryTarget(-1)} className="rounded-lg border border-dashed border-gold/50 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold">
-            🔍 Desde biblioteca
+          <button type="button" onClick={() => setLibraryTarget(-1)} className="flex items-center justify-center gap-1 rounded-lg border border-dashed border-gold/50 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold">
+            <Search size={16} strokeWidth={1.8} className="shrink-0" /> Desde biblioteca
           </button>
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2">

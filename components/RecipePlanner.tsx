@@ -5,6 +5,7 @@ import { InventoryItem, MealKey, MEAL_LABELS, GoalMode } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
 import { Collapsible } from "@/components/Collapsible";
 import { Cuisine, RECIPES, CUISINE_FILTERS as FILTERS } from "@/lib/recipes";
+import { Target } from "lucide-react";
 
 const PAGE_SIZE = 3;
 
@@ -170,8 +171,8 @@ export function RecipePlanner({
       </div>
 
       {goalMode && (
-        <div className="mb-3 rounded-lg border border-gold/30 bg-gold/10 px-2.5 py-2 text-[11px] text-textMuted">
-          🎯 {GOAL_CAPTION[goalMode]}
+        <div className="mb-3 rounded-lg border border-gold/30 bg-gold/10 px-2.5 py-2 text-[11px] text-textMuted flex items-center gap-1.5">
+          <Target size={16} strokeWidth={1.8} className="shrink-0" /> {GOAL_CAPTION[goalMode]}
         </div>
       )}
 

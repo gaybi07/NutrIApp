@@ -3,21 +3,34 @@
 import { useState } from "react";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 import { SECTION_HELP } from "@/lib/helpText";
+import {
+  Hand,
+  CalendarDays,
+  Trophy,
+  ClipboardList,
+  Footprints,
+  Package,
+  Salad,
+  Dumbbell,
+  Calculator,
+  Settings,
+  LucideIcon,
+} from "lucide-react";
 
-const STOPS = [
-  { icon: "👋", title: "Bienvenido", text: SECTION_HELP.bienvenida },
-  { icon: "📅", title: "Inicio · Hoy", text: SECTION_HELP.hoy },
-  { icon: "🗓️", title: "Inicio · Semana del…", text: SECTION_HELP.semana },
-  { icon: "🏆", title: "Inicio · Ranking de días", text: SECTION_HELP.ranking },
-  { icon: "📋", title: "Inicio · Tabla de la semana", text: SECTION_HELP.tabla },
-  { icon: "👣", title: "Inicio · Pasos de la semana", text: SECTION_HELP.pasos },
-  { icon: "🥫", title: "Comidas · Alacena", text: SECTION_HELP.comidasAlacena },
-  { icon: "📆", title: "Comidas · Planificado", text: SECTION_HELP.comidasPlanificado },
-  { icon: "🥗", title: "Macros", text: SECTION_HELP.macros },
-  { icon: "🏋️", title: "Entreno", text: SECTION_HELP.actividad },
-  { icon: "🧮", title: "Calculadora y carga con IA", text: SECTION_HELP.herramientas },
-  { icon: "⚙️", title: "Configuraciones", text: SECTION_HELP.configuraciones },
-  { icon: "✋", title: "Ocultar y mover secciones", text: SECTION_HELP.ocultarMover },
+const STOPS: { icon: LucideIcon; title: string; text: string }[] = [
+  { icon: Hand, title: "Bienvenido", text: SECTION_HELP.bienvenida },
+  { icon: CalendarDays, title: "Inicio · Hoy", text: SECTION_HELP.hoy },
+  { icon: CalendarDays, title: "Inicio · Semana del…", text: SECTION_HELP.semana },
+  { icon: Trophy, title: "Inicio · Ranking de días", text: SECTION_HELP.ranking },
+  { icon: ClipboardList, title: "Inicio · Tabla de la semana", text: SECTION_HELP.tabla },
+  { icon: Footprints, title: "Inicio · Pasos de la semana", text: SECTION_HELP.pasos },
+  { icon: Package, title: "Comidas · Alacena", text: SECTION_HELP.comidasAlacena },
+  { icon: CalendarDays, title: "Comidas · Planificado", text: SECTION_HELP.comidasPlanificado },
+  { icon: Salad, title: "Macros", text: SECTION_HELP.macros },
+  { icon: Dumbbell, title: "Entreno", text: SECTION_HELP.actividad },
+  { icon: Calculator, title: "Calculadora y carga con IA", text: SECTION_HELP.herramientas },
+  { icon: Settings, title: "Configuraciones", text: SECTION_HELP.configuraciones },
+  { icon: Hand, title: "Ocultar y mover secciones", text: SECTION_HELP.ocultarMover },
 ];
 
 export function AppTour({ onFinish }: { onFinish: () => void }) {
@@ -40,7 +53,9 @@ export function AppTour({ onFinish }: { onFinish: () => void }) {
         <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.18em] text-gold">
           Recorrido {index + 1} de {STOPS.length}
         </div>
-        <div className="mb-2 text-3xl">{stop.icon}</div>
+        <div className="mb-2">
+          <stop.icon size={24} strokeWidth={1.8} />
+        </div>
         <h2 className="mb-2 font-display text-xl text-text">{stop.title}</h2>
         <p className="text-[13px] leading-relaxed text-textMuted">{stop.text}</p>
 

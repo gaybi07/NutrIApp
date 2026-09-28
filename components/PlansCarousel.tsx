@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { ClientPlan, PLAN_PRICES_ARS } from "@/lib/types";
+import { Gem } from "lucide-react";
 
 type PlanId = ClientPlan;
 const PLAN_IDS: PlanId[] = ["basico", "premium", "autoentreno", "premium_plus"];
@@ -55,7 +56,10 @@ export function PlansCarousel({ currentPlan }: { currentPlan: ClientPlan }) {
 
   return (
     <div>
-      <div className="font-display italic text-lg text-gold mb-3">💎 Planes y suscripción</div>
+      <div className="font-display italic text-lg text-gold mb-3 flex items-center gap-1.5">
+        <Gem size={24} strokeWidth={1.8} />
+        Planes y suscripción
+      </div>
 
       <div className="-mx-1 mb-3 flex gap-1.5 overflow-x-auto px-1 pb-1" style={{ scrollbarWidth: "none" }}>
         {PLAN_IDS.map((id, i) => (

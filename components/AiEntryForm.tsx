@@ -15,6 +15,7 @@ import { useFoods } from "@/lib/useFoods";
 import { MealFromAlacena } from "@/components/MealFromAlacena";
 import { MealFromSearch } from "@/components/MealFromSearch";
 import { IngredientBreakdown, BreakdownRow, sumRows } from "@/components/IngredientBreakdown";
+import { Pencil, Lock, Mic, Lightbulb, CircleCheck, TriangleAlert } from "lucide-react";
 
 const MAX_SUGGESTIONS = 6;
 
@@ -445,7 +446,7 @@ export function AiEntryForm({
       className="rounded-xl p-4 border border-gold"
       style={{ background: "linear-gradient(135deg, rgb(var(--color-accent) / 0.08), rgb(var(--color-surface)))" }}
     >
-      <div className="font-display italic text-[15px] text-gold mb-2.5">✎ Cargar comida</div>
+      <div className="font-display italic text-[15px] text-gold mb-2.5 inline-flex items-center gap-1.5"><Pencil size={20} strokeWidth={1.8} /> Cargar comida</div>
 
       <div className="mb-2.5 flex gap-1 rounded-xl border border-border bg-bg/40 p-1">
         <button
@@ -455,7 +456,7 @@ export function AiEntryForm({
             disableAi ? "text-textMuted/50" : mode === "ia" ? "bg-gold text-bg" : "text-textMuted"
           }`}
         >
-          {disableAi ? "🔒 " : ""}Con IA
+          {disableAi ? <span className="inline-flex items-center gap-1"><Lock size={16} strokeWidth={1.8} /> Con IA</span> : "Con IA"}
         </button>
         <button
           type="button"
@@ -464,7 +465,7 @@ export function AiEntryForm({
             disableAi ? "text-textMuted/50" : mode === "alacena" ? "bg-gold text-bg" : "text-textMuted"
           }`}
         >
-          {disableAi ? "🔒 " : ""}Desde Alacena
+          {disableAi ? <span className="inline-flex items-center gap-1"><Lock size={16} strokeWidth={1.8} /> Desde Alacena</span> : "Desde Alacena"}
         </button>
         <button
           type="button"
@@ -473,7 +474,7 @@ export function AiEntryForm({
             disableAi ? "text-textMuted/50" : mode === "buscar" ? "bg-gold text-bg" : "text-textMuted"
           }`}
         >
-          {disableAi ? "🔒 " : ""}Buscar producto
+          {disableAi ? <span className="inline-flex items-center gap-1"><Lock size={16} strokeWidth={1.8} /> Buscar producto</span> : "Buscar producto"}
         </button>
       </div>
 
@@ -663,7 +664,7 @@ export function AiEntryForm({
                 : "border-gold bg-gold/15 text-gold"
             }`}
           >
-            <span className="text-lg leading-none">🎙️</span>
+            <span className="leading-none"><Mic size={20} strokeWidth={1.8} /></span>
             {recording ? "Grabando… tocá para parar" : "Grabar audio"}
           </button>
         )}
@@ -681,7 +682,7 @@ export function AiEntryForm({
               onClick={() => setShowSuggestions((v) => !v)}
               className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-wide text-textMuted underline"
             >
-              💡 Sugerencias {showSuggestions ? "▲" : "▼"}
+              <Lightbulb size={16} strokeWidth={1.8} /> Sugerencias {showSuggestions ? "▲" : "▼"}
             </button>
             {showSuggestions && (
               <div className="mt-1.5 rounded-lg border border-dashed border-border p-2">
@@ -865,12 +866,12 @@ export function AiEntryForm({
             <div className="flex-1 space-y-1.5">
               {consumeResult.consumed.length > 0 && (
                 <div className="text-[11px] text-sage">
-                  <span className="font-bold">✓ Descontado de tu alacena:</span> {consumeResult.consumed.join(", ")}
+                  <span className="font-bold inline-flex items-center gap-1"><CircleCheck size={16} strokeWidth={1.8} /> Descontado de tu alacena:</span> {consumeResult.consumed.join(", ")}
                 </div>
               )}
               {consumeResult.missing.length > 0 && (
                 <div className="text-[11px] text-rust">
-                  <span className="font-bold">⚠ No estaba cargado, no se descontó:</span> {consumeResult.missing.join(", ")}. Cargalo en Compras y la próxima te lo descontamos solo.
+                  <span className="font-bold inline-flex items-center gap-1"><TriangleAlert size={16} strokeWidth={1.8} /> No estaba cargado, no se descontó:</span> {consumeResult.missing.join(", ")}. Cargalo en Compras y la próxima te lo descontamos solo.
                 </div>
               )}
             </div>

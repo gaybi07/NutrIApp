@@ -6,6 +6,7 @@ import { CalculatorProfile, GoalMode } from "@/lib/types";
 import { countDigits, MAX_DIGITS } from "@/lib/inputLimits";
 import { FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
+import { Scale, TriangleAlert } from "lucide-react";
 
 export function GoalCalculator({
   tdeeFallback,
@@ -78,8 +79,9 @@ export function GoalCalculator({
           {detalle} El gasto diario luego varía con tus pasos y entrenamiento. Es una estimación orientativa.
         </div>
         {bloqueado ? (
-          <div className="mt-3 rounded-lg border border-rust/50 bg-rust/10 p-2.5 text-[11px] text-rust">
-            ⚠ {motivoBloqueo}
+          <div className="mt-3 flex items-center gap-1.5 rounded-lg border border-rust/50 bg-rust/10 p-2.5 text-[11px] text-rust">
+            <TriangleAlert size={16} strokeWidth={1.8} />
+            {motivoBloqueo}
           </div>
         ) : (
           onApplyGoal && (
@@ -100,7 +102,10 @@ export function GoalCalculator({
       className="rounded-xl p-4 mb-3 border border-sage"
       style={{ background: "linear-gradient(135deg, rgb(var(--color-sage) / 0.08), rgb(var(--color-surface)))" }}
     >
-      <div className="font-display italic text-[15px] text-sage mb-2.5">⚖ Calculadora de consumo y objetivo</div>
+      <div className="font-display italic text-[15px] text-sage mb-2.5 flex items-center gap-1.5">
+        <Scale size={20} strokeWidth={1.8} />
+        Calculadora de consumo y objetivo
+      </div>
       <div className="mb-2.5 text-[11px] text-textMuted">Calculá tu base personal y elegí qué querés lograr.</div>
       <div className="mb-2.5 grid grid-cols-3 gap-1.5">
         {[

@@ -2,6 +2,7 @@
 
 import { ReactNode, FormEvent, useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase/browser";
+import { Settings, Gem } from "lucide-react";
 
 export function AuthPanel({
   onAuthChange,
@@ -128,7 +129,7 @@ export function AuthPanel({
           aria-label="Ajustes"
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-bg text-base text-textMuted transition-colors hover:border-gold/60 hover:text-gold"
         >
-          ⚙
+          <Settings size={20} strokeWidth={1.8} />
         </button>
         {menuOpen && (
           <>
@@ -215,9 +216,10 @@ export function AuthPanel({
                     setMenuOpen(false);
                     onOpenPlanes();
                   }}
-                  className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
+                  className="flex w-full items-center gap-1.5 border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
                 >
-                  💎 Planes
+                  <Gem size={16} strokeWidth={1.8} />
+                  Planes
                 </button>
               )}
               {isSupabaseConfigured && onOpenLinkToProfessional && (

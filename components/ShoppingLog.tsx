@@ -10,6 +10,7 @@ import { InventoryCategory, InventoryItem, InventoryNutrition, PurchaseRecord, I
 import { parseInventoryText } from "@/lib/useInventory";
 import { ProductMemoryApi } from "@/lib/useProductMemory";
 import { estimateNutritionFromOff } from "@/lib/offAverage";
+import { Mic } from "lucide-react";
 
 type AiShoppingItem = {
   name: string;
@@ -392,7 +393,7 @@ export function ShoppingLog({
                 recording ? "border-rust bg-rust/15 text-rust animate-pulse" : "border-gold bg-gold/15 text-gold"
               }`}
             >
-              <span className="text-lg leading-none">🎙️</span>
+              <span className="leading-none"><Mic size={20} strokeWidth={1.8} /></span>
               {recording ? "Grabando… tocá para parar" : "Cargar con audio"}
             </button>
           )}

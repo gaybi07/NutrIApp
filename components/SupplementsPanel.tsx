@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { DayEntry, SUPPLEMENT_CATALOG, SupplementEntry } from "@/lib/types";
+import { Pill, CircleCheck, Plus } from "lucide-react";
 
 /**
  * Suplementos del día -- aparte de la carga de comidas a propósito (no
@@ -34,7 +35,7 @@ export function SupplementsPanel({ entry, onUpsert }: { entry: DayEntry; onUpser
 
   return (
     <div>
-      <div className="font-display italic text-lg text-gold mb-1">💊 Suplementos</div>
+      <div className="font-display italic text-lg text-gold mb-1 inline-flex items-center gap-1.5"><Pill size={24} strokeWidth={1.8} /> Suplementos</div>
       <div className="mb-3 text-xs text-textMuted">Tocá el que tomaste hoy -- se suma con su dosis habitual, sin escribir nada.</div>
       <div className="grid grid-cols-2 gap-1.5">
         {SUPPLEMENT_CATALOG.map((s) => {
@@ -48,7 +49,7 @@ export function SupplementsPanel({ entry, onUpsert }: { entry: DayEntry; onUpser
                 active ? "border-sage/60 bg-sage/10 text-sage" : "border-gold/60 bg-gold/5 text-text"
               }`}
             >
-              <div className="text-[13px] font-semibold">{s.nombre}{active ? " ✓" : ""}</div>
+              <div className="text-[13px] font-semibold inline-flex items-center gap-1">{s.nombre}{active ? <CircleCheck size={16} strokeWidth={1.8} /> : null}</div>
               <div className="font-mono text-[10px] uppercase tracking-wide text-textMuted">{s.dosis}</div>
             </button>
           );

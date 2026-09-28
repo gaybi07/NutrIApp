@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { Check, ChevronRight } from "lucide-react";
 import { useTrainerApplication, useTrainerAdmin } from "@/lib/useTrainerApplication";
 import { useTrainerLink, useTrainerStudents } from "@/lib/useTrainerLink";
 import { TrainerLinkRequest, TrainerStatus, TrainerStudent } from "@/lib/types";
@@ -9,7 +10,7 @@ import { AdminRow } from "@/components/TrainerPanel";
 
 const STATUS_STYLE: Record<TrainerStatus, { label: string; color: string }> = {
   pendiente: { label: "Pendiente de revisión", color: "text-gold" },
-  aprobado: { label: "Aprobado ✓", color: "text-sage" },
+  aprobado: { label: "Aprobado", color: "text-sage" },
   rechazado: { label: "Rechazado", color: "text-rust" },
 };
 
@@ -169,7 +170,9 @@ function NutricionistaPatientsAndPlan({
               {studentsHook.pendingRequests.length} solicitud{studentsHook.pendingRequests.length === 1 ? "" : "es"} pendiente
               {studentsHook.pendingRequests.length === 1 ? "" : "s"}
             </span>
-            <span className="font-mono text-[10px] text-gold">Revisar ›</span>
+            <span className="inline-flex items-center gap-0.5 font-mono text-[10px] text-gold">
+              Revisar <ChevronRight size={12} strokeWidth={1.8} />
+            </span>
           </button>
         </div>
       )}
@@ -367,8 +370,9 @@ export function NutricionistaPanel({ authenticated, userEmail }: { authenticated
     <div className="space-y-4">
       {own.application && (
         <div className="rounded-lg border border-border bg-bg/40 p-2.5">
-          <div className={`font-mono text-[11px] ${STATUS_STYLE[own.application.status].color}`}>
+          <div className={`flex items-center gap-1 font-mono text-[11px] ${STATUS_STYLE[own.application.status].color}`}>
             {STATUS_STYLE[own.application.status].label}
+            {own.application.status === "aprobado" && <Check size={14} strokeWidth={1.8} />}
           </div>
           <button type="button" onClick={viewOwnCertificate} className="mt-1 font-mono text-[11px] text-textMuted underline">
             Ver mi comprobante
@@ -394,8 +398,9 @@ export function NutricionistaPanel({ authenticated, userEmail }: { authenticated
           <>
             {own.application && (
               <div className="mb-3 rounded-lg border border-border bg-bg/40 p-2.5">
-                <div className={`font-mono text-[11px] ${STATUS_STYLE[own.application.status].color}`}>
+                <div className={`flex items-center gap-1 font-mono text-[11px] ${STATUS_STYLE[own.application.status].color}`}>
                   {STATUS_STYLE[own.application.status].label}
+                  {own.application.status === "aprobado" && <Check size={14} strokeWidth={1.8} />}
                 </div>
                 <button type="button" onClick={viewOwnCertificate} className="mt-1 font-mono text-[11px] text-textMuted underline">
                   Ver mi comprobante

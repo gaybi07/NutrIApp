@@ -4,12 +4,13 @@ import { DayEntry, INTENSITY_STYLES, MealKey, MEAL_LABELS } from "@/lib/types";
 import { dayTotal, dayProt, dayGoal, getTrainingSessions } from "@/lib/calculations";
 import { SECTION_HELP } from "@/lib/helpText";
 import { Collapsible } from "@/components/Collapsible";
+import { Sunrise, Utensils, Coffee, Moon, Cookie, Pill, CircleCheck, ListChecks } from "lucide-react";
 
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const DOW = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 
 const QUICK_MEALS: MealKey[] = ["des", "alm", "mer", "cen", "col"];
-const MEAL_ICON: Record<MealKey, string> = { des: "🌅", alm: "🍽️", mer: "🍎", cen: "🌙", col: "🍫" };
+const MEAL_ICON: Record<MealKey, typeof Sunrise> = { des: Sunrise, alm: Utensils, mer: Coffee, cen: Moon, col: Cookie };
 
 export function TodayCard({
   entry,
@@ -97,6 +98,7 @@ export function TodayCard({
       <div className="grid grid-cols-3 gap-2">
         {QUICK_MEALS.map((meal) => {
           const loaded = mealKcal[meal] > 0;
+          const MealIcon = MEAL_ICON[meal];
           return (
             <button
               key={meal}
@@ -107,9 +109,9 @@ export function TodayCard({
               }`}
             >
               {loaded && (
-                <span className="absolute right-1.5 top-1.5 text-[9px] leading-none">✓</span>
+                <span className="absolute right-1.5 top-1.5 leading-none"><CircleCheck size={16} strokeWidth={1.8} /></span>
               )}
-              <span className="text-sm leading-none">{MEAL_ICON[meal]}</span>
+              <span className="leading-none"><MealIcon size={16} strokeWidth={1.8} /></span>
               <span>{MEAL_LABELS[meal]}</span>
             </button>
           );
@@ -124,8 +126,8 @@ export function TodayCard({
             (entry.suplementos?.length || 0) > 0 ? "border-sage/60 bg-sage/10 text-sage" : "border-gold/60 bg-gold text-bg"
           }`}
         >
-          {(entry.suplementos?.length || 0) > 0 && <span className="absolute right-1.5 top-1.5 text-[9px] leading-none">✓</span>}
-          <span className="text-sm leading-none">💊</span>
+          {(entry.suplementos?.length || 0) > 0 && <span className="absolute right-1.5 top-1.5 leading-none"><CircleCheck size={16} strokeWidth={1.8} /></span>}
+          <span className="leading-none"><Pill size={16} strokeWidth={1.8} /></span>
           <span>Suplementos</span>
         </button>
       </div>
@@ -134,7 +136,7 @@ export function TodayCard({
         onClick={onViewMeals}
         className="mt-2 w-full rounded-xl border border-border bg-transparent px-3 py-2 font-mono text-[10px] uppercase tracking-[0.1em] text-textMuted"
       >
-        📋 Ver comidas cargadas
+        <span className="inline-flex items-center gap-1"><ListChecks size={16} strokeWidth={1.8} /> Ver comidas cargadas</span>
       </button>
       {/* Pasos y entrenamiento van cada uno en su propio botón -- antes
           compartían uno solo que, apenas cargabas el entrenamiento, dejaba

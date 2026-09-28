@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { InventoryItem, InventoryZone, INVENTORY_ZONE_LABELS } from "@/lib/types";
 import { ProductMemoryApi } from "@/lib/useProductMemory";
 import { QuickAddProducts, AiShoppingItem } from "@/components/QuickAddProducts";
+import { Info } from "lucide-react";
 
 const ZONE_STYLE: Record<InventoryZone, { accent: string; border: string; bg: string; icon: JSX.Element }> = {
   flotante: {
@@ -177,9 +178,12 @@ export function CocinaView({
         </ZoneCard>
       </div>
 
-      <div className="mt-2 rounded-xl border border-dashed border-border px-2.5 py-2 text-[11px] text-textMuted">
-        💡 Cada producto guarda una zona — la recordamos por nombre para la próxima vez. Tocá una zona para ver o agregar productos ahí.
-        La mesada se pone roja apenas tiene algo — es lo que todavía no guardaste.
+      <div className="mt-2 rounded-xl border border-dashed border-border px-2.5 py-2 text-[11px] text-textMuted flex items-start gap-1.5">
+        <Info size={16} strokeWidth={1.8} className="mt-px shrink-0" />
+        <span>
+          Cada producto guarda una zona — la recordamos por nombre para la próxima vez. Tocá una zona para ver o agregar productos ahí.
+          La mesada se pone roja apenas tiene algo — es lo que todavía no guardaste.
+        </span>
       </div>
 
       {openZone && (

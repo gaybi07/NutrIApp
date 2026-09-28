@@ -9,6 +9,7 @@ import { useMealMemory, MealMemoryEntry } from "@/lib/useMealMemory";
 import { useMyNutritionPlan } from "@/lib/useMyNutritionPlan";
 import { SECTION_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
+import { CircleCheck, Salad, TriangleAlert, Share2 } from "lucide-react";
 
 const DOW_FULL = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
@@ -154,7 +155,7 @@ function DayPlanRow({
         </div>
         <div className="flex items-center gap-2">
           <span className={`font-mono text-[9px] uppercase tracking-wide ${complete ? "text-sage" : "text-textMuted"}`}>
-            {complete ? "✓" : `${resolvedCount}/${REQUIRED_MEAL_KEYS.length}`}
+            {complete ? <CircleCheck size={16} strokeWidth={1.8} /> : `${resolvedCount}/${REQUIRED_MEAL_KEYS.length}`}
           </span>
           <span className="font-mono text-[10px] text-textMuted transition-transform" style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>
             ▾
@@ -431,7 +432,7 @@ export function WeekPlanner({
             onClick={importNutritionPlan}
             className="w-full rounded-lg border border-dashed border-sage/50 bg-sage/5 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-sage"
           >
-            🥗 Importar plan nutricional a la semana
+            <span className="inline-flex items-center gap-1"><Salad size={16} strokeWidth={1.8} /> Importar plan nutricional a la semana</span>
           </button>
           {importStatus && <div className="mt-1.5 text-center text-[11px] text-textMuted">{importStatus}</div>}
         </div>
@@ -459,7 +460,7 @@ export function WeekPlanner({
               alguna receta del catálogo para que se arme la lista.
             </div>
           ) : (
-            <div className="text-[12px] text-sage">Ya tenés todo lo que necesitás en el inventario ✓</div>
+            <div className="text-[12px] text-sage inline-flex items-center gap-1">Ya tenés todo lo que necesitás en el inventario <CircleCheck size={16} strokeWidth={1.8} /></div>
           )
         ) : (
           <>
@@ -481,9 +482,9 @@ export function WeekPlanner({
                 {reviewList.map((entry) => (
                   <span
                     key={entry.title}
-                    className="rounded-full border border-rust/50 bg-rust/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide text-rust"
+                    className="rounded-full border border-rust/50 bg-rust/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide text-rust inline-flex items-center gap-1"
                   >
-                    ⚠ Revisar: {entry.title} ({entry.note})
+                    <TriangleAlert size={16} strokeWidth={1.8} /> Revisar: {entry.title} ({entry.note})
                   </span>
                 ))}
               </div>
@@ -501,7 +502,7 @@ export function WeekPlanner({
               }}
               className="w-full rounded-lg border border-gold/60 bg-gold/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-gold"
             >
-              {showExport ? "Ocultar" : "📤 Exportar lista"}
+              {showExport ? "Ocultar" : <span className="inline-flex items-center gap-1"><Share2 size={16} strokeWidth={1.8} /> Exportar lista</span>}
             </button>
             {showExport && (
               <div className="mt-2">

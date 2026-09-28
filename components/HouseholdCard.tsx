@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CircleCheck } from "lucide-react";
 import { Collapsible } from "@/components/Collapsible";
 import { InventoryItem } from "@/lib/types";
 import { HouseholdInfo } from "@/lib/useHousehold";
@@ -68,7 +69,9 @@ export function HouseholdCard({
       {household ? (
         <>
           <div className="mb-3 flex items-center gap-1.5 text-[12px]">
-            <span className="text-sage">✓ Estás conectado</span>
+            <span className="inline-flex items-center gap-1 text-sage">
+              <CircleCheck size={16} strokeWidth={1.8} /> Estás conectado
+            </span>
             <span className="text-textMuted">
               · {household.memberCount} persona{household.memberCount !== 1 ? "s" : ""}
             </span>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, FileText, Plus, ShoppingBasket, X } from "lucide-react";
 import { DayMealOptions, MEAL_LABELS, MealKey, MealOption, MealOptionIngredient, Weekday, WEEKDAY_LABELS_SHORT } from "@/lib/types";
 import { isoMonday, fmtDate, addDays } from "@/lib/calculations";
 import { useNutritionPlan } from "@/lib/useNutritionPlan";
@@ -159,7 +160,13 @@ export function NutritionPlanBuilder({ studentId }: { studentId: string }) {
         disabled={importing}
         className="mb-3 w-full rounded-lg border border-dashed border-gold/50 bg-gold/5 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold disabled:opacity-50"
       >
-        {importing ? "Leyendo tu archivo..." : "📄 Importar desde PDF, Word o Excel"}
+        {importing ? (
+          "Leyendo tu archivo..."
+        ) : (
+          <span className="inline-flex items-center justify-center gap-1.5">
+            <FileText size={16} strokeWidth={1.8} /> Importar desde PDF, Word o Excel
+          </span>
+        )}
       </button>
       {importStatus && <div className="mb-3 text-center text-[11px] text-textMuted">{importStatus}</div>}
 
@@ -169,7 +176,7 @@ export function NutritionPlanBuilder({ studentId }: { studentId: string }) {
           onClick={() => setWeekOffset((o) => o - 1)}
           className="rounded-full border border-border px-2 py-1 font-mono text-[11px] text-textMuted"
         >
-          ‹
+          <ChevronLeft size={16} strokeWidth={1.8} />
         </button>
         <div className="text-center">
           <div className="font-mono text-[10px] uppercase tracking-wide text-textMuted">Semana del {weekLabel}</div>
@@ -182,7 +189,7 @@ export function NutritionPlanBuilder({ studentId }: { studentId: string }) {
           onClick={() => setWeekOffset((o) => o + 1)}
           className="rounded-full border border-border px-2 py-1 font-mono text-[11px] text-textMuted"
         >
-          ›
+          <ChevronRight size={16} strokeWidth={1.8} />
         </button>
       </div>
 
@@ -232,9 +239,9 @@ export function NutritionPlanBuilder({ studentId }: { studentId: string }) {
                     <button
                       type="button"
                       onClick={() => addOption(mealKey)}
-                      className="rounded-full border border-gold/60 bg-gold px-2 py-0.5 font-mono text-[9px] uppercase tracking-wide text-bg"
+                      className="inline-flex items-center gap-1 rounded-full border border-gold/60 bg-gold px-2 py-0.5 font-mono text-[9px] uppercase tracking-wide text-bg"
                     >
-                      + Opción
+                      <Plus size={12} strokeWidth={1.8} /> Opción
                     </button>
                   )}
                 </div>
@@ -300,13 +307,15 @@ export function NutritionPlanBuilder({ studentId }: { studentId: string }) {
 
                         <div className="mt-1.5 border-t border-dashed border-border pt-1.5">
                           <div className="mb-1 flex items-center justify-between">
-                            <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">🧺 Ingredientes (opcional)</span>
+                            <span className="inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">
+                              <ShoppingBasket size={14} strokeWidth={1.8} /> Ingredientes (opcional)
+                            </span>
                             <button
                               type="button"
                               onClick={() => addIngredient(mealKey, idx)}
-                              className="font-mono text-[9px] uppercase tracking-wide text-gold"
+                              className="inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-wide text-gold"
                             >
-                              + Ingrediente
+                              <Plus size={12} strokeWidth={1.8} /> Ingrediente
                             </button>
                           </div>
                           {(opt.ingredientes?.length || 0) > 0 && (
@@ -341,7 +350,7 @@ export function NutritionPlanBuilder({ studentId }: { studentId: string }) {
                                     onClick={() => removeIngredient(mealKey, idx, ingIdx)}
                                     className="shrink-0 font-mono text-[10px] text-rust"
                                   >
-                                    ✕
+                                    <X size={14} strokeWidth={1.8} />
                                   </button>
                                 </div>
                               ))}

@@ -1,6 +1,7 @@
 import { GoalProgressInfo } from "@/lib/calculations";
 import { Collapsible } from "@/components/Collapsible";
 import { SECTION_HELP } from "@/lib/helpText";
+import { CircleCheck } from "lucide-react";
 
 const MODO_LABEL: Record<"perder" | "aumentar", { verbo: string; hacia: string }> = {
   perder: { verbo: "Bajando", hacia: "hasta" },
@@ -55,7 +56,7 @@ export function GoalProgress({ progress, openOnDesktop }: { progress: GoalProgre
   let mensaje = "Cargá tu peso de esta semana para ver cómo venís.";
   let colorMensaje = "text-textMuted";
   if (yaLlego) {
-    mensaje = "🎉 ¡Ya llegaste a tu objetivo!";
+    mensaje = "¡Ya llegaste a tu objetivo!";
     colorMensaje = "text-sage";
   } else if (ritmoRealSemanal != null && kgPorSemanaNecesario == null && diasRestantes <= 0) {
     mensaje = "La fecha objetivo ya pasó — pero seguís sumando progreso. Podés poner una fecha nueva desde la calculadora.";
@@ -74,7 +75,10 @@ export function GoalProgress({ progress, openOnDesktop }: { progress: GoalProgre
   return (
     <Collapsible eyebrow="Objetivo" title={`${label.verbo} ${label.hacia} ${fmt(metaKg)}kg`} info={SECTION_HELP.objetivo} openOnDesktop={openOnDesktop}>
       {yaLlego ? (
-        <div className="rounded-lg border border-sage/40 bg-sage/10 px-3 py-2.5 text-[13px] text-sage">{mensaje}</div>
+        <div className="flex items-center gap-1.5 rounded-lg border border-sage/40 bg-sage/10 px-3 py-2.5 text-[13px] text-sage">
+          <CircleCheck size={16} strokeWidth={1.8} />
+          {mensaje}
+        </div>
       ) : (
         <>
           <div className="mb-1 flex items-baseline justify-between">

@@ -23,6 +23,7 @@ import { ExercisePicker } from "@/components/ExercisePicker";
 import { RoutineEditorModal } from "@/components/RoutineEditorModal";
 import { LibraryExercise, muscleGroupFor } from "@/lib/exerciseLibrary";
 import { useRoutineIncidents, RoutineIncidentInput } from "@/lib/useRoutineIncidents";
+import { Play, Pause, Lock, ClipboardList, Dumbbell, ChartColumn, Search, MessageSquareText, Lightbulb, CircleCheck } from "lucide-react";
 
 function newId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -605,11 +606,13 @@ export function LiveWorkout({
       )}
       {!session && assignedSession && (
         <div className="mb-2 rounded-xl border border-gold p-3" style={{ background: "linear-gradient(135deg, rgb(var(--color-accent) / 0.14), rgb(var(--color-surface)))" }}>
-          <div className="mb-1 font-mono text-[9px] uppercase tracking-[0.14em] text-gold">📋 Hoy te toca · asignado por tu profe</div>
+          <div className="mb-1 flex items-center gap-1 font-mono text-[9px] uppercase tracking-[0.14em] text-gold">
+            <ClipboardList size={16} strokeWidth={1.8} className="shrink-0" /> Hoy te toca · asignado por tu profe
+          </div>
           <div className="mb-0.5 text-[15px] font-bold text-text">{assignedSession.routineNombre}</div>
           <div className="mb-3 text-[12px] text-textMuted">{assignedSession.routineSnapshot.length} ejercicios</div>
-          <button type="button" onClick={startAssignedSession} className="w-full rounded-lg p-3 font-sans text-sm font-bold bg-gold text-bg">
-            ▶ Arrancar sesión asignada
+          <button type="button" onClick={startAssignedSession} className="flex w-full items-center justify-center gap-1.5 rounded-lg p-3 font-sans text-sm font-bold bg-gold text-bg">
+            <Play size={20} strokeWidth={1.8} className="shrink-0" /> Arrancar sesión asignada
           </button>
         </div>
       )}
@@ -620,25 +623,29 @@ export function LiveWorkout({
               <button
                 type="button"
                 onClick={startSession}
-                className="w-full rounded-lg p-3 font-sans text-sm font-bold bg-gold text-bg"
+                className="flex w-full items-center justify-center gap-1.5 rounded-lg p-3 font-sans text-sm font-bold bg-gold text-bg"
               >
-                ▶ Iniciar entrenamiento
+                <Play size={20} strokeWidth={1.8} className="shrink-0" /> Iniciar entrenamiento
               </button>
               {/* Antes de arrancar, solo el nombre -- la lista de ejercicios
                   se ve recién adentro de la sesión en vivo (a pedido: no
                   tiene sentido mostrarla si todavía no empezaste). */}
               <div className="mt-2 rounded-lg border border-border bg-bg/40 px-2.5 py-2 text-center text-[12px] text-textMuted">
                 Rutina de hoy: <span className="font-semibold text-text">{scheduledRoutine.nombre}</span>
-                {scheduledRoutine.origen === "asignada" && <span className="ml-1.5 text-gold">🔒 Asignada</span>}
+                {scheduledRoutine.origen === "asignada" && (
+                  <span className="ml-1.5 inline-flex items-center gap-0.5 text-gold">
+                    <Lock size={16} strokeWidth={1.8} className="shrink-0" /> Asignada
+                  </span>
+                )}
               </div>
             </>
           ) : (
             <button
               type="button"
               onClick={() => setPlanningOpen(true)}
-              className="w-full rounded-lg p-3 font-sans text-sm font-bold bg-gold text-bg"
+              className="flex w-full items-center justify-center gap-1.5 rounded-lg p-3 font-sans text-sm font-bold bg-gold text-bg"
             >
-              📋 Cargar rutina
+              <ClipboardList size={20} strokeWidth={1.8} className="shrink-0" /> Cargar rutina
             </button>
           )}
           {/* Independiente de si hay rutina planificada para hoy o no --
@@ -648,17 +655,17 @@ export function LiveWorkout({
           <button
             type="button"
             onClick={() => setUnplannedOpen(true)}
-            className="mt-2 w-full rounded-lg border border-dashed border-gold/50 px-3 py-2.5 font-mono text-[10px] uppercase tracking-wide text-gold"
+            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-gold/50 px-3 py-2.5 font-mono text-[10px] uppercase tracking-wide text-gold"
           >
-            🏋️ Entrenar sin planificar
+            <Dumbbell size={16} strokeWidth={1.8} className="shrink-0" /> Entrenar sin planificar
           </button>
           {entry.entrenamientoReporte && (
             <button
               type="button"
               onClick={() => setReport(entry.entrenamientoReporte!)}
-              className="mt-2 w-full rounded-lg border border-dashed border-gold/40 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold"
+              className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-gold/40 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold"
             >
-              📊 Ver reporte del entrenamiento de hoy
+              <ChartColumn size={16} strokeWidth={1.8} className="shrink-0" /> Ver reporte del entrenamiento de hoy
             </button>
           )}
         </>
@@ -768,8 +775,8 @@ export function LiveWorkout({
       {session && (
         <>
           {isAssignedRoutine && (
-            <div className="mb-2 rounded-lg border border-dashed border-gold/40 bg-gold/5 px-3 py-2 text-center text-[11px] text-textMuted">
-              🔒 Rutina asignada por tu entrenador — no podés borrar lo planificado, pero podés marcar omitidos, reemplazos, series
+            <div className="mb-2 flex items-center justify-center gap-1 rounded-lg border border-dashed border-gold/40 bg-gold/5 px-3 py-2 text-center text-[11px] text-textMuted">
+              <Lock size={16} strokeWidth={1.8} className="shrink-0" /> Rutina asignada por tu entrenador — no podés borrar lo planificado, pero podés marcar omitidos, reemplazos, series
               extra y ejercicios fuera de plan. Todo queda registrado para que lo vea.
             </div>
           )}
@@ -782,11 +789,19 @@ export function LiveWorkout({
               <button
                 type="button"
                 onClick={togglePause}
-                className={`rounded-lg border px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-wide ${
+                className={`flex items-center gap-1 rounded-lg border px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-wide ${
                   isPaused ? "border-gold bg-gold text-bg" : "border-border text-textMuted"
                 }`}
               >
-                {isPaused ? "▶ Seguir" : "⏸ Pausar"}
+                {isPaused ? (
+                  <>
+                    <Play size={16} strokeWidth={1.8} className="shrink-0" /> Seguir
+                  </>
+                ) : (
+                  <>
+                    <Pause size={16} strokeWidth={1.8} className="shrink-0" /> Pausar
+                  </>
+                )}
               </button>
               <button
                 type="button"
@@ -874,8 +889,8 @@ export function LiveWorkout({
                         </div>
                       </div>
                       {ex.suggestionNote && (
-                        <div className="mb-2 rounded-lg border border-gold/30 bg-gold/10 px-2 py-1.5 text-[11px] text-textMuted">
-                          💡 {ex.suggestionNote}
+                        <div className="mb-2 flex items-start gap-1 rounded-lg border border-gold/30 bg-gold/10 px-2 py-1.5 text-[11px] text-textMuted">
+                          <Lightbulb size={16} strokeWidth={1.8} className="shrink-0" /> {ex.suggestionNote}
                         </div>
                       )}
                       {ex.omitido && (
@@ -889,8 +904,8 @@ export function LiveWorkout({
                         </div>
                       )}
                       {ex.comentario && (
-                        <div className="mb-2 rounded-lg border border-border bg-bg/60 px-2 py-1.5 text-[11px] text-textMuted">
-                          💬 {ex.comentario}
+                        <div className="mb-2 flex items-start gap-1 rounded-lg border border-border bg-bg/60 px-2 py-1.5 text-[11px] text-textMuted">
+                          <MessageSquareText size={16} strokeWidth={1.8} className="shrink-0" /> {ex.comentario}
                         </div>
                       )}
                       <div className="space-y-1.5">
@@ -1006,9 +1021,9 @@ export function LiveWorkout({
                               const value = window.prompt("Comentario para tu entrenador:", ex.comentario || "");
                               if (value !== null) setComentario(i, value.trim() || undefined);
                             }}
-                            className="rounded-lg border border-dashed border-border px-2 py-1.5 font-mono text-[9px] uppercase tracking-wide text-textMuted"
+                            className="flex items-center justify-center gap-1 rounded-lg border border-dashed border-border px-2 py-1.5 font-mono text-[9px] uppercase tracking-wide text-textMuted"
                           >
-                            💬 Comentario
+                            <MessageSquareText size={16} strokeWidth={1.8} className="shrink-0" /> Comentario
                           </button>
                         </div>
                       )}
@@ -1040,9 +1055,9 @@ export function LiveWorkout({
             <button
               type="button"
               onClick={() => setLibraryTarget("new")}
-              className="rounded-lg border border-dashed border-gold/50 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold"
+              className="flex items-center justify-center gap-1 rounded-lg border border-dashed border-gold/50 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold"
             >
-              🔍 Desde biblioteca
+              <Search size={16} strokeWidth={1.8} className="shrink-0" /> Desde biblioteca
             </button>
           </div>
           {isAssignedRoutine && (
@@ -1103,7 +1118,9 @@ export function LiveWorkout({
             className="max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-2xl border border-border bg-surface p-4 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="font-display text-lg text-text">Entrenamiento cerrado ✓</div>
+            <div className="flex items-center gap-1.5 font-display text-lg text-text">
+              Entrenamiento cerrado <CircleCheck size={20} strokeWidth={1.8} className="shrink-0" />
+            </div>
             <div className="mb-3 font-mono text-[11px] text-textMuted">
               {report.minutos} min · nivel general {INTENSITY_STYLES[report.overallIntensidad].label.toLowerCase()}
             </div>

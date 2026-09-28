@@ -15,6 +15,7 @@ import { InfoHint } from "@/components/InfoHint";
 import { inventoryKey } from "@/lib/useInventory";
 import { getMealItems, applyMealItems, suggestedMeal, nutritionForAmount } from "@/lib/calculations";
 import { generateProductQrDataUrl } from "@/lib/generateProductQr";
+import { ChefHat, TriangleAlert, CircleCheck, ListChecks, Map, X, Camera, Search, QrCode } from "lucide-react";
 
 const EMPTY_NUTRITION: InventoryNutrition = { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 const REVIEW_BATCH_SIZE = 12;
@@ -421,7 +422,7 @@ export function AlacenaCard({
                 showPrepareDish ? "border-gold bg-gold text-bg" : "border-gold/60 bg-gold/10 text-gold"
               }`}
             >
-              🍲 Preparar
+              <span className="inline-flex items-center gap-1"><ChefHat size={16} strokeWidth={1.8} /> Preparar</span>
             </button>
             <InfoHint
               label="Qué hace Preparar plato"
@@ -448,8 +449,8 @@ export function AlacenaCard({
         <div className="mb-3 flex flex-wrap items-center gap-2">
           {missingNutritionCount > 0 ? (
             <div className="flex flex-1 flex-wrap items-center justify-between gap-2 rounded-lg border border-rust/50 bg-rust/10 px-3 py-2 text-[12px] text-rust">
-              <span>
-                ⚠ Falta información nutricional de {missingNutritionCount} producto{missingNutritionCount > 1 ? "s" : ""}.
+              <span className="inline-flex items-center gap-1">
+                <TriangleAlert size={16} strokeWidth={1.8} className="shrink-0" /> Falta información nutricional de {missingNutritionCount} producto{missingNutritionCount > 1 ? "s" : ""}.
               </span>
               <button
                 type="button"
@@ -466,8 +467,8 @@ export function AlacenaCard({
               </button>
             </div>
           ) : (
-            <div className="flex-1 rounded-lg border border-sage/40 bg-sage/10 px-3 py-2 text-[12px] text-sage">
-              ✓ Está todo OK — todos los productos tienen su valor nutricional cargado.
+            <div className="flex-1 rounded-lg border border-sage/40 bg-sage/10 px-3 py-2 text-[12px] text-sage inline-flex items-center gap-1">
+              <CircleCheck size={16} strokeWidth={1.8} className="shrink-0" /> Está todo OK — todos los productos tienen su valor nutricional cargado.
             </div>
           )}
         </div>
@@ -482,14 +483,14 @@ export function AlacenaCard({
               showList ? "border-gold bg-gold text-bg" : "border-border bg-bg/60 text-textMuted"
             }`}
           >
-            📋 {showList ? "Ocultar lista" : `Ver lista (${items.length})`}
+            <span className="inline-flex items-center gap-1"><ListChecks size={16} strokeWidth={1.8} /> {showList ? "Ocultar lista" : `Ver lista (${items.length})`}</span>
           </button>
           <button
             type="button"
             onClick={() => setShowCocina(true)}
             className="rounded-lg border border-gold/60 bg-gold/10 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold"
           >
-            🗺️ Ver cocina
+            <span className="inline-flex items-center gap-1"><Map size={16} strokeWidth={1.8} /> Ver cocina</span>
           </button>
         </div>
       )}
@@ -511,7 +512,7 @@ export function AlacenaCard({
                 aria-label="Cerrar"
                 className="shrink-0 rounded-full border border-border px-2 py-1 text-[11px] text-textMuted"
               >
-                ✕
+                <X size={16} strokeWidth={1.8} />
               </button>
             </div>
             <div className="mb-2.5 flex gap-1 rounded-full border border-border bg-bg/60 p-0.5">
@@ -531,7 +532,7 @@ export function AlacenaCard({
                   addMode === "ticket" ? "bg-gold text-bg" : "text-textMuted"
                 }`}
               >
-                📷 Con ticket
+                <span className="inline-flex items-center gap-1"><Camera size={16} strokeWidth={1.8} /> Con ticket</span>
               </button>
             </div>
             {addMode === "escribir" ? (
@@ -566,7 +567,7 @@ export function AlacenaCard({
                 aria-label="Cerrar"
                 className="shrink-0 rounded-full border border-border px-2 py-1 text-[11px] text-textMuted"
               >
-                ✕
+                <X size={16} strokeWidth={1.8} />
               </button>
             </div>
             <ExtraConsumption items={items} consumeAmounts={consumeAmounts} />
@@ -584,14 +585,14 @@ export function AlacenaCard({
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between gap-2">
-              <div className="font-display text-lg text-text">🍲 Preparar plato</div>
+              <div className="font-display text-lg text-text inline-flex items-center gap-1.5"><ChefHat size={20} strokeWidth={1.8} /> Preparar plato</div>
               <button
                 type="button"
                 onClick={() => setShowPrepareDish(false)}
                 aria-label="Cerrar"
                 className="shrink-0 rounded-full border border-border px-2 py-1 text-[11px] text-textMuted"
               >
-                ✕
+                <X size={16} strokeWidth={1.8} />
               </button>
             </div>
             <PrepareDish items={items} consumeAmounts={consumeAmounts} addStructuredItems={addStructuredItems} />
@@ -714,7 +715,7 @@ export function AlacenaCard({
                   {INVENTORY_CATEGORY_LABELS[item.category || "otros"]}
                 </span>
                 {!item.nutritionPer100g && (
-                  <span className="font-mono text-[9px] uppercase tracking-wide text-rust">⚠ falta nutrición, tocá para cargarla</span>
+                  <span className="font-mono text-[9px] uppercase tracking-wide text-rust inline-flex items-center gap-1"><TriangleAlert size={16} strokeWidth={1.8} /> falta nutrición, tocá para cargarla</span>
                 )}
               </div>
             ))}
@@ -742,7 +743,7 @@ export function AlacenaCard({
 
             <div className="mt-3 rounded-lg border border-dashed border-border bg-bg/40 p-2.5">
               <label className="mb-2 flex cursor-pointer items-center justify-center rounded-lg border border-border bg-surfaceAlt px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-text">
-                📷 Foto de la etiqueta nutricional
+                <span className="inline-flex items-center gap-1"><Camera size={16} strokeWidth={1.8} /> Foto de la etiqueta nutricional</span>
                 <input type="file" accept="image/*" className="hidden" onChange={handleLabelUpload} />
               </label>
               {labelImage && (
@@ -765,7 +766,7 @@ export function AlacenaCard({
 
             <div className="mt-3 rounded-lg border border-dashed border-border bg-bg/40 p-2.5">
               <label className="mb-2 flex items-center font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
-                🔍 Buscar en Open Food Facts
+                <span className="inline-flex items-center gap-1"><Search size={16} strokeWidth={1.8} /> Buscar en Open Food Facts</span>
               </label>
               <div className="flex gap-2">
                 <input
@@ -810,7 +811,7 @@ export function AlacenaCard({
 
             <div className="mt-3 rounded-lg border border-dashed border-border bg-bg/40 p-2.5">
               <label className="mb-2 flex items-center font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
-                🏷️ Código para escanear
+                <span className="inline-flex items-center gap-1"><QrCode size={16} strokeWidth={1.8} /> Código para escanear</span>
               </label>
               {qrDataUrl ? (
                 <div className="flex flex-col items-center gap-2">
@@ -912,7 +913,7 @@ export function AlacenaCard({
                   onClick={() => setShowCocina(false)}
                   className="rounded-full border border-gold/60 bg-gold/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-gold"
                 >
-                  📋 Ver lista completa
+                  <span className="inline-flex items-center gap-1"><ListChecks size={16} strokeWidth={1.8} /> Ver lista completa</span>
                 </button>
                 <button
                   type="button"

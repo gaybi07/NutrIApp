@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, useRef, useState } from "react";
+import { Check, ChevronRight, Plus } from "lucide-react";
 import { useTrainerApplication, useTrainerAdmin } from "@/lib/useTrainerApplication";
 import { useTrainerLink, useTrainerStudents, useTrainerRoutines, useTrainerRoutinesForStudent } from "@/lib/useTrainerLink";
 import { useTrainerIncidents } from "@/lib/useRoutineIncidents";
@@ -12,7 +13,7 @@ import { useMyReports } from "@/lib/useStudentReports";
 
 const STATUS_STYLE: Record<TrainerStatus, { label: string; color: string }> = {
   pendiente: { label: "Pendiente de revisión", color: "text-gold" },
-  aprobado: { label: "Aprobado ✓", color: "text-sage" },
+  aprobado: { label: "Aprobado", color: "text-sage" },
   rechazado: { label: "Rechazado", color: "text-rust" },
 };
 
@@ -263,7 +264,9 @@ function TrainerStudentsAndRoutines({
                 {studentsHook.pendingRequests.length} solicitud{studentsHook.pendingRequests.length === 1 ? "" : "es"} pendiente
                 {studentsHook.pendingRequests.length === 1 ? "" : "s"}
               </span>
-              <span className="font-mono text-[10px] text-gold">Revisar ›</span>
+              <span className="inline-flex items-center gap-0.5 font-mono text-[10px] text-gold">
+                Revisar <ChevronRight size={12} strokeWidth={1.8} />
+              </span>
             </button>
           )}
           {unseenIncidents > 0 && (
@@ -275,7 +278,9 @@ function TrainerStudentsAndRoutines({
               <span>
                 {unseenIncidents} incidencia{unseenIncidents === 1 ? "" : "s"} sin ver
               </span>
-              <span className="font-mono text-[10px] text-gold">Ver ›</span>
+              <span className="inline-flex items-center gap-0.5 font-mono text-[10px] text-gold">
+                Ver <ChevronRight size={12} strokeWidth={1.8} />
+              </span>
             </button>
           )}
         </div>
@@ -371,8 +376,8 @@ function TrainerStudentsAndRoutines({
         <div>
           <div className="mb-2 flex items-center justify-between">
             <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Tus rutinas para alumnos</div>
-            <button type="button" onClick={() => setEditing("new")} className="rounded-full border border-gold/60 bg-gold px-2.5 py-1 font-mono text-[9px] uppercase tracking-wide text-bg">
-              + Nueva
+            <button type="button" onClick={() => setEditing("new")} className="inline-flex items-center gap-1 rounded-full border border-gold/60 bg-gold px-2.5 py-1 font-mono text-[9px] uppercase tracking-wide text-bg">
+              <Plus size={12} strokeWidth={1.8} /> Nueva
             </button>
           </div>
           {!routinesHook.loaded ? (
@@ -532,7 +537,13 @@ export function StudentLinkSection({
                         disabled={adopted}
                         className="rounded-full border border-gold/60 bg-gold px-2.5 py-1 font-mono text-[9px] uppercase tracking-wide text-bg disabled:opacity-50"
                       >
-                        {adopted ? "Adoptada ✓" : "Adoptar"}
+                        {adopted ? (
+                          <span className="inline-flex items-center gap-1">
+                            Adoptada <Check size={14} strokeWidth={1.8} />
+                          </span>
+                        ) : (
+                          "Adoptar"
+                        )}
                       </button>
                     </div>
                     <div className="mt-1.5 space-y-0.5">
@@ -676,8 +687,9 @@ export function TrainerPanel({
     <div className="space-y-4">
       {own.application && (
         <div className="rounded-lg border border-border bg-bg/40 p-2.5">
-          <div className={`font-mono text-[11px] ${STATUS_STYLE[own.application.status].color}`}>
+          <div className={`flex items-center gap-1 font-mono text-[11px] ${STATUS_STYLE[own.application.status].color}`}>
             {STATUS_STYLE[own.application.status].label}
+            {own.application.status === "aprobado" && <Check size={14} strokeWidth={1.8} />}
           </div>
           <button type="button" onClick={viewOwnCertificate} className="mt-1 font-mono text-[11px] text-textMuted underline">
             Ver mi comprobante
@@ -732,8 +744,9 @@ export function TrainerPanel({
           <>
             {own.application && (
               <div className="mb-3 rounded-lg border border-border bg-bg/40 p-2.5">
-                <div className={`font-mono text-[11px] ${STATUS_STYLE[own.application.status].color}`}>
+                <div className={`flex items-center gap-1 font-mono text-[11px] ${STATUS_STYLE[own.application.status].color}`}>
                   {STATUS_STYLE[own.application.status].label}
+                  {own.application.status === "aprobado" && <Check size={14} strokeWidth={1.8} />}
                 </div>
                 <button type="button" onClick={viewOwnCertificate} className="mt-1 font-mono text-[11px] text-textMuted underline">
                   Ver mi comprobante

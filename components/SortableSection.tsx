@@ -3,6 +3,7 @@
 import { ReactNode } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Lightbulb, Hand } from "lucide-react";
 
 /**
  * Envoltorio para reordenar bloques grandes de una pantalla con una
@@ -64,7 +65,7 @@ export function SortableSection({
             onClick={onHide}
             className="flex h-6 w-6 select-none items-center justify-center rounded-full border border-border bg-surface text-[11px] leading-none opacity-60 shadow-sm transition-all active:bg-border/80 active:opacity-100"
           >
-            💡
+            <Lightbulb size={16} strokeWidth={1.8} />
           </button>
         )}
         <button
@@ -76,7 +77,7 @@ export function SortableSection({
             dragDisabledOnDesktop ? "lg:hidden" : ""
           } ${isDragging ? "cursor-grabbing bg-border border-gold opacity-100" : "cursor-grab bg-surface border-border"}`}
         >
-          ✋
+          <Hand size={16} strokeWidth={1.8} />
         </button>
       </div>
       <div

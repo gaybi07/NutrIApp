@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { computeGoal, bmiInfo, addDays, fmtDate } from "@/lib/calculations";
 import { CalculatorProfile, GoalMode } from "@/lib/types";
 import { countDigits, MAX_DIGITS } from "@/lib/inputLimits";
+import { TriangleAlert } from "lucide-react";
 
 type StepId = "modo" | "actual" | "altura" | "edad" | "sexo" | "meta" | "fecha" | "resultado";
 
@@ -297,7 +298,10 @@ export function GuidedGoalCalculator({
               </div>
               {computation.bloqueado ? (
                 <div className="mt-3 rounded-lg border border-rust/50 bg-rust/10 p-2.5 text-[11px] text-rust">
-                  ⚠ {computation.motivoBloqueo}
+                  <div className="flex items-center gap-1.5">
+                    <TriangleAlert size={16} strokeWidth={1.8} />
+                    {computation.motivoBloqueo}
+                  </div>
                   <button type="button" onClick={goBack} className="mt-2 w-full rounded-lg border border-rust/50 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-rust">
                     ‹ Volver a elegir fecha
                   </button>
