@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8" /><title>Morphy — Suplementos</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:ital,wght@0,400;0,500;0,600;0,700&display=swap");
+:root { --bg:#15141b; --surface:#242330; --text:#f8fafc; --text-muted:#9ca3af; --accent:#7557e8; --sage:#5dd6a8; --border:#3a3848; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font-family:"Inter",sans-serif; }
+.screen { max-width:420px; margin:0 auto; padding:16px 14px 40px; }
+.modal-card { position:relative; border-radius:20px; border:1px solid var(--border); background:var(--surface); padding:16px; }
+.close-btn { position:absolute; top:12px; right:12px; border-radius:999px; border:1px solid var(--border); background:var(--bg); color:var(--text-muted); font-family:"Poppins",sans-serif; font-size:10px; text-transform:uppercase; letter-spacing:.08em; padding:6px 10px; }
+h1 { font-family:"Poppins",sans-serif; font-style:italic; font-weight:600; font-size:16px; margin:0 0 10px; color:var(--accent); }
+.note { font-size:11px; color:var(--text-muted); margin-bottom:12px; }
+.sup-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.sup-btn { border-radius:12px; padding:10px 12px; }
+.sup-btn.on { border:1px solid var(--sage); background:rgba(93,214,168,0.1); color:var(--sage); }
+.sup-btn.off { border:1px solid var(--accent); background:rgba(117,87,232,0.05); color:var(--text); }
+.sup-btn .n { font-size:13px; font-weight:600; }
+.sup-btn .d { font-family:"Poppins",sans-serif; font-size:9px; text-transform:uppercase; color:var(--text-muted); margin-top:2px; }
+.field-label { display:block; font-family:"Poppins",sans-serif; font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin:16px 0 6px; }
+input { background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; padding:8px 10px; }
+.btn-violet { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-weight:700; font-size:12px; }
+.editable-tag { position:fixed; bottom:10px; right:10px; background:var(--surface); border:1px solid var(--accent); color:var(--accent); font-family:"Poppins",sans-serif; font-size:9px; text-transform:uppercase; letter-spacing:.08em; padding:5px 10px; border-radius:999px; opacity:.85; }
+</style></head>
+<body>
+<div class="editable-tag">EDITABLE — .html local</div>
+<div class="screen">
+  <div class="modal-card">
+    <button class="close-btn">Cerrar</button>
+    <h1>💊 Suplementos</h1>
+    <div class="note">Tocá el que tomaste hoy — se suma con su dosis habitual, sin escribir nada.</div>
+    <div class="sup-grid">
+      <div class="sup-btn on"><div class="n">Creatina ✓</div><div class="d">5g</div></div>
+      <div class="sup-btn off"><div class="n">Magnesio</div><div class="d">400mg</div></div>
+      <div class="sup-btn on"><div class="n">Omega 3 ✓</div><div class="d">1000mg</div></div>
+      <div class="sup-btn off"><div class="n">Vitamina D</div><div class="d">2000UI</div></div>
+      <div class="sup-btn off" style="grid-column:1/3"><div class="n">Multivitamínico</div><div class="d">1 comprimido</div></div>
+    </div>
+    <label class="field-label">¿Tomaste algo que no está en la lista?</label>
+    <div style="display:flex;gap:6px">
+      <input placeholder="Nombre" style="flex:1"/>
+      <input placeholder="Dosis" style="width:90px"/>
+      <button class="btn-violet">+ Agregar</button>
+    </div>
+  </div>
+</div>
+</body></html>

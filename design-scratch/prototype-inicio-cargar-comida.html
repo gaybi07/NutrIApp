@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8" /><title>Morphy — Cargar comida</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:ital,wght@0,400;0,500;0,600;0,700&display=swap");
+:root { --bg:#15141b; --surface:#242330; --text:#f8fafc; --text-muted:#9ca3af; --accent:#7557e8; --border:#3a3848; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font-family:"Inter",sans-serif; }
+.screen { max-width:420px; margin:0 auto; padding:16px 14px 40px; }
+.modal-card { border-radius:20px; border:1px solid var(--border); background:var(--surface); padding:16px; }
+h1 { font-family:"Poppins",sans-serif; font-style:italic; font-weight:600; font-size:16px; margin:0 0 10px; color:var(--accent); }
+.pill-tabs { display:flex; gap:4px; background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:4px; margin-bottom:12px; }
+.pill { flex:1; text-align:center; padding:7px 2px; font-family:"Poppins",sans-serif; font-size:9px; letter-spacing:.06em; text-transform:uppercase; border-radius:8px; color:var(--text-muted); }
+.pill.active { background:var(--accent); color:#fff; }
+.field-label { display:block; font-family:"Poppins",sans-serif; font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:6px; }
+.prep-item { display:flex; align-items:center; justify-content:space-between; gap:8px; border:1px solid rgba(117,87,232,0.4); background:rgba(117,87,232,0.08); border-radius:12px; padding:10px 12px; margin-bottom:6px; }
+.note { font-size:11px; color:var(--text-muted); }
+.ing-row { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+.ing-row .name { flex:1; font-size:13px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+input, select { background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; padding:7px 8px; }
+.ing-row input { width:64px; text-align:right; }
+.ing-row select { width:56px; }
+.btn-violet { border:none; background:var(--accent); color:#fff; border-radius:10px; padding:11px; font-weight:700; font-size:13px; width:100%; }
+.btn-outline { border:1px solid var(--border); background:transparent; color:var(--text-muted); border-radius:8px; padding:6px 10px; font-family:"Poppins",sans-serif; font-size:10px; text-transform:uppercase; display:inline-flex; align-items:center; gap:6px; margin-bottom:8px; }
+.editable-tag { position:fixed; bottom:10px; right:10px; background:var(--surface); border:1px solid var(--accent); color:var(--accent); font-family:"Poppins",sans-serif; font-size:9px; text-transform:uppercase; letter-spacing:.08em; padding:5px 10px; border-radius:999px; opacity:.85; }
+</style></head>
+<body>
+<div class="editable-tag">EDITABLE — .html local</div>
+<div class="screen">
+  <div class="modal-card">
+    <h1>✎ Cargar comida</h1>
+    <div class="pill-tabs">
+      <div class="pill">Con IA</div>
+      <div class="pill">Desde Alacena</div>
+      <div class="pill">Buscar producto</div>
+      <div class="pill active">Preparación</div>
+    </div>
+
+    <label class="field-label">Elegí una preparación guardada</label>
+    <div class="prep-item"><span><strong style="display:block;font-size:13.5px">Milanesa de pollo con papas fritas</strong><span class="note">Carnes · 2 ingredientes</span></span>🧑‍🍳</div>
+    <div class="prep-item"><span><strong style="display:block;font-size:13.5px">Tortitas mendocinas con fruta</strong><span class="note">Cuyo · 2 ingredientes</span></span>🧑‍🍳</div>
+    <div class="prep-item" style="border-color:var(--accent);background:rgba(117,87,232,0.15)"><span><strong style="display:block;font-size:13.5px">Pollo con repollo colorado y mostaza</strong><span class="note">Cenas · 4 ingredientes</span></span>🧑‍🍳</div>
+
+    <div style="margin-top:16px;padding-top:14px;border-top:1px dashed var(--border)">
+      <div class="btn-outline">‹ Elegir otra</div>
+      <div style="font-weight:600;font-size:15px;margin-bottom:2px">Pollo con repollo colorado y mostaza</div>
+      <div class="note" style="margin-bottom:10px">Completá los gramos/cantidad de cada ingrediente para esta vez.</div>
+      <div class="ing-row"><span class="name">pechuga de pollo</span><input value="200"/><select><option>g</option></select></div>
+      <div class="ing-row"><span class="name">repollo colorado</span><input value="120"/><select><option>g</option></select></div>
+      <div class="ing-row"><span class="name">mostaza</span><input value="15"/><select><option>g</option></select></div>
+      <div class="ing-row"><span class="name">yogur griego natural</span><input value="40"/><select><option>g</option></select></div>
+      <button class="btn-violet" style="margin-top:10px">Calcular</button>
+    </div>
+  </div>
+</div>
+</body></html>

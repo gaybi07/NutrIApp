@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8" /><title>Morphy — Inicio</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:ital,wght@0,400;0,500;0,600;0,700&display=swap");
+:root { --bg:#15141b; --surface:#242330; --text:#f8fafc; --text-muted:#9ca3af; --accent:#7557e8; --sage:#5dd6a8; --rust:#ef4444; --border:#3a3848; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font-family:"Inter",sans-serif; }
+.screen { max-width:420px; margin:0 auto; padding:16px 14px 40px; }
+.top-header { display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--border); background:var(--surface); padding:10px 14px; margin:-16px -14px 14px; }
+.top-header .settings-btn { margin-left:auto; width:32px; height:32px; border-radius:999px; border:1px solid var(--border); background:var(--bg); display:flex; align-items:center; justify-content:center; font-size:14px; }
+.card { border-radius:14px; border:1px solid var(--border); background:var(--surface); padding:12px; margin-bottom:12px; }
+.card.pending { border:2px solid rgba(239,68,68,0.5); box-shadow:0 0 24px -6px rgba(239,68,68,0.45); }
+.label { font-family:"Poppins",sans-serif; font-size:9px; text-transform:uppercase; letter-spacing:.12em; color:var(--accent); }
+.title { font-family:"Poppins",sans-serif; font-weight:600; font-size:17px; margin-top:2px; }
+.kcal-row { display:flex; align-items:baseline; gap:6px; margin:8px 0 4px; }
+.kcal-row .big { font-size:22px; font-weight:700; }
+.kcal-row .sub { font-size:11px; color:var(--text-muted); }
+.bar-track { height:10px; border-radius:6px; background:var(--bg); border:1px solid var(--border); overflow:hidden; margin:8px 0 12px; }
+.bar-fill { height:100%; background:var(--accent); }
+.stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; text-align:center; margin-bottom:12px; }
+.stats-row .val { font-size:15px; font-weight:700; }
+.meal-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.meal-btn { position:relative; height:64px; border-radius:12px; border:1px solid var(--accent); background:var(--accent); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-family:"Inter",sans-serif; font-size:10px; text-transform:uppercase; }
+.meal-btn.done { background:rgba(93,214,168,0.1); border-color:rgba(93,214,168,0.6); color:var(--sage); }
+.meal-btn .icon { font-size:16px; }
+.meal-btn .check { position:absolute; top:5px; right:6px; font-size:10px; }
+.btn-outline { display:flex; align-items:center; justify-content:center; gap:6px; width:100%; border:1px solid var(--border); background:transparent; color:var(--text-muted); border-radius:10px; padding:10px; font-family:"Inter",sans-serif; font-size:11px; text-transform:uppercase; margin-top:10px; }
+.bottom-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+.bottom-btn { border-radius:12px; padding:10px; text-align:center; font-family:"Inter",sans-serif; font-size:10px; text-transform:uppercase; }
+.btn-violet { border:none; background:var(--accent); color:#fff; border-radius:10px; padding:12px; font-weight:700; font-size:13.5px; width:100%; }
+.pending-badge { display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; border:1px solid rgba(239,68,68,0.5); background:rgba(239,68,68,0.15); color:var(--rust); font-family:"Poppins",sans-serif; font-size:9px; text-transform:uppercase; letter-spacing:.08em; }
+.head-row { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+.info-box { margin-top:8px; border-radius:10px; border:1px solid rgba(117,87,232,0.3); background:rgba(117,87,232,0.1); padding:8px 10px; font-size:11px; color:var(--text-muted); }
+.mini-bar { height:8px; border-radius:6px; background:var(--bg); overflow:hidden; margin:8px 0; }
+.mini-bar div { height:100%; background:var(--accent); }
+.two-stat { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+.two-stat .box { border-radius:10px; border:1px solid var(--border); background:rgba(21,20,27,0.4); padding:8px; text-align:center; }
+.two-stat .box .n { font-size:16px; font-weight:700; }
+.chart-row { display:flex; gap:6px; align-items:flex-end; height:70px; background:rgba(21,20,27,0.3); border-radius:10px; padding:8px 10px; margin-top:10px; }
+.chart-col { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:4px; }
+.chart-col .bar { width:16px; border-radius:3px; background:var(--accent); }
+.list-row { display:flex; align-items:center; justify-content:space-between; padding:7px 0; font-size:12px; border-top:1px dashed var(--border); }
+.editable-tag { position:fixed; bottom:10px; right:10px; background:var(--surface); border:1px solid var(--accent); color:var(--accent); font-family:"Poppins",sans-serif; font-size:9px; text-transform:uppercase; letter-spacing:.08em; padding:5px 10px; border-radius:999px; opacity:.85; }
+</style></head>
+<body>
+<div class="editable-tag">EDITABLE — .html local</div>
+<div class="screen">
+  <div class="top-header">
+    <span style="font-size:18px">🟣🟢</span>
+    <strong style="font-family:'Poppins';font-size:13px;">Viernes 26 sep</strong>
+    <div class="settings-btn">⚙️</div>
+  </div>
+
+  <div class="card">
+    <div class="label">HOY</div>
+    <div class="title">Viernes 26 sep</div>
+    <div class="kcal-row"><span class="big">1850</span><span class="sub">de 2400 kcal</span></div>
+    <div class="bar-track"><div class="bar-fill" style="width:77%"></div></div>
+    <div class="stats-row">
+      <div><div class="label" style="color:var(--text-muted)">Restantes</div><div class="val" style="color:var(--sage)">550</div></div>
+      <div><div class="label" style="color:var(--text-muted)">Proteína</div><div class="val">142g</div></div>
+      <div><div class="label" style="color:var(--text-muted)">Pasos</div><div class="val">6.400</div></div>
+    </div>
+    <div class="meal-grid">
+      <button class="meal-btn done"><span class="check">✓</span><span class="icon">🌅</span>Desayuno</button>
+      <button class="meal-btn done"><span class="icon">🍽️</span>Almuerzo</button>
+      <button class="meal-btn"><span class="icon">☕</span>Merienda</button>
+      <button class="meal-btn"><span class="icon">🌙</span>Cena</button>
+      <button class="meal-btn"><span class="icon">🍪</span>Colación</button>
+      <button class="meal-btn done"><span class="check">✓</span><span class="icon">💊</span>Suplementos</button>
+    </div>
+    <button class="btn-outline">📋 Ver comidas cargadas</button>
+    <div class="bottom-row">
+      <button class="bottom-btn" style="border:1px solid var(--sage);background:rgba(93,214,168,0.1);color:var(--sage)">6.400 pasos</button>
+      <button class="bottom-btn" style="border:1px solid rgba(242,184,75,0.6);background:#f2b84b;color:#1c1b18">
+        <div style="font-size:8px;opacity:.75">Entrenamiento +</div>
+        <div style="font-weight:700">● Moderado</div>
+      </button>
+    </div>
+  </div>
+
+  <div class="card pending">
+    <div class="head-row">
+      <div><div class="label">Control semanal</div><div class="title" style="font-size:16px">Peso de esta semana</div></div>
+      <span class="pending-badge">Pendiente</span>
+    </div>
+    <div class="info-box">Todavía no cargaste el peso de esta semana. Registralo para seguir tu evolución.</div>
+    <button class="btn-violet" style="margin-top:10px">Cargar peso semanal</button>
+  </div>
+
+  <div class="card pending">
+    <div class="head-row">
+      <div><div class="label">Tu equipo Morphy</div><div class="title" style="font-size:16px">Vincularte a un Entrenador y una Nutricionista</div></div>
+      <span class="pending-badge">Pendiente</span>
+    </div>
+    <div class="info-box">Conectá con tus profesionales para recibir planificación y seguimiento personalizado.</div>
+    <button class="btn-violet" style="margin-top:10px">Gestionar profesionales</button>
+  </div>
+
+  <div class="card">
+    <div class="label">Objetivo</div>
+    <div class="title" style="font-size:16px">Bajando hasta 100kg</div>
+    <div style="display:flex;justify-content:space-between;font-family:'Poppins';font-size:10px;text-transform:uppercase;color:var(--text-muted);margin-top:8px">
+      <span>Ya bajaste 17.6kg de 22.5kg</span><span>78%</span>
+    </div>
+    <div class="mini-bar"><div style="width:78%"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-muted)">
+      <span>Empezaste en 117.5kg</span><span>Meta: 100kg</span>
+    </div>
+    <div class="two-stat">
+      <div class="box"><div class="label" style="color:var(--text-muted)">Te faltan</div><div class="n">4.9kg</div><div style="font-size:9px;color:var(--text-muted)">antes del 15/12</div></div>
+      <div class="box"><div class="label" style="color:var(--text-muted)">Ritmo necesario</div><div class="n">0.6kg</div><div style="font-size:9px;color:var(--text-muted)">por semana</div></div>
+    </div>
+    <div style="text-align:center;color:var(--sage);font-size:12px;margin-top:10px">¡Vas mejor de lo que necesitás! Seguí así.</div>
+  </div>
+
+  <div class="card">
+    <div class="label">Seguimiento</div>
+    <div class="title" style="font-size:16px">Semana del 22 al 28 sep</div>
+    <div class="stats-row" style="margin-top:10px">
+      <div><div class="label" style="color:var(--text-muted)">Prom. kcal/día</div><div class="val">2180</div></div>
+      <div><div class="label" style="color:var(--text-muted)">Prom. proteína</div><div class="val">138g</div></div>
+      <div><div class="label" style="color:var(--text-muted)">Días entrenados</div><div class="val">4/7</div></div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-col"><div class="bar" style="height:40px"></div><span style="font-size:8px;color:var(--text-muted)">L</span></div>
+      <div class="chart-col"><div class="bar" style="height:55px"></div><span style="font-size:8px;color:var(--text-muted)">M</span></div>
+      <div class="chart-col"><div class="bar" style="height:30px"></div><span style="font-size:8px;color:var(--text-muted)">M</span></div>
+      <div class="chart-col"><div class="bar" style="height:60px"></div><span style="font-size:8px;color:var(--text-muted)">J</span></div>
+      <div class="chart-col"><div class="bar" style="height:45px"></div><span style="font-size:8px;color:var(--text-muted)">V</span></div>
+      <div class="chart-col"><div class="bar" style="height:50px"></div><span style="font-size:8px;color:var(--text-muted)">S</span></div>
+      <div class="chart-col"><div class="bar" style="height:20px;background:var(--border)"></div><span style="font-size:8px;color:var(--text-muted)">D</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">Comidas de la semana</div>
+    <div class="title" style="font-size:16px">Modificar comidas</div>
+    <div style="margin-top:8px">
+      <div class="list-row"><span>Lun 22</span><span style="color:var(--text-muted)">1950 kcal ✓</span></div>
+      <div class="list-row"><span>Mar 23</span><span style="color:var(--text-muted)">2340 kcal ✓</span></div>
+      <div class="list-row"><span>Mié 24</span><span style="color:var(--text-muted)">2100 kcal ✓</span></div>
+      <div class="list-row"><span>Jue 25</span><span style="color:var(--text-muted)">1880 kcal ✓</span></div>
+      <div class="list-row"><span>Vie 26 (hoy)</span><span style="color:var(--text-muted)">1850 kcal</span></div>
+    </div>
+  </div>
+</div>
+</body></html>

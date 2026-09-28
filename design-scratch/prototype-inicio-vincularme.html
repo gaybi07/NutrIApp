@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8" /><title>Morphy — Tu equipo Morphy</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:ital,wght@0,400;0,500;0,600;0,700&display=swap");
+:root { --bg:#15141b; --surface:#242330; --text:#f8fafc; --text-muted:#9ca3af; --accent:#7557e8; --border:#3a3848; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font-family:"Inter",sans-serif; }
+.screen { max-width:420px; margin:0 auto; padding:16px 14px 40px; }
+.modal-card { border-radius:20px; border:1px solid var(--border); background:var(--surface); padding:16px; }
+h1 { font-family:"Poppins",sans-serif; font-style:italic; font-weight:600; font-size:16px; margin:0 0 6px; color:var(--accent); }
+.note { font-size:11px; color:var(--text-muted); margin-bottom:14px; }
+.link-card { border:1px solid var(--border); background:var(--bg); border-radius:14px; padding:14px; margin-bottom:12px; }
+.field-label { display:block; font-family:"Poppins",sans-serif; font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin:8px 0 6px; }
+input { background:var(--surface); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; padding:8px 10px; flex:1; text-transform:uppercase; }
+.btn-violet { border:none; background:var(--accent); color:#fff; border-radius:8px; padding:8px 14px; font-weight:700; font-size:12px; }
+.editable-tag { position:fixed; bottom:10px; right:10px; background:var(--surface); border:1px solid var(--accent); color:var(--accent); font-family:"Poppins",sans-serif; font-size:9px; text-transform:uppercase; letter-spacing:.08em; padding:5px 10px; border-radius:999px; opacity:.85; }
+</style></head>
+<body>
+<div class="editable-tag">EDITABLE — .html local</div>
+<div class="screen">
+  <div class="modal-card">
+    <h1>👥 Tu equipo Morphy</h1>
+    <div class="note">Pedile el código a tu Entrenador o Nutricionista — podés vincularte a los dos a la vez si tu plan lo permite.</div>
+    <div class="link-card">
+      <div class="label" style="color:var(--accent);font-family:'Poppins';font-size:9px;text-transform:uppercase">🏋️ Entrenador</div>
+      <label class="field-label">Código de invitación</label>
+      <div style="display:flex;gap:6px"><input placeholder="Ej: A3F9K2"/><button class="btn-violet">Unirme</button></div>
+    </div>
+    <div class="link-card">
+      <div class="label" style="color:var(--accent);font-family:'Poppins';font-size:9px;text-transform:uppercase">🍽️ Nutricionista</div>
+      <label class="field-label">Código de invitación</label>
+      <div style="display:flex;gap:6px"><input placeholder="Ej: B7X2M9"/><button class="btn-violet">Unirme</button></div>
+    </div>
+  </div>
+</div>
+</body></html>
