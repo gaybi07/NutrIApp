@@ -108,7 +108,7 @@ export function AiEntryForm({
 }) {
   const [fecha, setFecha] = useState(fmtDate(new Date()));
   const [meal, setMeal] = useState<MealKey>(initialMeal || "des");
-  const [mode, setMode] = useState<"ia" | "alacena" | "buscar" | "preparacion">("ia");
+  const [mode, setMode] = useState<"ia" | "alacena" | "buscar" | "preparacion">("alacena");
   // Preparación elegida en el modo "Preparación guardada", con las
   // cantidades de esta vez (arranca con las de la última vez que se usó,
   // como punto de partida editable -- no se calcula nada hasta tocar
