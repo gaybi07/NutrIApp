@@ -913,7 +913,7 @@ export const MEAL_COLORS: Record<MealKey, string> = {
   alm: "#F2B84B", // Amarillo
   mer: "#7557E8", // Violeta Morphy
   cen: "#3B7DD8", // Celeste
-  col: "#E8863B", // Naranja
+  col: "#5DD6A8", // Mint
 };
 
 export const INTENSITY_STYLES: Record<
