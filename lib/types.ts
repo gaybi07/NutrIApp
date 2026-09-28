@@ -905,13 +905,15 @@ export const MEAL_LABELS: Record<MealKey, string> = {
 };
 
 /** Paleta de marca Morphy por comida -- fija, no depende del tema
- * oscuro/claro (igual que INTENSITY_STYLES). */
+ * oscuro/claro (igual que INTENSITY_STYLES). Celeste de Cena distinto al
+ * celeste de "Gasto" (WeeklyChart) a propósito -- aparecen juntos en el
+ * mismo gráfico y se confundirían si fueran el mismo tono. */
 export const MEAL_COLORS: Record<MealKey, string> = {
-  des: "#F28C6B", // Coral suave
-  alm: "#7557E8", // Violeta Morphy
-  mer: "#5DD6A8", // Mint
-  cen: "#C45D45", // Terracota
-  col: "#38BFA3", // Verde azulado
+  des: "#F28C6B", // Coral
+  alm: "#F2B84B", // Amarillo
+  mer: "#7557E8", // Violeta Morphy
+  cen: "#3B7DD8", // Celeste
+  col: "#E8863B", // Naranja
 };
 
 export const INTENSITY_STYLES: Record<
