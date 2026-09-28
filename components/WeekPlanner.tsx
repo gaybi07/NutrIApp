@@ -5,6 +5,7 @@ import { InventoryItem, MealKey, MealOption, MEAL_LABELS, WeekPlan, WEEKDAYS } f
 import { isoMonday, addDays, fmtDate } from "@/lib/calculations";
 import { Recipe, RecipeIngredient, RECIPES } from "@/lib/recipes";
 import { inventoryKey } from "@/lib/useInventory";
+import { fuzzyNameMatch } from "@/lib/foodText";
 import { useMealMemory, MealMemoryEntry } from "@/lib/useMealMemory";
 import { useMyNutritionPlan } from "@/lib/useMyNutritionPlan";
 import { SECTION_HELP } from "@/lib/helpText";
@@ -32,19 +33,6 @@ function isFilled(value: string | undefined): boolean {
 }
 function isSkipped(value: string | undefined): boolean {
   return value === SKIP_MEAL;
-}
-
-// Match más permisivo que un simple includes() para nombres compuestos --
-// "milanesas con puré" vs. "milanesa de carne" no son substring uno del
-// otro, pero comparten la palabra con la que vale la pena avisar ("milanesa"
-// / "milanesas", singular/plural). Se compara palabra por palabra (>= 4
-// letras, para no engancharse con "de"/"con"/etc.) además del substring
-// directo entre las dos frases completas.
-function fuzzyNameMatch(a: string, b: string): boolean {
-  if (a.includes(b) || b.includes(a)) return true;
-  const wordsA = a.split(" ").filter((w) => w.length >= 4);
-  const wordsB = b.split(" ").filter((w) => w.length >= 4);
-  return wordsA.some((wa) => wordsB.some((wb) => wa.includes(wb) || wb.includes(wa)));
 }
 
 function shortTitle(title: string) {

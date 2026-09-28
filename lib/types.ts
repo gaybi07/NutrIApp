@@ -894,6 +894,12 @@ export interface MealPreparation {
   vecesUsada: number;
   createdAt: string;
   updatedAt: string;
+  /** Si esta preparación matcheó contra una entrada de la memoria global
+   * (shared_preparations, ver lib/useSharedPreparations.ts) al guardarla, o
+   * generó una nueva -- undefined en preparaciones guardadas antes de este
+   * feature, o si el chequeo global falló (sin red, etc.), sin que eso
+   * rompa el guardado local de siempre. */
+  sharedPreparationId?: string;
 }
 
 export const MEAL_LABELS: Record<MealKey, string> = {

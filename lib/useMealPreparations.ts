@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { MealKey, MealPreparation, PreparationIngredient } from "@/lib/types";
+import { useSharedPreparations } from "@/lib/useSharedPreparations";
 
 const KEY = "registro:mealPreparations:v1";
 
@@ -21,6 +22,7 @@ function newId() {
  */
 export function useMealPreparations() {
   const [preparations, setPreparations] = useState<MealPreparation[]>([]);
+  const { findOrCreate: findOrCreateShared, bumpUsage: bumpSharedUsage } = useSharedPreparations();
 
   useEffect(() => {
     try {
@@ -59,9 +61,10 @@ export function useMealPreparations() {
       const detalle = hasDetail ? (ingredientes as PreparationIngredient[]) : undefined;
       const nombres = hasDetail ? (ingredientes as PreparationIngredient[]).map((i) => i.nombre) : (ingredientes as string[]);
       const now = new Date().toISOString();
+      const id = newId();
       setPreparations((prev) => {
         const nueva: MealPreparation = {
-          id: newId(),
+          id,
           nombre: trimmedName,
           categoria: categoria.trim() || "Sin categoría",
           ingredientes: nombres,
@@ -74,12 +77,28 @@ export function useMealPreparations() {
         };
         return persist([...prev, nueva]);
       });
+      // Chequeo de la memoria GLOBAL en segundo plano -- el guardado local de
+      // arriba ya pasó y no depende de esto. Solo tiene sentido con detalle
+      // (cantidades reales), no con la lista de nombres sueltos vieja.
+      if (detalle && detalle.length > 0) {
+        findOrCreateShared(trimmedName, categoria.trim() || "Sin categoría", detalle).then((sharedId) => {
+          if (sharedId) update(id, { sharedPreparationId: sharedId });
+        });
+      }
     },
-    [persist]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `update` se
+    // declara más abajo en este mismo hook; se referencia dentro del
+    // .then() de arriba, que corre bien después de que ya está definida
+    // (nunca durante el render). Agregarla acá crearía una dependencia
+    // circular de useCallback sin cambiar el comportamiento real.
+    [persist, findOrCreateShared]
   );
 
   const update = useCallback(
-    (id: string, patch: Partial<Pick<MealPreparation, "nombre" | "categoria" | "ingredientesDetalle" | "ingredientes" | "porciones">>) => {
+    (
+      id: string,
+      patch: Partial<Pick<MealPreparation, "nombre" | "categoria" | "ingredientesDetalle" | "ingredientes" | "porciones" | "sharedPreparationId">>
+    ) => {
       setPreparations((prev) =>
         persist(prev.map((p) => (p.id === id ? { ...p, ...patch, updatedAt: new Date().toISOString() } : p)))
       );
@@ -89,11 +108,13 @@ export function useMealPreparations() {
 
   const registerUse = useCallback(
     (id: string) => {
-      setPreparations((prev) =>
-        persist(prev.map((p) => (p.id === id ? { ...p, vecesUsada: p.vecesUsada + 1, updatedAt: new Date().toISOString() } : p)))
-      );
+      setPreparations((prev) => {
+        const found = prev.find((p) => p.id === id);
+        if (found?.sharedPreparationId) bumpSharedUsage(found.sharedPreparationId);
+        return persist(prev.map((p) => (p.id === id ? { ...p, vecesUsada: p.vecesUsada + 1, updatedAt: new Date().toISOString() } : p)));
+      });
     },
-    [persist]
+    [persist, bumpSharedUsage]
   );
 
   const remove = useCallback(

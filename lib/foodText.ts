@@ -21,6 +21,20 @@ export function inventoryKey(name: string) {
  * alacena caen en la misma fila. */
 export const foodKey = inventoryKey;
 
+// Match más permisivo que un simple includes() para nombres compuestos --
+// "milanesas con puré" vs. "milanesa de carne" no son substring uno del
+// otro, pero comparten la palabra con la que vale la pena avisar ("milanesa"
+// / "milanesas", singular/plural). Se compara palabra por palabra (>= 4
+// letras, para no engancharse con "de"/"con"/etc.) además del substring
+// directo entre las dos frases completas. Antes vivía solo en
+// WeekPlanner.tsx -- se promovió acá para reusarla en useSharedPreparations.ts.
+export function fuzzyNameMatch(a: string, b: string): boolean {
+  if (a.includes(b) || b.includes(a)) return true;
+  const wordsA = a.split(" ").filter((w) => w.length >= 4);
+  const wordsB = b.split(" ").filter((w) => w.length >= 4);
+  return wordsA.some((wa) => wordsB.some((wb) => wa.includes(wb) || wb.includes(wa)));
+}
+
 export function defaultUnitForName(name: string): InventoryItem["unit"] {
   const key = inventoryKey(name);
   if (
