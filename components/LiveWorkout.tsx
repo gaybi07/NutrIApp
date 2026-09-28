@@ -129,6 +129,21 @@ export function formatElapsed(ms: number): string {
   return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
 }
 
+/** Reloj en vivo aislado en su propio componente -- si el tick de cada
+ * segundo viviera en el estado de LiveWorkout entero, cada re-render
+ * reescribiría el `value` de los inputs de reps/peso de más abajo con lo
+ * último guardado, pisando lo que la persona esté a mitad de borrar/escribir
+ * (bug real: tocaba escribir encima del número viejo en vez de reemplazarlo). */
+function ElapsedTimer({ startedAt, pausedAt, className }: { startedAt: number; pausedAt?: number; className?: string }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (pausedAt != null) return; // pausado: el valor ya quedó fijo, no hace falta tickear
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [pausedAt]);
+  return <span className={className}>{formatElapsed((pausedAt ?? now) - startedAt)}</span>;
+}
+
 const VERDICT_LABEL: Record<WorkoutVerdict, { icon: string; text: string; color: string }> = {
   mejor: { icon: "▲", text: "Por encima de lo planificado", color: "text-sage" },
   similar: { icon: "●", text: "Como lo planificado", color: "text-textMuted" },
@@ -178,7 +193,6 @@ export function LiveWorkout({
   const sessionRoutine = session ? routines.find((r) => r.id === session.routineId) : null;
   const isAssignedRoutine = Boolean(session?.assignedSessionId) || sessionRoutine?.origen === "asignada";
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const [now, setNow] = useState(() => Date.now());
   const [libraryTarget, setLibraryTarget] = useState<"new" | null>(null);
   // Ojo: arranca en null a propósito aunque `entry.entrenamientoReporte` ya
   // pueda existir -- si lo iniciara con ese valor, el modal del reporte se
@@ -223,12 +237,6 @@ export function LiveWorkout({
       return { ...prev, pausedAt: Date.now() };
     });
   };
-
-  useEffect(() => {
-    if (!session) return;
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, [session]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -590,7 +598,6 @@ export function LiveWorkout({
     else doFinish("");
   };
 
-  const elapsedLabel = session ? formatElapsed((session.pausedAt ?? now) - session.startedAt) : "0:00";
   const isPaused = Boolean(session?.pausedAt);
 
   return (
@@ -783,7 +790,11 @@ export function LiveWorkout({
           <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border bg-bg/40 px-3 py-2">
             <div>
               <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">{isPaused ? "En pausa" : "Tiempo"}</div>
-              <div className={`font-mono text-xl font-bold tabular-nums ${isPaused ? "text-gold" : "text-text"}`}>{elapsedLabel}</div>
+              <ElapsedTimer
+                startedAt={session.startedAt}
+                pausedAt={session.pausedAt}
+                className={`font-mono text-xl font-bold tabular-nums ${isPaused ? "text-gold" : "text-text"}`}
+              />
             </div>
             <div className="flex gap-1.5">
               <button
@@ -885,7 +896,11 @@ export function LiveWorkout({
                         </div>
                         <div className="shrink-0 text-right">
                           <div className="font-mono text-[8px] uppercase tracking-wide text-textMuted">{isPaused ? "En pausa" : "Tiempo"}</div>
-                          <div className={`font-mono text-sm font-bold tabular-nums ${isPaused ? "text-gold" : "text-text"}`}>{elapsedLabel}</div>
+                          <ElapsedTimer
+                            startedAt={session.startedAt}
+                            pausedAt={session.pausedAt}
+                            className={`font-mono text-sm font-bold tabular-nums ${isPaused ? "text-gold" : "text-text"}`}
+                          />
                         </div>
                       </div>
                       {ex.suggestionNote && (
