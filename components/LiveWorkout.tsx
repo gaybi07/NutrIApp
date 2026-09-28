@@ -935,7 +935,13 @@ export function LiveWorkout({
                                   min="0"
                                   max="999"
                                   value={set.repeticiones}
-                                  onChange={(event) => updateSet(i, j, { repeticiones: clampNumber(Number(event.target.value), 999) })}
+                                  onChange={(event) => {
+                                    // Vacío momentáneo (borraste para reescribir) -- no se
+                                    // confirma como "pusiste 0", si no queda pegado un 0 que
+                                    // hay que borrar de nuevo antes de poder escribir encima.
+                                    if (event.target.value === "") return;
+                                    updateSet(i, j, { repeticiones: clampNumber(Number(event.target.value), 999) });
+                                  }}
                                 />
                               </div>
                               <div>

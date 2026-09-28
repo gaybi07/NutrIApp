@@ -140,7 +140,27 @@ export function MealsEditor({
       const gpu = isUnitBased ? gramsPerUnit(item.nombre) : null;
       const newGramos = isUnitBased ? (gpu ? unitsToGrams(newValue, gpu) : item.gramos) : newValue;
       const patchedFuente = canReconcile ? { fuenteCantidad: newValue } : {};
-      if (!oldValue || oldValue <= 0 || newValue <= 0) return { ...item, ...patchedFuente, gramos: newGramos };
+      if (newValue <= 0) {
+        // 0 a propósito -- 0 gramos son 0 de todo lo demás, no se deja kcal/
+        // proteína viejas colgando (eso rompía el recálculo al volver a
+        // poner una cantidad: la próxima vez ya no había de dónde sacar la
+        // proporción real, quedaban pegadas en lo último que tenían).
+        return {
+          ...item,
+          ...patchedFuente,
+          gramos: newGramos,
+          kcal: 0,
+          protein: 0,
+          carbs: item.carbs != null ? 0 : item.carbs,
+          fat: item.fat != null ? 0 : item.fat,
+          fiber: item.fiber != null ? 0 : item.fiber,
+        };
+      }
+      if (!oldValue || oldValue <= 0) {
+        // No hay de dónde sacar una proporción (recién cargado, o venía de
+        // 0) -- no se puede escalar, queda para completar a mano.
+        return { ...item, ...patchedFuente, gramos: newGramos };
+      }
       const ratio = newValue / oldValue;
       return {
         ...item,
@@ -185,7 +205,11 @@ export function MealsEditor({
                 placeholder="—"
                 value={item.fuenteCantidad ?? ""}
                 onChange={(e) => {
-                  if (countDigits(e.target.value) <= MAX_DIGITS) updateQuantity(meal, item.id, normalizeNumberInput(e.target));
+                  if (e.target.value !== "" && countDigits(e.target.value) <= MAX_DIGITS) updateQuantity(meal, item.id, normalizeNumberInput(e.target));
+                  // Vacío momentáneo (borraste para reescribir) -- no se
+                  // confirma como "pusiste 0", así el campo se puede seguir
+                  // escribiendo sin que quede un 0 pegado ni se rompan las
+                  // macros (ver updateQuantity).
                 }}
                 className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
               />
@@ -200,7 +224,7 @@ export function MealsEditor({
               placeholder="—"
               value={item.gramos ?? ""}
               onChange={(e) => {
-                if (countDigits(e.target.value) <= MAX_DIGITS) updateQuantity(meal, item.id, normalizeNumberInput(e.target));
+                if (e.target.value !== "" && countDigits(e.target.value) <= MAX_DIGITS) updateQuantity(meal, item.id, normalizeNumberInput(e.target));
               }}
               className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
             />
@@ -213,7 +237,7 @@ export function MealsEditor({
             max="999999"
             value={item.kcal}
             onChange={(e) => {
-              if (countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { kcal: normalizeNumberInput(e.target) });
+              if (e.target.value !== "" && countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { kcal: normalizeNumberInput(e.target) });
             }}
             className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
           />
@@ -225,7 +249,7 @@ export function MealsEditor({
             max="999999"
             value={item.protein}
             onChange={(e) => {
-              if (countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { protein: normalizeNumberInput(e.target) });
+              if (e.target.value !== "" && countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { protein: normalizeNumberInput(e.target) });
             }}
             className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
           />
@@ -239,7 +263,7 @@ export function MealsEditor({
             max="999999"
             value={item.carbs ?? 0}
             onChange={(e) => {
-              if (countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { carbs: normalizeNumberInput(e.target) });
+              if (e.target.value !== "" && countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { carbs: normalizeNumberInput(e.target) });
             }}
             className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
           />
@@ -251,7 +275,7 @@ export function MealsEditor({
             max="999999"
             value={item.fat ?? 0}
             onChange={(e) => {
-              if (countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { fat: normalizeNumberInput(e.target) });
+              if (e.target.value !== "" && countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { fat: normalizeNumberInput(e.target) });
             }}
             className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
           />
@@ -263,7 +287,7 @@ export function MealsEditor({
             max="999999"
             value={item.fiber ?? 0}
             onChange={(e) => {
-              if (countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { fiber: normalizeNumberInput(e.target) });
+              if (e.target.value !== "" && countDigits(e.target.value) <= MAX_DIGITS) updateItem(meal, item.id, { fiber: normalizeNumberInput(e.target) });
             }}
             className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-right font-mono text-[11px]"
           />
