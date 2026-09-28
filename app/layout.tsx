@@ -5,6 +5,10 @@ export const metadata: Metadata = {
   title: "Morphy",
   description: "Morphy — Planificá. Medí. Evolucioná.",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/icon-192.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

@@ -752,6 +752,9 @@ export default function Home() {
                 disableAi={isBasico}
                 initialMeal={aiMeal}
                 onInventoryDelta={handleMealInventoryDelta}
+                authenticated={authenticated}
+                hasNutricionistaLink={hasNutricionistaLink}
+                weekPlan={weekPlan}
               />
             </div>
           </div>

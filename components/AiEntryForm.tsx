@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { DayEntry, InventoryItem, MealKey, MEAL_LABELS, MealItem, emptyDay, PreparationIngredient, MealPreparation } from "@/lib/types";
+import { DayEntry, InventoryItem, MealKey, MEAL_LABELS, MealItem, emptyDay, PreparationIngredient, MealPreparation, WeekPlan } from "@/lib/types";
 import { countDigits, MAX_DIGITS, MAX_TEXT_LENGTH, normalizeNumberInput } from "@/lib/inputLimits";
-import { fmtDate, addDays, getMealItems, applyMealItems, suggestedMeal, macrosForFoodQuantity, sumMealItems, tagGroup } from "@/lib/calculations";
+import { fmtDate, addDays, getMealItems, applyMealItems, suggestedMeal, macrosForFoodQuantity, sumMealItems, tagGroup, isoMonday, weekdayOf } from "@/lib/calculations";
+import { useMyNutritionPlan } from "@/lib/useMyNutritionPlan";
+import { RECIPES } from "@/lib/recipes";
 import { MealItemsList, MealItemsInventoryDelta } from "@/components/MealItemsList";
 import { SavePreparationToggle } from "@/components/SavePreparationToggle";
 import { FIELD_HELP } from "@/lib/helpText";
@@ -76,6 +78,9 @@ export function AiEntryForm({
   disableAi,
   initialMeal,
   onInventoryDelta,
+  authenticated,
+  hasNutricionistaLink,
+  weekPlan,
 }: {
   days: DayEntry[];
   onUpsert: (entry: DayEntry) => void;
@@ -94,6 +99,12 @@ export function AiEntryForm({
    * cargado" que vino de la Alacena tiene que ajustar el stock, no solo el
    * registro de la comida. */
   onInventoryDelta?: (deltas: MealItemsInventoryDelta[]) => void;
+  /** Para resolver las macros de lo planificado (WeekPlanner) contra el Plan
+   * Nutricional del Nutricionista para la semana de `fecha` -- ver
+   * resolvePlannedMeal más abajo. */
+  authenticated: boolean;
+  hasNutricionistaLink: boolean;
+  weekPlan: WeekPlan;
 }) {
   const [fecha, setFecha] = useState(fmtDate(new Date()));
   const [meal, setMeal] = useState<MealKey>(initialMeal || "des");
@@ -138,6 +149,10 @@ export function AiEntryForm({
   const [breakdownOpenIndex, setBreakdownOpenIndex] = useState<number | null>(null);
   const [breakdowns, setBreakdowns] = useState<Record<number, PreparationIngredient[]>>({});
   const { findFood } = useFoods();
+  // Pantalla limpia: arranca mostrando solo "Ya cargado"/"Planificado" -- las
+  // 4 pestañas de siempre (Con IA/Alacena/Buscar/Preparación) y todo lo demás
+  // solo aparecen al tocar "+ Agregar comida".
+  const [addingMeal, setAddingMeal] = useState(false);
 
   // Lo que ya está cargado en la comida/fecha elegidas -- se recalcula cada
   // vez que cambia `fecha`, `meal` o `days`, así que refleja al instante lo
@@ -145,6 +160,44 @@ export function AiEntryForm({
   const entryForFecha = days.find((d) => d.fecha === fecha);
   const yaCargado = entryForFecha ? getMealItems(entryForFecha, meal) : [];
   const yaCargadoTotales = sumMealItems(yaCargado);
+
+  // Lo planificado (WeekPlanner) para esta fecha+comida -- solo título, nunca
+  // se borra al pasar la semana. Para resolver sus macros hay que volver a
+  // pedir el Plan Nutricional del Nutricionista pero con el weekStart REAL de
+  // `fecha` (no siempre "la semana que viene" como hace WeekPlanner).
+  const weekStart = fmtDate(isoMonday(fecha));
+  const { days: planDays } = useMyNutritionPlan(authenticated, hasNutricionistaLink, weekStart);
+  const plannedTitle = weekPlan[fecha]?.[meal];
+  const showPlanned = Boolean(plannedTitle) && yaCargado.length === 0;
+
+  const resolvePlannedMeal = (title: string): { kcal: number; protein: number; carbs?: number; fat?: number } | null => {
+    const recipe = RECIPES.find((r) => r.title === title);
+    if (recipe) return { kcal: recipe.kcal, protein: recipe.protein };
+    const weekday = weekdayOf(fecha);
+    const opciones = planDays[weekday]?.[meal] || [];
+    const opcion = opciones.find((o) => o.nombre === title);
+    if (opcion) return { kcal: opcion.kcal, protein: opcion.protein, carbs: opcion.carbs, fat: opcion.fat };
+    return null;
+  };
+
+  const handleImportPlanned = (title: string) => {
+    const resolved = resolvePlannedMeal(title);
+    if (!resolved) return;
+    const existing = days.find((d) => d.fecha === fecha) || emptyDay(fecha);
+    const item: MealItem = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      nombre: title,
+      kcal: resolved.kcal,
+      protein: resolved.protein,
+      carbs: resolved.carbs ?? 0,
+      fat: resolved.fat ?? 0,
+      fiber: 0,
+    };
+    const itemsActuales = getMealItems(existing, meal);
+    onUpsert(applyMealItems(existing, meal, [...itemsActuales, item]));
+    setStatus(`Importado "${title}" a ${MEAL_LABELS[meal]} ✓`);
+    setTimeout(() => setStatus(""), 3500);
+  };
 
   const { supported: speechSupported, recording, toggle: toggleRecording } = useSpeechToText(
     (transcript) => setText((prev) => (prev ? `${prev} ${transcript}` : transcript)),
@@ -516,7 +569,87 @@ export function AiEntryForm({
     >
       <div className="font-display italic text-[15px] text-gold mb-2.5 inline-flex items-center gap-1.5"><Pencil size={20} strokeWidth={1.8} /> Cargar comida</div>
 
-      <div className="mb-2.5 flex gap-1 rounded-xl border border-border bg-bg/40 p-1">
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label>Fecha</label>
+          <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+        </div>
+        {/* Si ya se sabe la comida (se tocó "Desayuno"/etc. en Inicio), no
+            hace falta preguntarla de nuevo -- un desplegable de más es un
+            paso de más para alguien a quien ya le cuesta seguir el resto. */}
+        {initialMeal ? (
+          <div>
+            <label>Comida</label>
+            <div className="flex h-[38px] items-center rounded-lg border border-border bg-bg/40 px-2.5 text-sm text-text">
+              {MEAL_LABELS[meal]}
+            </div>
+          </div>
+        ) : (
+          <div>
+            <label>Comida</label>
+            <select value={meal} onChange={(e) => setMeal(e.target.value as MealKey)}>
+              {Object.entries(MEAL_LABELS).map(([k, v]) => (
+                <option key={k} value={k}>{v}</option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+
+      {yaCargado.length > 0 && entryForFecha && (
+        <div className="mt-2.5 rounded-xl border border-border bg-bg/40 p-2.5">
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
+              Ya cargado en {MEAL_LABELS[meal].toLowerCase()}
+            </span>
+            <span className="shrink-0 font-mono text-[10px] text-textMuted">{Math.round(yaCargadoTotales.kcal)} kcal</span>
+          </div>
+          <MealItemsList entry={entryForFecha} meal={meal} onUpsert={onUpsert} onInventoryDelta={onInventoryDelta} />
+        </div>
+      )}
+
+      {showPlanned && plannedTitle && (
+        <div className="mt-2.5 rounded-xl border border-gold/50 bg-gold/10 p-2.5">
+          <div className="mb-1 font-mono text-[9px] uppercase tracking-wide text-gold">Planificado</div>
+          <div className="mb-2 text-sm font-semibold text-text">{plannedTitle}</div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => handleImportPlanned(plannedTitle)}
+              disabled={!resolvePlannedMeal(plannedTitle)}
+              className="flex-1 rounded-lg p-2.5 font-sans font-bold text-[12px] bg-gold text-bg disabled:opacity-40"
+            >
+              Importar
+            </button>
+            <button
+              type="button"
+              onClick={() => setAddingMeal(true)}
+              className="flex-1 rounded-lg p-2.5 font-sans font-bold text-[12px] border border-gold text-gold"
+            >
+              Agregar comida
+            </button>
+          </div>
+          {!resolvePlannedMeal(plannedTitle) && (
+            <div className="mt-1.5 text-[10px] text-textMuted">
+              No tiene macros para importar automáticamente — cargalo con &quot;Agregar comida&quot;.
+            </div>
+          )}
+        </div>
+      )}
+
+      {!addingMeal && !showPlanned && (
+        <button
+          type="button"
+          onClick={() => setAddingMeal(true)}
+          className="mt-2.5 w-full rounded-lg p-3 font-sans font-bold text-sm border border-gold text-gold"
+        >
+          + Agregar comida
+        </button>
+      )}
+
+      {addingMeal && (
+      <>
+      <div className="mt-2.5 flex gap-1 rounded-xl border border-border bg-bg/40 p-1">
         <button
           type="button"
           onClick={() => (disableAi ? setStatus("🔒 Con IA requiere un plan pago — actualizá tu plan para desbloquearlo.") : setMode("ia"))}
@@ -561,45 +694,6 @@ export function AiEntryForm({
           {disableAi ? <span className="inline-flex items-center gap-1"><Lock size={16} strokeWidth={1.8} /> Preparación</span> : "Preparación"}
         </button>
       </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label>Fecha</label>
-          <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
-        </div>
-        {/* Si ya se sabe la comida (se tocó "Desayuno"/etc. en Inicio), no
-            hace falta preguntarla de nuevo -- un desplegable de más es un
-            paso de más para alguien a quien ya le cuesta seguir el resto. */}
-        {initialMeal ? (
-          <div>
-            <label>Comida</label>
-            <div className="flex h-[38px] items-center rounded-lg border border-border bg-bg/40 px-2.5 text-sm text-text">
-              {MEAL_LABELS[meal]}
-            </div>
-          </div>
-        ) : (
-          <div>
-            <label>Comida</label>
-            <select value={meal} onChange={(e) => setMeal(e.target.value as MealKey)}>
-              {Object.entries(MEAL_LABELS).map(([k, v]) => (
-                <option key={k} value={k}>{v}</option>
-              ))}
-            </select>
-          </div>
-        )}
-      </div>
-
-      {yaCargado.length > 0 && entryForFecha && (
-        <div className="mt-2.5 rounded-xl border border-border bg-bg/40 p-2.5">
-          <div className="mb-1.5 flex items-center justify-between gap-2">
-            <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
-              Ya cargado en {MEAL_LABELS[meal].toLowerCase()}
-            </span>
-            <span className="shrink-0 font-mono text-[10px] text-textMuted">{Math.round(yaCargadoTotales.kcal)} kcal</span>
-          </div>
-          <MealItemsList entry={entryForFecha} meal={meal} onUpsert={onUpsert} onInventoryDelta={onInventoryDelta} />
-        </div>
-      )}
 
       {recientes.length > 0 && (
         <div className="mt-2.5">
@@ -1025,6 +1119,8 @@ export function AiEntryForm({
             Sumar a {MEAL_LABELS[meal]}
           </button>
         </div>
+      )}
+      </>
       )}
       {status && <div className="text-center font-mono text-[11px] text-sage mt-2">{status}</div>}
 
