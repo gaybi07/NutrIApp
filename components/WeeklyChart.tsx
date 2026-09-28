@@ -1,11 +1,12 @@
 "use client";
 
 import { ComposedChart, Bar, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
-import { DayEntry, TrainingSession, INTENSITY_STYLES } from "@/lib/types";
+import { DayEntry, TrainingSession, INTENSITY_STYLES, MEAL_COLORS } from "@/lib/types";
 import { dayGoal, estimateGasto, dayDeficit, getTrainingSessions, resolveWeightForDate, DEFAULT_PESO_KG } from "@/lib/calculations";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
-const COLORS = { des: "#E88D67", alm: "rgb(var(--color-accent))", mer: "#C9A227", cen: "#B5533C", col: "#8B5CF6" };
+const COLORS = MEAL_COLORS;
+const GASTO_COLOR = "#55B6E8";
 
 type ChartRow = {
   dow: string;
@@ -139,7 +140,7 @@ export function WeeklyChart({
           <Bar dataKey="cen" name="Cena" stackId="a" fill={COLORS.cen} className="chart-neon-d" />
           <Bar dataKey="col" name="Colación" stackId="a" fill={COLORS.col} radius={[3, 3, 0, 0]} />
           <Line type="monotone" dataKey="goal" name="Objetivo diario" stroke="rgb(var(--color-text))" strokeWidth={2} dot={{ r: 2.5, fill: "rgb(var(--color-text))" }} strokeDasharray="4 3" />
-          <Line type="monotone" dataKey="gasto" name="Gasto" stroke="#5FA8D3" strokeWidth={2} dot={{ r: 2.5, fill: "#5FA8D3" }} className="chart-neon-c" />
+          <Line type="monotone" dataKey="gasto" name="Gasto" stroke={GASTO_COLOR} strokeWidth={2} dot={{ r: 2.5, fill: GASTO_COLOR }} className="chart-neon-c" />
         </ComposedChart>
       </ResponsiveContainer>
       <div className="flex gap-3 flex-wrap mt-2 font-mono text-[9px] text-textMuted">
@@ -149,7 +150,7 @@ export function WeeklyChart({
         <span className="flex items-center gap-1"><i className="chart-neon-d w-[7px] h-[7px] rounded-full inline-block" style={{ background: COLORS.cen }} />Cena</span>
         <span className="flex items-center gap-1"><i className="w-[7px] h-[7px] rounded-full inline-block" style={{ background: COLORS.col }} />Colación</span>
         <span className="flex items-center gap-1"><i className="w-[10px] h-[2px] inline-block" style={{ background: "rgb(var(--color-text))" }} />Objetivo diario</span>
-        <span className="flex items-center gap-1"><i className="chart-neon-c w-[10px] h-[2px] inline-block" style={{ background: "#5FA8D3" }} />Gasto</span>
+        <span className="flex items-center gap-1"><i className="chart-neon-c w-[10px] h-[2px] inline-block" style={{ background: GASTO_COLOR }} />Gasto</span>
       </div>
     </div>
   );

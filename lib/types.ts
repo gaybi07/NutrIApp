@@ -904,6 +904,16 @@ export const MEAL_LABELS: Record<MealKey, string> = {
   col: "Colación",
 };
 
+/** Paleta de marca Morphy por comida -- fija, no depende del tema
+ * oscuro/claro (igual que INTENSITY_STYLES). */
+export const MEAL_COLORS: Record<MealKey, string> = {
+  des: "#F28C6B", // Coral suave
+  alm: "#7557E8", // Violeta Morphy
+  mer: "#5DD6A8", // Mint
+  cen: "#C45D45", // Terracota
+  col: "#38BFA3", // Verde azulado
+};
+
 export const INTENSITY_STYLES: Record<
   TrainingIntensity | "ninguno",
   { label: string; background: string; color: string; description: string }
