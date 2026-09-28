@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { DayEntry, InventoryItem, MealKey, MEAL_LABELS, MealItem, emptyDay, PreparationIngredient, MealPreparation } from "@/lib/types";
 import { countDigits, MAX_DIGITS, MAX_TEXT_LENGTH, normalizeNumberInput } from "@/lib/inputLimits";
-import { fmtDate, addDays, getMealItems, applyMealItems, suggestedMeal, macrosForFoodQuantity, sumMealItems, tagGroup, groupMealItems } from "@/lib/calculations";
+import { fmtDate, addDays, getMealItems, applyMealItems, suggestedMeal, macrosForFoodQuantity, sumMealItems, tagGroup } from "@/lib/calculations";
+import { MealItemsList, MealItemsInventoryDelta } from "@/components/MealItemsList";
 import { SavePreparationToggle } from "@/components/SavePreparationToggle";
 import { FIELD_HELP } from "@/lib/helpText";
 import { InfoHint } from "@/components/InfoHint";
@@ -74,6 +75,7 @@ export function AiEntryForm({
   consumeAmounts,
   disableAi,
   initialMeal,
+  onInventoryDelta,
 }: {
   days: DayEntry[];
   onUpsert: (entry: DayEntry) => void;
@@ -88,6 +90,10 @@ export function AiEntryForm({
   /** Se tocó un botón de comida puntual en Inicio (Desayuno/Almuerzo/etc.) --
    * ya no hace falta el desplegable de "¿cuál comida?", ya se sabe. */
   initialMeal?: MealKey | null;
+  /** Igual que MealsEditor.onInventoryDelta -- editar un item de "Ya
+   * cargado" que vino de la Alacena tiene que ajustar el stock, no solo el
+   * registro de la comida. */
+  onInventoryDelta?: (deltas: MealItemsInventoryDelta[]) => void;
 }) {
   const [fecha, setFecha] = useState(fmtDate(new Date()));
   const [meal, setMeal] = useState<MealKey>(initialMeal || "des");
@@ -119,9 +125,6 @@ export function AiEntryForm({
   const { memory: mealMemory, remember, findMatch } = useMealMemory();
   const { preparations, save: savePreparation, registerUse: registerPreparationUse } = useMealPreparations();
   const [savePrep, setSavePrep] = useState(false);
-  // Grupo ("preparación" ya nombrada) desglosado en "Ya cargado en {comida}"
-  // -- arranca colapsado, se abre por separado igual que en MealsEditor.tsx.
-  const [openYaCargadoGroup, setOpenYaCargadoGroup] = useState<string | null>(null);
   // Las sugerencias (comidas frecuentes + preparaciones guardadas) empiezan
   // colapsadas -- antes quedaban siempre abiertas entre el texto y "Calcular
   // con IA", empujando ese botón bien abajo y haciendo fácil no darse cuenta
@@ -586,7 +589,7 @@ export function AiEntryForm({
         )}
       </div>
 
-      {yaCargado.length > 0 && (
+      {yaCargado.length > 0 && entryForFecha && (
         <div className="mt-2.5 rounded-xl border border-border bg-bg/40 p-2.5">
           <div className="mb-1.5 flex items-center justify-between gap-2">
             <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
@@ -594,45 +597,7 @@ export function AiEntryForm({
             </span>
             <span className="shrink-0 font-mono text-[10px] text-textMuted">{Math.round(yaCargadoTotales.kcal)} kcal</span>
           </div>
-          <div className="flex flex-col gap-1">
-            {groupMealItems(yaCargado).map((group) => {
-              if (!group.grupoId) {
-                const item = group.items[0];
-                return (
-                  <div key={item.id} className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-bg/50 px-2 py-1.5 text-[11px]">
-                    <span className="min-w-0 flex-1 truncate text-text">{item.nombre}{item.gramos ? ` (${item.gramos}g)` : ""}</span>
-                    <span className="shrink-0 text-textMuted">{Math.round(item.kcal)} kcal · {Math.round(item.protein)}g prot</span>
-                  </div>
-                );
-              }
-              const groupOpen = openYaCargadoGroup === group.grupoId;
-              const totals = sumMealItems(group.items);
-              return (
-                <div key={group.grupoId} className="rounded-lg border border-gold/40 bg-gold/5">
-                  <button
-                    type="button"
-                    onClick={() => setOpenYaCargadoGroup(groupOpen ? null : (group.grupoId as string))}
-                    className="flex w-full items-center justify-between gap-2 px-2 py-1.5 text-left"
-                  >
-                    <span className="min-w-0 flex-1 truncate text-[11px] font-semibold text-text">{group.grupoNombre}</span>
-                    <span className="shrink-0 font-mono text-[10px] text-textMuted">
-                      {Math.round(totals.kcal)} kcal {groupOpen ? "▲" : "▼"}
-                    </span>
-                  </button>
-                  {groupOpen && (
-                    <div className="flex flex-col gap-1 border-t border-gold/30 p-1.5">
-                      {group.items.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-bg/50 px-2 py-1.5 text-[11px]">
-                          <span className="min-w-0 flex-1 truncate text-text">{item.nombre}{item.gramos ? ` (${item.gramos}g)` : ""}</span>
-                          <span className="shrink-0 text-textMuted">{Math.round(item.kcal)} kcal · {Math.round(item.protein)}g prot</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <MealItemsList entry={entryForFecha} meal={meal} onUpsert={onUpsert} onInventoryDelta={onInventoryDelta} />
         </div>
       )}
 

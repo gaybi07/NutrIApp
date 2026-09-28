@@ -751,6 +751,7 @@ export default function Home() {
                 consumeAmounts={consumeAmounts}
                 disableAi={isBasico}
                 initialMeal={aiMeal}
+                onInventoryDelta={handleMealInventoryDelta}
               />
             </div>
           </div>
