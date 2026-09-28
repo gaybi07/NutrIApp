@@ -891,10 +891,10 @@ export function LiveWorkout({
                   return (
                     <>
                       <div className="mb-2 flex items-center justify-between gap-2">
-                        <div className={`truncate text-base font-bold ${ex.omitido ? "text-textMuted line-through" : "text-text"}`}>
+                        <div className={`min-w-0 flex-1 truncate text-base font-bold ${ex.omitido ? "text-textMuted line-through" : "text-text"}`}>
                           {ex.nombre}
                         </div>
-                        <div className="shrink-0 text-right">
+                        <div className="min-w-[70px] shrink-0 text-right">
                           <div className="font-mono text-[8px] uppercase tracking-wide text-textMuted">{isPaused ? "En pausa" : "Tiempo"}</div>
                           <ElapsedTimer
                             startedAt={session.startedAt}
