@@ -2,6 +2,7 @@
 
 import { ReactNode, FormEvent, useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase/browser";
+import { MorphyLogo } from "@/components/MorphyLogo";
 import { Settings, Gem } from "lucide-react";
 
 export function AuthPanel({
@@ -122,6 +123,7 @@ export function AuthPanel({
   if (userEmail || !isSupabaseConfigured) {
     return (
       <div className="relative -mx-3 mb-3 flex items-center gap-2 border-b border-border bg-surface px-3 py-2.5 lg:mx-0 lg:rounded-xl lg:border">
+        <MorphyLogo size={22} className="shrink-0" />
         <div className="flex min-w-0 flex-1 items-center">{centerContent}</div>
         <button
           type="button"
@@ -259,6 +261,7 @@ export function AuthPanel({
 
   return (
     <div className="border border-border rounded-xl p-4">
+      <MorphyLogo size={40} className="mb-2" />
       <div className="font-display italic text-lg text-gold mb-1">Bienvenida a Morphy</div>
       <div className="text-xs text-textMuted mb-4">Planificá. Medí. Evolucioná.</div>
       <button
