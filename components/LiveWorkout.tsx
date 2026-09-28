@@ -816,10 +816,9 @@ export function LiveWorkout({
               <button
                 type="button"
                 onClick={handleFinish}
-                aria-label="Finalizar"
-                className="rounded-lg border border-gold/60 bg-gold p-2 text-bg"
+                className="flex items-center gap-1 rounded-lg border border-gold/60 bg-gold px-2.5 py-2 font-mono text-[10px] uppercase tracking-wide text-bg"
               >
-                <CircleCheck size={18} strokeWidth={1.8} />
+                <CircleCheck size={18} strokeWidth={1.8} /> Finalizar
               </button>
             </div>
           </div>
