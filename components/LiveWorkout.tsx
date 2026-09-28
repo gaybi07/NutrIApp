@@ -788,7 +788,7 @@ export function LiveWorkout({
             </div>
           )}
           <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border bg-bg/40 px-3 py-2">
-            <div>
+            <div className="min-w-[92px] shrink-0">
               <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">{isPaused ? "En pausa" : "Tiempo"}</div>
               <ElapsedTimer
                 startedAt={session.startedAt}
@@ -796,7 +796,7 @@ export function LiveWorkout({
                 className={`font-mono text-xl font-bold tabular-nums ${isPaused ? "text-gold" : "text-text"}`}
               />
             </div>
-            <div className="flex gap-1.5">
+            <div className="flex shrink-0 gap-1.5">
               <button
                 type="button"
                 onClick={togglePause}
