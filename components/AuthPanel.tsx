@@ -48,6 +48,12 @@ export function AuthPanel({
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  // Vía alternativa al enlace mágico -- pensada para cuentas de prueba
+  // (ej. test-alumno@registroapp.local) que no tienen una casilla real
+  // donde recibir el enlace. Nunca se muestra sola: cuelga de un link
+  // colapsado, no reemplaza el flujo normal para cuentas reales.
+  const [passwordLoginOpen, setPasswordLoginOpen] = useState(false);
+  const [password, setPassword] = useState("");
 
   useEffect(() => {
     if (!supabase) {
@@ -81,6 +87,14 @@ export function AuthPanel({
       options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
     });
     setStatus(error ? "No se pudo enviar el enlace." : "Revisá tu email para entrar.");
+  };
+
+  const signInWithPassword = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!supabase || !email.trim() || !password) return;
+    setStatus("Ingresando...");
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    setStatus(error ? "Email o contraseña incorrectos." : "");
   };
 
   const signInWithGoogle = async () => {
@@ -270,6 +284,36 @@ export function AuthPanel({
       </div>
       {status && <div className="text-[11px] text-sage mt-2">{status}</div>}
       </form>
+      <button
+        type="button"
+        onClick={() => setPasswordLoginOpen((v) => !v)}
+        className="mt-3 w-full text-center text-[10px] text-textMuted underline"
+      >
+        {passwordLoginOpen ? "Ocultar" : "¿Cuenta de prueba? Entrar con contraseña"}
+      </button>
+      {passwordLoginOpen && (
+        <form onSubmit={signInWithPassword} className="mt-2">
+          <div className="flex flex-col gap-2">
+            <input
+              type="email"
+              required
+              placeholder="tu@email.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+            <input
+              type="password"
+              required
+              placeholder="contraseña"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+            <button type="submit" className="rounded-lg px-3 py-2 text-xs font-bold bg-gold text-bg">
+              Ingresar
+            </button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }
