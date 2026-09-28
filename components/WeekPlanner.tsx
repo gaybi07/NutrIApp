@@ -251,26 +251,26 @@ export function WeekPlanner({
   const importNutritionPlan = () => {
     const next: WeekPlan = { ...weekPlan };
     let autoFilled = 0;
-    let needsChoice = 0;
+    let withAlternativas = 0;
     for (const [fecha, day] of planOptionsByDate.entries()) {
       const dayPlan = { ...(next[fecha] || {}) };
       for (const meal of MEAL_KEYS) {
         const options = day[meal];
         if (!options || options.length === 0) continue;
         if (dayPlan[meal] !== undefined) continue; // no pisar algo ya elegido
-        if (options.length === 1) {
-          dayPlan[meal] = options[0].nombre;
-          autoFilled++;
-        } else {
-          needsChoice++;
-        }
+        // Se carga la opción A de una -- si tenía más alternativas, tocar
+        // esa comida (ya cargada) reabre el selector para cambiarla por
+        // cualquiera de las otras.
+        dayPlan[meal] = options[0].nombre;
+        autoFilled++;
+        if (options.length > 1) withAlternativas++;
       }
       if (Object.keys(dayPlan).length > 0) next[fecha] = dayPlan;
     }
     onSave(next);
     setImportStatus(
-      needsChoice > 0
-        ? `Se cargaron ${autoFilled} comida${autoFilled === 1 ? "" : "s"} — ${needsChoice} tenían más de una opción, elegí cuál en cada "+ Elegir".`
+      withAlternativas > 0
+        ? `Se cargaron ${autoFilled} comida${autoFilled === 1 ? "" : "s"} de tu plan nutricional ✓ — ${withAlternativas} tenían más de una opción, se eligió la primera (tocá esa comida para cambiarla).`
         : `Se cargaron ${autoFilled} comida${autoFilled === 1 ? "" : "s"} de tu plan nutricional ✓`
     );
     setTimeout(() => setImportStatus(""), 6000);
