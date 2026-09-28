@@ -105,7 +105,7 @@ export function TodayCard({
               type="button"
               onClick={() => onLogMeal(meal)}
               className={`relative flex h-16 flex-col items-center justify-center gap-1 rounded-xl border font-mono text-[10px] uppercase tracking-[0.06em] ${
-                loaded ? "border-sage/60 bg-sage/10 text-sage" : "border-gold/60 bg-gold text-bg"
+                loaded ? "border-sage/60 bg-sage/10 text-sage" : "border-gold/60 bg-gold text-white"
               }`}
             >
               {loaded && (
@@ -123,7 +123,7 @@ export function TodayCard({
           type="button"
           onClick={onLogSupplements}
           className={`relative flex h-16 flex-col items-center justify-center gap-1 rounded-xl border font-mono text-[10px] uppercase tracking-[0.06em] ${
-            (entry.suplementos?.length || 0) > 0 ? "border-sage/60 bg-sage/10 text-sage" : "border-gold/60 bg-gold text-bg"
+            (entry.suplementos?.length || 0) > 0 ? "border-sage/60 bg-sage/10 text-sage" : "border-gold/60 bg-gold text-white"
           }`}
         >
           {(entry.suplementos?.length || 0) > 0 && <span className="absolute right-1.5 top-1.5 leading-none"><CircleCheck size={16} strokeWidth={1.8} /></span>}

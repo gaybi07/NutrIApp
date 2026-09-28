@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { DayEntry, InventoryItem, MealKey, MEAL_LABELS, MealItem, emptyDay, PreparationIngredient } from "@/lib/types";
+import { DayEntry, InventoryItem, MealKey, MEAL_LABELS, MealItem, emptyDay, PreparationIngredient, MealPreparation } from "@/lib/types";
 import { countDigits, MAX_DIGITS, MAX_TEXT_LENGTH, normalizeNumberInput } from "@/lib/inputLimits";
 import { fmtDate, addDays, getMealItems, applyMealItems, suggestedMeal, macrosForFoodQuantity, sumMealItems, tagGroup } from "@/lib/calculations";
 import { SavePreparationToggle } from "@/components/SavePreparationToggle";
@@ -15,7 +15,7 @@ import { useFoods } from "@/lib/useFoods";
 import { MealFromAlacena } from "@/components/MealFromAlacena";
 import { MealFromSearch } from "@/components/MealFromSearch";
 import { IngredientBreakdown, BreakdownRow, sumRows } from "@/components/IngredientBreakdown";
-import { Pencil, Lock, Mic, Lightbulb, CircleCheck, TriangleAlert } from "lucide-react";
+import { Pencil, Lock, Mic, Lightbulb, CircleCheck, TriangleAlert, ChefHat, ArrowLeft } from "lucide-react";
 
 const MAX_SUGGESTIONS = 6;
 
@@ -91,7 +91,14 @@ export function AiEntryForm({
 }) {
   const [fecha, setFecha] = useState(fmtDate(new Date()));
   const [meal, setMeal] = useState<MealKey>(initialMeal || "des");
-  const [mode, setMode] = useState<"ia" | "alacena" | "buscar">("ia");
+  const [mode, setMode] = useState<"ia" | "alacena" | "buscar" | "preparacion">("ia");
+  // Preparación elegida en el modo "Preparación guardada", con las
+  // cantidades de esta vez (arranca con las de la última vez que se usó,
+  // como punto de partida editable -- no se calcula nada hasta tocar
+  // "Calcular", a diferencia de tocarla desde el chip de Sugerencias, que
+  // sigue resolviendo directo con las cantidades de la última vez).
+  const [selectedPrep, setSelectedPrep] = useState<MealPreparation | null>(null);
+  const [prepDraft, setPrepDraft] = useState<{ nombre: string; cantidad: number; unidad: InventoryItem["unit"] }[]>([]);
   const [manualDesc, setManualDesc] = useState("");
   const [manualValues, setManualValues] = useState({ kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
   const [text, setText] = useState("");
@@ -342,6 +349,61 @@ export function AiEntryForm({
     [preparations, meal]
   );
 
+  // Mismo filtro que misPreparaciones pero SIN el tope de 6 -- para el modo
+  // "Preparación guardada", que es una pantalla dedicada (no un chip
+  // colgando de Sugerencias), tiene sentido ver todas, tengas o no stock en
+  // la Alacena de sus ingredientes (a diferencia de "Desde Alacena", que
+  // solo muestra "preparado" con stock real para poder descontarlo).
+  const todasMisPreparaciones = useMemo(
+    () => preparations.filter((p) => !p.meal || p.meal === meal).sort((a, b) => b.vecesUsada - a.vecesUsada),
+    [preparations, meal]
+  );
+
+  // Elegir una preparación en el modo dedicado -- a diferencia de
+  // usePreparacion() (que resuelve directo con las cantidades de la última
+  // vez), acá se arranca un borrador editable para que la persona complete
+  // los gramos/cantidades de ESTA vez antes de calcular nada.
+  const pickPreparacion = (prep: MealPreparation) => {
+    setSelectedPrep(prep);
+    const base: PreparationIngredient[] =
+      prep.ingredientesDetalle && prep.ingredientesDetalle.length > 0
+        ? prep.ingredientesDetalle
+        : prep.ingredientes.map((nombre) => ({ nombre, cantidad: 0, unidad: "g" as const }));
+    setPrepDraft(base.map((i) => ({ nombre: i.nombre, cantidad: i.cantidad, unidad: i.unidad })));
+  };
+
+  const updatePrepDraft = (index: number, patch: Partial<{ cantidad: number; unidad: InventoryItem["unit"] }>) => {
+    setPrepDraft((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+  };
+
+  const calcularPreparacion = () => {
+    if (!selectedPrep) return;
+    const resueltos = prepDraft.map((ing) => {
+      const food = findFood(ing.nombre);
+      const macros = food && ing.cantidad > 0 ? macrosForFoodQuantity(food, ing.cantidad, ing.unidad) : null;
+      return macros ? { nombre: ing.nombre, ...macros } : null;
+    });
+    if (resueltos.every((r): r is NonNullable<typeof r> => r !== null)) {
+      const totals = sumMealItems(resueltos as MealItem[]);
+      setPreview({
+        ...totals,
+        detalle: "",
+        resumen: selectedPrep.nombre,
+        ingredientes: prepDraft.map((i) => `${i.cantidad} ${i.unidad} ${i.nombre}`).join(", "),
+        items: resueltos.map((r) => ({ nombre: r.nombre, kcal: r.kcal, protein: r.protein, carbs: r.carbs, fat: r.fat, fiber: r.fiber, gramos: r.gramos })),
+      });
+      setStatus(`Armado desde tu preparación "${selectedPrep.nombre}" — sin IA. Revisá y guardá ↓`);
+      registerPreparationUse(selectedPrep.id);
+      return;
+    }
+    // Algún ingrediente no se pudo resolver (no está en la tabla foods, o
+    // quedó sin cantidad) -- cae al camino de siempre: pasa a la IA con el
+    // texto ya armado con las cantidades que sí se completaron.
+    setText(prepDraft.map((i) => `${i.cantidad || "?"} ${i.unidad} ${i.nombre}`).join(", "));
+    setMode("ia");
+    registerPreparationUse(selectedPrep.id);
+  };
+
   const usePreparacion = (prep: (typeof preparations)[number]) => {
     // Si TODOS los ingredientes de la preparación resuelven contra la tabla
     // foods (incluye peso-por-unidad si hace falta), se arma la comida
@@ -475,6 +537,22 @@ export function AiEntryForm({
           }`}
         >
           {disableAi ? <span className="inline-flex items-center gap-1"><Lock size={16} strokeWidth={1.8} /> Buscar producto</span> : "Buscar producto"}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            if (disableAi) {
+              setStatus("🔒 Preparación guardada requiere un plan pago — actualizá tu plan para desbloquearlo.");
+              return;
+            }
+            setSelectedPrep(null);
+            setMode("preparacion");
+          }}
+          className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
+            disableAi ? "text-textMuted/50" : mode === "preparacion" ? "bg-gold text-bg" : "text-textMuted"
+          }`}
+        >
+          {disableAi ? <span className="inline-flex items-center gap-1"><Lock size={16} strokeWidth={1.8} /> Preparación</span> : "Preparación"}
         </button>
       </div>
 
@@ -650,6 +728,88 @@ export function AiEntryForm({
         />
       )}
 
+      {!disableAi && mode === "preparacion" && (
+        <div className="mt-2">
+          {!selectedPrep ? (
+            todasMisPreparaciones.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-border p-3 text-center text-[12px] text-textMuted">
+                Todavía no guardaste ninguna preparación. Se guardan desde "Con IA", tocando "+ Agregar a preparaciones" después de calcular.
+              </div>
+            ) : (
+              <>
+                <label className="mb-1 flex items-center">Elegí una preparación guardada</label>
+                <div className="flex flex-col gap-1.5">
+                  {todasMisPreparaciones.map((prep) => (
+                    <button
+                      key={prep.id}
+                      type="button"
+                      onClick={() => pickPreparacion(prep)}
+                      className="flex items-center justify-between gap-2 rounded-xl border border-gold/40 bg-gold/10 px-3 py-2.5 text-left"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold text-text">{prep.nombre}</span>
+                        <span className="block font-mono text-[9px] uppercase tracking-wide text-textMuted">
+                          {prep.categoria} · {prep.ingredientes.length} ingrediente{prep.ingredientes.length === 1 ? "" : "s"}
+                        </span>
+                      </span>
+                      <span className="shrink-0 inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-wide text-gold">
+                        <ChefHat size={16} strokeWidth={1.8} />
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => setSelectedPrep(null)}
+                className="mb-2 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wide text-textMuted underline"
+              >
+                <ArrowLeft size={16} strokeWidth={1.8} /> Elegir otra
+              </button>
+              <div className="mb-2 text-sm font-semibold text-text">{selectedPrep.nombre}</div>
+              <div className="mb-2 text-[11px] text-textMuted">Completá los gramos/cantidad de cada ingrediente para esta vez.</div>
+              <div className="flex flex-col gap-1.5">
+                {prepDraft.map((ing, i) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <span className="min-w-0 flex-1 truncate text-[13px] text-text">{ing.nombre}</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="999999"
+                      value={ing.cantidad || ""}
+                      placeholder="0"
+                      onChange={(e) => {
+                        if (countDigits(e.target.value) <= MAX_DIGITS) updatePrepDraft(i, { cantidad: normalizeNumberInput(e.target) });
+                      }}
+                      className="w-20 shrink-0 text-[13px]"
+                    />
+                    <select
+                      value={ing.unidad}
+                      onChange={(e) => updatePrepDraft(i, { unidad: e.target.value as InventoryItem["unit"] })}
+                      className="w-16 shrink-0 text-[13px]"
+                    >
+                      <option value="g">g</option>
+                      <option value="ml">ml</option>
+                      <option value="u.">u.</option>
+                    </select>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={calcularPreparacion}
+                className="mt-2.5 w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-bg"
+              >
+                Calcular
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
       {!disableAi && mode === "ia" && (
       <>
       <div className="mt-2">
@@ -734,6 +894,8 @@ export function AiEntryForm({
       >
         {loading ? "Calculando..." : "Calcular con IA"}
       </button>
+      </>
+      )}
 
       {preview && (
         <div className="mt-3 pt-3 border-t border-dashed border-border">
@@ -885,8 +1047,6 @@ export function AiEntryForm({
             </button>
           </div>
         </div>
-      )}
-      </>
       )}
     </div>
   );
