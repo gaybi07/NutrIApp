@@ -23,7 +23,7 @@ import { ExercisePicker } from "@/components/ExercisePicker";
 import { RoutineEditorModal } from "@/components/RoutineEditorModal";
 import { LibraryExercise, muscleGroupFor } from "@/lib/exerciseLibrary";
 import { useRoutineIncidents, RoutineIncidentInput } from "@/lib/useRoutineIncidents";
-import { Play, Pause, Lock, ClipboardList, Dumbbell, ChartColumn, Search, MessageSquareText, Lightbulb, CircleCheck } from "lucide-react";
+import { Play, Pause, Lock, ClipboardList, Dumbbell, ChartColumn, Search, MessageSquareText, Lightbulb, CircleCheck, X } from "lucide-react";
 
 function newId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -800,33 +800,26 @@ export function LiveWorkout({
               <button
                 type="button"
                 onClick={togglePause}
-                className={`flex items-center gap-1 rounded-lg border px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-wide ${
-                  isPaused ? "border-gold bg-gold text-bg" : "border-border text-textMuted"
-                }`}
+                aria-label={isPaused ? "Seguir" : "Pausar"}
+                className={`rounded-lg border p-2 ${isPaused ? "border-gold bg-gold text-bg" : "border-border text-textMuted"}`}
               >
-                {isPaused ? (
-                  <>
-                    <Play size={16} strokeWidth={1.8} className="shrink-0" /> Seguir
-                  </>
-                ) : (
-                  <>
-                    <Pause size={16} strokeWidth={1.8} className="shrink-0" /> Pausar
-                  </>
-                )}
+                {isPaused ? <Play size={18} strokeWidth={1.8} /> : <Pause size={18} strokeWidth={1.8} />}
               </button>
               <button
                 type="button"
                 onClick={cancelSession}
-                className="rounded-lg border border-rust/40 px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-wide text-rust"
+                aria-label="Cancelar"
+                className="rounded-lg border border-rust/40 p-2 text-rust"
               >
-                Cancelar
+                <X size={18} strokeWidth={1.8} />
               </button>
               <button
                 type="button"
                 onClick={handleFinish}
-                className="rounded-lg border border-gold/60 bg-gold px-3 py-1.5 font-mono text-[10px] uppercase tracking-wide text-bg"
+                aria-label="Finalizar"
+                className="rounded-lg border border-gold/60 bg-gold p-2 text-bg"
               >
-                Finalizar
+                <CircleCheck size={18} strokeWidth={1.8} />
               </button>
             </div>
           </div>
