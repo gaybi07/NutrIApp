@@ -6,7 +6,8 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { SortableSection } from "@/components/SortableSection";
 import { useSectionOrder } from "@/lib/useSectionOrder";
 import { useLocalDays } from "@/lib/useLocalDays";
-import { isoMonday, addDays, fmtDate, summarizeWeek, proteinTargetForWeight, getMealItems, applyMealItems, dayTotal, weightStreak, computeGoalProgress, earliestLoggedWeight, computeFoodTrainingInsight, computeMuscleGroupVolumeTrend } from "@/lib/calculations";
+import { isoMonday, addDays, fmtDate, summarizeWeek, proteinTargetForWeight, getMealItems, applyMealItems, dayTotal, weightStreak, computeGoalProgress, earliestLoggedWeight, computeFoodTrainingInsight, computeMuscleGroupVolumeTrend, totalVolume } from "@/lib/calculations";
+import { useMyNutritionPlan } from "@/lib/useMyNutritionPlan";
 import { GoalProgress } from "@/components/GoalProgress";
 import { TabBar, MainTab } from "@/components/TabBar";
 import { MacrosTab } from "@/components/MacrosTab";
@@ -144,6 +145,43 @@ export default function Home() {
   const hasNutricionistaLink = Boolean(nutricionistaLink);
   const assignedSessions = useMyAssignedSessions(authenticated, hasTrainerLink);
   const nextWeekTraining = useNextWeekTrainingPlan(authenticated, hasTrainerLink);
+
+  // Objetivo que puso cada profesional -- independiente de qué semana se
+  // esté navegando con las flechas de arriba (weekOffset), siempre la
+  // semana REAL de hoy. Se muestra en Comidas/Actividad (cada uno el suyo)
+  // y combinado en Inicio.
+  const thisWeekStart = useMemo(() => fmtDate(isoMonday(fmtDate(new Date()))), []);
+  const nutritionPlanThisWeek = useMyNutritionPlan(authenticated, hasNutricionistaLink, thisWeekStart);
+  const nutritionGoal = useMemo(() => {
+    if (!hasNutricionistaLink) return null;
+    const days = Object.values(nutritionPlanThisWeek.days);
+    let kcalSum = 0;
+    let proteinSum = 0;
+    let count = 0;
+    for (const day of days) {
+      let dayKcal = 0;
+      let dayProtein = 0;
+      for (const meal of Object.values(day || {})) {
+        if (meal && meal[0]) {
+          dayKcal += meal[0].kcal;
+          dayProtein += meal[0].protein;
+        }
+      }
+      if (dayKcal > 0) {
+        kcalSum += dayKcal;
+        proteinSum += dayProtein;
+        count++;
+      }
+    }
+    if (count === 0) return null;
+    return { kcalPromedio: Math.round(kcalSum / count), proteinPromedio: Math.round(proteinSum / count) };
+  }, [hasNutricionistaLink, nutritionPlanThisWeek.days]);
+
+  const trainingGoal = useMemo(() => {
+    if (!hasTrainerLink || assignedSessions.sessions.length === 0) return null;
+    const volumen = assignedSessions.sessions.reduce((sum, s) => sum + totalVolume(s.routineSnapshot), 0);
+    return { sesionesSemana: assignedSessions.sessions.length, volumenPlanificado: Math.round(volumen) };
+  }, [hasTrainerLink, assignedSessions.sessions]);
   useEscapeKey(() => setPanel(null), panel !== null);
 
   useEffect(() => {
@@ -505,6 +543,7 @@ export default function Home() {
           onCompleteAssignedSession={assignedSessions.complete}
           weekSessions={assignedSessions.sessions}
           nextWeekReady={nextWeekTraining.ready}
+          trainingGoal={trainingGoal}
           muscleGroupTrend={muscleGroupTrend}
           goalMode={settings.calculatorProfile?.modo}
         />
@@ -608,10 +647,31 @@ export default function Home() {
                   );
                 }
                 if (blockId === "objetivo") {
-                  if (!goalProgress) return null;
+                  if (!goalProgress && !nutritionGoal && !trainingGoal) return null;
                   return (
                     <SortableSection key="objetivo" id="objetivo" onHide={() => hideInicioBlock("objetivo")} dragDisabledOnDesktop>
-                      <GoalProgress progress={goalProgress} openOnDesktop />
+                      {(nutritionGoal || trainingGoal) && (
+                        <div className="mb-2 rounded-xl border border-gold/40 bg-gold/5 p-3">
+                          <div className="mb-1.5 font-mono text-[9px] uppercase tracking-[0.15em] text-gold">Objetivo de tus profesionales</div>
+                          <div className="grid grid-cols-2 gap-2">
+                            {nutritionGoal && (
+                              <div>
+                                <div className="font-mono text-[8px] uppercase tracking-wide text-textMuted">Nutricionista</div>
+                                <div className="text-[13px] font-semibold text-text">{nutritionGoal.kcalPromedio} kcal/día</div>
+                                <div className="font-mono text-[10px] text-textMuted">{nutritionGoal.proteinPromedio}g proteína</div>
+                              </div>
+                            )}
+                            {trainingGoal && (
+                              <div>
+                                <div className="font-mono text-[8px] uppercase tracking-wide text-textMuted">Entrenador</div>
+                                <div className="text-[13px] font-semibold text-text">{trainingGoal.sesionesSemana} sesiones/sem.</div>
+                                <div className="font-mono text-[10px] text-textMuted">~{trainingGoal.volumenPlanificado.toLocaleString("es-AR")}kg volumen</div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {goalProgress && <GoalProgress progress={goalProgress} openOnDesktop />}
                     </SortableSection>
                   );
                 }
@@ -708,6 +768,7 @@ export default function Home() {
           weekDates={weekDates}
           onOpenPlanificador={() => setPanel("planificador")}
           hasNutricionistaLink={hasNutricionistaLink}
+          nutritionGoal={nutritionGoal}
           order={settings.comidasOrder}
           onReorder={(comidasOrder) => saveSettings({ ...settings, comidasOrder })}
           hidden={settings.comidasHidden}

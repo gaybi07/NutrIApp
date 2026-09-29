@@ -155,6 +155,7 @@ export function ActividadTab({
   onCompleteAssignedSession,
   weekSessions,
   nextWeekReady,
+  trainingGoal,
   muscleGroupTrend,
   goalMode,
 }: {
@@ -194,6 +195,9 @@ export function ActividadTab({
   /** Ya hay un plan de fuerza publicado para la semana que viene -- se
    * avisa acá mismo, sin esperar a que llegue esa semana. */
   nextWeekReady?: boolean;
+  /** Objetivo semanal que puso el Entrenador (sesiones + volumen
+   * planificado, calculado de las sesiones asignadas de esta semana). */
+  trainingGoal?: { sesionesSemana: number; volumenPlanificado: number } | null;
   muscleGroupTrend: Record<MuscleGroup, { actual: number; anterior: number }>;
   goalMode?: GoalMode;
 }) {
@@ -333,6 +337,13 @@ export function ActividadTab({
       {isApprovedTrainer && (
         <div className="mb-3 flex items-center gap-1.5 rounded-full border border-gold/50 bg-gold/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wide text-gold">
           <Award size={16} strokeWidth={1.8} className="shrink-0" /> Sos entrenador certificado
+        </div>
+      )}
+      {trainingGoal && (
+        <div className="mb-3 rounded-xl border border-gold/40 bg-gold/5 p-3">
+          <div className="mb-1 font-mono text-[9px] uppercase tracking-[0.15em] text-gold">Objetivo de tu Entrenador</div>
+          <div className="text-sm font-semibold text-text">{trainingGoal.sesionesSemana} sesiones esta semana</div>
+          <div className="font-mono text-[10px] text-textMuted">~{trainingGoal.volumenPlanificado.toLocaleString("es-AR")}kg de volumen planificado</div>
         </div>
       )}
       <DndContext sensors={drag.sensors} collisionDetection={drag.collisionDetection} onDragStart={drag.handleDragStart} onDragEnd={drag.handleDragEnd} onDragCancel={drag.handleDragCancel}>

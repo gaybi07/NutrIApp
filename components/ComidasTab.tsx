@@ -75,6 +75,7 @@ export function ComidasTab({
   onHide,
   household,
   hasNutricionistaLink,
+  nutritionGoal,
 }: {
   weekPlan: WeekPlan;
   /** Las 7 fechas de la semana que se está mirando con las flechas de
@@ -92,6 +93,10 @@ export function ComidasTab({
    * Nutricionista vinculado, adentro ya no se "programa" nada a mano (ver
    * WeekPlanner), se ve directo lo que él/ella planificó. */
   hasNutricionistaLink?: boolean;
+  /** Objetivo diario que puso el Nutricionista (promedio de la semana
+   * actual real, no la que se esté navegando) -- null sin vínculo o sin
+   * plan publicado todavía. */
+  nutritionGoal?: { kcalPromedio: number; proteinPromedio: number } | null;
 }) {
   const blockOrder = resolveOrder(order, DEFAULT_COMIDAS_ORDER);
   const visibleOrder = blockOrder.filter((id) => !(hidden || []).includes(id));
@@ -100,6 +105,13 @@ export function ComidasTab({
 
   return (
     <div>
+      {nutritionGoal && (
+        <div className="mb-3 rounded-xl border border-gold/40 bg-gold/5 p-3">
+          <div className="mb-1 font-mono text-[9px] uppercase tracking-[0.15em] text-gold">Objetivo de tu Nutricionista</div>
+          <div className="text-sm font-semibold text-text">{nutritionGoal.kcalPromedio} kcal/día</div>
+          <div className="font-mono text-[10px] text-textMuted">{nutritionGoal.proteinPromedio}g proteína/día</div>
+        </div>
+      )}
       <DndContext sensors={drag.sensors} collisionDetection={drag.collisionDetection} onDragStart={drag.handleDragStart} onDragEnd={drag.handleDragEnd} onDragCancel={drag.handleDragCancel}>
         <SortableContext items={visibleOrder} strategy={verticalListSortingStrategy}>
           <div className="min-w-0 space-y-4 lg:columns-2 lg:gap-4 lg:space-y-0 xl:columns-3">
