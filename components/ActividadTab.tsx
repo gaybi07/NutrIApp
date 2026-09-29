@@ -158,7 +158,10 @@ export function ActividadTab({
   trainingGoal,
   muscleGroupTrend,
   goalMode,
+  basic,
 }: {
+  /** Plan Básico: solo el registro rápido de Hoy (pasos/entreno/sueño), sin entrenamiento en vivo. */
+  basic?: boolean;
   entry: DayEntry;
   weekDates: string[];
   weekDays: (DayEntry | null)[];
@@ -285,19 +288,21 @@ export function ActividadTab({
             {entry.suenoHoras ? `${entry.suenoHoras}h` : "+ Sueño"}
           </button>
         </div>
-        <LiveWorkout
-          entry={entry}
-          routines={routines}
-          schedule={schedule}
-          onFinish={onUpsert}
-          onSaveSchedule={onSaveSchedule}
-          onCreateAndAssignRoutine={onCreateAndAssignRoutine}
-          suggestions={workoutSuggestions}
-          onSaveSuggestions={onSaveWorkoutSuggestions}
-          assignedSession={assignedSession}
-          onStartAssignedSession={onStartAssignedSession}
-          onCompleteAssignedSession={onCompleteAssignedSession}
-        />
+        {!basic && (
+          <LiveWorkout
+            entry={entry}
+            routines={routines}
+            schedule={schedule}
+            onFinish={onUpsert}
+            onSaveSchedule={onSaveSchedule}
+            onCreateAndAssignRoutine={onCreateAndAssignRoutine}
+            suggestions={workoutSuggestions}
+            onSaveSuggestions={onSaveWorkoutSuggestions}
+            assignedSession={assignedSession}
+            onStartAssignedSession={onStartAssignedSession}
+            onCompleteAssignedSession={onCompleteAssignedSession}
+          />
+        )}
       </Collapsible>
     ),
     planSemanaFuerza: hasTrainerLink ? (
