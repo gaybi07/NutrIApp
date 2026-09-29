@@ -53,6 +53,7 @@ import { useTrainerApplication } from "@/lib/useTrainerApplication";
 import { useTrainerLink } from "@/lib/useTrainerLink";
 import { GlobalWorkoutTimer } from "@/components/GlobalWorkoutTimer";
 import { useMyAssignedSessions } from "@/lib/useAssignedSessions";
+import { useNextWeekTrainingPlan } from "@/lib/useNextWeekTrainingPlan";
 import { useProductMemory } from "@/lib/useProductMemory";
 import { emptyDay, MealKey, MEAL_LABELS, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER, resolveOrder } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
@@ -142,6 +143,7 @@ export default function Home() {
   const { link: nutricionistaLink } = useTrainerLink(authenticated, "nutricion");
   const hasNutricionistaLink = Boolean(nutricionistaLink);
   const assignedSessions = useMyAssignedSessions(authenticated, hasTrainerLink);
+  const nextWeekTraining = useNextWeekTrainingPlan(authenticated, hasTrainerLink);
   useEscapeKey(() => setPanel(null), panel !== null);
 
   useEffect(() => {
@@ -501,6 +503,8 @@ export default function Home() {
           assignedSession={assignedSessions.todaySession}
           onStartAssignedSession={assignedSessions.start}
           onCompleteAssignedSession={assignedSessions.complete}
+          weekSessions={assignedSessions.sessions}
+          nextWeekReady={nextWeekTraining.ready}
           muscleGroupTrend={muscleGroupTrend}
           goalMode={settings.calculatorProfile?.modo}
         />

@@ -789,12 +789,16 @@ export const MACROS_BLOCK_LABELS: Record<MacrosBlockId, string> = {
 };
 
 export type ActividadBlockId =
-  | "resumen" | "objetivoEntreno" | "indicadoresEntreno" | "pasosEditar" | "pasosChart" | "entrenoChart" | "suenoChart" | "volumenChart" | "volumenGrupos" | "rutinas";
+  | "resumen" | "planSemanaFuerza" | "objetivoEntreno" | "indicadoresEntreno" | "pasosEditar" | "pasosChart" | "entrenoChart" | "suenoChart" | "volumenChart" | "volumenGrupos" | "rutinas";
 export const DEFAULT_ACTIVIDAD_ORDER: ActividadBlockId[] = [
-  "resumen", "objetivoEntreno", "indicadoresEntreno", "pasosEditar", "pasosChart", "entrenoChart", "suenoChart", "volumenChart", "volumenGrupos", "rutinas",
+  "resumen", "planSemanaFuerza", "objetivoEntreno", "indicadoresEntreno", "pasosEditar", "pasosChart", "entrenoChart", "suenoChart", "volumenChart", "volumenGrupos", "rutinas",
 ];
 export const ACTIVIDAD_BLOCK_LABELS: Record<ActividadBlockId, string> = {
   resumen: "Hoy · Entrenamiento",
+  // Solo lectura -- lo que el Entrenador planificó para la semana actual
+  // (assigned_sessions), y aviso si ya armó la semana que viene. Solo tiene
+  // sentido con Entrenador vinculado (ver hasTrainerLink en ActividadTab).
+  planSemanaFuerza: "Plan de la semana (Entrenador)",
   objetivoEntreno: "Objetivo de entrenamiento",
   indicadoresEntreno: "Indicadores de entrenamiento",
   pasosEditar: "Pasos (editar)",

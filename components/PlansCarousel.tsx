@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ClientPlan, PLAN_PRICES_ARS } from "@/lib/types";
 import { Gem } from "lucide-react";
 
@@ -34,6 +34,28 @@ export function PlansCarousel({ currentPlan }: { currentPlan: ClientPlan }) {
     setSelected(i);
     cardRefs.current[i]?.scrollIntoView({ behavior: "smooth", inline: "start" });
   };
+
+  // Las solapas y los puntitos de abajo solo se actualizaban tocando una
+  // solapa -- si deslizabas el carrusel a mano, quedaban pegados en la
+  // tarjeta vieja. Este observer sigue cuál tarjeta está más visible
+  // mientras se desliza (a mano o programático) y sincroniza `selected`.
+  useEffect(() => {
+    const deck = deckRef.current;
+    if (!deck) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const mostVisible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (!mostVisible) return;
+        const idx = cardRefs.current.findIndex((el) => el === mostVisible.target);
+        if (idx >= 0) setSelected(idx);
+      },
+      { root: deck, threshold: [0.5, 0.75, 1] }
+    );
+    cardRefs.current.forEach((el) => el && observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
 
   const elegir = async (plan: PlanId) => {
     if (plan === "basico") return;

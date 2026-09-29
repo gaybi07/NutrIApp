@@ -1,9 +1,10 @@
 "use client";
 
 import { ReactNode, useRef, useState } from "react";
-import { Check, ChevronRight, Plus } from "lucide-react";
+import { Check, ChevronRight, Plus, TriangleAlert } from "lucide-react";
 import { useTrainerApplication, useTrainerAdmin } from "@/lib/useTrainerApplication";
 import { useTrainerLink, useTrainerStudents, useTrainerRoutines, useTrainerRoutinesForStudent } from "@/lib/useTrainerLink";
+import { useCurrentWeekCoverage } from "@/lib/useCurrentWeekCoverage";
 import { useTrainerIncidents } from "@/lib/useRoutineIncidents";
 import { TrainerApplication, TrainerStatus, TrainerRoutine, TrainerLinkRequest, TrainerStudent, RoutineIncident, RoutineIncidentType, WeeklyReportMetrics, Routine, ExerciseEntry } from "@/lib/types";
 import { RoutineEditorModal } from "@/components/RoutineEditorModal";
@@ -210,6 +211,9 @@ function TrainerStudentsAndRoutines({
   accountTab: ReactNode;
 }) {
   const studentsHook = useTrainerStudents(authenticated, true);
+  // Quiénes ya tienen la semana actual cubierta con un plan publicado --
+  // el resto se marca en rojo en la lista de alumnos (ver más abajo).
+  const coverage = useCurrentWeekCoverage(studentsHook.loaded, studentsHook.students.map((s) => s.studentId));
   const routinesHook = useTrainerRoutines(authenticated, true);
   const incidentsHook = useTrainerIncidents(authenticated, true);
   // El caso "duplicar" es un objeto sin id, con el nombre y ejercicios
@@ -354,19 +358,37 @@ function TrainerStudentsAndRoutines({
             <div className="rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">Todavía no tenés alumnos vinculados.</div>
           ) : (
             <div className="space-y-1.5">
-              {studentsHook.students.map((s) => (
-                <div key={s.studentId} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-bg/40 px-2.5 py-2">
-                  <span className="font-mono text-[11px] text-text">{s.studentEmail}</span>
-                  <div className="flex shrink-0 gap-2">
-                    <button type="button" onClick={() => setViewingStudent(s)} className="font-mono text-[10px] text-gold">
-                      Ver alumno
-                    </button>
-                    <button type="button" onClick={() => studentsHook.removeStudent(s.studentId)} className="font-mono text-[10px] text-rust">
-                      Quitar
-                    </button>
+              {studentsHook.students.map((s) => {
+                // Rojo si esta semana YA está corriendo sin un plan de fuerza
+                // publicado para ella -- normalmente porque pasó el domingo
+                // (último día de la semana anterior) sin cargar la siguiente.
+                const needsWeek = coverage.loaded && !coverage.covered.has(s.studentId);
+                return (
+                  <div
+                    key={s.studentId}
+                    className={`flex items-center justify-between gap-2 rounded-lg border px-2.5 py-2 ${
+                      needsWeek ? "border-rust/60 bg-rust/10" : "border-border bg-bg/40"
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <span className="font-mono text-[11px] text-text">{s.studentEmail}</span>
+                      {needsWeek && (
+                        <div className="mt-0.5 inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-wide text-rust">
+                          <TriangleAlert size={12} strokeWidth={1.8} /> Falta cargar la rutina de esta semana
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      <button type="button" onClick={() => setViewingStudent(s)} className="font-mono text-[10px] text-gold">
+                        Ver alumno
+                      </button>
+                      <button type="button" onClick={() => studentsHook.removeStudent(s.studentId)} className="font-mono text-[10px] text-rust">
+                        Quitar
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

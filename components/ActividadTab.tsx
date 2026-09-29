@@ -75,6 +75,60 @@ function WeekBarChart({
   );
 }
 
+const SESSION_STATUS_LABEL: Record<AssignedSession["status"], { text: string; className: string }> = {
+  planificada: { text: "Planificada", className: "text-textMuted" },
+  movida: { text: "Reprogramada", className: "text-gold" },
+  en_curso: { text: "En curso", className: "text-gold" },
+  completada: { text: "✓ Completada", className: "text-sage" },
+  vencida: { text: "No hecha", className: "text-rust" },
+  cancelada: { text: "Cancelada", className: "text-textMuted" },
+};
+
+/**
+ * Solo lectura -- lo que el Entrenador planificó para la semana ACTUAL
+ * (assigned_sessions ya viene filtrado a esa semana desde
+ * useMyAssignedSessions), y un aviso si ya armó la que viene. Distinto del
+ * "Hoy · Entrenamiento" de arriba, que solo muestra/permite arrancar la
+ * sesión de hoy.
+ */
+function WeekTrainingPlanCard({ weekSessions, nextWeekReady }: { weekSessions: AssignedSession[]; nextWeekReady: boolean }) {
+  const sorted = [...weekSessions].sort((a, b) => a.fechaPlanificada.localeCompare(b.fechaPlanificada));
+  return (
+    <Collapsible eyebrow="Semana" title="Plan de la semana (Entrenador)">
+      {nextWeekReady && (
+        <div className="mb-2 rounded-lg border border-dashed border-sage/50 bg-sage/5 px-3 py-2 text-center font-mono text-[10px] uppercase tracking-wide text-sage">
+          Tu Entrenador ya armó la semana que viene ✓
+        </div>
+      )}
+      {sorted.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">
+          Tu Entrenador todavía no publicó nada para esta semana.
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          {sorted.map((s) => {
+            const date = new Date(`${s.fechaPlanificada}T00:00:00`);
+            const statusInfo = SESSION_STATUS_LABEL[s.status];
+            return (
+              <div key={s.id} className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-bg/30 px-2.5 py-1.5">
+                <div className="min-w-0">
+                  <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
+                    {DOW[date.getDay()]} {date.getDate()}/{date.getMonth() + 1}
+                  </div>
+                  <div className="truncate text-[12px] text-text">
+                    {s.routineNombre} <span className="text-textMuted">· {s.routineSnapshot.length} ejercicios</span>
+                  </div>
+                </div>
+                <span className={`shrink-0 font-mono text-[9px] uppercase tracking-wide ${statusInfo.className}`}>{statusInfo.text}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Collapsible>
+  );
+}
+
 export function ActividadTab({
   entry,
   weekDates,
@@ -99,6 +153,8 @@ export function ActividadTab({
   assignedSession,
   onStartAssignedSession,
   onCompleteAssignedSession,
+  weekSessions,
+  nextWeekReady,
   muscleGroupTrend,
   goalMode,
 }: {
@@ -131,6 +187,13 @@ export function ActividadTab({
   assignedSession?: AssignedSession | null;
   onStartAssignedSession?: (sessionId: string) => void;
   onCompleteAssignedSession?: (sessionId: string, ejercicios: ExerciseEntry[], duracionMinutos?: number) => Promise<{ ok: boolean; error?: string }>;
+  /** Todas las sesiones asignadas de la semana ACTUAL (lunes a domingo de
+   * hoy) -- para el resumen de solo lectura "Plan de la semana", distinto
+   * de `assignedSession` que es solo la de hoy. */
+  weekSessions?: AssignedSession[];
+  /** Ya hay un plan de fuerza publicado para la semana que viene -- se
+   * avisa acá mismo, sin esperar a que llegue esa semana. */
+  nextWeekReady?: boolean;
   muscleGroupTrend: Record<MuscleGroup, { actual: number; anterior: number }>;
   goalMode?: GoalMode;
 }) {
@@ -141,7 +204,10 @@ export function ActividadTab({
   // "objetivoEntreno" solo se muestra si ya asignaste al menos un día en tu
   // rutina semanal (sin eso no hay objetivo que calcular).
   const visibleOrder = blockOrder.filter(
-    (id) => (id === "resumen" || !(hidden || []).includes(id)) && !(id === "objetivoEntreno" && !trainingGoalPreview)
+    (id) =>
+      (id === "resumen" || !(hidden || []).includes(id)) &&
+      !(id === "objetivoEntreno" && !trainingGoalPreview) &&
+      !(id === "planSemanaFuerza" && !hasTrainerLink)
   );
 
   const sessions = getTrainingSessions(entry);
@@ -230,6 +296,9 @@ export function ActividadTab({
         />
       </Collapsible>
     ),
+    planSemanaFuerza: hasTrainerLink ? (
+      <WeekTrainingPlanCard weekSessions={weekSessions || []} nextWeekReady={Boolean(nextWeekReady)} />
+    ) : null,
     objetivoEntreno: trainingGoalPreview ? <TrainingGoal goal={trainingGoalPreview} openOnDesktop /> : null,
     indicadoresEntreno: <TrainingIndicators routines={routines} workoutSuggestions={workoutSuggestions} />,
     pasosEditar: <DailySteps weekDates={weekDates} weekDays={weekDays} onUpsert={onUpsert} />,
