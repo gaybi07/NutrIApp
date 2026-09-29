@@ -806,26 +806,36 @@ export function AiEntryForm({
         </div>
       )}
 
-      {!disableAi && mode === "alacena" && (
-        <MealFromAlacena
-          items={inventory}
-          days={days}
-          fecha={fecha}
-          meal={meal}
-          onUpsert={onUpsert}
-          consumeAmounts={consumeAmounts}
-          onAdded={(updated) => setMeal(suggestedMeal(updated, new Date().getHours()))}
-        />
+      {/* Montados siempre (solo se oculta con CSS) en vez de con && -- si se
+          desmontaran al cambiar de pestaña, la "canasta" de productos
+          elegidos ahí adentro (todavía sin confirmar con "Sumar") se
+          perdería: por ejemplo buscar "Pan de salvado" en Buscar producto,
+          pasar a Desde Alacena a sumar un huevo, y volver -- el pan tiene
+          que seguir ahí. */}
+      {!disableAi && (
+        <div className={mode === "alacena" ? undefined : "hidden"}>
+          <MealFromAlacena
+            items={inventory}
+            days={days}
+            fecha={fecha}
+            meal={meal}
+            onUpsert={onUpsert}
+            consumeAmounts={consumeAmounts}
+            onAdded={(updated) => setMeal(suggestedMeal(updated, new Date().getHours()))}
+          />
+        </div>
       )}
 
-      {!disableAi && mode === "buscar" && (
-        <MealFromSearch
-          days={days}
-          fecha={fecha}
-          meal={meal}
-          onUpsert={onUpsert}
-          onAdded={(updated) => setMeal(suggestedMeal(updated, new Date().getHours()))}
-        />
+      {!disableAi && (
+        <div className={mode === "buscar" ? undefined : "hidden"}>
+          <MealFromSearch
+            days={days}
+            fecha={fecha}
+            meal={meal}
+            onUpsert={onUpsert}
+            onAdded={(updated) => setMeal(suggestedMeal(updated, new Date().getHours()))}
+          />
+        </div>
       )}
 
       {!disableAi && mode === "preparacion" && (
