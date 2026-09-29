@@ -40,7 +40,6 @@ import { ThemeSettings, FontSizeSettings, TabsSettings, ToolsSettings, SectionsS
 import { TrainerPanel } from "@/components/TrainerPanel";
 import { NutricionistaPanel } from "@/components/NutricionistaPanel";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
-import { AppTour } from "@/components/AppTour";
 import { TipPopup } from "@/components/TipPopup";
 import { isSupabaseConfigured } from "@/lib/supabase/browser";
 import { useEscapeKey } from "@/lib/useEscapeKey";
@@ -397,20 +396,16 @@ export default function Home() {
         </div>
       )}
 
-      {!settings.tourDone && (
-        <AppTour onFinish={() => saveSettings({ ...settings, tourDone: true })} />
-      )}
-
-      {settings.tourDone && (
-        <TipPopup
-          presentDays={presentDays}
-          summary={summary}
-          proteinTarget={proteinTargetForWeight(currentWeightKg)}
-          goalMode={settings.calculatorProfile?.modo}
-          weightTrend={weightTrend}
-          sleepAvg={sleepAvg}
-        />
-      )}
+      {/* El tour de 8 tarjetas (AppTour) está apagado a pedido -- era largo y tedioso.
+          El componente queda en el repo para rehacerlo más corto. */}
+      <TipPopup
+        presentDays={presentDays}
+        summary={summary}
+        proteinTarget={proteinTargetForWeight(currentWeightKg)}
+        goalMode={settings.calculatorProfile?.modo}
+        weightTrend={weightTrend}
+        sleepAvg={sleepAvg}
+      />
 
       {/* Fijo arriba (TabBar + selector de semana + peso/racha), un solo
           contenedor sticky para que se queden pegados juntos como una sola
