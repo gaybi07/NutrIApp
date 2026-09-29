@@ -200,8 +200,8 @@ export default function Home() {
   const clientPlan = settings.plan || "basico";
   const isBasico = clientPlan === "basico";
   // Se VEN con candado (no desaparecen) y al tocarlas muestran qué desbloquean.
-  // Comidas y Entreno quedan disponibles con lo básico -- ver PLAN_LOCKED_ACTIVIDAD_BLOCKS.
-  const PLAN_LOCKED_TABS: MainTab[] = ["alacena", "gastos"];
+  // Cargar comidas (desde Inicio), Macros y Entreno quedan con lo básico -- ver PLAN_LOCKED_ACTIVIDAD_BLOCKS.
+  const PLAN_LOCKED_TABS: MainTab[] = ["alacena", "comidas", "gastos"];
   const PLAN_LOCKED_ACTIVIDAD_BLOCKS = ["planSemanaFuerza", "objetivoEntreno", "indicadoresEntreno", "volumenChart", "volumenGrupos", "rutinas"] as const;
   // "comidasSemana" (Modificar comidas de la semana) queda afuera de esta
   // lista a propósito -- es la única forma de corregir un error en algo ya
@@ -556,6 +556,13 @@ export default function Home() {
           onUpgrade={() => setPanel("planes")}
         />
       )}
+      {tabLocked && activeTab === "comidas" && (
+        <LockedTabNotice
+          title="Comidas"
+          unlocks={["Planificador semanal de comidas", "Plan semanal de tu Nutricionista, con opciones", "Lista de compras armada con lo que planificaste"]}
+          onUpgrade={() => setPanel("planes")}
+        />
+      )}
       {tabLocked && activeTab === "gastos" && (
         <LockedTabNotice
           title="Gastos"
@@ -776,7 +783,7 @@ export default function Home() {
         />
       )}
 
-      {activeTab === "comidas" && (
+      {activeTab === "comidas" && !tabLocked && (
         <ComidasTab
           weekPlan={weekPlan}
           weekDates={weekDates}
