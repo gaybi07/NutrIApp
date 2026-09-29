@@ -6,6 +6,7 @@ export type { MainTab };
 
 const TABS: { id: MainTab; label: string }[] = [
   { id: "inicio", label: "Inicio" },
+  { id: "alacena", label: "Alacena" },
   { id: "comidas", label: "Comidas" },
   { id: "macros", label: "Macros" },
   { id: "actividad", label: "Entreno" },

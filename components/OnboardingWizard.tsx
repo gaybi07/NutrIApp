@@ -10,9 +10,13 @@ type ActivityLevel = "leve" | "moderado" | "alto" | "exigente";
 
 const MODULE_INFO: Record<MainTab, { label: string; description: string }> = {
   inicio: { label: "Inicio", description: "Resumen del día y de la semana." },
+  alacena: {
+    label: "Alacena",
+    description: "Qué tenés en la heladera y la alacena, y sugerencias de recetas con eso mismo.",
+  },
   comidas: {
     label: "Comidas",
-    description: "Alacena, recetas y planificación semanal — cargá lo que comés con IA, buscando productos, o descontando de tu alacena.",
+    description: "Planificación semanal, propia o de tu Nutricionista.",
   },
   macros: {
     label: "Macros",

@@ -676,10 +676,10 @@ export const SUPPLEMENT_CATALOG: { nombre: string; dosis: string }[] = [
 export type WeekPlan = Record<string, Partial<Record<MealKey, string>>>; // fecha -> comida -> título de receta
 
 /** Las solapas de arriba que se pueden prender/apagar desde Preferencias — "inicio" no está acá porque siempre está fija. */
-export type MainTab = "inicio" | "comidas" | "macros" | "actividad" | "gastos" | "entrenador" | "nutricionista";
+export type MainTab = "inicio" | "alacena" | "comidas" | "macros" | "actividad" | "gastos" | "entrenador" | "nutricionista";
 
-export const OPTIONAL_TABS: MainTab[] = ["macros", "comidas", "actividad", "gastos"];
-export const DEFAULT_ENABLED_TABS: MainTab[] = ["inicio", "comidas", "macros", "actividad", "gastos"];
+export const OPTIONAL_TABS: MainTab[] = ["alacena", "macros", "comidas", "actividad", "gastos"];
+export const DEFAULT_ENABLED_TABS: MainTab[] = ["inicio", "alacena", "comidas", "macros", "actividad", "gastos"];
 
 export type ThemeMode = "claro" | "oscuro" | "neon" | "olimpo";
 
@@ -724,20 +724,11 @@ export const INICIO_BLOCK_LABELS: Record<InicioBlockId, string> = {
  * unificadas en una sola tira continua a pedido del usuario, para no tener
  * que ir y volver entre las dos. Todos los bloques conviven en un mismo
  * orden ahora. */
-export type ComidasBlockId = "hogar" | "alacena" | "sugerencias" | "comunes" | "plan-semana" | "planificador";
-// "comunes" (Comidas más comunes) sigue existiendo -- la memoria atrás
-// (useMealMemory) sigue guardando y alimentando sugerencias en otros
-// lados -- pero se sacó del orden por default a pedido del usuario: la
-// tarjeta en sí todavía no muestra nada realmente útil ("lo más común es
-// esto, bueno, nada"), así que por ahora queda oculta para todos hasta
-// que se le sume algo de verdad (ej. calificar si esas comidas son
-// buenas o no). Se puede reactivar agregándola de nuevo acá.
-export const DEFAULT_COMIDAS_ORDER: ComidasBlockId[] = ["hogar", "alacena", "sugerencias", "plan-semana", "planificador"];
+// "Comidas" (planificación: qué voy a comer) quedó separada de "Alacena"
+// (stock: qué tengo) -- antes convivían en una sola solapa.
+export type ComidasBlockId = "plan-semana" | "planificador";
+export const DEFAULT_COMIDAS_ORDER: ComidasBlockId[] = ["plan-semana", "planificador"];
 export const COMIDAS_BLOCK_LABELS: Record<ComidasBlockId, string> = {
-  hogar: "Grupo compartido",
-  alacena: "Alacena",
-  sugerencias: "Sugerencias de recetas",
-  comunes: "Comidas más comunes",
   // Solo lectura -- lo planificado (propio o del Nutricionista) para la
   // semana que estás mirando con las flechas de arriba, sea cual sea
   // ("planificador" en cambio siempre edita/importa la semana que viene).
@@ -746,6 +737,22 @@ export const COMIDAS_BLOCK_LABELS: Record<ComidasBlockId, string> = {
   // el botón de Alacena -- unificada ahí adentro, como la opción "Con
   // ticket" al agregar productos.
   planificador: "Planificador semanal",
+};
+
+export type AlacenaBlockId = "hogar" | "alacena" | "sugerencias" | "comunes";
+// "comunes" (Comidas más comunes) sigue existiendo -- la memoria atrás
+// (useMealMemory) sigue guardando y alimentando sugerencias en otros
+// lados -- pero se sacó del orden por default a pedido del usuario: la
+// tarjeta en sí todavía no muestra nada realmente útil ("lo más común es
+// esto, bueno, nada"), así que por ahora queda oculta para todos hasta
+// que se le sume algo de verdad (ej. calificar si esas comidas son
+// buenas o no). Se puede reactivar agregándola de nuevo acá.
+export const DEFAULT_ALACENA_ORDER: AlacenaBlockId[] = ["hogar", "alacena", "sugerencias"];
+export const ALACENA_BLOCK_LABELS: Record<AlacenaBlockId, string> = {
+  hogar: "Grupo compartido",
+  alacena: "Alacena",
+  sugerencias: "Sugerencias de recetas",
+  comunes: "Comidas más comunes",
 };
 
 /** Un renglón de lo que se compró de verdad (marca, precio) -- separado del
@@ -851,10 +858,12 @@ export interface Settings {
   fontSize?: FontSize; // chico / mediano / grande, elegido en el onboarding o desde Preferencias
   inicioOrder?: InicioBlockId[]; // orden de los bloques de Inicio, elegido arrastrándolos
   comidasOrder?: ComidasBlockId[]; // ídem, solapa Comidas
+  alacenaOrder?: AlacenaBlockId[]; // ídem, solapa Alacena
   macrosOrder?: MacrosBlockId[]; // ídem, solapa Macros
   actividadOrder?: ActividadBlockId[]; // ídem, solapa Entrenamientos
   inicioHidden?: InicioBlockId[]; // bloques de Inicio apagados con el foquito — se pueden reactivar en Preferencias > Secciones
   comidasHidden?: ComidasBlockId[]; // ídem, solapa Comidas
+  alacenaHidden?: AlacenaBlockId[]; // ídem, solapa Alacena
   macrosHidden?: MacrosBlockId[]; // ídem, solapa Macros
   actividadHidden?: ActividadBlockId[]; // ídem, solapa Entrenamientos
   aiReviewLockedUntil?: number; // timestamp (ms) hasta el que "Revisar con IA" de la Alacena queda bloqueado, para no recargar la API de IA

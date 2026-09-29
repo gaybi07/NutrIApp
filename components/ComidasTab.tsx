@@ -3,27 +3,16 @@
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import {
-  DayEntry,
-  InventoryCategory,
-  InventoryItem,
-  InventoryNutrition,
-  PurchaseRecord,
   MealKey,
   MEAL_LABELS,
   WeekPlan,
-  GoalMode,
   ComidasBlockId,
   DEFAULT_COMIDAS_ORDER,
   resolveOrder,
 } from "@/lib/types";
-import { ProductMemoryApi } from "@/lib/useProductMemory";
 import { HouseholdInfo } from "@/lib/useHousehold";
 import { useSectionOrder } from "@/lib/useSectionOrder";
 import { SortableSection } from "@/components/SortableSection";
-import { RecipePlanner } from "@/components/RecipePlanner";
-import { CommonMealsCard } from "@/components/CommonMealsCard";
-import { AlacenaCard } from "@/components/AlacenaCard";
-import { HouseholdCard } from "@/components/HouseholdCard";
 import { countPlannedMeals, hasWeekActivity, SKIP_MEAL } from "@/components/WeekPlanner";
 
 const MEAL_KEYS: MealKey[] = ["des", "alm", "mer", "cen", "col"];
@@ -77,82 +66,35 @@ function WeekPlanSummaryCard({ weekDates, weekPlan }: { weekDates: string[]; wee
 }
 
 export function ComidasTab({
-  items,
-  consumeAmounts,
-  onUseRecipe,
-  dailyGoal,
-  consumedKcal,
   weekPlan,
   weekDates,
   onOpenPlanificador,
-  addStructuredItems,
-  updateInventoryItem,
-  applyInventoryReview,
-  productMemory,
-  replaceItems,
   order,
   onReorder,
   hidden,
   onHide,
-  aiReviewLockedUntil,
-  onAiReviewLockedUntilChange,
-  todayEntry,
-  onUpsertDay,
   household,
-  householdLoaded,
-  householdStatus,
-  householdBusy,
-  createHousehold,
-  joinHousehold,
-  leaveHousehold,
-  getInviteCode,
-  addPurchases,
-  goalMode,
   hasNutricionistaLink,
 }: {
-  items: InventoryItem[];
-  consumeAmounts: (amounts: Array<{ id: string; quantity: number }>) => void;
-  onUseRecipe: (recipe: { kcal: number; protein: number }, meal: MealKey) => void;
-  dailyGoal: number;
-  consumedKcal: number;
-  goalMode?: GoalMode;
   weekPlan: WeekPlan;
   /** Las 7 fechas de la semana que se está mirando con las flechas de
    * arriba (◂ Semana anterior / Semana siguiente ▸) -- distinta de "la
    * semana que viene" que siempre usa el Planificador para armar/importar. */
   weekDates: string[];
   onOpenPlanificador: () => void;
-  addStructuredItems: (entries: Array<{ name: string; quantity: number; unit: InventoryItem["unit"]; category?: InventoryCategory; nutritionPer100g?: InventoryNutrition }>) => void;
-  updateInventoryItem: (id: string, patch: Partial<InventoryItem>) => void;
-  applyInventoryReview: (corrections: Array<{ id: string; name: string; quantity: number; unit: InventoryItem["unit"]; category?: InventoryCategory; nutritionPer100g?: InventoryNutrition }>) => void;
-  productMemory: ProductMemoryApi;
-  replaceItems: (items: InventoryItem[]) => void;
   order?: ComidasBlockId[];
   onReorder: (next: ComidasBlockId[]) => void;
   hidden?: ComidasBlockId[];
   onHide: (id: ComidasBlockId) => void;
-  aiReviewLockedUntil?: number;
-  onAiReviewLockedUntilChange: (until: number) => void;
-  todayEntry: DayEntry;
-  onUpsertDay: (entry: DayEntry) => void;
+  /** Solo para el aviso de "nadie del grupo planificó todavía". */
   household: HouseholdInfo | null;
-  householdLoaded: boolean;
-  householdStatus: string;
-  householdBusy: boolean;
-  createHousehold: (name: string, importItems: InventoryItem[]) => Promise<void>;
-  joinHousehold: (code: string) => Promise<void>;
-  leaveHousehold: () => Promise<void>;
-  getInviteCode: () => Promise<string | null>;
-  addPurchases: (entries: Array<Omit<PurchaseRecord, "id">>) => void;
   /** Cambia el título/subtítulo de la tarjeta del Planificador -- con
    * Nutricionista vinculado, adentro ya no se "programa" nada a mano (ver
    * WeekPlanner), se ve directo lo que él/ella planificó. */
   hasNutricionistaLink?: boolean;
 }) {
   const blockOrder = resolveOrder(order, DEFAULT_COMIDAS_ORDER);
-  // "alacena" nunca se apaga -- mismo criterio que "hoy" en Inicio: es el
-  // bloque central de la solapa, siempre visible y siempre abierto.
-  const visibleOrder = blockOrder.filter((id) => id === "alacena" || !(hidden || []).includes(id));
+  const visibleOrder = blockOrder.filter((id) => !(hidden || []).includes(id));
 
   const drag = useSectionOrder(blockOrder, onReorder);
 
@@ -160,55 +102,9 @@ export function ComidasTab({
     <div>
       <DndContext sensors={drag.sensors} collisionDetection={drag.collisionDetection} onDragStart={drag.handleDragStart} onDragEnd={drag.handleDragEnd} onDragCancel={drag.handleDragCancel}>
         <SortableContext items={visibleOrder} strategy={verticalListSortingStrategy}>
-          {/* Igual que Inicio: en PC los bloques se acomodan solos en columnas
-              tipo mosaico en vez de una sola tira vertical -- el arrastre no
-              tiene sentido ahí (el orden real lo decide el navegador
-              acomodando alturas), por eso cada SortableSection de acá abajo
-              pasa dragDisabledOnDesktop. */}
           <div className="min-w-0 space-y-4 lg:columns-2 lg:gap-4 lg:space-y-0 xl:columns-3">
           {visibleOrder.map((blockId) => (
-            <SortableSection key={blockId} id={blockId} onHide={blockId === "alacena" ? undefined : () => onHide(blockId)} dragDisabledOnDesktop>
-              {blockId === "hogar" && (
-                <HouseholdCard
-                  household={household}
-                  loaded={householdLoaded}
-                  status={householdStatus}
-                  busy={householdBusy}
-                  localItems={items}
-                  create={createHousehold}
-                  join={joinHousehold}
-                  leave={leaveHousehold}
-                  getInviteCode={getInviteCode}
-                />
-              )}
-              {blockId === "alacena" && (
-                <AlacenaCard
-                  items={items}
-                  replaceItems={replaceItems}
-                  updateItem={updateInventoryItem}
-                  applyReview={applyInventoryReview}
-                  productMemory={productMemory}
-                  addStructuredItems={addStructuredItems}
-                  consumeAmounts={consumeAmounts}
-                  aiReviewLockedUntil={aiReviewLockedUntil}
-                  onAiReviewLockedUntilChange={onAiReviewLockedUntilChange}
-                  todayEntry={todayEntry}
-                  onUpsertDay={onUpsertDay}
-                  addPurchases={addPurchases}
-                  householdName={household?.name}
-                />
-              )}
-              {blockId === "sugerencias" && (
-                <RecipePlanner
-                  items={items}
-                  consumeAmounts={consumeAmounts}
-                  onUseRecipe={onUseRecipe}
-                  dailyGoal={dailyGoal}
-                  consumedKcal={consumedKcal}
-                  goalMode={goalMode}
-                />
-              )}
-              {blockId === "comunes" && <CommonMealsCard />}
+            <SortableSection key={blockId} id={blockId} onHide={() => onHide(blockId)} dragDisabledOnDesktop>
               {blockId === "plan-semana" && <WeekPlanSummaryCard weekDates={weekDates} weekPlan={weekPlan} />}
               {blockId === "planificador" && (() => {
                 const plannedCount = countPlannedMeals(weekPlan);

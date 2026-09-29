@@ -13,6 +13,8 @@ import {
   INICIO_BLOCK_LABELS,
   DEFAULT_COMIDAS_ORDER,
   COMIDAS_BLOCK_LABELS,
+  DEFAULT_ALACENA_ORDER,
+  ALACENA_BLOCK_LABELS,
   DEFAULT_MACROS_ORDER,
   MACROS_BLOCK_LABELS,
   DEFAULT_ACTIVIDAD_ORDER,
@@ -31,6 +33,7 @@ const THEME_OPTIONS: { value: ThemeMode; label: string; description: string }[] 
 
 const TAB_LABELS: Record<MainTab, string> = {
   inicio: "Inicio",
+  alacena: "Alacena",
   comidas: "Comidas",
   macros: "Macros",
   actividad: "Entrenamientos",
@@ -252,6 +255,9 @@ export function SectionsSettings({
           INICIO_BLOCK_LABELS,
           settings.inicioHidden,
           (id) => onSave((prev) => ({ ...prev, inicioHidden: toggleHidden(prev.inicioHidden, id) }))
+        )}
+        {renderGroup("Alacena", DEFAULT_ALACENA_ORDER, ALACENA_BLOCK_LABELS, settings.alacenaHidden, (id) =>
+          onSave((prev) => ({ ...prev, alacenaHidden: toggleHidden(prev.alacenaHidden, id) }))
         )}
         {renderGroup("Comidas", DEFAULT_COMIDAS_ORDER, COMIDAS_BLOCK_LABELS, settings.comidasHidden, (id) =>
           onSave((prev) => ({ ...prev, comidasHidden: toggleHidden(prev.comidasHidden, id) }))

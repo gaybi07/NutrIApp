@@ -71,7 +71,9 @@ export function AlacenaCard({
    * queda claro de qué alacena se trata cuando hay más de una persona. */
   householdName?: string;
 }) {
-  const [showCocina, setShowCocina] = useState(false);
+  // Arranca abierta -- es la vista de entrada de la solapa Alacena ahora,
+  // no un extra a pedir aparte.
+  const [showCocina, setShowCocina] = useState(true);
   // La lista con buscador/filtros queda oculta por default -- mezclada con
   // los botones de arriba se sentía como "demasiados datos a la vista" sin
   // haber pedido verla. Se despliega solo al tocar "Ver lista".

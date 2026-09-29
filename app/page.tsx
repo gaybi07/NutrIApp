@@ -19,6 +19,7 @@ import { GoalCalculator } from "@/components/GoalCalculator";
 import { AiEntryForm } from "@/components/AiEntryForm";
 import { WeekPlanner } from "@/components/WeekPlanner";
 import { ComidasTab } from "@/components/ComidasTab";
+import { AlacenaTab } from "@/components/AlacenaTab";
 import { WeeklyWeight } from "@/components/WeeklyWeight";
 import { AuthPanel } from "@/components/AuthPanel";
 import { DataImport } from "@/components/DataImport";
@@ -664,27 +665,23 @@ export default function Home() {
       </div>
       )}
 
-      {activeTab === "comidas" && (
-        <ComidasTab
+      {activeTab === "alacena" && (
+        <AlacenaTab
           items={inventory}
           consumeAmounts={consumeAmounts}
           onUseRecipe={useRecipeAsMeal}
           goalMode={settings.calculatorProfile?.modo}
           dailyGoal={settings.goal}
           consumedKcal={todayKcal}
-          weekPlan={weekPlan}
-          weekDates={weekDates}
-          onOpenPlanificador={() => setPanel("planificador")}
-          hasNutricionistaLink={hasNutricionistaLink}
           addStructuredItems={addStructuredItems}
           updateInventoryItem={updateInventoryItem}
           applyInventoryReview={applyInventoryReview}
           productMemory={productMemory}
           replaceItems={replaceInventory}
-          order={settings.comidasOrder}
-          onReorder={(comidasOrder) => saveSettings({ ...settings, comidasOrder })}
-          hidden={settings.comidasHidden}
-          onHide={(id) => saveSettings((prev) => ({ ...prev, comidasHidden: [...(prev.comidasHidden || []), id] }))}
+          order={settings.alacenaOrder}
+          onReorder={(alacenaOrder) => saveSettings({ ...settings, alacenaOrder })}
+          hidden={settings.alacenaHidden}
+          onHide={(id) => saveSettings((prev) => ({ ...prev, alacenaHidden: [...(prev.alacenaHidden || []), id] }))}
           aiReviewLockedUntil={settings.aiReviewLockedUntil}
           onAiReviewLockedUntilChange={(aiReviewLockedUntil) => saveSettings({ ...settings, aiReviewLockedUntil })}
           todayEntry={todayEntry}
@@ -698,6 +695,20 @@ export default function Home() {
           leaveHousehold={household.leave}
           getInviteCode={household.getInviteCode}
           addPurchases={addPurchases}
+        />
+      )}
+
+      {activeTab === "comidas" && (
+        <ComidasTab
+          weekPlan={weekPlan}
+          weekDates={weekDates}
+          onOpenPlanificador={() => setPanel("planificador")}
+          hasNutricionistaLink={hasNutricionistaLink}
+          order={settings.comidasOrder}
+          onReorder={(comidasOrder) => saveSettings({ ...settings, comidasOrder })}
+          hidden={settings.comidasHidden}
+          onHide={(id) => saveSettings((prev) => ({ ...prev, comidasHidden: [...(prev.comidasHidden || []), id] }))}
+          household={household.household}
         />
       )}
 
