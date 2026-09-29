@@ -6,6 +6,7 @@ import { useTrainerApplication, useTrainerAdmin } from "@/lib/useTrainerApplicat
 import { useTrainerLink, useTrainerStudents } from "@/lib/useTrainerLink";
 import { TrainerLinkRequest, TrainerStatus, TrainerStudent } from "@/lib/types";
 import { NutritionPlanBuilder } from "@/components/NutritionPlanBuilder";
+import { PatientDetailScreen } from "@/components/PatientDetailScreen";
 import { AdminRow } from "@/components/TrainerPanel";
 
 const STATUS_STYLE: Record<TrainerStatus, { label: string; color: string }> = {
@@ -142,6 +143,7 @@ function NutricionistaPatientsAndPlan({
   const studentsHook = useTrainerStudents(authenticated, true, "nutricion");
   const [subtab, setSubtab] = useState<NutriSubtab>("pacientes");
   const [planFor, setPlanFor] = useState<TrainerStudent | null>(null);
+  const [viewingPatient, setViewingPatient] = useState<TrainerStudent | null>(null);
 
   const copyInviteCode = async () => {
     if (!studentsHook.inviteCode) return;
@@ -247,8 +249,11 @@ function NutricionistaPatientsAndPlan({
             <div className="space-y-1.5">
               {studentsHook.students.map((s) => (
                 <div key={s.studentId} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-bg/40 px-2.5 py-2">
-                  <span className="font-mono text-[11px] text-text">{s.studentEmail}</span>
-                  <div className="flex shrink-0 gap-2">
+                  <span className="min-w-0 truncate font-mono text-[11px] text-text">{s.studentEmail}</span>
+                  <div className="flex shrink-0 flex-wrap justify-end gap-x-2 gap-y-1">
+                    <button type="button" onClick={() => setViewingPatient(s)} className="font-mono text-[10px] text-gold">
+                      Ver paciente
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
@@ -268,6 +273,14 @@ function NutricionistaPatientsAndPlan({
             </div>
           )}
         </div>
+      )}
+
+      {viewingPatient && (
+        <PatientDetailScreen
+          studentId={viewingPatient.studentId}
+          studentEmail={viewingPatient.studentEmail}
+          onClose={() => setViewingPatient(null)}
+        />
       )}
 
       {subtab === "plan" &&

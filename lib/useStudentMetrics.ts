@@ -15,13 +15,14 @@ export function useStudentMetrics() {
   const [metricsByStudent, setMetricsByStudent] = useState<Record<string, StudentMetrics | null>>({});
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
-  const load = useCallback(async (studentId: string) => {
+  const load = useCallback(async (studentId: string, disciplina: "fuerza" | "nutricion" = "fuerza") => {
     if (!supabase) return;
     setLoadingId(studentId);
     const weekStart = fmtDate(isoMonday(fmtDate(new Date())));
     const { data, error } = await supabase.rpc("get_student_metrics", {
       p_student_id: studentId,
       p_week_start: weekStart,
+      p_disciplina: disciplina,
     });
     setMetricsByStudent((prev) => ({ ...prev, [studentId]: error ? null : (data as StudentMetrics) }));
     setLoadingId(null);

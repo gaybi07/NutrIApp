@@ -16,12 +16,12 @@ export function useStudentDetail() {
   const [weightHistory, setWeightHistory] = useState<StudentWeightPoint[] | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const load = useCallback(async (studentId: string, weekStart: string) => {
+  const load = useCallback(async (studentId: string, weekStart: string, disciplina: "fuerza" | "nutricion" = "fuerza") => {
     if (!supabase) return;
     setLoading(true);
     const [{ data: weekData, error: weekError }, { data: weightData, error: weightError }] = await Promise.all([
-      supabase.rpc("get_student_week_detail", { p_student_id: studentId, p_week_start: weekStart }),
-      supabase.rpc("get_student_weight_history", { p_student_id: studentId, p_weeks: 8 }),
+      supabase.rpc("get_student_week_detail", { p_student_id: studentId, p_week_start: weekStart, p_disciplina: disciplina }),
+      supabase.rpc("get_student_weight_history", { p_student_id: studentId, p_weeks: 8, p_disciplina: disciplina }),
     ]);
     setWeek(weekError ? null : (weekData as StudentDayDetail[]));
     setWeightHistory(weightError ? null : (weightData as StudentWeightPoint[]));

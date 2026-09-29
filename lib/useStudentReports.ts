@@ -52,10 +52,10 @@ export function useStudentReports(studentId: string) {
   }, [refetch]);
 
   const generate = useCallback(
-    async (periodStart: string) => {
+    async (periodStart: string, disciplina: "fuerza" | "nutricion" = "fuerza") => {
       if (!supabase) return;
       setBusy(true);
-      await supabase.rpc("generate_student_report", { p_student_id: studentId, p_period_start: periodStart });
+      await supabase.rpc("generate_student_report", { p_student_id: studentId, p_period_start: periodStart, p_disciplina: disciplina });
       await refetch();
       setBusy(false);
     },
