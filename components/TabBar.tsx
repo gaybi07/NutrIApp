@@ -1,5 +1,6 @@
 "use client";
 
+import { Lock } from "lucide-react";
 import { MainTab } from "@/lib/types";
 
 export type { MainTab };
@@ -19,11 +20,14 @@ export function TabBar({
   active,
   onChange,
   enabledTabs,
+  lockedTabs,
 }: {
   active: MainTab;
   onChange: (tab: MainTab) => void;
   /** Solapas visibles además de Inicio (que siempre se muestra). Si no se pasa, se muestran todas. */
   enabledTabs?: MainTab[];
+  /** Solapas que el plan actual tiene bloqueadas: se ven con candado y al tocarlas muestran qué desbloquean. */
+  lockedTabs?: MainTab[];
 }) {
   const tabs = TABS.filter((tab) => tab.id === "inicio" || !enabledTabs || enabledTabs.includes(tab.id));
 
@@ -46,7 +50,13 @@ export function TabBar({
             active === tab.id ? "bg-gold text-bg" : "text-textMuted"
           }`}
         >
-          {tab.label}
+          {lockedTabs?.includes(tab.id) ? (
+            <span className="inline-flex items-center justify-center gap-1">
+              <Lock size={11} strokeWidth={1.8} /> {tab.label}
+            </span>
+          ) : (
+            tab.label
+          )}
         </button>
       ))}
     </div>

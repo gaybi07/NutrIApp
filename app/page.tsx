@@ -10,6 +10,7 @@ import { isoMonday, addDays, fmtDate, summarizeWeek, proteinTargetForWeight, get
 import { useMyNutritionPlan } from "@/lib/useMyNutritionPlan";
 import { GoalProgress } from "@/components/GoalProgress";
 import { TabBar, MainTab } from "@/components/TabBar";
+import { LockedTabNotice } from "@/components/LockedTabNotice";
 import { MacrosTab } from "@/components/MacrosTab";
 import { ActividadTab } from "@/components/ActividadTab";
 import { SummaryCards } from "@/components/SummaryCards";
@@ -198,7 +199,10 @@ export default function Home() {
   // prender a mano -- se resuelve solo con lo que cuenta Settings.plan.
   const clientPlan = settings.plan || "basico";
   const isBasico = clientPlan === "basico";
-  const PLAN_LOCKED_TABS: MainTab[] = ["comidas", "actividad", "gastos"];
+  // Se VEN con candado (no desaparecen) y al tocarlas muestran qué desbloquean.
+  // Comidas y Entreno quedan disponibles con lo básico -- ver PLAN_LOCKED_ACTIVIDAD_BLOCKS.
+  const PLAN_LOCKED_TABS: MainTab[] = ["alacena", "gastos"];
+  const PLAN_LOCKED_ACTIVIDAD_BLOCKS = ["planSemanaFuerza", "objetivoEntreno", "indicadoresEntreno", "volumenChart", "volumenGrupos", "rutinas"] as const;
   // "comidasSemana" (Modificar comidas de la semana) queda afuera de esta
   // lista a propósito -- es la única forma de corregir un error en algo ya
   // cargado (no es un "reporte", es edición básica), así que se mantiene
@@ -219,9 +223,10 @@ export default function Home() {
   // se puede ocultar desde Ajustes > Solapas) -- aparece sola cuando la
   // postulación está aprobada, se apaga sola si se te vence/retiran el rol,
   // igual que PLAN_LOCKED_TABS pero al revés (agrega en vez de sacar).
-  const enabledTabs = resolveOrder(settings.enabledTabs, DEFAULT_ENABLED_TABS).filter(
-    (tab) => tab === "inicio" || !isBasico || !PLAN_LOCKED_TABS.includes(tab)
-  );
+  const enabledTabs = resolveOrder(settings.enabledTabs, DEFAULT_ENABLED_TABS);
+  const lockedTabs = isBasico ? PLAN_LOCKED_TABS : [];
+  const tabLocked = lockedTabs.includes(activeTab);
+  const actividadHidden = isBasico ? [...(settings.actividadHidden || []), ...PLAN_LOCKED_ACTIVIDAD_BLOCKS] : settings.actividadHidden;
   if (isApprovedTrainer) enabledTabs.push("entrenador");
   if (isApprovedNutricionista) enabledTabs.push("nutricionista");
   useEffect(() => {
@@ -474,7 +479,7 @@ export default function Home() {
             </div>
           }
         />
-        <TabBar active={activeTab} onChange={setActiveTab} enabledTabs={enabledTabs} />
+        <TabBar active={activeTab} onChange={setActiveTab} enabledTabs={enabledTabs} lockedTabs={lockedTabs} />
       </div>
 
       {activeTab === "macros" && (
@@ -515,7 +520,7 @@ export default function Home() {
           onSaveSchedule={(trainingSchedule) => saveSettings({ ...settings, trainingSchedule })}
           order={settings.actividadOrder}
           onReorder={(actividadOrder) => saveSettings({ ...settings, actividadOrder })}
-          hidden={settings.actividadHidden}
+          hidden={actividadHidden}
           onHide={(id) => {
             if (id === "resumen") return; // "Hoy" nunca se apaga -- ver comentario en ActividadTab.tsx
             saveSettings((prev) => ({ ...prev, actividadHidden: [...(prev.actividadHidden || []), id] }));
@@ -544,7 +549,21 @@ export default function Home() {
         />
       )}
 
-      {activeTab === "gastos" && <PurchaseHistoryCard purchases={purchases} removePurchase={removePurchase} />}
+      {tabLocked && activeTab === "alacena" && (
+        <LockedTabNotice
+          title="Alacena"
+          unlocks={["Stock de tu cocina, con grupo compartido", "Descuento automático al cargar una comida", "Sugerencias de recetas con lo que tenés"]}
+          onUpgrade={() => setPanel("planes")}
+        />
+      )}
+      {tabLocked && activeTab === "gastos" && (
+        <LockedTabNotice
+          title="Gastos"
+          unlocks={["Historial de compras con precio y marca", "Lo que gastás por semana y por producto"]}
+          onUpgrade={() => setPanel("planes")}
+        />
+      )}
+      {activeTab === "gastos" && !tabLocked && <PurchaseHistoryCard purchases={purchases} removePurchase={removePurchase} />}
 
       {activeTab === "entrenador" && (
         <div className="mx-auto max-w-lg">
@@ -724,7 +743,7 @@ export default function Home() {
       </div>
       )}
 
-      {activeTab === "alacena" && (
+      {activeTab === "alacena" && !tabLocked && (
         <AlacenaTab
           items={inventory}
           consumeAmounts={consumeAmounts}
