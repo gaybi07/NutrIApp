@@ -188,13 +188,12 @@ export default function Home() {
     if (activeTab !== "inicio" && !enabledTabs.includes(activeTab)) setActiveTab("inicio");
   }, [activeTab, enabledTabs]);
 
-  const monday = useMemo(() => {
-    const base =
-      days.length > 0
-        ? isoMonday(days.reduce((a, b) => (a.fecha > b.fecha ? a : b)).fecha)
-        : isoMonday(fmtDate(new Date()));
-    return addDays(base, weekOffset * 7);
-  }, [days, weekOffset]);
+  // weekOffset 0 siempre es la semana calendario REAL de hoy -- antes
+  // arrancaba de la semana del último día cargado en `days`, así que si
+  // todavía no habías cargado nada hoy (ej. estabas revisando la
+  // planificación antes de comer), "semana actual" te mostraba una semana
+  // vieja en vez de la de hoy.
+  const monday = useMemo(() => addDays(isoMonday(fmtDate(new Date())), weekOffset * 7), [weekOffset]);
 
   // "hoy" nunca se puede apagar -- es el bloque más importante de Inicio y ya
   // pasó que alguien lo apagó sin querer y no encontraba cómo volver a
