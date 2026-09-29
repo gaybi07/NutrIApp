@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { InventoryItem, MealKey, MealOption, MEAL_LABELS, WeekPlan, WEEKDAYS } from "@/lib/types";
 import { isoMonday, addDays, fmtDate } from "@/lib/calculations";
 import { Recipe, RecipeIngredient, RECIPES } from "@/lib/recipes";
@@ -276,6 +276,20 @@ export function WeekPlanner({
     setTimeout(() => setImportStatus(""), 6000);
   };
 
+  // Con Nutricionista vinculado, su plan se carga solo -- ya no hace falta
+  // tocar "Importar" (planOptionsByDate solo tiene datos cuando hay Nutri
+  // vinculado, ver el guard de useMyNutritionPlan/hasLink, así que esto
+  // nunca corre para alguien sin vínculo). Se guarda con qué semana ya se
+  // auto-importó para no repetir el guardado en cada re-render.
+  const autoImportedForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!hasPlanToImport) return;
+    if (autoImportedForRef.current === nextWeekDates[0]) return;
+    autoImportedForRef.current = nextWeekDates[0];
+    importNutritionPlan();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasPlanToImport, nextWeekDates]);
+
   const assign = (fecha: string, meal: MealKey, recipeTitle: string | null) => {
     const next: WeekPlan = { ...weekPlan };
     const dayPlan = { ...(next[fecha] || {}) };
@@ -414,15 +428,9 @@ export function WeekPlanner({
       </div>
 
       {hasPlanToImport && (
-        <div className="mb-3">
-          <button
-            type="button"
-            onClick={importNutritionPlan}
-            className="w-full rounded-lg border border-dashed border-sage/50 bg-sage/5 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-sage"
-          >
-            <span className="inline-flex items-center gap-1"><Salad size={16} strokeWidth={1.8} /> Importar plan nutricional a la semana</span>
-          </button>
-          {importStatus && <div className="mt-1.5 text-center text-[11px] text-textMuted">{importStatus}</div>}
+        <div className="mb-3 rounded-lg border border-dashed border-sage/50 bg-sage/5 px-3 py-2 text-center font-mono text-[10px] uppercase tracking-wide text-sage">
+          <span className="inline-flex items-center gap-1"><Salad size={16} strokeWidth={1.8} /> Tu Nutricionista planificó esta semana ✓</span>
+          {importStatus && <div className="mt-1 normal-case tracking-normal text-textMuted">{importStatus}</div>}
         </div>
       )}
 
@@ -534,32 +542,34 @@ export function WeekPlanner({
             <div className="font-display text-lg text-text">
               {MEAL_LABELS[pickerFor.meal]} · {DOW_FULL[new Date(`${pickerFor.fecha}T00:00:00`).getDay()]}
             </div>
-            <div className="mt-3">
-              <label className="mb-1 block">Agregar algo distinto</label>
-              <div className="flex gap-1.5">
-                <input
-                  type="text"
-                  value={customText}
-                  onChange={(event) => setCustomText(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" && customText.trim()) assign(pickerFor.fecha, pickerFor.meal, customText.trim());
-                  }}
-                  placeholder="Ej: Tarta de jamón y queso"
-                  className="flex-1"
-                />
-                <button
-                  type="button"
-                  disabled={!customText.trim()}
-                  onClick={() => assign(pickerFor.fecha, pickerFor.meal, customText.trim())}
-                  className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg disabled:opacity-40"
-                >
-                  + Agregar
-                </button>
+            {!hasNutricionistaLink && (
+              <div className="mt-3">
+                <label className="mb-1 block">Agregar algo distinto</label>
+                <div className="flex gap-1.5">
+                  <input
+                    type="text"
+                    value={customText}
+                    onChange={(event) => setCustomText(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && customText.trim()) assign(pickerFor.fecha, pickerFor.meal, customText.trim());
+                    }}
+                    placeholder="Ej: Tarta de jamón y queso"
+                    className="flex-1"
+                  />
+                  <button
+                    type="button"
+                    disabled={!customText.trim()}
+                    onClick={() => assign(pickerFor.fecha, pickerFor.meal, customText.trim())}
+                    className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg disabled:opacity-40"
+                  >
+                    + Agregar
+                  </button>
+                </div>
+                <div className="mt-1 text-[10px] text-textMuted">
+                  No suma a la lista de compras (no sabemos los ingredientes de algo escrito a mano) — para eso, elegí una receta del catálogo de abajo.
+                </div>
               </div>
-              <div className="mt-1 text-[10px] text-textMuted">
-                No suma a la lista de compras (no sabemos los ingredientes de algo escrito a mano) — para eso, elegí una receta del catálogo de abajo.
-              </div>
-            </div>
+            )}
 
             <div className="mt-3 space-y-2">
               {(() => {
@@ -627,53 +637,63 @@ export function WeekPlanner({
                 </div>
               )}
 
-              {personalSuggestions.length === 0 && catalogSuggestions.length === 0 && planSuggestions.length === 0 && (
-                <div className="rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">
-                  Todavía no hay recetas ni comidas guardadas para {MEAL_LABELS[pickerFor.meal].toLowerCase()}.
-                </div>
+              {hasNutricionistaLink
+                ? planSuggestions.length === 0 && (
+                    <div className="rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">
+                      Tu Nutricionista no planificó {MEAL_LABELS[pickerFor.meal].toLowerCase()} para este día.
+                    </div>
+                  )
+                : personalSuggestions.length === 0 && catalogSuggestions.length === 0 && planSuggestions.length === 0 && (
+                    <div className="rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">
+                      Todavía no hay recetas ni comidas guardadas para {MEAL_LABELS[pickerFor.meal].toLowerCase()}.
+                    </div>
+                  )}
+
+              {!hasNutricionistaLink && (
+                <>
+                  {personalSuggestions.map((entry) => (
+                    <button
+                      key={`mem-${entry.text}`}
+                      type="button"
+                      onClick={() => assign(pickerFor.fecha, pickerFor.meal, entry.text)}
+                      className="w-full rounded-lg border border-sage/40 bg-sage/10 p-2.5 text-left"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-sm font-semibold">{entry.text}</div>
+                        <div className="font-mono text-[9px] uppercase tracking-wide text-sage">tu memoria</div>
+                      </div>
+                      <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">
+                        {entry.kcal} kcal · {entry.protein}g prot
+                      </div>
+                    </button>
+                  ))}
+
+                  {catalogSuggestions.map((recipe) => {
+                    const portion = recommendedPortion(recipe, pickerFor.meal, dailyGoal, proteinTargetG);
+                    return (
+                      <button
+                        key={recipe.title}
+                        type="button"
+                        onClick={() => assign(pickerFor.fecha, pickerFor.meal, recipe.title)}
+                        className="w-full rounded-lg border border-border bg-bg/40 p-2.5 text-left"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-sm font-semibold">{recipe.title}</div>
+                          <div className="font-mono text-[9px] uppercase tracking-wide text-gold">{recipe.time}</div>
+                        </div>
+                        <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">
+                          {recipe.kcal} kcal · {recipe.protein}g prot (receta completa)
+                        </div>
+                        <div className="mt-1 rounded-md border border-gold/30 bg-gold/5 px-1.5 py-1 text-[10px] text-gold">
+                          Porción para vos: {portionText(portion.ingredients)}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </>
               )}
-
-              {personalSuggestions.map((entry) => (
-                <button
-                  key={`mem-${entry.text}`}
-                  type="button"
-                  onClick={() => assign(pickerFor.fecha, pickerFor.meal, entry.text)}
-                  className="w-full rounded-lg border border-sage/40 bg-sage/10 p-2.5 text-left"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-sm font-semibold">{entry.text}</div>
-                    <div className="font-mono text-[9px] uppercase tracking-wide text-sage">tu memoria</div>
-                  </div>
-                  <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">
-                    {entry.kcal} kcal · {entry.protein}g prot
-                  </div>
-                </button>
-              ))}
-
-              {catalogSuggestions.map((recipe) => {
-                const portion = recommendedPortion(recipe, pickerFor.meal, dailyGoal, proteinTargetG);
-                return (
-                  <button
-                    key={recipe.title}
-                    type="button"
-                    onClick={() => assign(pickerFor.fecha, pickerFor.meal, recipe.title)}
-                    className="w-full rounded-lg border border-border bg-bg/40 p-2.5 text-left"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-sm font-semibold">{recipe.title}</div>
-                      <div className="font-mono text-[9px] uppercase tracking-wide text-gold">{recipe.time}</div>
-                    </div>
-                    <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">
-                      {recipe.kcal} kcal · {recipe.protein}g prot (receta completa)
-                    </div>
-                    <div className="mt-1 rounded-md border border-gold/30 bg-gold/5 px-1.5 py-1 text-[10px] text-gold">
-                      Porción para vos: {portionText(portion.ingredients)}
-                    </div>
-                  </button>
-                );
-              })}
             </div>
-            {(personalSuggestions.length > 0 || catalogSuggestions.length > 0) && (
+            {!hasNutricionistaLink && (personalSuggestions.length > 0 || catalogSuggestions.length > 0) && (
               <div className="mt-2 text-[10px] text-textMuted">
                 Las recetas del catálogo suman a la lista de compras; lo de tu memoria no (no sabemos los ingredientes exactos).
               </div>
