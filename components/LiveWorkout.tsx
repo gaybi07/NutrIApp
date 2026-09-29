@@ -50,7 +50,12 @@ function loadPendingSync(): PendingSync | null {
 }
 
 interface DraftSet {
-  repeticiones: number;
+  // Sin valor hasta que la persona escribe algo -- arrancaba pre-cargado
+  // con lo planificado/lo de la serie anterior, lo que hacía casi
+  // imposible de borrar para escribir encima (el campo nunca podía quedar
+  // vacío ni un instante). Ahora se muestra en gris como placeholder (ver
+  // el render de este input) y esto queda sin definir hasta que se escribe.
+  repeticiones?: number;
   peso?: number;
   intensidad?: TrainingIntensity;
 }
@@ -115,8 +120,8 @@ function loadStoredSession(fecha: string): LiveSession | null {
   }
 }
 
-function defaultSet(repeticiones: number, peso?: number): DraftSet {
-  return { repeticiones, peso, intensidad: undefined };
+function defaultSet(peso?: number): DraftSet {
+  return { peso, intensidad: undefined };
 }
 
 export function formatElapsed(ms: number): string {
@@ -255,7 +260,7 @@ export function LiveWorkout({
         plannedRepeticiones: e.repeticiones,
         plannedPeso: e.peso,
         suggestionNote: suggestion?.nota,
-        sets: Array.from({ length: e.series }, () => defaultSet(e.repeticiones, peso)),
+        sets: Array.from({ length: e.series }, () => defaultSet(peso)),
         grupoMuscular: e.grupoMuscular,
       };
     });
@@ -300,7 +305,7 @@ export function LiveWorkout({
         plannedRepeticiones: e.repeticiones,
         plannedPeso: e.peso,
         suggestionNote: suggestion?.nota,
-        sets: Array.from({ length: e.series }, () => defaultSet(e.repeticiones, peso)),
+        sets: Array.from({ length: e.series }, () => defaultSet(peso)),
         grupoMuscular: e.grupoMuscular,
       };
     });
@@ -334,7 +339,7 @@ export function LiveWorkout({
                 nombre,
                 plannedSeries: 4,
                 plannedRepeticiones: 10,
-                sets: Array.from({ length: 4 }, () => defaultSet(10)),
+                sets: Array.from({ length: 4 }, () => defaultSet()),
                 grupoMuscular,
                 // Si la sesión es de una rutina asignada, esto nunca estuvo
                 // en el plan -- se marca para poder quitarlo/editarlo libre
@@ -358,7 +363,7 @@ export function LiveWorkout({
       const exercises = prev.exercises.map((ex, i) => {
         if (i !== exIndex) return ex;
         const last = ex.sets[ex.sets.length - 1];
-        return { ...ex, sets: [...ex.sets, defaultSet(last?.repeticiones ?? ex.plannedRepeticiones, last?.peso ?? ex.plannedPeso)] };
+        return { ...ex, sets: [...ex.sets, defaultSet(last?.peso ?? ex.plannedPeso)] };
       });
       return { ...prev, exercises };
     });
@@ -445,7 +450,9 @@ export function LiveWorkout({
     for (const ex of session.exercises) {
       const doneSets = ex.sets.filter((s) => s.intensidad != null);
       const sets: ExerciseSetEntry[] = ex.sets.map((s) => ({
-        repeticiones: s.repeticiones,
+        // Si quedó vacío (nunca se escribió encima del placeholder), se
+        // guarda con lo planificado en vez de con "nada".
+        repeticiones: s.repeticiones ?? ex.plannedRepeticiones,
         peso: s.peso,
         intensidad: s.intensidad || "moderado",
       }));
@@ -941,12 +948,16 @@ export function LiveWorkout({
                                   type="number"
                                   min="0"
                                   max="999"
-                                  value={set.repeticiones}
+                                  value={set.repeticiones ?? ""}
+                                  placeholder={String(ex.sets[j - 1]?.repeticiones ?? ex.plannedRepeticiones)}
                                   onChange={(event) => {
-                                    // Vacío momentáneo (borraste para reescribir) -- no se
-                                    // confirma como "pusiste 0", si no queda pegado un 0 que
-                                    // hay que borrar de nuevo antes de poder escribir encima.
-                                    if (event.target.value === "") return;
+                                    // Arranca vacío (ver DraftSet.repeticiones) -- lo planificado
+                                    // se ve en gris de fondo (placeholder) y se escribe encima
+                                    // directo, sin tener que borrar nada primero.
+                                    if (event.target.value === "") {
+                                      updateSet(i, j, { repeticiones: undefined });
+                                      return;
+                                    }
                                     updateSet(i, j, { repeticiones: clampNumber(Number(event.target.value), 999) });
                                   }}
                                 />

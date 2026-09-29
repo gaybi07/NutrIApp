@@ -56,6 +56,7 @@ export function ComidasTab({
   getInviteCode,
   addPurchases,
   goalMode,
+  hasNutricionistaLink,
 }: {
   items: InventoryItem[];
   consumeAmounts: (amounts: Array<{ id: string; quantity: number }>) => void;
@@ -87,6 +88,10 @@ export function ComidasTab({
   leaveHousehold: () => Promise<void>;
   getInviteCode: () => Promise<string | null>;
   addPurchases: (entries: Array<Omit<PurchaseRecord, "id">>) => void;
+  /** Cambia el título/subtítulo de la tarjeta del Planificador -- con
+   * Nutricionista vinculado, adentro ya no se "programa" nada a mano (ver
+   * WeekPlanner), se ve directo lo que él/ella planificó. */
+  hasNutricionistaLink?: boolean;
 }) {
   const blockOrder = resolveOrder(order, DEFAULT_COMIDAS_ORDER);
   // "alacena" nunca se apaga -- mismo criterio que "hoy" en Inicio: es el
@@ -161,7 +166,9 @@ export function ComidasTab({
                     <section className="mb-4 rounded-xl border-2 border-rust/50 bg-surface p-3 shadow-[0_0_24px_-6px_rgba(239,68,68,0.45)]">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-gold">Planificador</div>
+                          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-gold">
+                            {hasNutricionistaLink ? "Nutricionista" : "Planificador"}
+                          </div>
                           <h2 className="font-display text-lg text-text">Semana que viene</h2>
                         </div>
                         <div className="shrink-0 rounded-full border border-rust/50 bg-rust/15 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide text-rust">
@@ -176,7 +183,7 @@ export function ComidasTab({
                         onClick={onOpenPlanificador}
                         className="mt-3 w-full rounded-lg border border-gold/60 bg-gold px-3 py-2 font-sans text-[12px] font-bold text-bg"
                       >
-                        Planificar la semana
+                        {hasNutricionistaLink ? "Ver plan del Nutricionista" : "Planificar la semana"}
                       </button>
                     </section>
                   );
@@ -188,8 +195,12 @@ export function ComidasTab({
                     className="mb-4 flex w-full items-center justify-between gap-2 rounded-2xl border border-border bg-surface/70 p-3 text-left shadow-[0_0_0_1px_rgba(58,54,47,0.4)]"
                   >
                     <div>
-                      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Planificador</div>
-                      <div className="font-display text-xl leading-none -tracking-[0.04em]">Semana que viene</div>
+                      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">
+                        {hasNutricionistaLink ? "Nutricionista" : "Planificador"}
+                      </div>
+                      <div className="font-display text-xl leading-none -tracking-[0.04em]">
+                        {hasNutricionistaLink ? "Ver plan de la semana" : "Semana que viene"}
+                      </div>
                     </div>
                     <div className="rounded-full border border-border bg-bg/70 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted">
                       {plannedCount} comidas
