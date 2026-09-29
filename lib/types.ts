@@ -724,7 +724,7 @@ export const INICIO_BLOCK_LABELS: Record<InicioBlockId, string> = {
  * unificadas en una sola tira continua a pedido del usuario, para no tener
  * que ir y volver entre las dos. Todos los bloques conviven en un mismo
  * orden ahora. */
-export type ComidasBlockId = "hogar" | "alacena" | "sugerencias" | "comunes" | "planificador";
+export type ComidasBlockId = "hogar" | "alacena" | "sugerencias" | "comunes" | "plan-semana" | "planificador";
 // "comunes" (Comidas más comunes) sigue existiendo -- la memoria atrás
 // (useMealMemory) sigue guardando y alimentando sugerencias en otros
 // lados -- pero se sacó del orden por default a pedido del usuario: la
@@ -732,12 +732,16 @@ export type ComidasBlockId = "hogar" | "alacena" | "sugerencias" | "comunes" | "
 // esto, bueno, nada"), así que por ahora queda oculta para todos hasta
 // que se le sume algo de verdad (ej. calificar si esas comidas son
 // buenas o no). Se puede reactivar agregándola de nuevo acá.
-export const DEFAULT_COMIDAS_ORDER: ComidasBlockId[] = ["hogar", "alacena", "sugerencias", "planificador"];
+export const DEFAULT_COMIDAS_ORDER: ComidasBlockId[] = ["hogar", "alacena", "sugerencias", "plan-semana", "planificador"];
 export const COMIDAS_BLOCK_LABELS: Record<ComidasBlockId, string> = {
   hogar: "Grupo compartido",
   alacena: "Alacena",
   sugerencias: "Sugerencias de recetas",
   comunes: "Comidas más comunes",
+  // Solo lectura -- lo planificado (propio o del Nutricionista) para la
+  // semana que estás mirando con las flechas de arriba, sea cual sea
+  // ("planificador" en cambio siempre edita/importa la semana que viene).
+  "plan-semana": "Plan semanal",
   // Antes era su propia sección aparte ("Compras") con el mismo nombre que
   // el botón de Alacena -- unificada ahí adentro, como la opción "Con
   // ticket" al agregar productos.

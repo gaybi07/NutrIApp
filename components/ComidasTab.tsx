@@ -9,6 +9,7 @@ import {
   InventoryNutrition,
   PurchaseRecord,
   MealKey,
+  MEAL_LABELS,
   WeekPlan,
   GoalMode,
   ComidasBlockId,
@@ -23,7 +24,57 @@ import { RecipePlanner } from "@/components/RecipePlanner";
 import { CommonMealsCard } from "@/components/CommonMealsCard";
 import { AlacenaCard } from "@/components/AlacenaCard";
 import { HouseholdCard } from "@/components/HouseholdCard";
-import { countPlannedMeals, hasWeekActivity } from "@/components/WeekPlanner";
+import { countPlannedMeals, hasWeekActivity, SKIP_MEAL } from "@/components/WeekPlanner";
+
+const MEAL_KEYS: MealKey[] = ["des", "alm", "mer", "cen", "col"];
+const DOW_SHORT = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+/**
+ * Solo lectura -- lo planificado para la semana que se está mirando con las
+ * flechas "‹ Semana anterior / Semana siguiente ›" del header (weekDates,
+ * calculado en app/page.tsx a partir de weekOffset). A diferencia del
+ * Planificador (que siempre arma/importa la semana QUE VIENE), esto muestra
+ * cualquier semana -- pasada, actual o futura -- tal como haya quedado en
+ * weekPlan (propio o ya importado del Nutricionista).
+ */
+function WeekPlanSummaryCard({ weekDates, weekPlan }: { weekDates: string[]; weekPlan: WeekPlan }) {
+  const first = new Date(`${weekDates[0]}T00:00:00`);
+  const last = new Date(`${weekDates[weekDates.length - 1]}T00:00:00`);
+
+  return (
+    <section className="rounded-2xl border border-border bg-surface/70 p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Plan semanal</div>
+        <div className="font-mono text-[10px] text-textMuted">
+          {first.getDate()}/{first.getMonth() + 1}–{last.getDate()}/{last.getMonth() + 1}
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        {weekDates.map((fecha) => {
+          const dayPlan = weekPlan[fecha] || {};
+          const date = new Date(`${fecha}T00:00:00`);
+          const entries = MEAL_KEYS.map((meal) => {
+            const value = dayPlan[meal];
+            if (!value || value === SKIP_MEAL) return null;
+            return `${MEAL_LABELS[meal]}: ${value}`;
+          }).filter((v): v is string => v !== null);
+          return (
+            <div key={fecha} className="rounded-lg border border-border/60 bg-bg/30 px-2.5 py-1.5">
+              <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
+                {DOW_SHORT[date.getDay()]} {date.getDate()}/{date.getMonth() + 1}
+              </div>
+              {entries.length === 0 ? (
+                <div className="mt-0.5 text-[11px] text-textMuted">Sin planificar</div>
+              ) : (
+                <div className="mt-0.5 text-[12px] text-text">{entries.join(" · ")}</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 
 export function ComidasTab({
   items,
@@ -32,6 +83,7 @@ export function ComidasTab({
   dailyGoal,
   consumedKcal,
   weekPlan,
+  weekDates,
   onOpenPlanificador,
   addStructuredItems,
   updateInventoryItem,
@@ -65,6 +117,10 @@ export function ComidasTab({
   consumedKcal: number;
   goalMode?: GoalMode;
   weekPlan: WeekPlan;
+  /** Las 7 fechas de la semana que se está mirando con las flechas de
+   * arriba (◂ Semana anterior / Semana siguiente ▸) -- distinta de "la
+   * semana que viene" que siempre usa el Planificador para armar/importar. */
+  weekDates: string[];
   onOpenPlanificador: () => void;
   addStructuredItems: (entries: Array<{ name: string; quantity: number; unit: InventoryItem["unit"]; category?: InventoryCategory; nutritionPer100g?: InventoryNutrition }>) => void;
   updateInventoryItem: (id: string, patch: Partial<InventoryItem>) => void;
@@ -153,6 +209,7 @@ export function ComidasTab({
                 />
               )}
               {blockId === "comunes" && <CommonMealsCard />}
+              {blockId === "plan-semana" && <WeekPlanSummaryCard weekDates={weekDates} weekPlan={weekPlan} />}
               {blockId === "planificador" && (() => {
                 const plannedCount = countPlannedMeals(weekPlan);
                 // Ahora que el plan se comparte entre los del grupo (ver

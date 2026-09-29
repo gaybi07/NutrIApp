@@ -674,6 +674,7 @@ export default function Home() {
           dailyGoal={settings.goal}
           consumedKcal={todayKcal}
           weekPlan={weekPlan}
+          weekDates={weekDates}
           onOpenPlanificador={() => setPanel("planificador")}
           hasNutricionistaLink={hasNutricionistaLink}
           addStructuredItems={addStructuredItems}
