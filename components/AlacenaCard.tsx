@@ -81,6 +81,7 @@ export function AlacenaCard({
   const [query, setQuery] = useState("");
   const [onlyMissing, setOnlyMissing] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [reviewMenuId, setReviewMenuId] = useState<string | null>(null);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   // "escribir" = alta rápida por texto (QuickAddProducts, lo de siempre);
   // "ticket" = lo que antes era la sección aparte "Compras" -- foto/audio del
@@ -141,7 +142,7 @@ export function AlacenaCard({
       .filter((item) => filter === "todas" || (item.category || "otros") === filter)
       .filter((item) => !onlyMissing || !item.nutritionPer100g)
       .filter((item) => !q || item.name.toLowerCase().includes(q))
-      .sort((a, b) => a.name.localeCompare(b.name, "es"));
+      .sort((a, b) => Number(!!a.nutritionPer100g) - Number(!!b.nutritionPer100g) || a.name.localeCompare(b.name, "es"));
   }, [items, filter, query, onlyMissing]);
   const filtersActive = filter !== "todas" || query.trim() !== "" || onlyMissing;
   const clearFilters = () => {
@@ -291,7 +292,7 @@ export function AlacenaCard({
     setOffStatus(`Cargado desde Open Food Facts: ${result.name}${result.brand ? ` (${result.brand})` : ""} ✓`);
   };
 
-  const reviewWithAi = async () => {
+  const reviewWithAi = async (only?: InventoryItem[]) => {
     if (items.length === 0 || reviewLocked) return;
     setReviewing(true);
     // Tope de items por toque (ver REVIEW_MAX_ITEMS_PER_RUN) para no
@@ -299,7 +300,7 @@ export function AlacenaCard({
     // que ni siquiera tiene nutrición cargada, después lo que la tiene pero
     // sin confirmar, recién al final (si sobra lugar) lo ya confirmado.
     const priority = (item: InventoryItem) => (!item.nutritionPer100g ? 0 : !item.nutritionConfirmed ? 1 : 2);
-    const toReview = [...items].sort((a, b) => priority(a) - priority(b)).slice(0, REVIEW_MAX_ITEMS_PER_RUN);
+    const toReview = only ?? [...items].sort((a, b) => priority(a) - priority(b)).slice(0, REVIEW_MAX_ITEMS_PER_RUN);
 
     // Con muchos items en un solo pedido, un inventario grande puede tardar
     // más que el límite de la función serverless y el fetch se queda
@@ -470,35 +471,6 @@ export function AlacenaCard({
       {status && <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] text-sage">{status}</div>}
 
       {items.length > 0 && (
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          {missingNutritionCount > 0 ? (
-            <div className="flex flex-1 flex-wrap items-center justify-between gap-2 rounded-lg border border-rust/50 bg-rust/10 px-3 py-2 text-[12px] text-rust">
-              <span className="inline-flex items-center gap-1">
-                <TriangleAlert size={16} strokeWidth={1.8} className="shrink-0" /> Falta información nutricional de {missingNutritionCount} producto{missingNutritionCount > 1 ? "s" : ""}.
-              </span>
-              <button
-                type="button"
-                onClick={reviewWithAi}
-                disabled={reviewing || reviewLocked}
-                title={
-                  reviewLocked
-                    ? `Disponible de nuevo en ${reviewLockLabel} — revisa hasta ${REVIEW_MAX_ITEMS_PER_RUN} ítems por vez para no recargar la IA`
-                    : undefined
-                }
-                className={`${btn("secondary", "sm")} shrink-0`}
-              >
-                {reviewing ? "Revisando..." : reviewLocked ? `Disponible en ${reviewLockLabel}` : "Revisar con IA"}
-              </button>
-            </div>
-          ) : (
-            <div className="flex-1 rounded-lg border border-sage/40 bg-sage/10 px-3 py-2 text-[12px] text-sage inline-flex items-center gap-1">
-              <CircleCheck size={16} strokeWidth={1.8} className="shrink-0" /> Está todo OK — todos los productos tienen su valor nutricional cargado.
-            </div>
-          )}
-        </div>
-      )}
-
-      {items.length > 0 && (
         <div className="mb-3">
           <button
             type="button"
@@ -506,6 +478,11 @@ export function AlacenaCard({
             className={btn(showList ? "neutral" : "secondary", "md", true)}
           >
             <ListChecks size={16} strokeWidth={1.8} /> {showList ? "Ocultar lista" : `Ver lista (${items.length})`}
+            {missingNutritionCount > 0 && (
+              <span className="rounded-full bg-rust px-1.5 py-0.5 text-[9px] font-bold leading-none text-white">
+                {missingNutritionCount} sin revisar
+              </span>
+            )}
           </button>
         </div>
       )}
@@ -699,6 +676,28 @@ export function AlacenaCard({
             </div>
           )}
 
+          {missingNutritionCount > 0 && (
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-rust/50 bg-rust/10 px-3 py-2">
+              <span className="inline-flex items-center gap-1.5 text-[12px] text-rust">
+                <TriangleAlert size={16} strokeWidth={1.8} className="shrink-0" />
+                {missingNutritionCount} producto{missingNutritionCount > 1 ? "s" : ""} sin revisar — van primero, en rojo
+              </span>
+              <button
+                type="button"
+                onClick={() => reviewWithAi()}
+                disabled={reviewing || reviewLocked}
+                title={
+                  reviewLocked
+                    ? `Disponible de nuevo en ${reviewLockLabel} — revisa hasta ${REVIEW_MAX_ITEMS_PER_RUN} ítems por vez para no recargar la IA`
+                    : undefined
+                }
+                className={`${btn("secondary", "sm")} shrink-0`}
+              >
+                {reviewing ? "Revisando..." : reviewLocked ? `Disponible en ${reviewLockLabel}` : "Revisar todos con IA"}
+              </button>
+            </div>
+          )}
+
           <div className="mb-2 flex items-center justify-between gap-2">
             <span className="font-mono text-[10px] uppercase tracking-wide text-textMuted">
               {visibleItems.length} producto{visibleItems.length === 1 ? "" : "s"}
@@ -716,47 +715,88 @@ export function AlacenaCard({
             </div>
           ) : (
             <div className="flex flex-col gap-1.5">
-              {visibleItems.map((item) => (
-                <div
-                  key={item.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => openItem(item)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      openItem(item);
-                    }
-                  }}
-                  className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-border bg-surfaceAlt/30 px-3 py-2.5"
-                >
-                  <span
-                    className={`h-2 w-2 shrink-0 rounded-full ${item.nutritionPer100g ? "bg-sage" : "bg-rust"}`}
-                    title={item.nutritionPer100g ? "Con valor nutricional" : "Falta valor nutricional"}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[13px] font-semibold text-text">{item.name}</div>
-                    <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
-                      {INVENTORY_CATEGORY_LABELS[item.category || "otros"]}
-                      {!item.nutritionPer100g && <span className="text-rust"> · falta nutrición, tocá para cargarla</span>}
+              {visibleItems.map((item) => {
+                const sinRevisar = !item.nutritionPer100g;
+                return (
+                  <div key={item.id}>
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => openItem(item)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          openItem(item);
+                        }
+                      }}
+                      className={`flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 ${
+                        sinRevisar ? "border-rust/50 bg-rust/10" : "border-border bg-surfaceAlt/30"
+                      }`}
+                    >
+                      <span className={`h-2 w-2 shrink-0 rounded-full ${sinRevisar ? "bg-rust" : "bg-sage"}`} />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-[13px] font-semibold text-text">{item.name}</div>
+                        <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
+                          {INVENTORY_CATEGORY_LABELS[item.category || "otros"]}
+                          {sinRevisar && <span className="text-rust"> · sin revisar</span>}
+                        </div>
+                      </div>
+                      <span className="shrink-0 font-sans text-[13px] font-bold text-text">
+                        {item.quantity} <span className="font-normal text-textMuted">{item.unit}</span>
+                      </span>
+                      {sinRevisar && (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setReviewMenuId((current) => (current === item.id ? null : item.id));
+                          }}
+                          className={`${btn("danger", "sm")} shrink-0`}
+                        >
+                          Revisar
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          removeItem(item.id);
+                        }}
+                        className={`${btn("danger", "sm")} shrink-0 !px-2`}
+                        aria-label={`Quitar ${item.name}`}
+                      >
+                        <Trash2 size={14} strokeWidth={1.8} />
+                      </button>
                     </div>
+                    {sinRevisar && reviewMenuId === item.id && (
+                      <div className="mt-1 grid grid-cols-2 gap-2 rounded-xl border border-border bg-surface p-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReviewMenuId(null);
+                            openItem(item);
+                          }}
+                          className={btn("secondary", "sm", true)}
+                        >
+                          Manual
+                        </button>
+                        <button
+                          type="button"
+                          disabled={reviewing || reviewLocked}
+                          onClick={() => {
+                            setReviewMenuId(null);
+                            reviewWithAi([item]);
+                          }}
+                          className={btn("primary", "sm", true)}
+                          title={reviewLocked ? `Disponible de nuevo en ${reviewLockLabel}` : undefined}
+                        >
+                          {reviewLocked ? `IA en ${reviewLockLabel}` : "Con IA"}
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <span className="shrink-0 font-sans text-[13px] font-bold text-text">
-                    {item.quantity} <span className="font-normal text-textMuted">{item.unit}</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      removeItem(item.id);
-                    }}
-                    className={`${btn("danger", "sm")} shrink-0 !px-2`}
-                    aria-label={`Quitar ${item.name}`}
-                  >
-                    <Trash2 size={14} strokeWidth={1.8} />
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </>
