@@ -51,6 +51,7 @@ function toDay(row: Record<string, unknown>): DayEntry {
     merItems: (row.mer_items as DayEntry["merItems"]) || undefined,
     cenItems: (row.cen_items as DayEntry["cenItems"]) || undefined,
     colItems: (row.col_items as DayEntry["colItems"]) || undefined,
+    omisiones: ((row.omisiones as DayEntry["omisiones"]) && (row.omisiones as NonNullable<DayEntry["omisiones"]>).length > 0 ? (row.omisiones as DayEntry["omisiones"]) : undefined),
     suplementos: (row.suplementos as DayEntry["suplementos"]) || undefined,
   };
 }
@@ -104,6 +105,8 @@ function toDayRow(day: DayEntry, userId: string) {
     cen_items: day.cenItems || [],
     col_items: day.colItems || [],
     suplementos: day.suplementos || [],
+    // Solo si hay algo: así un guardado no rompe en bases donde todavía no se corrió la migración de omisiones.
+    ...(day.omisiones && day.omisiones.length > 0 ? { omisiones: day.omisiones } : {}),
   };
 }
 

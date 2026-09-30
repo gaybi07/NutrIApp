@@ -571,6 +571,14 @@ export interface WorkoutReport {
 }
 
 /** Un alimento/plato individual dentro de una comida (ej. "Puré de papas" adentro de la Cena) — editable y borrable por separado. */
+/** Un alimento del plan que el paciente NO comió, con el motivo -- lo ve la Nutricionista en Adherencia. */
+export interface MealOmission {
+  comida: MealKey;
+  alimento: string;
+  motivo: "alergia" | "no_le_gusta" | "otro";
+  nota?: string;
+}
+
 export interface MealItem {
   id: string;
   nombre: string;
@@ -642,6 +650,7 @@ export interface DayEntry {
   entrenamientos?: TrainingSession[]; // formato nuevo: soporta más de un entrenamiento por día
   ejercicios?: ExerciseEntry[]; // desglose real de lo entrenado ese día (series/reps/peso por ejercicio)
   entrenamientoReporte?: WorkoutReport; // reporte planificado vs. real del entrenamiento en vivo de ese día -- se puede volver a abrir más tarde
+  omisiones?: MealOmission[]; // alimentos del plan que no comió ese día y por qué
   alimentos?: string[]; // nombres de ingredientes comidos ese día (para diversidad de grupos alimenticios en Macros)
   desItems?: MealItem[]; // desglose editable del desayuno — la suma de estos da desK/desP/desC/desG/desF
   almItems?: MealItem[];

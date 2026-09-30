@@ -10,6 +10,7 @@ export interface NutritionAdherenceDay {
   actualKcal: number;
   actualProtein: number;
   pctSimilitud: number | null;
+  omisiones?: { comida: string; alimento: string; motivo: "alergia" | "no_le_gusta" | "otro"; nota?: string }[];
 }
 
 export interface NutritionAdherence {

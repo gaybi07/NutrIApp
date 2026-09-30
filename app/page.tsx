@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { SortableSection } from "@/components/SortableSection";
@@ -58,7 +58,7 @@ import { GlobalWorkoutTimer } from "@/components/GlobalWorkoutTimer";
 import { useMyAssignedSessions } from "@/lib/useAssignedSessions";
 import { useNextWeekTrainingPlan } from "@/lib/useNextWeekTrainingPlan";
 import { useProductMemory } from "@/lib/useProductMemory";
-import { emptyDay, MealKey, MEAL_LABELS, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER, resolveOrder } from "@/lib/types";
+import { emptyDay, MealKey, MEAL_LABELS, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER, resolveOrder, WEEKDAYS } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
 import { TriangleAlert, Flame } from "lucide-react";
 
@@ -178,6 +178,36 @@ export default function Home() {
     if (count === 0) return null;
     return { kcalPromedio: Math.round(kcalSum / count), proteinPromedio: Math.round(proteinSum / count) };
   }, [hasNutricionistaLink, nutritionPlanThisWeek.days]);
+
+  // Con Nutricionista vinculado, su plan de ESTA semana se carga solo en "Plan semanal" (Comidas):
+  // antes solo se importaba la semana que viene, al abrir el planificador, y la semana actual
+  // quedaba "Sin planificar" aunque ella ya la hubiera publicado. Opción A por comida; no pisa lo ya elegido.
+  const autoImportedWeekRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!hasNutricionistaLink || !nutritionPlanThisWeek.loaded) return;
+    if (Object.keys(nutritionPlanThisWeek.days).length === 0) return;
+    if (autoImportedWeekRef.current === thisWeekStart) return;
+    autoImportedWeekRef.current = thisWeekStart;
+    const next: typeof weekPlan = { ...weekPlan };
+    let changed = false;
+    const mondayDate = isoMonday(thisWeekStart);
+    for (let i = 0; i < 7; i++) {
+      const date = addDays(mondayDate, i);
+      const fecha = fmtDate(date);
+      const dayOptions = nutritionPlanThisWeek.days[WEEKDAYS[date.getDay()]];
+      if (!dayOptions) continue;
+      const dayPlan = { ...(next[fecha] || {}) };
+      for (const meal of ["des", "alm", "mer", "cen", "col"] as MealKey[]) {
+        const options = dayOptions[meal];
+        if (!options || options.length === 0 || dayPlan[meal] !== undefined) continue;
+        dayPlan[meal] = options[0].nombre;
+        changed = true;
+      }
+      if (Object.keys(dayPlan).length > 0) next[fecha] = dayPlan;
+    }
+    if (changed) saveWeekPlan(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasNutricionistaLink, nutritionPlanThisWeek.loaded, nutritionPlanThisWeek.days, thisWeekStart]);
 
   const trainingGoal = useMemo(() => {
     if (!hasTrainerLink || assignedSessions.sessions.length === 0) return null;

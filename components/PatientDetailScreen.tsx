@@ -82,7 +82,7 @@ function AdherenciaTab({
   loaded,
 }: {
   weekDates: string[];
-  dias: { fecha: string; plannedKcal: number; plannedProtein: number; actualKcal: number; actualProtein: number; pctSimilitud: number | null }[] | null;
+  dias: { fecha: string; plannedKcal: number; plannedProtein: number; actualKcal: number; actualProtein: number; pctSimilitud: number | null; omisiones?: { comida: string; alimento: string; motivo: "alergia" | "no_le_gusta" | "otro"; nota?: string }[] }[] | null;
   loaded: boolean;
 }) {
   if (!loaded) return <div className="text-[12px] text-textMuted">Cargando...</div>;
@@ -107,6 +107,25 @@ function AdherenciaTab({
               <div className="mt-0.5 font-mono text-[10px] text-textMuted">
                 Planificado {Math.round(d.plannedKcal)} kcal · {Math.round(d.plannedProtein)}g P — Real {Math.round(d.actualKcal)} kcal ·{" "}
                 {Math.round(d.actualProtein)}g P
+              </div>
+            )}
+            {d.omisiones && d.omisiones.length > 0 && (
+              <div className="mt-1.5 space-y-1">
+                {d.omisiones.map((o, idx) => (
+                  <div key={idx} className="flex items-start gap-1.5 text-[11px] text-text">
+                    <span
+                      className={`mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase leading-none text-white ${
+                        o.motivo === "alergia" ? "bg-rust" : o.motivo === "no_le_gusta" ? "bg-gold" : "bg-textMuted"
+                      }`}
+                    >
+                      {o.motivo === "alergia" ? "Alergia" : o.motivo === "no_le_gusta" ? "No le gusta" : "Otro"}
+                    </span>
+                    <span>
+                      <span className="font-semibold">{o.alimento}</span>
+                      {o.nota ? <span className="text-textMuted"> — {o.nota}</span> : null}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
