@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, FileText, Plus, ShoppingBasket, X } from "lucide-react";
-import { DayMealOptions, MEAL_LABELS, MealKey, MealOption, MealOptionIngredient, Weekday, WEEKDAY_LABELS_SHORT } from "@/lib/types";
+import { DayMealOptions, MEAL_LABELS, MealKey, MealOption, MealOptionIngredient, MEAL_LEVEL_LABELS, Weekday, WEEKDAY_LABELS_SHORT } from "@/lib/types";
 import { isoMonday, fmtDate, addDays } from "@/lib/calculations";
 import { useNutritionPlan } from "@/lib/useNutritionPlan";
 
@@ -266,6 +266,28 @@ export function NutritionPlanBuilder({ studentId }: { studentId: string }) {
                           >
                             Quitar
                           </button>
+                        </div>
+                        <div className="mb-1.5 flex items-center gap-1.5">
+                          <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">Nivel</span>
+                          {(["optima", "buena", "ocasional"] as const).map((level) => {
+                            const active = (opt.nivel ?? "buena") === level;
+                            const color = level === "optima" ? "rgb(var(--color-accent))" : level === "buena" ? "rgb(var(--color-sage))" : "rgb(var(--color-carbs))";
+                            return (
+                              <button
+                                key={level}
+                                type="button"
+                                onClick={() => updateOption(mealKey, idx, { nivel: level })}
+                                className="rounded-full border px-2.5 py-1 font-mono text-[9px] font-bold uppercase tracking-wide"
+                                style={
+                                  active
+                                    ? { background: color, borderColor: color, color: level === "optima" ? "#fff" : level === "buena" ? "#0f3d2d" : "#4a2f00" }
+                                    : { borderColor: "rgb(var(--color-border))", color: "rgb(var(--color-text-muted))" }
+                                }
+                              >
+                                {MEAL_LEVEL_LABELS[level]}
+                              </button>
+                            );
+                          })}
                         </div>
                         <div className="grid grid-cols-4 gap-1.5">
                           <input

@@ -58,7 +58,7 @@ import { GlobalWorkoutTimer } from "@/components/GlobalWorkoutTimer";
 import { useMyAssignedSessions } from "@/lib/useAssignedSessions";
 import { useNextWeekTrainingPlan } from "@/lib/useNextWeekTrainingPlan";
 import { useProductMemory } from "@/lib/useProductMemory";
-import { emptyDay, MealKey, MEAL_LABELS, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER, resolveOrder, WEEKDAYS } from "@/lib/types";
+import { emptyDay, MealKey, MealOption, MEAL_LABELS, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER, resolveOrder, WEEKDAYS } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
 import { TriangleAlert, Flame } from "lucide-react";
 
@@ -303,6 +303,25 @@ export default function Home() {
     return days.find((d) => d.fecha === todayFecha) || emptyDay(todayFecha);
   }, [days]);
   const todayKcal = dayTotal(todayEntry);
+
+  // "Agregar a comidas" desde "Lo que te toca comer" (Comidas): la opción elegida del plan entra como comida de hoy.
+  const addPlannedMeal = useCallback(
+    (meal: MealKey, option: MealOption) => {
+      const fecha = fmtDate(new Date());
+      const existing = days.find((d) => d.fecha === fecha) || emptyDay(fecha);
+      const item = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        nombre: option.nombre,
+        kcal: option.kcal,
+        protein: option.protein,
+        carbs: option.carbs,
+        fat: option.fat,
+        fiber: 0,
+      };
+      upsertDay(applyMealItems(existing, meal, [...getMealItems(existing, meal), item]));
+    },
+    [days, upsertDay]
+  );
 
   const currentWeightKg = useMemo(() => {
     // El único DayEntry con pesoKg suele ser el del día del onboarding (ver
@@ -870,6 +889,7 @@ export default function Home() {
           todayFecha={fmtDate(new Date())}
           planThisWeek={nutritionPlanThisWeek.days}
           planViewedWeek={nutritionPlanViewed.days}
+          onAddPlannedMeal={addPlannedMeal}
           order={settings.comidasOrder}
           onReorder={(comidasOrder) => saveSettings({ ...settings, comidasOrder })}
           hidden={settings.comidasHidden}

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { DayEntry, DayMealOptions, MealKey, MEAL_LABELS, MealOption, Weekday, WEEKDAYS } from "@/lib/types";
-import { classifyMeal, MealCompliance, MealStatus } from "@/lib/planCompliance";
+import { DayEntry, DayMealOptions, MealKey, MEAL_LABELS, MEAL_LEVEL_LABELS, MealLevel, MealOption, Weekday, WEEKDAYS } from "@/lib/types";
+import { classifyMeal, levelOf, MealCompliance, MealStatus } from "@/lib/planCompliance";
 import { getMealItems } from "@/lib/calculations";
 import { btn } from "@/components/buttonStyles";
 import { useEscapeKey } from "@/lib/useEscapeKey";
@@ -16,13 +16,32 @@ type PlanDays = Partial<Record<Weekday, DayMealOptions>>;
 
 /** Color de fondo de cada estado (mismos tokens del tema: verde, ámbar, violeta, rojo). */
 const STATUS_STYLE: Record<MealStatus, { bg: string; text: string; mark: string }> = {
-  igual: { bg: "rgb(var(--color-sage))", text: "#0f3d2d", mark: "✓" },
-  cantidad: { bg: "rgb(var(--color-carbs))", text: "#4a2f00", mark: "≈" },
-  otra_ok: { bg: "rgb(var(--color-accent))", text: "#ffffff", mark: "★" },
-  otra_lejos: { bg: "rgb(var(--color-rust))", text: "#ffffff", mark: "✕" },
+  optima: { bg: "rgb(var(--color-accent))", text: "#ffffff", mark: "★" },
+  buena: { bg: "rgb(var(--color-sage))", text: "#0f3d2d", mark: "✓" },
+  ocasional: { bg: "rgb(var(--color-carbs))", text: "#4a2f00", mark: "≈" },
+  fuera_ok: { bg: "rgb(var(--color-carbs))", text: "#4a2f00", mark: "?" },
+  fuera_lejos: { bg: "rgb(var(--color-rust))", text: "#ffffff", mark: "✕" },
   saltada: { bg: "rgb(var(--color-rust))", text: "#ffffff", mark: "✕" },
   pendiente: { bg: "transparent", text: "rgb(var(--color-text-muted))", mark: "" },
 };
+
+const LEVEL_STYLE: Record<MealLevel, { bg: string; text: string }> = {
+  optima: { bg: "rgb(var(--color-accent))", text: "#ffffff" },
+  buena: { bg: "rgb(var(--color-sage))", text: "#0f3d2d" },
+  ocasional: { bg: "rgb(var(--color-carbs))", text: "#4a2f00" },
+};
+
+export function LevelChip({ option }: { option: MealOption }) {
+  const level = levelOf(option);
+  return (
+    <span
+      className="shrink-0 rounded-full px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase leading-none tracking-wide"
+      style={{ background: LEVEL_STYLE[level].bg, color: LEVEL_STYLE[level].text }}
+    >
+      {MEAL_LEVEL_LABELS[level]}
+    </span>
+  );
+}
 
 function weekdayOf(fecha: string): Weekday {
   return WEEKDAYS[new Date(`${fecha}T00:00:00`).getDay()];
@@ -33,7 +52,7 @@ function dateLabel(fecha: string) {
   return `${DOW_SHORT[date.getDay()]} ${date.getDate()}/${date.getMonth() + 1}`;
 }
 
-function quantities(option: MealOption) {
+export function quantities(option: MealOption) {
   if (!option.ingredientes || option.ingredientes.length === 0) return null;
   return option.ingredientes.map((ing) => `${ing.name} ${ing.quantity}${ing.unit === "u." ? " u." : ` ${ing.unit}`}`).join(" · ");
 }
@@ -70,8 +89,8 @@ function OptionList({ options, matched }: { options: MealOption[]; matched?: Mea
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-[13px] font-semibold text-text">
-                  {option.nombre}
-                  {matched && matched.nombre === option.nombre && <span className="ml-1 text-sage">✓</span>}
+                  {option.nombre} <LevelChip option={option} />
+                  {matched && matched.nombre === option.nombre && <span className="ml-1 text-sage">✓ la que comiste</span>}
                 </span>
                 <span className="shrink-0 font-mono text-[10px] text-textMuted">
                   {option.kcal} kcal · {option.protein} g
@@ -157,20 +176,24 @@ function MealDetailSheet({
 
 /**
  * "Lo que te toca comer hoy" -- siempre es el primer bloque de Comidas,
- * abierto y fijo (no se puede ocultar ni mover). Las 5 comidas del día con
- * las opciones de la Nutricionista y sus cantidades; si ya comió, lo que
- * cargó y el color.
+ * abierto y fijo (no se puede ocultar ni mover). Las comidas del día con las
+ * opciones de la Nutricionista (cada una con su nivel y cantidades): se elige
+ * una y aparece "Agregar a comidas". Si ya comió, muestra lo que cargó y el color.
  */
 export function TodayMeals({
   todayFecha,
   plan,
   days,
+  onAddPlanned,
 }: {
   todayFecha: string;
   plan: PlanDays;
   days: DayEntry[];
+  /** Carga la opción elegida como comida de hoy. */
+  onAddPlanned: (meal: MealKey, option: MealOption) => void;
 }) {
   const [open, setOpen] = useState<MealKey | null>(null);
+  const [picked, setPicked] = useState<Partial<Record<MealKey, number>>>({});
   const dayOptions = plan[weekdayOf(todayFecha)];
   if (!dayOptions) return null;
   const entry = days.find((d) => d.fecha === todayFecha);
@@ -185,13 +208,11 @@ export function TodayMeals({
           if (!options || options.length === 0) return null;
           const compliance = classifyMeal(options, entry, meal, todayFecha, todayFecha);
           const style = STATUS_STYLE[compliance?.status ?? "pendiente"];
+          const alreadyLoaded = Boolean(compliance?.real);
+          const matchedIndex = compliance?.matched ? options.findIndex((opt) => opt.nombre === compliance.matched!.nombre) : -1;
+          const selectedIndex = alreadyLoaded ? matchedIndex : picked[meal] ?? -1;
           return (
-            <button
-              key={meal}
-              type="button"
-              onClick={() => setOpen(meal)}
-              className="block w-full rounded-xl border border-border bg-bg/30 p-2.5 text-left"
-            >
+            <div key={meal} className="rounded-xl border border-border bg-bg/30 p-2.5">
               <div className="flex items-center justify-between gap-2">
                 <span className="flex items-center gap-2 text-[13px] font-semibold text-text">
                   <span
@@ -200,31 +221,75 @@ export function TodayMeals({
                   />
                   {MEAL_LABELS[meal]}
                 </span>
-                {compliance && compliance.status !== "pendiente" && <StatusBadge compliance={compliance} />}
+                {compliance && compliance.status !== "pendiente" ? (
+                  <button type="button" onClick={() => setOpen(meal)} className="shrink-0">
+                    <StatusBadge compliance={compliance} />
+                  </button>
+                ) : (
+                  <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">Elegí una opción</span>
+                )}
               </div>
-              <div className="mt-1.5 space-y-1">
-                {options.slice(0, 3).map((option, index) => (
-                  <div key={option.nombre} className="text-[12px]">
-                    <div className="flex items-baseline gap-2">
-                      <span className={`font-mono text-[9px] font-bold ${index === 0 ? "text-gold" : "text-textMuted"}`}>{OPTION_LETTERS[index]}</span>
-                      <span className="flex-1 text-text">{option.nombre}</span>
-                      <span className="shrink-0 font-mono text-[10px] text-textMuted">
-                        {option.kcal} kcal · {option.protein} g
-                      </span>
-                    </div>
-                    {quantities(option) && <div className="pl-4 text-[11px] text-textMuted">{quantities(option)}</div>}
-                  </div>
-                ))}
+
+              <div className="mt-1.5 space-y-1.5">
+                {options.map((option, index) => {
+                  const selected = selectedIndex === index;
+                  return (
+                    <button
+                      key={option.nombre}
+                      type="button"
+                      disabled={alreadyLoaded}
+                      onClick={() => setPicked((prev) => ({ ...prev, [meal]: prev[meal] === index ? undefined : index }))}
+                      className={`block w-full rounded-lg border p-2 text-left ${
+                        selected ? "border-gold bg-gold/10" : "border-border/70 bg-bg/20"
+                      } ${alreadyLoaded && !selected ? "opacity-60" : ""}`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span
+                          className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border font-mono text-[9px] font-bold ${
+                            selected ? "border-gold bg-gold text-white" : "border-border text-textMuted"
+                          }`}
+                        >
+                          {selected ? "✓" : OPTION_LETTERS[index]}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="flex flex-wrap items-baseline justify-between gap-x-2">
+                            <span className="text-[13px] text-text">
+                              {option.nombre} <LevelChip option={option} />
+                            </span>
+                            <span className="shrink-0 font-mono text-[10px] text-textMuted">
+                              {option.kcal} kcal · {option.protein} g
+                            </span>
+                          </span>
+                          {quantities(option) && <span className="mt-0.5 block text-[11px] text-textMuted">{quantities(option)}</span>}
+                          {selected && option.explicacion && <span className="mt-0.5 block text-[11px] italic text-textMuted">{option.explicacion}</span>}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
+
+              {!alreadyLoaded && selectedIndex >= 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onAddPlanned(meal, options[selectedIndex]);
+                    setPicked((prev) => ({ ...prev, [meal]: undefined }));
+                  }}
+                  className={`${btn("primary", "md", true)} mt-2`}
+                >
+                  + Agregar a comidas
+                </button>
+              )}
               {compliance?.real && (
-                <div className="mt-1.5 border-t border-dashed border-border pt-1.5 text-[12px] text-text">
+                <div className="mt-2 border-t border-dashed border-border pt-1.5 text-[12px] text-text">
                   Comiste: <span className="font-semibold">{compliance.real.nombres.join(", ")}</span>{" "}
                   <span className="text-textMuted">
                     ({compliance.real.kcal} kcal · {compliance.real.protein} g)
                   </span>
                 </div>
               )}
-            </button>
+            </div>
           );
         })}
       </div>
@@ -319,10 +384,10 @@ export function WeekAlmanaque({
       <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-textMuted">
         {(
           [
-            ["igual", "Igual al plan"],
-            ["cantidad", "Distinta cantidad"],
-            ["otra_ok", "Otra cosa, cumplió"],
-            ["otra_lejos", "Otra cosa / salteada"],
+            ["optima", "Perfecta"],
+            ["buena", "Buena"],
+            ["ocasional", "Ocasional / fuera del plan"],
+            ["fuera_lejos", "Lejos del objetivo / salteada"],
             ["pendiente", "Pendiente"],
           ] as [MealStatus, string][]
         ).map(([status, label]) => (

@@ -12,7 +12,20 @@ export type MealOptionIngredient = { name: string; quantity: number; unit: Inven
  * explicación de cuándo/por qué elegirla (ej. según horario de entreno o de
  * acostarse) -- escrita por el Nutricionista, la IA solo puede sugerir un
  * borrador que el profesional revisa antes de publicar. */
+/** Nivel nutricional de una opción, lo define la Nutricionista al armar el plan (y es el color del
+ * casillero en el almanaque del paciente): "optima" = la perfecta / la mejor (violeta), "buena" = la
+ * que está bien (verde), "ocasional" = puede comerse de vez en cuando: más grasas, menos proteína o más
+ * densidad calórica (amarillo). Sin nivel guardado (planes viejos) se trata como "buena". */
+export type MealLevel = "optima" | "buena" | "ocasional";
+
+export const MEAL_LEVEL_LABELS: Record<MealLevel, string> = {
+  optima: "Perfecta",
+  buena: "Buena",
+  ocasional: "Ocasional",
+};
+
 export interface MealOption {
+  nivel?: MealLevel;
   nombre: string;
   kcal: number;
   protein: number;

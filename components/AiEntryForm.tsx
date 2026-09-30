@@ -5,6 +5,8 @@ import { DayEntry, InventoryItem, MealKey, MEAL_LABELS, MealItem, emptyDay, Prep
 import { countDigits, MAX_DIGITS, MAX_TEXT_LENGTH, normalizeNumberInput } from "@/lib/inputLimits";
 import { fmtDate, addDays, getMealItems, applyMealItems, suggestedMeal, macrosForFoodQuantity, sumMealItems, tagGroup, isoMonday, weekdayOf } from "@/lib/calculations";
 import { useMyNutritionPlan } from "@/lib/useMyNutritionPlan";
+import { LevelChip, quantities } from "@/components/PlanAlmanaque";
+import { btn } from "@/components/buttonStyles";
 import { RECIPES } from "@/lib/recipes";
 import { MealItemsList, MealItemsInventoryDelta } from "@/components/MealItemsList";
 import { SavePreparationToggle } from "@/components/SavePreparationToggle";
@@ -213,6 +215,25 @@ export function AiEntryForm({
     const opcion = opciones.find((o) => o.nombre === title);
     if (opcion) return { kcal: opcion.kcal, protein: opcion.protein, carbs: opcion.carbs, fat: opcion.fat };
     return null;
+  };
+
+  // Opciones que la Nutricionista planificó para esta fecha + comida (con nivel y cantidades).
+  const planOptions = hasNutricionistaLink ? planDays[weekdayOf(fecha)]?.[meal] || [] : [];
+
+  const addPlanOption = (option: (typeof planOptions)[number]) => {
+    const existing = days.find((d) => d.fecha === fecha) || emptyDay(fecha);
+    const item: MealItem = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      nombre: option.nombre,
+      kcal: option.kcal,
+      protein: option.protein,
+      carbs: option.carbs,
+      fat: option.fat,
+      fiber: 0,
+    };
+    onUpsert(applyMealItems(existing, meal, [...getMealItems(existing, meal), item]));
+    setStatus(`Agregado "${option.nombre}" a ${MEAL_LABELS[meal]} ✓`);
+    setTimeout(() => setStatus(""), 3500);
   };
 
   const handleImportPlanned = (title: string) => {
@@ -641,6 +662,32 @@ export function AiEntryForm({
           </div>
           <MealItemsList entry={entryForFecha} meal={meal} onUpsert={onUpsert} onInventoryDelta={onInventoryDelta} />
           {yaCargado.some((item) => !item.grupoId) && prepButton}
+        </div>
+      )}
+
+      {planOptions.length > 0 && (
+        <div className="mt-2.5 rounded-xl border border-gold/50 bg-gold/10 p-2.5">
+          <div className="mb-1.5 font-mono text-[9px] uppercase tracking-wide text-gold">Del plan de tu Nutricionista · {MEAL_LABELS[meal]}</div>
+          <div className="space-y-1.5">
+            {planOptions.map((option, index) => (
+              <div key={option.nombre} className="rounded-lg border border-border/70 bg-bg/30 p-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[13px] text-text">
+                      {option.nombre} <LevelChip option={option} />
+                    </div>
+                    <div className="font-mono text-[10px] text-textMuted">
+                      {option.kcal} kcal · {option.protein} g prot
+                    </div>
+                    {quantities(option) && <div className="text-[11px] text-textMuted">{quantities(option)}</div>}
+                  </div>
+                  <button type="button" onClick={() => addPlanOption(option)} className={`${btn("primary", "sm")} shrink-0`}>
+                    + Agregar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
