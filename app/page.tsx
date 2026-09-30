@@ -225,14 +225,17 @@ export default function Home() {
   };
   const macrosHidden = settings.macrosHidden || [];
   // En Básico estos bloques se ven desenfocados (BlurLock), no ocultos.
-  const macrosBlurred = isBasico ? PLAN_LOCKED_MACROS_BLOCKS : [];
+  // Espejo de Entreno: las herramientas de nutrición (planificación de Comidas, reportes de Macros) salen de un
+  // Nutricionista vinculado o del plan Autoentreno. Con Entrenador solo (o Básico) queda la carga básica de comidas.
+  const comidasBasic = isBasico || (!hasNutricionistaLink && clientPlan !== "autoentreno");
+  const macrosBlurred = comidasBasic ? PLAN_LOCKED_MACROS_BLOCKS : [];
 
   // "entrenador" no es una preferencia (no vive en settings.enabledTabs, no
   // se puede ocultar desde Ajustes > Solapas) -- aparece sola cuando la
   // postulación está aprobada, se apaga sola si se te vence/retiran el rol,
   // igual que PLAN_LOCKED_TABS pero al revés (agrega en vez de sacar).
   const enabledTabs = resolveOrder(settings.enabledTabs, DEFAULT_ENABLED_TABS);
-  const lockedTabs = isBasico ? PLAN_LOCKED_TABS : [];
+  const lockedTabs = isBasico ? PLAN_LOCKED_TABS : comidasBasic ? (["comidas"] as MainTab[]) : [];
   const tabLocked = lockedTabs.includes(activeTab);
   const actividadHidden = settings.actividadHidden;
 // Las herramientas de fuerza (rutinas, entrenamiento en vivo, planificación, reportes) salen de un Entrenador vinculado
@@ -544,6 +547,7 @@ export default function Home() {
           onReorder={(macrosOrder) => saveSettings({ ...settings, macrosOrder })}
           hidden={macrosHidden}
           blurred={macrosBlurred}
+          lockedHint={isBasico ? undefined : "Con un Nutricionista o el plan Autoentreno"}
           onUpgrade={() => setPanel("planes")}
           onHide={(id) => saveSettings((prev) => ({ ...prev, macrosHidden: [...(prev.macrosHidden || []), id] }))}
           foodTrainingInsight={foodTrainingInsight}
@@ -610,8 +614,10 @@ export default function Home() {
       {tabLocked && activeTab === "comidas" && (
         <LockedTabNotice
           title="Comidas"
+          headline={isBasico ? undefined : "Las herramientas de Comidas necesitan un Nutricionista"}
           unlocks={["Planificador semanal de comidas", "Plan semanal de tu Nutricionista, con opciones", "Lista de compras armada con lo que planificaste"]}
-          onUpgrade={() => setPanel("planes")}
+          onUpgrade={() => setPanel(isBasico ? "planes" : "vincular-profesional")}
+          cta={isBasico ? "Ver planes" : "Vincular un Nutricionista"}
         />
       )}
       {tabLocked && activeTab === "gastos" && (

@@ -146,6 +146,7 @@ export function MacrosTab({
   goalMode,
   blurred,
   onUpgrade,
+  lockedHint,
   densityGoal,
 }: {
   entry: DayEntry;
@@ -166,6 +167,8 @@ export function MacrosTab({
   /** Plan Básico: bloques que se ven desenfocados con candado en vez de ocultos. */
   blurred?: readonly MacrosBlockId[];
   onUpgrade?: () => void;
+  /** Texto del candado (según si falta un plan o un Nutricionista). */
+  lockedHint?: string;
   /** Densidad que implica el plan de la Nutricionista para hoy. Sin plan con cantidades es null y no se muestra nada. */
   densityGoal?: Density | null;
 }) {
@@ -367,7 +370,7 @@ export function MacrosTab({
         {visibleOrder.map((blockId) => (
           <SortableSection key={blockId} id={blockId} onHide={() => onHide(blockId)} dragDisabledOnDesktop>
             {blurred?.includes(blockId) ? (
-              <LockedCollapsible eyebrow="Macros" title={MACROS_BLOCK_LABELS[blockId]} onUpgrade={onUpgrade || (() => {})}>
+              <LockedCollapsible eyebrow="Macros" title={MACROS_BLOCK_LABELS[blockId]} onUpgrade={onUpgrade || (() => {})} hint={lockedHint}>
                 {blocks[blockId]}
               </LockedCollapsible>
             ) : (
