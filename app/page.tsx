@@ -11,6 +11,8 @@ import { useMyNutritionPlan } from "@/lib/useMyNutritionPlan";
 import { GoalProgress } from "@/components/GoalProgress";
 import { TabBar, MainTab } from "@/components/TabBar";
 import { LockedTabNotice } from "@/components/LockedTabNotice";
+import { BlurLock } from "@/components/BlurLock";
+import { LockedBlockCard } from "@/components/LockedBlockCard";
 import { MacrosTab } from "@/components/MacrosTab";
 import { ActividadTab } from "@/components/ActividadTab";
 import { SummaryCards } from "@/components/SummaryCards";
@@ -207,7 +209,9 @@ export default function Home() {
   // lista a propósito -- es la única forma de corregir un error en algo ya
   // cargado (no es un "reporte", es edición básica), así que se mantiene
   // disponible para básico igual que "hoy" y "peso".
-  const PLAN_LOCKED_INICIO_BLOCKS = ["objetivo", "seguimiento"] as const;
+  // "objetivo" queda visible en Básico (solo el progreso de la calculadora, sin objetivos de
+  // profesionales); "vinculo" y "seguimiento" se ven con candado, ver el map de Inicio.
+  const PLAN_LOCKED_INICIO_BLOCKS = [] as const;
   const PLAN_LOCKED_MACROS_BLOCKS = ["ranking", "reporte", "cruceEntreno", "diversidad", "tabla"] as const;
 
   const inicioOrder = resolveOrder(settings.inicioOrder, DEFAULT_INICIO_ORDER);
@@ -217,7 +221,9 @@ export default function Home() {
     if (id === "hoy") return;
     saveSettings((prev) => ({ ...prev, inicioHidden: [...(prev.inicioHidden || []), id] }));
   };
-  const macrosHidden = isBasico ? [...(settings.macrosHidden || []), ...PLAN_LOCKED_MACROS_BLOCKS] : settings.macrosHidden || [];
+  const macrosHidden = settings.macrosHidden || [];
+  // En Básico estos bloques se ven desenfocados (BlurLock), no ocultos.
+  const macrosBlurred = isBasico ? PLAN_LOCKED_MACROS_BLOCKS : [];
 
   // "entrenador" no es una preferencia (no vive en settings.enabledTabs, no
   // se puede ocultar desde Ajustes > Solapas) -- aparece sola cuando la
@@ -499,6 +505,8 @@ export default function Home() {
           order={settings.macrosOrder}
           onReorder={(macrosOrder) => saveSettings({ ...settings, macrosOrder })}
           hidden={macrosHidden}
+          blurred={macrosBlurred}
+          onUpgrade={() => setPanel("planes")}
           onHide={(id) => saveSettings((prev) => ({ ...prev, macrosHidden: [...(prev.macrosHidden || []), id] }))}
           foodTrainingInsight={foodTrainingInsight}
           goalMode={settings.calculatorProfile?.modo}
@@ -644,6 +652,16 @@ export default function Home() {
                     </SortableSection>
                   );
                 }
+                if (isBasico && blockId === "vinculo") {
+                  return (
+                    <LockedBlockCard
+                      key="vinculo"
+                      title="Vincularme a un profesional"
+                      description="Conecta con un Entrenador o Nutricionista que te arme el plan."
+                      onUpgrade={() => setPanel("planes")}
+                    />
+                  );
+                }
                 if (blockId === "vinculo") {
                   // Solo tiene sentido para Premium/Premium+ (los planes que
                   // incluyen vínculo con un profesional) y solo si falta algo
@@ -700,7 +718,8 @@ export default function Home() {
                 if (blockId === "seguimiento") {
                   return (
                     <SortableSection key="seguimiento" id="seguimiento" onHide={() => hideInicioBlock("seguimiento")} dragDisabledOnDesktop>
-                      <Collapsible eyebrow="Semana" title="Seguimiento semanal" info={SECTION_HELP.semana} scrollable={false} openOnDesktop>
+                      <BlurLock active={isBasico} title="Seguimiento semanal" onUpgrade={() => setPanel("planes")}>
+                      <Collapsible eyebrow="Semana" title="Seguimiento semanal" info={SECTION_HELP.semana} scrollable={false} openOnDesktop locked={isBasico}>
                         <div className="mb-2 font-display text-base leading-none text-text">Indicadores</div>
                         <SummaryCards
                           summary={summary}
@@ -730,6 +749,7 @@ export default function Home() {
                           fallbackWeightKg={currentWeightKg}
                         />
                       </Collapsible>
+                      </BlurLock>
                     </SortableSection>
                   );
                 }

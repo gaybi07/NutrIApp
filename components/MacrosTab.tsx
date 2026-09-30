@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { BarChart, Bar, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip } from "recharts";
-import { DayEntry, MacrosBlockId, DEFAULT_MACROS_ORDER, resolveOrder, GoalMode } from "@/lib/types";
+import { DayEntry, MacrosBlockId, DEFAULT_MACROS_ORDER, MACROS_BLOCK_LABELS, resolveOrder, GoalMode } from "@/lib/types";
 import { dayTotal, dayProt, dayCarbs, dayFat, dayFiber, dayCaloricDensity, macroTargets, FoodTrainingInsight } from "@/lib/calculations";
 import { FoodTrainingInsights } from "@/components/FoodTrainingInsights";
 import { classifyIngredient, FOOD_GROUP_LABELS, FoodGroup } from "@/lib/foodGroups";
@@ -14,6 +14,7 @@ import { SECTION_HELP } from "@/lib/helpText";
 import { RankingCard } from "@/components/RankingCard";
 import { Ledger } from "@/components/Ledger";
 import { Collapsible } from "@/components/Collapsible";
+import { BlurLock } from "@/components/BlurLock";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 // Colores fijos de macros de la guía de diseño — iguales en Claro y Oscuro
@@ -114,6 +115,8 @@ export function MacrosTab({
   onHide,
   foodTrainingInsight,
   goalMode,
+  blurred,
+  onUpgrade,
 }: {
   entry: DayEntry;
   goal: number;
@@ -130,6 +133,9 @@ export function MacrosTab({
   onHide: (id: MacrosBlockId) => void;
   foodTrainingInsight: FoodTrainingInsight;
   goalMode?: GoalMode;
+  /** Plan Básico: bloques que se ven desenfocados con candado en vez de ocultos. */
+  blurred?: readonly MacrosBlockId[];
+  onUpgrade?: () => void;
 }) {
   const blockOrder = resolveOrder(order, DEFAULT_MACROS_ORDER);
   const drag = useSectionOrder(blockOrder, onReorder);
@@ -308,7 +314,9 @@ export function MacrosTab({
         <div className="min-w-0 space-y-4 lg:columns-2 lg:gap-4 lg:space-y-0 xl:columns-3">
         {visibleOrder.map((blockId) => (
           <SortableSection key={blockId} id={blockId} onHide={() => onHide(blockId)} dragDisabledOnDesktop>
-            {blocks[blockId]}
+            <BlurLock active={Boolean(blurred?.includes(blockId))} title={MACROS_BLOCK_LABELS[blockId]} onUpgrade={onUpgrade || (() => {})}>
+              {blocks[blockId]}
+            </BlurLock>
           </SortableSection>
         ))}
         </div>

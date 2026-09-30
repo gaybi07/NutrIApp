@@ -108,7 +108,7 @@ export function AiEntryForm({
 }) {
   const [fecha, setFecha] = useState(fmtDate(new Date()));
   const [meal, setMeal] = useState<MealKey>(initialMeal || "des");
-  const [mode, setMode] = useState<"ia" | "alacena" | "buscar" | "preparacion">("alacena");
+  const [mode, setMode] = useState<"ia" | "alacena" | "buscar" | "preparacion">(disableAi ? "buscar" : "alacena");
   // Preparación elegida en el modo "Preparación guardada", con las
   // cantidades de esta vez (arranca con las de la última vez que se usó,
   // como punto de partida editable -- no se calcula nada hasta tocar
@@ -670,12 +670,12 @@ export function AiEntryForm({
         </button>
         <button
           type="button"
-          onClick={() => (disableAi ? setStatus("🔒 Buscar producto requiere un plan pago — actualizá tu plan para desbloquearlo.") : setMode("buscar"))}
+          onClick={() => setMode("buscar")}
           className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
-            disableAi ? "text-textMuted/50" : mode === "buscar" ? "bg-gold text-bg" : "text-textMuted"
+            mode === "buscar" ? "bg-gold text-bg" : "text-textMuted"
           }`}
         >
-          {disableAi ? <span className="inline-flex items-center gap-1"><Lock size={16} strokeWidth={1.8} /> Buscar producto</span> : "Buscar producto"}
+          Buscar producto
         </button>
         <button
           type="button"
@@ -826,17 +826,16 @@ export function AiEntryForm({
         </div>
       )}
 
-      {!disableAi && (
-        <div className={mode === "buscar" ? undefined : "hidden"}>
-          <MealFromSearch
-            days={days}
-            fecha={fecha}
-            meal={meal}
-            onUpsert={onUpsert}
-            onAdded={(updated) => setMeal(suggestedMeal(updated, new Date().getHours()))}
-          />
-        </div>
-      )}
+      {/* Buscar producto no usa IA: disponible también en Básico. */}
+      <div className={mode === "buscar" ? undefined : "hidden"}>
+        <MealFromSearch
+          days={days}
+          fecha={fecha}
+          meal={meal}
+          onUpsert={onUpsert}
+          onAdded={(updated) => setMeal(suggestedMeal(updated, new Date().getHours()))}
+        />
+      </div>
 
       {!disableAi && mode === "preparacion" && (
         <div className="mt-2">
