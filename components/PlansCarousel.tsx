@@ -39,6 +39,8 @@ export function PlansCarousel({ currentPlan }: { currentPlan: ClientPlan }) {
   // solapa -- si deslizabas el carrusel a mano, quedaban pegados en la
   // tarjeta vieja. Este observer sigue cuál tarjeta está más visible
   // mientras se desliza (a mano o programático) y sincroniza `selected`.
+  const pillRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
   useEffect(() => {
     const deck = deckRef.current;
     if (!deck) return;
@@ -56,6 +58,12 @@ export function PlansCarousel({ currentPlan }: { currentPlan: ClientPlan }) {
     cardRefs.current.forEach((el) => el && observer.observe(el));
     return () => observer.disconnect();
   }, []);
+
+  // Al deslizar hasta el último plan, la pastilla seleccionada tiene que
+  // quedar entera dentro de la fila de arriba, no cortada en el borde.
+  useEffect(() => {
+    pillRefs.current[selected]?.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+  }, [selected]);
 
   const elegir = async (plan: PlanId) => {
     if (plan === "basico") return;
@@ -83,10 +91,11 @@ export function PlansCarousel({ currentPlan }: { currentPlan: ClientPlan }) {
         Planes y suscripción
       </div>
 
-      <div className="-mx-1 mb-3 flex gap-1.5 overflow-x-auto px-1 pb-1" style={{ scrollbarWidth: "none" }}>
+      <div className="-mx-1 mb-3 flex gap-1.5 overflow-x-auto px-1 pb-1 pr-4" style={{ scrollbarWidth: "none" }}>
         {PLAN_IDS.map((id, i) => (
           <button
             key={id}
+            ref={(el) => { pillRefs.current[i] = el; }}
             type="button"
             onClick={() => goTo(i)}
             className={`shrink-0 rounded-full border px-3.5 py-1.5 font-mono text-[12px] font-bold whitespace-nowrap ${
