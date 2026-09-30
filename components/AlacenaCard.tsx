@@ -7,7 +7,6 @@ import { Collapsible } from "@/components/Collapsible";
 import { SECTION_HELP } from "@/lib/helpText";
 import { QuickAddProducts, AiShoppingItem } from "@/components/QuickAddProducts";
 import { ShoppingLog } from "@/components/ShoppingLog";
-import { CocinaView } from "@/components/CocinaView";
 import { ExtraConsumption } from "@/components/ExtraConsumption";
 import { PrepareDish } from "@/components/PrepareDish";
 import { ProductScanner } from "@/components/ProductScanner";
@@ -489,12 +488,6 @@ export function AlacenaCard({
         </div>
       )}
 
-      {/* La Cocina (heladera / alacena / mesada) va desplegada siempre, no en
-          un pop-up que se abra solo al entrar; la lista de productos queda
-          plegada debajo hasta tocar "Ver lista". */}
-      <div className="mb-3">
-        <CocinaView items={items} addStructuredItems={addStructuredItems} updateItem={updateItem} productMemory={productMemory} />
-      </div>
 
 
       {showQuickAdd && (
