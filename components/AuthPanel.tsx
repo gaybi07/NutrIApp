@@ -97,6 +97,10 @@ export function AuthPanel({
     setStatus("Ingresando...");
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setStatus(error ? "Email o contraseña incorrectos." : "");
+    // Los datos de la cuenta se traen una sola vez al abrir la página (useLocalDays):
+    // sin recargar, quedaban los ajustes vacíos de antes del login, saltaba el
+    // onboarding y al terminarlo se guardaban por encima de los de la nube.
+    if (!error) window.location.reload();
   };
 
   const signInWithGoogle = async () => {
@@ -118,6 +122,8 @@ export function AuthPanel({
     await fetch("/api/auth/session", { method: "POST" });
     onAuthChange?.(false);
     setStatus("Sesión cerrada.");
+    // Recargar para no dejar en pantalla (ni en memoria) los datos de la cuenta que se fue.
+    window.location.reload();
   };
 
   if (userEmail || !isSupabaseConfigured) {
