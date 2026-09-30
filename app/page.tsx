@@ -60,7 +60,7 @@ import { useNextWeekTrainingPlan } from "@/lib/useNextWeekTrainingPlan";
 import { useProductMemory } from "@/lib/useProductMemory";
 import { emptyDay, MealKey, MEAL_LABELS, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER, resolveOrder } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
-import { TriangleAlert, Flame, Lock } from "lucide-react";
+import { TriangleAlert, Flame } from "lucide-react";
 
 export default function Home() {
   const { days, settings, loaded, syncError, upsertDay, saveDays, saveSettings } = useLocalDays();
@@ -724,7 +724,6 @@ export default function Home() {
                         info={SECTION_HELP.semana}
                         scrollable={false}
                         openOnDesktop={!isBasico}
-                        badge={isBasico ? <Lock size={14} strokeWidth={1.8} className="text-textMuted" /> : undefined}
                       >
                         <BlurLock active={isBasico} title="Seguimiento semanal" onUpgrade={() => setPanel("planes")}>
                         <div className="mb-2 font-display text-base leading-none text-text">Indicadores</div>
