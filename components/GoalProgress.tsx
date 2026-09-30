@@ -17,8 +17,15 @@ function fmtDateAr(iso: string) {
   return `${d.getDate()}/${d.getMonth() + 1}`;
 }
 
-export function GoalProgress({ progress, openOnDesktop, setBy }: { progress: GoalProgressInfo; openOnDesktop?: boolean; setBy?: string }) {
-  const setByLine = setBy ? <div className="mb-2 font-mono text-[9px] uppercase tracking-wide text-gold">{setBy}</div> : null;
+export function GoalProgress({ progress, openOnDesktop, setBy, extraLines }: { progress: GoalProgressInfo; openOnDesktop?: boolean; setBy?: string; extraLines?: string[] }) {
+  const setByLine = setBy ? (
+    <div className="mb-2 rounded-lg border border-gold/40 bg-gold/5 px-2.5 py-1.5">
+      <div className="font-mono text-[9px] uppercase tracking-wide text-gold">{setBy}</div>
+      {extraLines?.map((line) => (
+        <div key={line} className="mt-0.5 text-[12px] text-text">{line}</div>
+      ))}
+    </div>
+  ) : null;
   const { modo, metaKg, fechaObjetivo, diasRestantes, kgTotalPlan, kgYaLogrados, kgRestantes, kgPorSemanaNecesario, ritmoRealSemanal, yaLlego, proteinTargetG, goalKcal, actualKg } =
     progress;
 

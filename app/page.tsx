@@ -697,7 +697,7 @@ export default function Home() {
                   if (!goalProgress && !nutritionGoal && !trainingGoal) return null;
                   return (
                     <SortableSection key="objetivo" id="objetivo" onHide={() => hideInicioBlock("objetivo")} dragDisabledOnDesktop>
-                      {(nutritionGoal || trainingGoal) && (
+                      {((nutritionGoal && !goalProgress) || trainingGoal) && !goalProgress && (
                         <div className="mb-2 rounded-xl border border-gold/40 bg-gold/5 p-3">
                           <div className="mb-1.5 font-mono text-[9px] uppercase tracking-[0.15em] text-gold">Objetivo de tus profesionales</div>
                           <div className="grid grid-cols-2 gap-2">
@@ -718,7 +718,8 @@ export default function Home() {
                           </div>
                         </div>
                       )}
-                      {goalProgress && <GoalProgress progress={goalProgress} openOnDesktop setBy={nutritionGoal ? "Fijado por tu Nutricionista" : undefined} />}
+                      {goalProgress && <GoalProgress progress={goalProgress} openOnDesktop setBy={nutritionGoal ? (trainingGoal ? "Objetivo validado por tus profesionales" : "Objetivo validado por tu Nutricionista") : trainingGoal ? "Objetivo validado por tu Entrenador" : undefined}
+                        extraLines={trainingGoal ? [`Entrenador: ${trainingGoal.sesionesSemana} sesiones por semana · ~${trainingGoal.volumenPlanificado.toLocaleString("es-AR")} kg de volumen`] : undefined} />}
                     </SortableSection>
                   );
                 }
