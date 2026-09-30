@@ -20,6 +20,8 @@ export interface ObjectiveProgress {
   todayMet: boolean | null;
   /** Objetivos que el cliente marca a mano (agua, hábito propio): hace falta preguntarle cada día. */
   manual: boolean;
+  /** Si en la semana en curso ya cumplió la meta (objetivos recurrentes; false en los puntuales). */
+  weekMet: boolean;
 }
 
 const norm = (value: string) =>
@@ -98,7 +100,7 @@ export function computeObjectiveProgress(
   // ---------- Puntuales ----------
   if (o.tipo === "peso") {
     const series = weightSeries(days, weeklyWeights);
-    if (series.length === 0) return { percent: 0, headline: "Cargá tu peso para empezar a medirlo", achieved: false, todayMet: null, manual };
+    if (series.length === 0) return { percent: 0, headline: "Cargá tu peso para empezar a medirlo", achieved: false, todayMet: null, manual, weekMet: false };
     const current = series[series.length - 1].peso;
     const created = o.createdAt.slice(0, 10);
     const before = series.filter((p) => p.fecha <= created);
@@ -113,6 +115,7 @@ export function computeObjectiveProgress(
       achieved,
       todayMet: null,
       manual: false,
+      weekMet: false,
     };
   }
 
@@ -128,7 +131,7 @@ export function computeObjectiveProgress(
       }
     }
     points.sort((a, b) => a.fecha.localeCompare(b.fecha));
-    if (points.length === 0) return { percent: 0, headline: `Todavía sin cargas de ${o.ejercicio || "ese ejercicio"}`, achieved: false, todayMet: null, manual: false };
+    if (points.length === 0) return { percent: 0, headline: `Todavía sin cargas de ${o.ejercicio || "ese ejercicio"}`, achieved: false, todayMet: null, manual: false, weekMet: false };
     const best = Math.max(...points.map((p) => p.peso));
     const created = o.createdAt.slice(0, 10);
     const before = points.filter((p) => p.fecha <= created);
@@ -142,6 +145,7 @@ export function computeObjectiveProgress(
       achieved,
       todayMet: null,
       manual: false,
+      weekMet: false,
     };
   }
 
@@ -198,6 +202,7 @@ export function computeObjectiveProgress(
     achieved,
     todayMet,
     manual,
+    weekMet: current.met,
   };
 }
 

@@ -13,6 +13,9 @@ import { TabBar, MainTab } from "@/components/TabBar";
 import { LockedTabNotice } from "@/components/LockedTabNotice";
 import { ProfesionalesTab } from "@/components/ProfesionalesTab";
 import { MyObjectivesCard } from "@/components/MyObjectivesCard";
+import { AchievementsCard } from "@/components/AchievementsCard";
+import { computeAchievements } from "@/lib/achievements";
+import { useAchievementClaims } from "@/lib/useAchievementClaims";
 import { useMyObjectives } from "@/lib/useMyObjectives";
 import { useMyPoints } from "@/lib/useMyPoints";
 import { computeObjectiveProgress } from "@/lib/objectiveProgress";
@@ -395,6 +398,21 @@ export default function Home() {
       earliestLoggedWeight(days, settings.weeklyWeights) ?? undefined
     );
   }, [settings.calculatorProfile, currentWeightKg, weightTrend, goalKcal, proteinTarget, days, settings.weeklyWeights]);
+
+  // Logros diarios / semanales / mensuales y de los objetivos propios: se detectan con lo que se carga y se reclaman en
+  // la base (que decide los puntos).
+  const achievements = useMemo(
+    () =>
+      computeAchievements({
+        days,
+        objectives: objectivesWithProgress,
+        weeklyWeights: settings.weeklyWeights,
+        goalProgress,
+        today: fmtDate(new Date()),
+      }),
+    [days, objectivesWithProgress, settings.weeklyWeights, goalProgress]
+  );
+  const achievementClaims = useAchievementClaims(authenticated, achievements, myPoints.refetch);
 
   const muscleGroupTrend = useMemo(
     () => computeMuscleGroupVolumeTrend(days, weekDates),
@@ -821,6 +839,13 @@ export default function Home() {
                           <MyObjectivesCard items={objectivesWithProgress} onCheck={myObjectives.saveCheck} todayFecha={fmtDate(new Date())} totalPoints={myPoints.total} pointsByObjective={myPoints.byObjective} />
                         </div>
                       )}
+                    </SortableSection>
+                  );
+                }
+                if (blockId === "logros") {
+                  return (
+                    <SortableSection key="logros" id="logros" onHide={() => hideInicioBlock("logros")} dragDisabledOnDesktop>
+                      <AchievementsCard achievements={achievements} claimed={achievementClaims.claimed} totalPoints={myPoints.total} />
                     </SortableSection>
                   );
                 }
