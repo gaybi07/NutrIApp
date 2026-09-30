@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { SortableSection } from "@/components/SortableSection";
@@ -12,6 +12,9 @@ import { GoalProgress } from "@/components/GoalProgress";
 import { TabBar, MainTab } from "@/components/TabBar";
 import { LockedTabNotice } from "@/components/LockedTabNotice";
 import { ProfesionalesTab } from "@/components/ProfesionalesTab";
+import { MyObjectivesCard } from "@/components/MyObjectivesCard";
+import { useMyObjectives } from "@/lib/useMyObjectives";
+import { computeObjectiveProgress } from "@/lib/objectiveProgress";
 import { BlurLock } from "@/components/BlurLock";
 import { LockedBlockCard } from "@/components/LockedBlockCard";
 import { MacrosTab } from "@/components/MacrosTab";
@@ -350,6 +353,34 @@ export default function Home() {
     if (currentWeight == null || previousWeight == null) return null;
     return currentWeight - previousWeight;
   }, [settings.weeklyWeights, monday]);
+
+  // Objetivos medibles que fijaron los profesionales: se miden solos con lo que se carga, y al cumplirse se marcan
+  // como logrados (el profesional se entera y puede dejar un mensaje).
+  const myObjectives = useMyObjectives(authenticated);
+  const objectivesWithProgress = useMemo(
+    () =>
+      myObjectives.objectives.map((objective) => ({
+        objective,
+        progress: computeObjectiveProgress(
+          objective,
+          days,
+          settings.weeklyWeights,
+          myObjectives.checks.filter((c) => c.objectiveId === objective.id),
+          fmtDate(new Date())
+        ),
+      })),
+    [myObjectives.objectives, myObjectives.checks, days, settings.weeklyWeights]
+  );
+  const achievedMarkedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    for (const { objective, progress } of objectivesWithProgress) {
+      if (objective.estado === "activo" && progress.achieved && !achievedMarkedRef.current.has(objective.id)) {
+        achievedMarkedRef.current.add(objective.id);
+        myObjectives.markAchieved(objective.id);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [objectivesWithProgress]);
 
   const goalProgress = useMemo(() => {
     if (!settings.calculatorProfile) return null;
@@ -757,7 +788,7 @@ export default function Home() {
                   );
                 }
                 if (blockId === "objetivo") {
-                  if (!goalProgress && !nutritionGoal && !trainingGoal) return null;
+                  if (!goalProgress && !nutritionGoal && !trainingGoal && objectivesWithProgress.length === 0) return null;
                   return (
                     <SortableSection key="objetivo" id="objetivo" onHide={() => hideInicioBlock("objetivo")} dragDisabledOnDesktop>
                       {((nutritionGoal && !goalProgress) || trainingGoal) && !goalProgress && (
@@ -783,6 +814,11 @@ export default function Home() {
                       )}
                       {goalProgress && <GoalProgress progress={goalProgress} openOnDesktop setBy={nutritionGoal ? (trainingGoal ? "Objetivo validado por tus profesionales" : "Objetivo validado por tu Nutricionista") : trainingGoal ? "Objetivo validado por tu Entrenador" : undefined}
                         extraLines={trainingGoal ? [`Entrenador: ${trainingGoal.sesionesSemana} sesiones por semana · ~${trainingGoal.volumenPlanificado.toLocaleString("es-AR")} kg de volumen`] : undefined} />}
+                      {objectivesWithProgress.length > 0 && (
+                        <div className={goalProgress ? "mt-3" : ""}>
+                          <MyObjectivesCard items={objectivesWithProgress} onCheck={myObjectives.saveCheck} todayFecha={fmtDate(new Date())} />
+                        </div>
+                      )}
                     </SortableSection>
                   );
                 }
