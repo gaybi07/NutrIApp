@@ -605,6 +605,35 @@ export function AiEntryForm({
             <span className="shrink-0 font-mono text-[10px] text-textMuted">{Math.round(yaCargadoTotales.kcal)} kcal</span>
           </div>
           <MealItemsList entry={entryForFecha} meal={meal} onUpsert={onUpsert} onInventoryDelta={onInventoryDelta} />
+          {yaCargado.some((item) => !item.grupoId) && (
+          <button
+            type="button"
+            onClick={() => {
+              if (disableAi) {
+                setStatus("🔒 Guardar preparaciones requiere un plan pago — actualizá tu plan para desbloquearlo.");
+                return;
+              }
+              const nombre = window.prompt(`¿Cómo se llama esta preparación? (se guarda con los ${yaCargado.filter((item) => !item.grupoId).length} productos de ${MEAL_LABELS[meal].toLowerCase()})`);
+              if (!nombre || !nombre.trim()) return;
+              const loose = yaCargado.filter((item) => !item.grupoId);
+              const grouped = yaCargado.filter((item) => item.grupoId);
+              onUpsert(applyMealItems(entryForFecha, meal, [...grouped, ...tagGroup(loose, nombre.trim())]));
+              savePreparation(
+                nombre.trim(),
+                "",
+                loose.map((item) => ({ nombre: item.nombre, cantidad: item.gramos ?? 1, unidad: (item.gramos != null ? "g" : "u.") as "g" | "u." })),
+                meal
+              );
+              setStatus(`Guardado "${nombre.trim()}" en tus preparaciones. Lo elegís desde la pestaña Preparación.`);
+            }}
+            className={`mt-2 w-full rounded-lg border border-dashed px-3 py-2 font-mono text-[10px] uppercase tracking-wide ${
+              disableAi ? "border-border text-textMuted/60" : "border-gold/50 text-gold"
+            }`}
+          >
+            {disableAi && <Lock size={12} strokeWidth={1.8} className="mr-1 inline" />}
+            + Agregar {MEAL_LABELS[meal].toLowerCase()} a preparaciones ({yaCargado.filter((item) => !item.grupoId).length} productos)
+          </button>
+          )}
         </div>
       )}
 
@@ -836,41 +865,6 @@ export function AiEntryForm({
           onAdded={(updated) => setMeal(suggestedMeal(updated, new Date().getHours()))}
         />
       </div>
-
-      {/* Lo ya cargado en esta comida desde Alacena / Buscar producto (varios
-          ítems sueltos) se puede guardar de una como preparación reusable:
-          después, en "Preparación", se elige y se ajusta la cantidad de cada
-          ingrediente. Mismo mecanismo que "Agregar a preparaciones" de
-          Modificar comidas, pero a mano en el momento de cargar. */}
-      {(mode === "alacena" || mode === "buscar") && entryForFecha && yaCargado.filter((item) => !item.grupoId).length > 1 && (
-        <button
-          type="button"
-          onClick={() => {
-            if (disableAi) {
-              setStatus("🔒 Guardar preparaciones requiere un plan pago — actualizá tu plan para desbloquearlo.");
-              return;
-            }
-            const nombre = window.prompt(`¿Cómo se llama esta preparación? (se guarda con los ${yaCargado.filter((item) => !item.grupoId).length} productos de ${MEAL_LABELS[meal].toLowerCase()})`);
-            if (!nombre || !nombre.trim()) return;
-            const loose = yaCargado.filter((item) => !item.grupoId);
-            const grouped = yaCargado.filter((item) => item.grupoId);
-            onUpsert(applyMealItems(entryForFecha, meal, [...grouped, ...tagGroup(loose, nombre.trim())]));
-            savePreparation(
-              nombre.trim(),
-              "",
-              loose.map((item) => ({ nombre: item.nombre, cantidad: item.gramos ?? 1, unidad: (item.gramos != null ? "g" : "u.") as "g" | "u." })),
-              meal
-            );
-            setStatus(`Guardado "${nombre.trim()}" en tus preparaciones. Lo elegís desde la pestaña Preparación.`);
-          }}
-          className={`mt-2 w-full rounded-lg border border-dashed px-3 py-2 font-mono text-[10px] uppercase tracking-wide ${
-            disableAi ? "border-border text-textMuted/60" : "border-gold/50 text-gold"
-          }`}
-        >
-          {disableAi && <Lock size={12} strokeWidth={1.8} className="mr-1 inline" />}
-          + Agregar {MEAL_LABELS[meal].toLowerCase()} a preparaciones ({yaCargado.filter((item) => !item.grupoId).length} productos)
-        </button>
-      )}
 
       {!disableAi && mode === "preparacion" && (
         <div className="mt-2">
