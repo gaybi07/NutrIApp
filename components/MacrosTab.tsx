@@ -14,6 +14,7 @@ import { SECTION_HELP } from "@/lib/helpText";
 import { RankingCard } from "@/components/RankingCard";
 import { Ledger } from "@/components/Ledger";
 import { Collapsible } from "@/components/Collapsible";
+import { Density, entryDensity } from "@/lib/density";
 import { LockedCollapsible } from "@/components/BlurLock";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
@@ -99,6 +100,34 @@ function MacroStat({ label, value, target, color, neonClass }: { label: string; 
   );
 }
 
+function DensityStat({
+  label,
+  value,
+  goal,
+  unit,
+  goodWhen,
+}: {
+  label: string;
+  value?: number;
+  goal: number;
+  unit: string;
+  /** "high": mejor cuanto más alto (proteína); "low": mejor cuanto más bajo (kcal por gramo). */
+  goodWhen: "high" | "low";
+}) {
+  const ok = value == null ? null : goodWhen === "high" ? value >= goal * 0.9 : value <= goal * 1.1;
+  return (
+    <div className="rounded-xl border border-border bg-bg/30 p-2.5">
+      <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">{label}</div>
+      <div className={`font-sans text-lg font-bold leading-tight ${ok == null ? "text-textMuted" : ok ? "text-sage" : "text-rust"}`}>
+        {value == null ? "—" : value} <span className="text-[10px] font-normal text-textMuted">{unit}</span>
+      </div>
+      <div className="font-mono text-[9px] text-textMuted">
+        objetivo {goodWhen === "high" ? "≥" : "≤"} {goal} {unit}
+      </div>
+    </div>
+  );
+}
+
 export function MacrosTab({
   entry,
   goal,
@@ -117,6 +146,7 @@ export function MacrosTab({
   goalMode,
   blurred,
   onUpgrade,
+  densityGoal,
 }: {
   entry: DayEntry;
   goal: number;
@@ -136,6 +166,8 @@ export function MacrosTab({
   /** Plan Básico: bloques que se ven desenfocados con candado en vez de ocultos. */
   blurred?: readonly MacrosBlockId[];
   onUpgrade?: () => void;
+  /** Densidad que implica el plan de la Nutricionista para hoy. Sin plan con cantidades es null y no se muestra nada. */
+  densityGoal?: Density | null;
 }) {
   const blockOrder = resolveOrder(order, DEFAULT_MACROS_ORDER);
   const drag = useSectionOrder(blockOrder, onReorder);
@@ -201,6 +233,8 @@ export function MacrosTab({
     }
   }
 
+  const actualDensity = entryDensity(entry);
+
   const resumenBlock = (
       <Collapsible eyebrow="Hoy" title="Macros" info={SECTION_HELP.macros} defaultOpen>
         {goalMode && (
@@ -214,6 +248,24 @@ export function MacrosTab({
           <MacroStat label="Grasas" value={fat} target={targets.fatG} color={COLORS.fat} neonClass="chart-neon-c" />
           <MacroStat label="Fibra" value={fiber} target={targets.fiberG} color={COLORS.fiber} neonClass="chart-neon-d" />
         </div>
+        {densityGoal && (
+          <div className="mb-3">
+            <div className="mb-1.5 font-mono text-[9px] uppercase tracking-[0.14em] text-textMuted">Densidad de lo que comés hoy</div>
+            <div className="grid grid-cols-2 gap-3">
+              <DensityStat
+                label="Proteína cada 100 g"
+                value={actualDensity?.proteinPer100g}
+                goal={densityGoal.proteinPer100g}
+                unit="g"
+                goodWhen="high"
+              />
+              <DensityStat label="Energía por gramo" value={actualDensity?.kcalPerG} goal={densityGoal.kcalPerG} unit="kcal/g" goodWhen="low" />
+            </div>
+            {!actualDensity && (
+              <div className="mt-1 text-[10px] text-textMuted">Se calcula con las comidas que cargaste con gramos (las del plan ya los traen).</div>
+            )}
+          </div>
+        )}
         <div className="mb-3 font-mono text-[11px] text-textMuted">
           {consumedKcal.toLocaleString("es-AR")} de {goal.toLocaleString("es-AR")} kcal hoy
         </div>

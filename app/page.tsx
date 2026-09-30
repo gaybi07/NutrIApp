@@ -59,6 +59,7 @@ import { useMyAssignedSessions } from "@/lib/useAssignedSessions";
 import { useNextWeekTrainingPlan } from "@/lib/useNextWeekTrainingPlan";
 import { useProductMemory } from "@/lib/useProductMemory";
 import { ingredientsToText, inventoryMessage } from "@/lib/planInventory";
+import { optionGrams, planDayDensity } from "@/lib/density";
 import { emptyDay, MealKey, MealOption, MEAL_LABELS, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER, resolveOrder, WEEKDAYS } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
 import { TriangleAlert, Flame } from "lucide-react";
@@ -289,6 +290,7 @@ export default function Home() {
         carbs: option.carbs,
         fat: option.fat,
         fiber: 0,
+        gramos: optionGrams(option) ?? undefined,
       };
       upsertDay(applyMealItems(existing, meal, [...getMealItems(existing, meal), item]));
       // Lo que se come del plan se descuenta de la Alacena (por ingrediente y cantidad).
@@ -543,6 +545,7 @@ export default function Home() {
           onHide={(id) => saveSettings((prev) => ({ ...prev, macrosHidden: [...(prev.macrosHidden || []), id] }))}
           foodTrainingInsight={foodTrainingInsight}
           goalMode={settings.calculatorProfile?.modo}
+          densityGoal={hasNutricionistaLink ? planDayDensity(nutritionPlanThisWeek.days[WEEKDAYS[new Date().getDay()]], weekPlan[fmtDate(new Date())]) : null}
         />
       )}
 

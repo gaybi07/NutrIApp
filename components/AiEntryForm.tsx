@@ -8,6 +8,7 @@ import { useMyNutritionPlan } from "@/lib/useMyNutritionPlan";
 import { LevelChip, quantities } from "@/components/PlanAlmanaque";
 import { btn } from "@/components/buttonStyles";
 import { ingredientsToText, inventoryMessage } from "@/lib/planInventory";
+import { optionGrams } from "@/lib/density";
 import { RECIPES } from "@/lib/recipes";
 import { MealItemsList, MealItemsInventoryDelta } from "@/components/MealItemsList";
 import { SavePreparationToggle } from "@/components/SavePreparationToggle";
@@ -231,6 +232,7 @@ export function AiEntryForm({
       carbs: option.carbs,
       fat: option.fat,
       fiber: 0,
+      gramos: optionGrams(option) ?? undefined,
     };
     onUpsert(applyMealItems(existing, meal, [...getMealItems(existing, meal), item]));
     const text = ingredientsToText(option);
