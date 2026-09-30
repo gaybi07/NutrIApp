@@ -14,7 +14,7 @@ import { TrainingIndicators } from "@/components/TrainingIndicators";
 import { TrainingGoal } from "@/components/TrainingGoal";
 import { MuscleGroupVolume } from "@/components/MuscleGroupVolume";
 import { DailySteps } from "@/components/DailySteps";
-import { Collapsible } from "@/components/Collapsible";
+import { Collapsible, BareSectionContext } from "@/components/Collapsible";
 import { BlurLock, LockedCollapsible } from "@/components/BlurLock";
 import { LiveWorkout } from "@/components/LiveWorkout";
 import { Award, Lock } from "lucide-react";
@@ -339,23 +339,28 @@ export function ActividadTab({
       <WeekTrainingPlanCard weekSessions={weekSessions || []} nextWeekReady={Boolean(nextWeekReady)} />
     ) : null,
     objetivoEntreno: trainingGoalPreview ? <TrainingGoal goal={trainingGoalPreview} openOnDesktop /> : null,
-    indicadoresEntreno: <TrainingIndicators routines={routines} workoutSuggestions={workoutSuggestions} />,
     pasosEditar: <DailySteps weekDates={weekDates} weekDays={weekDays} onUpsert={onUpsert} />,
-    pasosChart: <WeekBarChart title="Gráfico de pasos" data={stepsData} color={STEPS_COLOR} unit="pasos" neonClass="chart-neon-a" />,
-    entrenoChart: <WeekBarChart title="Calorías quemadas entrenando" data={trainingData} color={TRAINING_COLOR} unit="kcal" neonClass="chart-neon-b" />,
-    suenoChart: (
-      <WeekBarChart
-        title="Sueño de la semana"
-        data={sleepData}
-        color={SLEEP_COLOR}
-        unit="hs"
-        referenceValue={SLEEP_TARGET_HOURS}
-        referenceLabel={`recomendado ${SLEEP_TARGET_HOURS}h`}
-        neonClass="chart-neon-c"
-      />
+    // Un solo reporte: indicadores, gráficos de la semana y volumen por grupo muscular, como secciones planas.
+    reporte: (
+      <Collapsible eyebrow="Semana" title="Reporte de entrenamiento" info={SECTION_HELP.actividad}>
+        <BareSectionContext.Provider value={true}>
+          <TrainingIndicators routines={routines} workoutSuggestions={workoutSuggestions} />
+          <WeekBarChart title="Pasos" data={stepsData} color={STEPS_COLOR} unit="pasos" neonClass="chart-neon-a" />
+          <WeekBarChart title="Calorías quemadas entrenando" data={trainingData} color={TRAINING_COLOR} unit="kcal" neonClass="chart-neon-b" />
+          <WeekBarChart
+            title="Sueño"
+            data={sleepData}
+            color={SLEEP_COLOR}
+            unit="hs"
+            referenceValue={SLEEP_TARGET_HOURS}
+            referenceLabel={`recomendado ${SLEEP_TARGET_HOURS}h`}
+            neonClass="chart-neon-c"
+          />
+          <WeekBarChart title="Volumen entrenado (series × reps × peso)" data={volumeData} color={VOLUME_COLOR} unit="kg" neonClass="chart-neon-d" />
+          <MuscleGroupVolume trend={muscleGroupTrend} modo={goalMode} />
+        </BareSectionContext.Provider>
+      </Collapsible>
     ),
-    volumenChart: <WeekBarChart title="Volumen entrenado (series × reps × peso)" data={volumeData} color={VOLUME_COLOR} unit="kg" neonClass="chart-neon-d" />,
-    volumenGrupos: <MuscleGroupVolume trend={muscleGroupTrend} modo={goalMode} openOnDesktop />,
     rutinas: (
       <RoutineManager
         routines={routines}

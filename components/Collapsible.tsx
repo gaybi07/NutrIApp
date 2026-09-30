@@ -1,8 +1,12 @@
 "use client";
 
-import { KeyboardEvent, ReactNode, useContext, useEffect, useState } from "react";
+import { KeyboardEvent, ReactNode, createContext, useContext, useEffect, useState } from "react";
 import { ForceOpenContext } from "@/components/BlurLock";
 import { InfoHint } from "@/components/InfoHint";
+
+/** Dentro de un reporte unificado, los Collapsible anidados se ven como secciones planas (título + contenido,
+ * siempre abiertas), sin tarjeta propia -- así el reporte es una sola tarjeta y no tarjetas dentro de tarjetas. */
+export const BareSectionContext = createContext(false);
 
 export function Collapsible({
   eyebrow,
@@ -36,6 +40,7 @@ export function Collapsible({
 }) {
   const [openState, setOpen] = useState(locked || defaultOpen);
   const forceOpen = useContext(ForceOpenContext);
+  const bare = useContext(BareSectionContext);
   const open = openState || forceOpen;
 
   useEffect(() => {
@@ -58,6 +63,18 @@ export function Collapsible({
       toggle();
     }
   };
+
+  if (bare) {
+    return (
+      <div className="mb-4">
+        <div className="mb-1.5 flex items-center font-mono text-[10px] uppercase tracking-[0.14em] text-textMuted">
+          {title}
+          {info && <InfoHint text={info} label={`Qué es ${title}`} />}
+        </div>
+        {children}
+      </div>
+    );
+  }
 
   return (
     <section className="mb-4 rounded-2xl border border-border bg-surface/70 shadow-[0_0_0_1px_rgba(58,54,47,0.4)]">

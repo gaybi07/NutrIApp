@@ -813,9 +813,9 @@ export const MACROS_BLOCK_LABELS: Record<MacrosBlockId, string> = {
 };
 
 export type ActividadBlockId =
-  | "resumen" | "planSemanaFuerza" | "objetivoEntreno" | "indicadoresEntreno" | "pasosEditar" | "pasosChart" | "entrenoChart" | "suenoChart" | "volumenChart" | "volumenGrupos" | "rutinas";
+  | "resumen" | "planSemanaFuerza" | "objetivoEntreno" | "reporte" | "pasosEditar" | "rutinas";
 export const DEFAULT_ACTIVIDAD_ORDER: ActividadBlockId[] = [
-  "resumen", "planSemanaFuerza", "objetivoEntreno", "indicadoresEntreno", "pasosEditar", "pasosChart", "entrenoChart", "suenoChart", "volumenChart", "volumenGrupos", "rutinas",
+  "resumen", "planSemanaFuerza", "objetivoEntreno", "reporte", "pasosEditar", "rutinas",
 ];
 export const ACTIVIDAD_BLOCK_LABELS: Record<ActividadBlockId, string> = {
   resumen: "Hoy · Entrenamiento",
@@ -824,13 +824,9 @@ export const ACTIVIDAD_BLOCK_LABELS: Record<ActividadBlockId, string> = {
   // sentido con Entrenador vinculado (ver hasTrainerLink en ActividadTab).
   planSemanaFuerza: "Plan de la semana (Entrenador)",
   objetivoEntreno: "Objetivo de entrenamiento",
-  indicadoresEntreno: "Indicadores de entrenamiento",
+  // Indicadores, gráficos de pasos / calorías / sueño / volumen y volumen por grupo muscular, todo junto.
+  reporte: "Reporte de entrenamiento",
   pasosEditar: "Pasos (editar)",
-  pasosChart: "Gráfico de pasos",
-  entrenoChart: "Gráfico de entrenamiento",
-  suenoChart: "Gráfico de sueño",
-  volumenChart: "Gráfico de volumen",
-  volumenGrupos: "Volumen por grupo muscular",
   rutinas: "Rutinas",
 };
 

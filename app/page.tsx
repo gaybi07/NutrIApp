@@ -206,7 +206,7 @@ export default function Home() {
   // Se VEN con candado (no desaparecen) y al tocarlas muestran qué desbloquean.
   // Cargar comidas (desde Inicio), Macros y Entreno quedan con lo básico -- ver PLAN_LOCKED_ACTIVIDAD_BLOCKS.
   const PLAN_LOCKED_TABS: MainTab[] = ["alacena", "comidas", "gastos"];
-  const PLAN_LOCKED_ACTIVIDAD_BLOCKS = ["planSemanaFuerza", "objetivoEntreno", "indicadoresEntreno", "pasosEditar", "pasosChart", "entrenoChart", "suenoChart", "volumenChart", "volumenGrupos", "rutinas"] as const;
+  const PLAN_LOCKED_ACTIVIDAD_BLOCKS = ["planSemanaFuerza", "objetivoEntreno", "reporte", "pasosEditar", "rutinas"] as const;
   // "comidasSemana" (Modificar comidas de la semana) queda afuera de esta
   // lista a propósito -- es la única forma de corregir un error en algo ya
   // cargado (no es un "reporte", es edición básica), así que se mantiene
