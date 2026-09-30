@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Lock } from "lucide-react";
 import { DayEntry, MealKey, MEAL_LABELS } from "@/lib/types";
 import { getMealItems, applyMealItems, tagGroup } from "@/lib/calculations";
 import { useMealPreparations } from "@/lib/useMealPreparations";
@@ -29,6 +30,8 @@ export function MealsEditor({
   onUpsert,
   emptyMessage,
   onInventoryDelta,
+  preparationsLocked,
+  onUpgrade,
 }: {
   entry: DayEntry;
   onUpsert: (entry: DayEntry) => void;
@@ -39,6 +42,9 @@ export function MealsEditor({
    * esto, el stock quedaba fijo en lo que se cargó la primera vez aunque
    * después se corrigiera la cantidad. */
   onInventoryDelta?: (deltas: MealsEditorInventoryDelta[]) => void;
+  /** Plan Básico: el botón de preparaciones se ve pero bloqueado. */
+  preparationsLocked?: boolean;
+  onUpgrade?: () => void;
 }) {
   const mealsWithItems = getMealsWithItems(entry);
   // Colapsado por comida (Desayuno/Almuerzo/...), tipo acordeón -- si no, con
@@ -54,6 +60,10 @@ export function MealsEditor({
   // todos los items sin grupo de esa comida pasan a compartir un grupoId
   // nuevo y se muestran colapsados de ahí en más.
   const groupLooseItems = (meal: MealKey) => {
+    if (preparationsLocked) {
+      onUpgrade?.();
+      return;
+    }
     const nombre = window.prompt("¿Cómo se llama esta preparación?");
     if (!nombre || !nombre.trim()) return;
     const items = getMealItems(entry, meal);
@@ -128,12 +138,15 @@ export function MealsEditor({
             {open && (
               <div className="flex flex-col gap-1.5 px-2.5 pb-2.5">
                 <MealItemsList entry={entry} meal={meal} onUpsert={onUpsert} onInventoryDelta={onInventoryDelta} />
-                {items.filter((item) => !item.grupoId).length > 1 && (
+                {items.some((item) => !item.grupoId) && (
                   <button
                     type="button"
                     onClick={() => groupLooseItems(meal)}
-                    className="mt-0.5 rounded-lg border border-dashed border-gold/40 px-2.5 py-1.5 font-mono text-[9px] uppercase tracking-wide text-gold"
+                    className={`mt-0.5 rounded-lg border border-dashed px-2.5 py-1.5 font-mono text-[9px] uppercase tracking-wide ${
+                      preparationsLocked ? "border-border text-textMuted/60" : "border-gold/40 text-gold"
+                    }`}
                   >
+                    {preparationsLocked && <Lock size={11} strokeWidth={1.8} className="mr-1 inline" />}
                     + Agregar a preparaciones
                   </button>
                 )}

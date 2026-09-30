@@ -775,6 +775,8 @@ export default function Home() {
                       onUpsert={upsertDay}
                       openOnDesktop
                       onInventoryDelta={handleMealInventoryDelta}
+                      preparationsLocked={isBasico}
+                      onUpgrade={() => setPanel("planes")}
                     />
                   </SortableSection>
                 );
@@ -981,6 +983,8 @@ export default function Home() {
               onUpsert={upsertDay}
               emptyMessage="Todavía no cargaste comidas hoy."
               onInventoryDelta={handleMealInventoryDelta}
+              preparationsLocked={isBasico}
+              onUpgrade={() => setPanel("planes")}
             />
           </div>
         </div>

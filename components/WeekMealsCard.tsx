@@ -18,12 +18,16 @@ export function WeekMealsCard({
   onUpsert,
   openOnDesktop,
   onInventoryDelta,
+  preparationsLocked,
+  onUpgrade,
 }: {
   weekDates: string[];
   weekDays: Array<DayEntry | null>;
   onUpsert: (entry: DayEntry) => void;
   openOnDesktop?: boolean;
   onInventoryDelta?: (deltas: MealsEditorInventoryDelta[]) => void;
+  preparationsLocked?: boolean;
+  onUpgrade?: () => void;
 }) {
   const todayIso = fmtDate(new Date());
   const [selectedIndex, setSelectedIndex] = useState(() => Math.max(0, weekDates.indexOf(todayIso)));
@@ -61,6 +65,8 @@ export function WeekMealsCard({
         onUpsert={onUpsert}
         emptyMessage={`No tenés comidas cargadas el ${DOW_SHORT[selectedIndex]} ${selectedDay.getDate()}.`}
         onInventoryDelta={onInventoryDelta}
+        preparationsLocked={preparationsLocked}
+        onUpgrade={onUpgrade}
       />
     </Collapsible>
   );
