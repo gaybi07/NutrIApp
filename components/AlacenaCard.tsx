@@ -73,7 +73,6 @@ export function AlacenaCard({
 }) {
   // Arranca abierta -- es la vista de entrada de la solapa Alacena ahora,
   // no un extra a pedir aparte.
-  const [showCocina, setShowCocina] = useState(true);
   // La lista con buscador/filtros queda oculta por default -- mezclada con
   // los botones de arriba se sentía como "demasiados datos a la vista" sin
   // haber pedido verla. Se despliega solo al tocar "Ver lista".
@@ -477,25 +476,26 @@ export function AlacenaCard({
       )}
 
       {items.length > 0 && (
-        <div className="mb-3 grid grid-cols-2 gap-2">
+        <div className="mb-3">
           <button
             type="button"
             onClick={() => setShowList((prev) => !prev)}
-            className={`rounded-lg border px-3 py-2 font-mono text-[10px] uppercase tracking-wide ${
+            className={`w-full rounded-lg border px-3 py-2 font-mono text-[10px] uppercase tracking-wide ${
               showList ? "border-gold bg-gold text-bg" : "border-border bg-bg/60 text-textMuted"
             }`}
           >
             <span className="inline-flex items-center gap-1"><ListChecks size={16} strokeWidth={1.8} /> {showList ? "Ocultar lista" : `Ver lista (${items.length})`}</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setShowCocina(true)}
-            className="rounded-lg border border-gold/60 bg-gold/10 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold"
-          >
-            <span className="inline-flex items-center gap-1"><Map size={16} strokeWidth={1.8} /> Ver cocina</span>
-          </button>
         </div>
       )}
+
+      {/* La Cocina (heladera / alacena / mesada) va desplegada siempre, no en
+          un pop-up que se abra solo al entrar; la lista de productos queda
+          plegada debajo hasta tocar "Ver lista". */}
+      <div className="mb-3">
+        <CocinaView items={items} addStructuredItems={addStructuredItems} updateItem={updateItem} productMemory={productMemory} />
+      </div>
+
 
       {showQuickAdd && (
         <div
@@ -901,35 +901,6 @@ export function AlacenaCard({
         </div>
       )}
 
-      {showCocina && (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-bg/80 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => setShowCocina(false)}>
-          <div
-            className="max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-border bg-surface p-4 shadow-2xl sm:rounded-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <div className="font-display text-xl text-text">Cocina</div>
-              <div className="flex shrink-0 gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setShowCocina(false)}
-                  className="rounded-full border border-gold/60 bg-gold/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-gold"
-                >
-                  <span className="inline-flex items-center gap-1"><ListChecks size={16} strokeWidth={1.8} /> Ver lista completa</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowCocina(false)}
-                  className="rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
-                >
-                  Cerrar
-                </button>
-              </div>
-            </div>
-            <CocinaView items={items} addStructuredItems={addStructuredItems} updateItem={updateItem} productMemory={productMemory} />
-          </div>
-        </div>
-      )}
     </Collapsible>
   );
 }
