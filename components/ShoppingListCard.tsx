@@ -34,15 +34,20 @@ export function ShoppingListCard({
   weekPlan,
   planThisWeek,
   planNextWeek,
+  onOpenPlanner,
 }: {
   items: InventoryItem[];
   weekPlan: WeekPlan;
   planThisWeek: PlanDays;
   planNextWeek: PlanDays;
+  /** Abre el planificador de la semana que viene, donde se eligen las comidas. */
+  onOpenPlanner: () => void;
 }) {
   const [which, setWhich] = useState<"next" | "this">("next");
-  const [excluded, setExcluded] = useState<Set<string>>(new Set());
   const [status, setStatus] = useState("");
+  // La lista NO se arma sola: recién cuando se toca "Armar lista". Se guarda con qué selección se armó, para
+  // avisar si después se cambian las comidas elegidas.
+  const [builtFor, setBuiltFor] = useState<string | null>(null);
 
   const thisMonday = useMemo(() => isoMonday(fmtDate(new Date())), []);
   const dates = useMemo(() => weekDatesFrom(which === "next" ? addDays(thisMonday, 7) : thisMonday), [which, thisMonday]);
@@ -71,7 +76,20 @@ export function ShoppingListCard({
     return out;
   }, [dates, weekPlan, plan]);
 
-  const included = chosen.filter((c) => !excluded.has(c.key));
+  const included = chosen;
+  const selectionKey = useMemo(() => `${which}|` + included.map((c) => `${c.key}:${c.title}`).join("|"), [which, included]);
+  const built = builtFor !== null;
+  const stale = built && builtFor !== selectionKey;
+
+  // Comidas que el plan ofrece esa semana (las que no se eligen quedan pendientes en el almanaque)
+  const offeredCount = useMemo(() => {
+    let n = 0;
+    for (const fecha of dates) {
+      const day = plan[WEEKDAYS[new Date(`${fecha}T00:00:00`).getDay()]];
+      if (day) for (const meal of MEAL_KEYS) if ((day[meal]?.length ?? 0) > 0) n++;
+    }
+    return n;
+  }, [dates, plan]);
 
   const rows = useMemo(() => {
     const totals = new Map<string, Ingredient>();
@@ -107,14 +125,6 @@ export function ShoppingListCard({
     return [`Lista de compras — semana del ${rangeLabel}`, "", ...lines].join("\n");
   }, [missing, rangeLabel]);
 
-  const toggle = (key: string) =>
-    setExcluded((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(text);
@@ -141,50 +151,55 @@ export function ShoppingListCard({
       <div className="mb-2 font-display text-xl text-text">Semana del {rangeLabel}</div>
 
       <div className="mb-3 flex gap-1.5">
-        <button type="button" onClick={() => setWhich("next")} className={chip(which === "next")}>
+        <button type="button" onClick={() => { setWhich("next"); setBuiltFor(null); }} className={chip(which === "next")}>
           Semana que viene
         </button>
-        <button type="button" onClick={() => setWhich("this")} className={chip(which === "this")}>
+        <button type="button" onClick={() => { setWhich("this"); setBuiltFor(null); }} className={chip(which === "this")}>
           Esta semana
         </button>
       </div>
 
-      {chosen.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">
-          Todavía no elegiste comidas para esta semana. Elegilas en el planificador y acá te armo la lista de lo que te falta comprar.
+      <div className="rounded-xl border border-border bg-bg/30 p-2.5">
+        <div className="text-[13px] text-text">
+          Elegiste <b>{chosen.length}</b> de <b>{offeredCount || chosen.length}</b> comidas de tu plan
+          {offeredCount > chosen.length ? <span className="text-textMuted"> · {offeredCount - chosen.length} sin elegir (quedan pendientes)</span> : null}
         </div>
-      ) : (
-        <>
-          <div className="mb-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">
-            Comidas que entran ({included.length} de {chosen.length}) — tocá para sacar o volver a sumar
-          </div>
-          <div className="mb-3 space-y-1">
-            {dates.map((fecha) => {
-              const dayChosen = chosen.filter((c) => c.fecha === fecha);
-              if (dayChosen.length === 0) return null;
-              const d = new Date(`${fecha}T00:00:00`);
-              return (
-                <div key={fecha} className="flex items-start gap-2">
-                  <span className="w-14 shrink-0 pt-1.5 font-mono text-[9px] uppercase tracking-wide text-textMuted">
-                    {DOW[d.getDay()]} {d.getDate()}
-                  </span>
-                  <div className="flex flex-wrap gap-1">
-                    {dayChosen.map((c) => {
-                      const on = !excluded.has(c.key);
-                      return (
-                        <button key={c.key} type="button" onClick={() => toggle(c.key)} className={`${chip(on)} max-w-full truncate !px-2.5 !py-1.5`} title={c.title}>
-                          {on ? "✓ " : ""}
-                          {MEAL_LABELS[c.meal]}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        <div className="mt-0.5 text-[11px] text-textMuted">
+          Primero elegí qué comidas vas a seguir; las que no elijas (un evento, una salida) quedan pendientes en el almanaque. Después armás la lista.
+        </div>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          {which === "next" ? (
+            <button type="button" onClick={onOpenPlanner} className={btn("secondary", "md", true)}>
+              Elegir mis comidas
+            </button>
+          ) : (
+            <div />
+          )}
+          <button
+            type="button"
+            disabled={chosen.length === 0}
+            onClick={() => setBuiltFor(selectionKey)}
+            className={`${btn("primary", "md", true)} ${which === "next" ? "" : "col-span-2"}`}
+          >
+            {built ? "Actualizar lista" : "Armar lista de compras"}
+          </button>
+        </div>
+      </div>
 
-          <div className="mb-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">Lo que necesitás y lo que tenés en la Alacena</div>
+      {chosen.length === 0 && (
+        <div className="mt-2 rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">
+          Todavía no elegiste comidas para {which === "next" ? "la semana que viene" : "esta semana"}. Tocá &quot;Elegir mis comidas&quot; y después armá la lista.
+        </div>
+      )}
+
+      {built && chosen.length > 0 && (
+        <>
+          {stale && (
+            <div className="mt-2 rounded-lg border border-gold/40 bg-gold/10 px-2.5 py-1.5 text-[12px] text-text">
+              Cambiaste tus comidas después de armar la lista. Tocá <b>Actualizar lista</b> para recalcularla.
+            </div>
+          )}
+          <div className="mb-1 mt-3 font-mono text-[9px] uppercase tracking-wide text-textMuted">Lo que necesitás y lo que tenés en la Alacena</div>
           {rows.length === 0 ? (
             <div className="rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">
               Las comidas elegidas no traen ingredientes con cantidad, así que no puedo calcular la lista.

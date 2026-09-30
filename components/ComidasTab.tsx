@@ -154,7 +154,7 @@ export function ComidasTab({
                 ) : (
                   <WeekPlanSummaryCard weekDates={weekDates} weekPlan={weekPlan} />
                 ))}
-              {blockId === "compras" && <ShoppingListCard items={inventory} weekPlan={weekPlan} planThisWeek={planThisWeek} planNextWeek={planNextWeek} />}
+              {blockId === "compras" && <ShoppingListCard items={inventory} weekPlan={weekPlan} planThisWeek={planThisWeek} planNextWeek={planNextWeek} onOpenPlanner={onOpenPlanificador} />}
               {blockId === "planificador" && (() => {
                 const plannedCount = countPlannedMeals(weekPlan);
                 // Ahora que el plan se comparte entre los del grupo (ver
