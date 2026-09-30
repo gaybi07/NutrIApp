@@ -300,6 +300,8 @@ export function TodayMeals({
                 <>
                   <div className="mt-1.5 space-y-1.5">
                     {options.map((option, index) => {
+                      // Ya cargada: solo la opción que comió (las otras se ven tocando el color)
+                      if (alreadyLoaded && index !== selectedIndex && selectedIndex >= 0) return null;
                       const selected = selectedIndex === index;
                       return (
                         <button
@@ -320,15 +322,17 @@ export function TodayMeals({
                               {selected ? "✓" : OPTION_LETTERS[index]}
                             </span>
                             <span className="min-w-0 flex-1">
-                              <span className="flex flex-wrap items-baseline justify-between gap-x-2">
-                                <span className="text-[13px] text-text">
+                              <span className="flex items-baseline justify-between gap-2">
+                                <span className="min-w-0 flex-1 truncate text-[13px] text-text">
                                   {option.nombre} <LevelChip option={option} />
                                 </span>
                                 <span className="shrink-0 font-mono text-[10px] text-textMuted">
                                   {option.kcal} kcal · {option.protein} g
                                 </span>
                               </span>
-                              {quantities(option) && <span className="mt-0.5 block text-[11px] text-textMuted">{quantities(option)}</span>}
+                              {quantities(option) && (
+                                <span className={`mt-0.5 block text-[11px] text-textMuted ${selected ? "" : "truncate"}`}>{quantities(option)}</span>
+                              )}
                               {selected && option.explicacion && <span className="mt-0.5 block text-[11px] italic text-textMuted">{option.explicacion}</span>}
                             </span>
                           </div>
