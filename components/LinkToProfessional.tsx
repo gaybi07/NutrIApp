@@ -17,16 +17,21 @@ export function LinkToProfessional({
   authenticated,
   routines,
   onSaveRoutines,
+  hasFreeSlot = true,
 }: {
   authenticated: boolean;
+  /** Con todos los cupos usados el panel es "Mis profesionales": ya no pide un código, explica cómo cambiar. */
+  hasFreeSlot?: boolean;
   routines: Routine[];
   onSaveRoutines: (routines: Routine[]) => void;
 }) {
   return (
     <div>
-      <div className="font-display italic text-lg text-gold mb-1">Tu equipo Morphy</div>
+      <div className="font-display italic text-lg text-gold mb-1">{hasFreeSlot ? "Tu equipo Morphy" : "Mis profesionales"}</div>
       <div className="mb-3 text-xs text-textMuted">
-        Pedile el código a tu Entrenador o Nutricionista -- podés vincularte a los dos a la vez si tu plan lo permite.
+        {hasFreeSlot
+          ? "Pedile el código a tu Entrenador o Nutricionista -- podés vincularte a los dos a la vez si tu plan lo permite."
+          : "Estos son tus profesionales. Para cambiar de uno a otro, desvinculate y pedile el código al nuevo: después de cambiar hay una espera de 14 días (mismo tipo) o 28 días (otro tipo) para volver a cambiar."}
       </div>
       <StudentLinkSection authenticated={authenticated} routines={routines} onSaveRoutines={onSaveRoutines} />
       <div className="mt-5 border-t border-border pt-3">

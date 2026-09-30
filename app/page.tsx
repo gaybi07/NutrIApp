@@ -227,6 +227,9 @@ export default function Home() {
   // En Básico estos bloques se ven desenfocados (BlurLock), no ocultos.
   // Espejo de Entreno: las herramientas de nutrición (planificación de Comidas, reportes de Macros) salen de un
   // Nutricionista vinculado o del plan Autoentreno. Con Entrenador solo (o Básico) queda la carga básica de comidas.
+  // Cupos de vínculo con profesionales: Premium 1, Premium+ 2. Con todos usados, el acceso pasa a "Mis profesionales".
+  const linkSlots = clientPlan === "premium_plus" ? 2 : 1;
+  const hasFreeLinkSlot = (hasTrainerLink ? 1 : 0) + (hasNutricionistaLink ? 1 : 0) < linkSlots;
   const comidasBasic = isBasico || (!hasNutricionistaLink && clientPlan !== "autoentreno");
   const macrosBlurred = comidasBasic ? PLAN_LOCKED_MACROS_BLOCKS : [];
 
@@ -477,6 +480,7 @@ export default function Home() {
           isApprovedNutricionista={isApprovedNutricionista}
           onOpenPlanes={() => setPanel("planes")}
           onOpenLinkToProfessional={() => setPanel("vincular-profesional")}
+          linkMenuLabel={hasFreeLinkSlot ? "Vincularme a un profesional" : "Mis profesionales"}
           centerContent={
             <div className="flex w-full min-w-0 items-center justify-between gap-1">
               <button
@@ -1089,7 +1093,7 @@ export default function Home() {
             >
               Cerrar
             </button>
-            <LinkToProfessional authenticated={authenticated} routines={settings.routines || []} onSaveRoutines={(routines) => saveSettings({ ...settings, routines })} />
+            <LinkToProfessional hasFreeSlot={hasFreeLinkSlot} authenticated={authenticated} routines={settings.routines || []} onSaveRoutines={(routines) => saveSettings({ ...settings, routines })} />
           </div>
         </div>
       )}
