@@ -202,7 +202,7 @@ export function TrainingPlanBuilder({ studentId }: { studentId: string }) {
           type="button"
           disabled={busy}
           onClick={() => publish()}
-          className="flex-1 rounded-lg bg-gold p-2.5 font-sans text-[13px] font-bold text-bg disabled:opacity-50"
+          className="flex-1 rounded-lg bg-gold p-2.5 font-sans text-[13px] font-bold text-white disabled:opacity-50"
         >
           Publicar
         </button>

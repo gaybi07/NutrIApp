@@ -112,7 +112,7 @@ export function OwnPatientLinkSection({ authenticated }: { authenticated: boolea
               type="button"
               onClick={() => linkHook.join(code)}
               disabled={linkHook.busy || !code.trim()}
-              className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg disabled:opacity-50"
+              className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-white disabled:opacity-50"
             >
               Enviar solicitud
             </button>
@@ -430,7 +430,7 @@ export function NutricionistaPanel({ authenticated, userEmail }: { authenticated
                   type="button"
                   onClick={handlePick}
                   disabled={own.busy}
-                  className="w-full rounded-lg p-2.5 font-sans text-sm font-bold bg-gold text-bg disabled:opacity-50"
+                  className="w-full rounded-lg p-2.5 font-sans text-sm font-bold bg-gold text-white disabled:opacity-50"
                 >
                   {own.application ? "Volver a postularme" : "Subir comprobante"}
                 </button>

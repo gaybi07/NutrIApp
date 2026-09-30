@@ -179,7 +179,7 @@ function ComentariosTab({ studentId }: { studentId: string }) {
             send(texto);
             setTexto("");
           }}
-          className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg disabled:opacity-50"
+          className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-white disabled:opacity-50"
         >
           Enviar
         </button>
@@ -255,7 +255,7 @@ export function PatientDetailScreen({
               type="button"
               onClick={() => setTab(t.id)}
               className={`shrink-0 rounded-full px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-wide transition-colors ${
-                tab === t.id ? "bg-gold text-bg" : "border border-border text-textMuted"
+                tab === t.id ? "bg-gold text-white" : "border border-border text-textMuted"
               }`}
             >
               {t.label}

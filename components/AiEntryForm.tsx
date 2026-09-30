@@ -653,7 +653,7 @@ export function AiEntryForm({
               type="button"
               onClick={() => handleImportPlanned(plannedTitle)}
               disabled={!resolvePlannedMeal(plannedTitle)}
-              className="flex-1 rounded-lg p-2.5 font-sans font-bold text-[12px] bg-gold text-bg disabled:opacity-40"
+              className="flex-1 rounded-lg p-2.5 font-sans font-bold text-[12px] bg-gold text-white disabled:opacity-40"
             >
               Importar
             </button>
@@ -690,7 +690,7 @@ export function AiEntryForm({
           type="button"
           onClick={() => (disableAi ? setStatus("🔒 Con IA requiere un plan pago — actualizá tu plan para desbloquearlo.") : setMode("ia"))}
           className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
-            disableAi ? "text-textMuted/50" : mode === "ia" ? "bg-gold text-bg" : "text-textMuted"
+            disableAi ? "text-textMuted/50" : mode === "ia" ? "bg-gold text-white" : "text-textMuted"
           }`}
         >
           {disableAi ? <span className="inline-flex items-center gap-1"><Lock size={16} strokeWidth={1.8} /> Con IA</span> : "Con IA"}
@@ -699,7 +699,7 @@ export function AiEntryForm({
           type="button"
           onClick={() => (disableAi ? setStatus("🔒 Desde Alacena requiere un plan pago — actualizá tu plan para desbloquearlo.") : setMode("alacena"))}
           className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
-            disableAi ? "text-textMuted/50" : mode === "alacena" ? "bg-gold text-bg" : "text-textMuted"
+            disableAi ? "text-textMuted/50" : mode === "alacena" ? "bg-gold text-white" : "text-textMuted"
           }`}
         >
           {disableAi ? <span className="inline-flex items-center gap-1"><Lock size={16} strokeWidth={1.8} /> Desde Alacena</span> : "Desde Alacena"}
@@ -708,7 +708,7 @@ export function AiEntryForm({
           type="button"
           onClick={() => setMode("buscar")}
           className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
-            mode === "buscar" ? "bg-gold text-bg" : "text-textMuted"
+            mode === "buscar" ? "bg-gold text-white" : "text-textMuted"
           }`}
         >
           Buscar producto
@@ -724,7 +724,7 @@ export function AiEntryForm({
             setMode("preparacion");
           }}
           className={`flex-1 rounded-lg py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
-            disableAi ? "text-textMuted/50" : mode === "preparacion" ? "bg-gold text-bg" : "text-textMuted"
+            disableAi ? "text-textMuted/50" : mode === "preparacion" ? "bg-gold text-white" : "text-textMuted"
           }`}
         >
           {disableAi ? <span className="inline-flex items-center gap-1"><Lock size={16} strokeWidth={1.8} /> Preparación</span> : "Preparación"}
@@ -834,7 +834,7 @@ export function AiEntryForm({
           <button
             type="button"
             onClick={handleManualSave}
-            className="mt-2.5 w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-bg"
+            className="mt-2.5 w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-white"
           >
             Sumar a {MEAL_LABELS[meal]}
           </button>
@@ -948,7 +948,7 @@ export function AiEntryForm({
               <button
                 type="button"
                 onClick={calcularPreparacion}
-                className="mt-2.5 w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-bg"
+                className="mt-2.5 w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-white"
               >
                 Calcular
               </button>
@@ -1037,7 +1037,7 @@ export function AiEntryForm({
       <button
         onClick={() => handleCalc()}
         disabled={loading}
-        className="w-full rounded-lg p-3 font-sans font-bold text-sm mt-2.5 disabled:opacity-60 bg-gold text-bg"
+        className="w-full rounded-lg p-3 font-sans font-bold text-sm mt-2.5 disabled:opacity-60 bg-gold text-white"
       >
         {loading ? "Calculando..." : "Calcular con IA"}
       </button>
@@ -1161,7 +1161,7 @@ export function AiEntryForm({
           )}
           <button
             onClick={() => handleSave()}
-            className="w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-bg"
+            className="w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-white"
           >
             Sumar a {MEAL_LABELS[meal]}
           </button>

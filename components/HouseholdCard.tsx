@@ -81,7 +81,7 @@ export function HouseholdCard({
             <button
               type="button"
               onClick={toggleInvite}
-              className="rounded-xl border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg"
+              className="rounded-xl border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-white"
             >
               {showInvite ? "Ocultar código" : "Invitar a alguien"}
             </button>
@@ -160,7 +160,7 @@ export function HouseholdCard({
                 type="button"
                 disabled={busy}
                 onClick={() => create(nameDraft, localItems)}
-                className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg disabled:opacity-60"
+                className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-white disabled:opacity-60"
               >
                 Crear
               </button>

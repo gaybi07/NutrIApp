@@ -89,7 +89,7 @@ export function MealMemoryImport() {
           va a recordar el valor exacto y no depender de que la IA lo vuelva a estimar cada vez.
         </div>
       </div>
-      <label className="mb-3 block cursor-pointer rounded-xl border border-gold/60 bg-gold px-3 py-2 text-center font-mono text-[10px] uppercase tracking-[0.12em] text-bg">
+      <label className="mb-3 block cursor-pointer rounded-xl border border-gold/60 bg-gold px-3 py-2 text-center font-mono text-[10px] uppercase tracking-[0.12em] text-white">
         Importar CSV
         <input type="file" accept=".csv,text/csv" className="hidden" onChange={handleImportCsv} />
       </label>
@@ -120,14 +120,14 @@ export function MealMemoryImport() {
             <button
               type="button"
               onClick={copyExportedJson}
-              className="mt-1.5 w-full rounded-xl border border-gold/60 bg-gold px-3 py-2 text-center font-mono text-[10px] uppercase tracking-[0.12em] text-bg"
+              className="mt-1.5 w-full rounded-xl border border-gold/60 bg-gold px-3 py-2 text-center font-mono text-[10px] uppercase tracking-[0.12em] text-white"
             >
               Copiar al portapapeles
             </button>
           </div>
         )}
 
-        <label className="mb-2 block cursor-pointer rounded-xl border border-gold/60 bg-gold px-3 py-2 text-center font-mono text-[10px] uppercase tracking-[0.12em] text-bg">
+        <label className="mb-2 block cursor-pointer rounded-xl border border-gold/60 bg-gold px-3 py-2 text-center font-mono text-[10px] uppercase tracking-[0.12em] text-white">
           Importar JSON (archivo)
           <input type="file" accept=".json,application/json" className="hidden" onChange={handleImportJsonFile} />
         </label>

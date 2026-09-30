@@ -220,7 +220,7 @@ export function MacrosTab({
         <button
           type="button"
           onClick={onLogMeal}
-          className="w-full rounded-xl border border-gold/60 bg-gold px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-bg"
+          className="w-full rounded-xl border border-gold/60 bg-gold px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-white"
         >
           + Cargar comida
         </button>

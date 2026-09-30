@@ -14,7 +14,8 @@ import { InfoHint } from "@/components/InfoHint";
 import { inventoryKey } from "@/lib/useInventory";
 import { getMealItems, applyMealItems, suggestedMeal, nutritionForAmount } from "@/lib/calculations";
 import { generateProductQrDataUrl } from "@/lib/generateProductQr";
-import { ChefHat, TriangleAlert, CircleCheck, ListChecks, Map, X, Camera, Search, QrCode } from "lucide-react";
+import { ChefHat, TriangleAlert, CircleCheck, ListChecks, X, Camera, Search, QrCode, Trash2 } from "lucide-react";
+import { btn, chip } from "@/components/buttonStyles";
 
 const EMPTY_NUTRITION: InventoryNutrition = { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 const REVIEW_BATCH_SIZE = 12;
@@ -77,6 +78,9 @@ export function AlacenaCard({
   // haber pedido verla. Se despliega solo al tocar "Ver lista".
   const [showList, setShowList] = useState(false);
   const [filter, setFilter] = useState<InventoryCategory | "todas">("todas");
+  const [query, setQuery] = useState("");
+  const [onlyMissing, setOnlyMissing] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   // "escribir" = alta rápida por texto (QuickAddProducts, lo de siempre);
   // "ticket" = lo que antes era la sección aparte "Compras" -- foto/audio del
@@ -131,10 +135,20 @@ export function AlacenaCard({
     return INVENTORY_CATEGORIES.filter((c) => set.has(c.id));
   }, [items]);
 
-  const visibleItems = useMemo(
-    () => (filter === "todas" ? items : items.filter((item) => (item.category || "otros") === filter)),
-    [items, filter]
-  );
+  const visibleItems = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return items
+      .filter((item) => filter === "todas" || (item.category || "otros") === filter)
+      .filter((item) => !onlyMissing || !item.nutritionPer100g)
+      .filter((item) => !q || item.name.toLowerCase().includes(q))
+      .sort((a, b) => a.name.localeCompare(b.name, "es"));
+  }, [items, filter, query, onlyMissing]);
+  const filtersActive = filter !== "todas" || query.trim() !== "" || onlyMissing;
+  const clearFilters = () => {
+    setFilter("todas");
+    setQuery("");
+    setOnlyMissing(false);
+  };
 
   const missingNutritionCount = useMemo(() => items.filter((item) => !item.nutritionPer100g).length, [items]);
 
@@ -377,9 +391,7 @@ export function AlacenaCard({
               setShowPrepareDish(false);
               setScanPrefill(undefined);
             }}
-            className={`flex-1 rounded-xl border px-2 py-2 font-mono text-[10px] uppercase tracking-[0.1em] ${
-              showQuickAdd ? "border-gold bg-gold text-bg" : "border-sage/60 bg-sage/10 text-sage"
-            }`}
+            className={`${btn("primary")} flex-1`}
           >
             + Agregar
           </button>
@@ -393,36 +405,13 @@ export function AlacenaCard({
             <button
               type="button"
               onClick={() => {
-                setShowExtraConsumption((prev) => !prev);
-                setShowQuickAdd(false);
-                setShowPrepareDish(false);
-              }}
-              className={`flex-1 rounded-xl border px-2 py-2 font-mono text-[10px] uppercase tracking-[0.1em] ${
-                showExtraConsumption ? "border-rust bg-rust text-bg" : "border-rust/60 bg-rust/10 text-rust"
-              }`}
-            >
-              − Descontar
-            </button>
-            <InfoHint
-              label="Qué hace Descontar"
-              text="Restá algo de la alacena sin que cuente como una comida tuya — por ejemplo, si vino gente a comer, se te rompió un producto, o le diste de comer a otra persona. No hace falta que tenga nutrición cargada, solo se resta del stock."
-            />
-          </div>
-        )}
-        {items.length > 0 && (
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => {
                 setShowPrepareDish((prev) => !prev);
                 setShowQuickAdd(false);
                 setShowExtraConsumption(false);
               }}
-              className={`flex-1 rounded-xl border px-2 py-2 font-mono text-[10px] uppercase tracking-[0.1em] ${
-                showPrepareDish ? "border-gold bg-gold text-bg" : "border-gold/60 bg-gold/10 text-gold"
-              }`}
+              className={`${btn("secondary")} flex-1`}
             >
-              <span className="inline-flex items-center gap-1"><ChefHat size={16} strokeWidth={1.8} /> Preparar</span>
+              <ChefHat size={16} strokeWidth={1.8} /> Preparar
             </button>
             <InfoHint
               label="Qué hace Preparar plato"
@@ -434,15 +423,50 @@ export function AlacenaCard({
           <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={clearAll}
-              className="flex-1 rounded-xl border border-border bg-bg/60 px-2 py-2 font-mono text-[10px] uppercase tracking-[0.1em] text-textMuted"
+              onClick={() => {
+                setShowExtraConsumption((prev) => !prev);
+                setShowQuickAdd(false);
+                setShowPrepareDish(false);
+              }}
+              className={`${btn("secondary")} flex-1`}
             >
-              Vaciar
+              − Descontar
+            </button>
+            <InfoHint
+              label="Qué hace Descontar"
+              text="Restá algo de la alacena sin que cuente como una comida tuya — por ejemplo, si vino gente a comer, se te rompió un producto, o le diste de comer a otra persona. No hace falta que tenga nutrición cargada, solo se resta del stock."
+            />
+          </div>
+        )}
+        {items.length > 0 && (
+          <div className="flex items-center gap-1">
+            <button type="button" onClick={() => setConfirmClear(true)} className={`${btn("danger")} flex-1`}>
+              <Trash2 size={14} strokeWidth={1.8} /> Vaciar
             </button>
             <InfoHint label="Qué hace Vaciar alacena" text="Borra todos los productos de la alacena de una vez. No se puede deshacer." />
           </div>
         )}
       </div>
+      {confirmClear && (
+        <div className="mb-3 rounded-xl border border-rust/50 bg-rust/10 p-3">
+          <div className="text-[13px] text-text">¿Seguro? Se borran los {items.length} productos de la alacena y no se puede deshacer.</div>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <button type="button" onClick={() => setConfirmClear(false)} className={btn("neutral", "sm", true)}>
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                clearAll();
+                setConfirmClear(false);
+              }}
+              className={btn("dangerSolid", "sm", true)}
+            >
+              Sí, vaciar
+            </button>
+          </div>
+        </div>
+      )}
       {status && <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] text-sage">{status}</div>}
 
       {items.length > 0 && (
@@ -461,7 +485,7 @@ export function AlacenaCard({
                     ? `Disponible de nuevo en ${reviewLockLabel} — revisa hasta ${REVIEW_MAX_ITEMS_PER_RUN} ítems por vez para no recargar la IA`
                     : undefined
                 }
-                className="shrink-0 rounded-lg border border-rust/60 bg-rust px-2.5 py-1.5 font-mono text-[9.5px] uppercase tracking-wide text-bg disabled:opacity-60"
+                className={`${btn("secondary", "sm")} shrink-0`}
               >
                 {reviewing ? "Revisando..." : reviewLocked ? `Disponible en ${reviewLockLabel}` : "Revisar con IA"}
               </button>
@@ -479,11 +503,9 @@ export function AlacenaCard({
           <button
             type="button"
             onClick={() => setShowList((prev) => !prev)}
-            className={`w-full rounded-lg border px-3 py-2 font-mono text-[10px] uppercase tracking-wide ${
-              showList ? "border-gold bg-gold text-bg" : "border-border bg-bg/60 text-textMuted"
-            }`}
+            className={btn(showList ? "neutral" : "secondary", "md", true)}
           >
-            <span className="inline-flex items-center gap-1"><ListChecks size={16} strokeWidth={1.8} /> {showList ? "Ocultar lista" : `Ver lista (${items.length})`}</span>
+            <ListChecks size={16} strokeWidth={1.8} /> {showList ? "Ocultar lista" : `Ver lista (${items.length})`}
           </button>
         </div>
       )}
@@ -515,7 +537,7 @@ export function AlacenaCard({
                 type="button"
                 onClick={() => setAddMode("escribir")}
                 className={`flex-1 rounded-full px-3 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
-                  addMode === "escribir" ? "bg-gold text-bg" : "text-textMuted"
+                  addMode === "escribir" ? "bg-gold text-white" : "text-textMuted"
                 }`}
               >
                 Escribir
@@ -524,7 +546,7 @@ export function AlacenaCard({
                 type="button"
                 onClick={() => setAddMode("ticket")}
                 className={`flex-1 rounded-full px-3 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
-                  addMode === "ticket" ? "bg-gold text-bg" : "text-textMuted"
+                  addMode === "ticket" ? "bg-gold text-white" : "text-textMuted"
                 }`}
               >
                 <span className="inline-flex items-center gap-1"><Camera size={16} strokeWidth={1.8} /> Con ticket</span>
@@ -628,14 +650,14 @@ export function AlacenaCard({
               <button
                 type="button"
                 onClick={() => setScannedItem(null)}
-                className="rounded-lg border border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted"
+                className={btn("neutral", "sm", true)}
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={confirmConsume}
-                className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg"
+                className={btn("success", "sm", true)}
               >
                 Consumir
               </button>
@@ -646,53 +668,81 @@ export function AlacenaCard({
 
       {items.length > 0 && showList ? (
         <>
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Buscar un producto…"
+            className="mb-3 w-full"
+          />
 
           {presentCategories.length > 1 && (
-            <div className="mb-3 flex flex-wrap gap-1.5">
-              <button
-                type="button"
-                onClick={() => setFilter("todas")}
-                className={`rounded-full border px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
-                  filter === "todas" ? "border-gold bg-gold text-bg" : "border-border bg-bg/60 text-textMuted"
-                }`}
-              >
-                Todas
+            <div className="mb-2 flex flex-wrap items-center gap-1.5">
+              <span className="w-full font-mono text-[9px] uppercase tracking-[0.14em] text-textMuted">Categoría</span>
+              <button type="button" onClick={() => setFilter("todas")} className={chip(filter === "todas")}>
+                Todas <span className="opacity-70">{items.length}</span>
               </button>
               {presentCategories.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setFilter(c.id)}
-                  className={`rounded-full border px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
-                    filter === c.id ? "border-gold bg-gold text-bg" : "border-border bg-bg/60 text-textMuted"
-                  }`}
-                >
-                  {c.label}
+                <button key={c.id} type="button" onClick={() => setFilter(c.id)} className={chip(filter === c.id)}>
+                  {c.label} <span className="opacity-70">{items.filter((item) => (item.category || "otros") === c.id).length}</span>
                 </button>
               ))}
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-2">
-            {visibleItems.map((item) => (
-              <div
-                key={item.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => openItem(item)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    openItem(item);
-                  }
-                }}
-                className={`flex cursor-pointer flex-col gap-1 rounded-xl border px-2 py-2 text-left font-mono text-[11px] text-text ${
-                  item.nutritionPer100g ? "border-sage/60 bg-sage/10" : "border-rust/60 bg-rust/10"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span>
-                    {item.name} <span className="text-gold">× {item.quantity} {item.unit}</span>
+          {missingNutritionCount > 0 && (
+            <div className="mb-2 flex flex-wrap items-center gap-1.5">
+              <span className="w-full font-mono text-[9px] uppercase tracking-[0.14em] text-textMuted">Estado</span>
+              <button type="button" onClick={() => setOnlyMissing((v) => !v)} className={chip(onlyMissing)}>
+                Sin valor nutricional <span className="opacity-70">{missingNutritionCount}</span>
+              </button>
+            </div>
+          )}
+
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <span className="font-mono text-[10px] uppercase tracking-wide text-textMuted">
+              {visibleItems.length} producto{visibleItems.length === 1 ? "" : "s"}
+            </span>
+            {filtersActive && (
+              <button type="button" onClick={clearFilters} className={btn("neutral", "sm")}>
+                Limpiar filtros
+              </button>
+            )}
+          </div>
+
+          {visibleItems.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border p-3 text-center text-[12px] text-textMuted">
+              Ningún producto coincide con esos filtros.
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              {visibleItems.map((item) => (
+                <div
+                  key={item.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openItem(item)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      openItem(item);
+                    }
+                  }}
+                  className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-border bg-surfaceAlt/30 px-3 py-2.5"
+                >
+                  <span
+                    className={`h-2 w-2 shrink-0 rounded-full ${item.nutritionPer100g ? "bg-sage" : "bg-rust"}`}
+                    title={item.nutritionPer100g ? "Con valor nutricional" : "Falta valor nutricional"}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[13px] font-semibold text-text">{item.name}</div>
+                    <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
+                      {INVENTORY_CATEGORY_LABELS[item.category || "otros"]}
+                      {!item.nutritionPer100g && <span className="text-rust"> · falta nutrición, tocá para cargarla</span>}
+                    </div>
+                  </div>
+                  <span className="shrink-0 font-sans text-[13px] font-bold text-text">
+                    {item.quantity} <span className="font-normal text-textMuted">{item.unit}</span>
                   </span>
                   <button
                     type="button"
@@ -700,21 +750,15 @@ export function AlacenaCard({
                       event.stopPropagation();
                       removeItem(item.id);
                     }}
-                    className="shrink-0 text-rust"
+                    className={`${btn("danger", "sm")} shrink-0 !px-2`}
                     aria-label={`Quitar ${item.name}`}
                   >
-                    ×
+                    <Trash2 size={14} strokeWidth={1.8} />
                   </button>
                 </div>
-                <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
-                  {INVENTORY_CATEGORY_LABELS[item.category || "otros"]}
-                </span>
-                {!item.nutritionPer100g && (
-                  <span className="font-mono text-[9px] uppercase tracking-wide text-rust inline-flex items-center gap-1"><TriangleAlert size={16} strokeWidth={1.8} /> falta nutrición, tocá para cargarla</span>
-                )}
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </>
       ) : items.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-3 text-[11px] text-textMuted">
@@ -751,7 +795,7 @@ export function AlacenaCard({
                   type="button"
                   onClick={readLabel}
                   disabled={labelLoading}
-                  className="w-full rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg disabled:opacity-60"
+                  className={btn("secondary", "sm", true)}
                 >
                   {labelLoading ? "Leyendo..." : "Leer etiqueta con IA"}
                 </button>
@@ -776,7 +820,7 @@ export function AlacenaCard({
                   type="button"
                   onClick={searchOff}
                   disabled={offLoading}
-                  className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg disabled:opacity-60"
+                  className={`${btn("primary", "sm")} shrink-0`}
                 >
                   {offLoading ? "..." : "Buscar"}
                 </button>
@@ -820,7 +864,7 @@ export function AlacenaCard({
                   type="button"
                   onClick={generateQr}
                   disabled={qrLoading}
-                  className="w-full rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg disabled:opacity-60"
+                  className={btn("secondary", "sm", true)}
                 >
                   {qrLoading ? "Generando..." : "Generar código QR"}
                 </button>
@@ -883,10 +927,10 @@ export function AlacenaCard({
             </div>
 
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <button type="button" onClick={() => setSelected(null)} className="rounded-lg border border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted">
+              <button type="button" onClick={() => setSelected(null)} className={btn("neutral", "md", true)}>
                 Cancelar
               </button>
-              <button type="button" onClick={saveItem} className="rounded-lg border border-sage/50 bg-sage/10 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-sage">
+              <button type="button" onClick={saveItem} className={btn("primary", "md", true)}>
                 Guardar
               </button>
             </div>

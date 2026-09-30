@@ -47,7 +47,7 @@ export function TabBar({
           type="button"
           onClick={() => onChange(tab.id)}
           className={`tabbar-label min-w-[76px] shrink-0 rounded-lg px-2 py-2 text-center font-mono uppercase tracking-normal transition-colors ${
-            active === tab.id ? "bg-gold text-bg" : "text-textMuted"
+            active === tab.id ? "bg-gold text-white" : "text-textMuted"
           }`}
         >
           {lockedTabs?.includes(tab.id) ? (

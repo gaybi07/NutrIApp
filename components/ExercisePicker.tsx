@@ -101,7 +101,7 @@ export function ExercisePicker({ onSelect, onClose }: { onSelect: (exercise: Lib
                 </ol>
               </div>
             )}
-            <button type="button" onClick={() => pick(detail)} className="w-full rounded-lg p-2.5 font-sans text-sm font-bold bg-gold text-bg">
+            <button type="button" onClick={() => pick(detail)} className="w-full rounded-lg p-2.5 font-sans text-sm font-bold bg-gold text-white">
               Usar este ejercicio
             </button>
           </div>

@@ -323,7 +323,7 @@ export function ShoppingLog({
             <button
               onClick={confirmPending}
               disabled={!pendingComplete}
-              className="flex-1 rounded-xl border border-gold/60 bg-gold px-3 py-2 font-sans font-bold text-[12px] text-bg disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex-1 rounded-xl border border-gold/60 bg-gold px-3 py-2 font-sans font-bold text-[12px] text-white disabled:cursor-not-allowed disabled:opacity-40"
             >
               Guardar y agregar a la alacena
             </button>
@@ -366,7 +366,7 @@ export function ShoppingLog({
             <button
               onClick={confirmAiResult}
               disabled={aiResult.length === 0}
-              className="flex-1 rounded-xl border border-gold/60 bg-gold px-3 py-2 font-sans font-bold text-[12px] text-bg disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex-1 rounded-xl border border-gold/60 bg-gold px-3 py-2 font-sans font-bold text-[12px] text-white disabled:cursor-not-allowed disabled:opacity-40"
             >
               Confirmar y agregar a la alacena
             </button>
@@ -437,7 +437,7 @@ export function ShoppingLog({
             <button
               onClick={readTicket}
               disabled={loading}
-              className="flex-1 rounded-xl border border-gold/60 bg-gold px-3 py-2 font-sans font-bold text-[12px] text-bg disabled:opacity-60"
+              className="flex-1 rounded-xl border border-gold/60 bg-gold px-3 py-2 font-sans font-bold text-[12px] text-white disabled:opacity-60"
             >
               {loading ? "Leyendo..." : "Leer con IA"}
             </button>

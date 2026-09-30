@@ -70,7 +70,7 @@ export function DataImport({
         >
           Exportar respaldo
         </button>
-        <label className="cursor-pointer rounded-xl border border-gold/60 bg-gold px-3 py-2 text-center font-mono text-[10px] uppercase tracking-[0.12em] text-bg">
+        <label className="cursor-pointer rounded-xl border border-gold/60 bg-gold px-3 py-2 text-center font-mono text-[10px] uppercase tracking-[0.12em] text-white">
           Cargar respaldo
           <input type="file" accept=".json,application/json" className="hidden" onChange={handleImport} />
         </label>

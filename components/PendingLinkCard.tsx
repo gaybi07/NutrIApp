@@ -48,7 +48,7 @@ export function PendingLinkCard({
       <button
         type="button"
         onClick={onOpen}
-        className="mt-3 w-full rounded-lg border border-gold/60 bg-gold px-3 py-2 font-sans text-[12px] font-bold text-bg"
+        className="mt-3 w-full rounded-lg border border-gold/60 bg-gold px-3 py-2 font-sans text-[12px] font-bold text-white"
       >
         Gestionar profesionales
       </button>

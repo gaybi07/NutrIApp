@@ -144,7 +144,7 @@ export function MealFromSearch({
           type="button"
           onClick={search}
           disabled={searching}
-          className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg disabled:opacity-60"
+          className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-white disabled:opacity-60"
         >
           {searching ? "..." : "Buscar"}
         </button>
@@ -174,7 +174,7 @@ export function MealFromSearch({
               <button
                 type="button"
                 onClick={() => addToBasket(result, i)}
-                className="shrink-0 rounded-md border border-gold/60 bg-gold px-2 py-1 font-mono text-[10px] uppercase text-bg"
+                className="shrink-0 rounded-md border border-gold/60 bg-gold px-2 py-1 font-mono text-[10px] uppercase text-white"
               >
                 +
               </button>
@@ -212,7 +212,7 @@ export function MealFromSearch({
               onChangeCategoria={setPrepCategoria}
             />
           )}
-          <button type="button" onClick={confirm} className="mt-2 w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-bg">
+          <button type="button" onClick={confirm} className="mt-2 w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-white">
             Sumar a {MEAL_LABELS[meal]}
           </button>
         </div>

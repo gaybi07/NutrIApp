@@ -140,7 +140,7 @@ export function PlansCarousel({ currentPlan }: { currentPlan: ClientPlan }) {
             type="button"
             disabled={busyPlan === "premium" || currentPlan === "premium"}
             onClick={() => elegir("premium")}
-            className="mt-3 w-full rounded-lg bg-gold p-2.5 font-sans text-sm font-bold text-bg disabled:opacity-50"
+            className="mt-3 w-full rounded-lg bg-gold p-2.5 font-sans text-sm font-bold text-white disabled:opacity-50"
           >
             {currentPlan === "premium" ? "Tu plan actual" : busyPlan === "premium" ? "Redirigiendo..." : "Elegir Coach o Nutrition"}
           </button>

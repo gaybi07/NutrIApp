@@ -186,7 +186,7 @@ export function OnboardingWizard({
           <button
             type="button"
             onClick={() => setStep("calc")}
-            className="mt-3 w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-bg"
+            className="mt-3 w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-white"
           >
             Siguiente
           </button>

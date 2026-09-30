@@ -50,7 +50,7 @@ export function WeekMealsCard({
               type="button"
               onClick={() => setSelectedIndex(i)}
               className={`flex flex-col items-center gap-1 rounded-lg border px-1 py-1.5 font-mono text-[9px] uppercase tracking-wide transition-colors ${
-                active ? "border-gold bg-gold text-bg" : "border-border bg-bg/60 text-textMuted"
+                active ? "border-gold bg-gold text-white" : "border-border bg-bg/60 text-textMuted"
               }`}
             >
               <span>{DOW_SHORT[i]}</span>

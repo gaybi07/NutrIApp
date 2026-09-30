@@ -239,7 +239,7 @@ export function NutritionPlanBuilder({ studentId }: { studentId: string }) {
                     <button
                       type="button"
                       onClick={() => addOption(mealKey)}
-                      className="inline-flex items-center gap-1 rounded-full border border-gold/60 bg-gold px-2 py-0.5 font-mono text-[9px] uppercase tracking-wide text-bg"
+                      className="inline-flex items-center gap-1 rounded-full border border-gold/60 bg-gold px-2 py-0.5 font-mono text-[9px] uppercase tracking-wide text-white"
                     >
                       <Plus size={12} strokeWidth={1.8} /> Opción
                     </button>
@@ -383,7 +383,7 @@ export function NutritionPlanBuilder({ studentId }: { studentId: string }) {
           type="button"
           disabled={busy}
           onClick={() => publish()}
-          className="flex-1 rounded-lg bg-gold p-2.5 font-sans text-[13px] font-bold text-bg disabled:opacity-50"
+          className="flex-1 rounded-lg bg-gold p-2.5 font-sans text-[13px] font-bold text-white disabled:opacity-50"
         >
           Publicar
         </button>

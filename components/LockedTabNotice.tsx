@@ -25,7 +25,7 @@ export function LockedTabNotice({
       <button
         type="button"
         onClick={onUpgrade}
-        className="mt-4 rounded-xl bg-gold px-4 py-2 font-mono text-[11px] uppercase tracking-[0.12em] text-bg"
+        className="mt-4 rounded-xl bg-gold px-4 py-2 font-mono text-[11px] uppercase tracking-[0.12em] text-white"
       >
         Ver planes
       </button>

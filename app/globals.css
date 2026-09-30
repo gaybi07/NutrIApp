@@ -341,14 +341,16 @@ html[data-font-size="grande"] .text-\[15px\] { font-size: 19px; }
 /* Los botones "sólidos" (bg-gold/bg-sage + text-bg) se invierten en Neón:
    en vez de un relleno de color plano, quedan negro/gris con el borde y la
    letra prendidos en neón — el color vive en el detalle, no en el fondo. */
-[data-theme="neon"] .bg-gold.text-bg {
+[data-theme="neon"] .bg-gold.text-bg,
+[data-theme="neon"] .bg-gold.text-white {
   background-color: rgb(var(--color-surface-alt));
   color: rgb(var(--color-accent));
   border: 1px solid rgb(var(--color-accent));
   text-shadow: 0 0 6px rgb(var(--color-accent) / 0.9), 0 0 16px rgb(var(--color-accent) / 0.5);
   box-shadow: 0 0 10px rgb(var(--color-accent) / 0.35), inset 0 0 8px rgb(var(--color-accent) / 0.12);
 }
-[data-theme="neon"] .bg-sage.text-bg {
+[data-theme="neon"] .bg-sage.text-bg,
+[data-theme="neon"] .bg-sage.text-white {
   background-color: rgb(var(--color-surface-alt));
   color: rgb(var(--color-sage));
   border: 1px solid rgb(var(--color-sage));

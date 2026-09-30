@@ -72,7 +72,7 @@ export function AppTour({ onFinish }: { onFinish: () => void }) {
           <button
             type="button"
             onClick={() => (isLast ? onFinish() : setIndex((i) => i + 1))}
-            className="flex-1 rounded-lg p-2.5 font-sans font-bold text-sm bg-gold text-bg"
+            className="flex-1 rounded-lg p-2.5 font-sans font-bold text-sm bg-gold text-white"
           >
             {isLast ? "Empezar a usar la app" : "Siguiente"}
           </button>

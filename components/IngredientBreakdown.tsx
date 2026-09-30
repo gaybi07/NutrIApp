@@ -125,7 +125,7 @@ export function IngredientBreakdown({
               type="button"
               onClick={() => confirmWith(true)}
               disabled={unknownCount === rows.length}
-              className="flex-1 rounded-md border border-gold/60 bg-gold px-2 py-1.5 font-mono text-[10px] uppercase text-bg disabled:opacity-40"
+              className="flex-1 rounded-md border border-gold/60 bg-gold px-2 py-1.5 font-mono text-[10px] uppercase text-white disabled:opacity-40"
             >
               Usar lo calculado
             </button>

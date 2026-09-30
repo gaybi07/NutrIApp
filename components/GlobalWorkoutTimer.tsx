@@ -81,7 +81,7 @@ export function GlobalWorkoutTimer({ onOpen, hidden }: { onOpen: () => void; hid
           </span>
           <span className={`block font-mono text-lg font-bold tabular-nums ${isPaused ? "text-gold" : "text-text"}`}>{elapsedLabel}</span>
         </span>
-        <span className="shrink-0 rounded-lg bg-gold px-3 py-2 font-sans text-[12px] font-bold text-bg">Volver ›</span>
+        <span className="shrink-0 rounded-lg bg-gold px-3 py-2 font-sans text-[12px] font-bold text-white">Volver ›</span>
       </button>
     </div>
   );

@@ -42,7 +42,7 @@ export function StepsEntryForm({ entry, onSave }: { entry: DayEntry; onSave: (en
         />
       </div>
 
-      <button type="button" onClick={handleSave} className="w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-bg">
+      <button type="button" onClick={handleSave} className="w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-white">
         Guardar
       </button>
     </div>

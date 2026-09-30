@@ -398,7 +398,7 @@ function TrainerStudentsAndRoutines({
         <div>
           <div className="mb-2 flex items-center justify-between">
             <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Tus rutinas para alumnos</div>
-            <button type="button" onClick={() => setEditing("new")} className="inline-flex items-center gap-1 rounded-full border border-gold/60 bg-gold px-2.5 py-1 font-mono text-[9px] uppercase tracking-wide text-bg">
+            <button type="button" onClick={() => setEditing("new")} className="inline-flex items-center gap-1 rounded-full border border-gold/60 bg-gold px-2.5 py-1 font-mono text-[9px] uppercase tracking-wide text-white">
               <Plus size={12} strokeWidth={1.8} /> Nueva
             </button>
           </div>
@@ -557,7 +557,7 @@ export function StudentLinkSection({
                         type="button"
                         onClick={() => adopt(r)}
                         disabled={adopted}
-                        className="rounded-full border border-gold/60 bg-gold px-2.5 py-1 font-mono text-[9px] uppercase tracking-wide text-bg disabled:opacity-50"
+                        className="rounded-full border border-gold/60 bg-gold px-2.5 py-1 font-mono text-[9px] uppercase tracking-wide text-white disabled:opacity-50"
                       >
                         {adopted ? (
                           <span className="inline-flex items-center gap-1">
@@ -645,7 +645,7 @@ export function StudentLinkSection({
               type="button"
               onClick={() => linkHook.join(code)}
               disabled={linkHook.busy || !code.trim()}
-              className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg disabled:opacity-50"
+              className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-white disabled:opacity-50"
             >
               Enviar solicitud
             </button>
@@ -785,7 +785,7 @@ export function TrainerPanel({
                   type="button"
                   onClick={handlePick}
                   disabled={own.busy}
-                  className="w-full rounded-lg p-2.5 font-sans text-sm font-bold bg-gold text-bg disabled:opacity-50"
+                  className="w-full rounded-lg p-2.5 font-sans text-sm font-bold bg-gold text-white disabled:opacity-50"
                 >
                   {own.application ? "Volver a postularme" : "Subir comprobante"}
                 </button>

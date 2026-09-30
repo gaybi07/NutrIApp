@@ -513,7 +513,7 @@ export function WeekPlanner({
                   <button
                     type="button"
                     onClick={copyShoppingList}
-                    className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg"
+                    className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-white"
                   >
                     Copiar texto
                   </button>
@@ -560,7 +560,7 @@ export function WeekPlanner({
                     type="button"
                     disabled={!customText.trim()}
                     onClick={() => assign(pickerFor.fecha, pickerFor.meal, customText.trim())}
-                    className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg disabled:opacity-40"
+                    className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-white disabled:opacity-40"
                   >
                     + Agregar
                   </button>

@@ -94,7 +94,7 @@ export function SupplementsPanel({ entry, onUpsert }: { entry: DayEntry; onUpser
             type="button"
             onClick={addCustom}
             disabled={!customName.trim()}
-            className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg disabled:opacity-50"
+            className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-white disabled:opacity-50"
           >
             + Agregar
           </button>

@@ -212,7 +212,7 @@ export function QuickAddProducts({
           <button
             onClick={confirmPending}
             disabled={!pendingComplete}
-            className="flex-1 rounded-xl border border-gold/60 bg-gold px-3 py-2 font-sans font-bold text-[12px] text-bg disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex-1 rounded-xl border border-gold/60 bg-gold px-3 py-2 font-sans font-bold text-[12px] text-white disabled:cursor-not-allowed disabled:opacity-40"
           >
             Guardar y agregar a la alacena
           </button>
@@ -245,7 +245,7 @@ export function QuickAddProducts({
             type="button"
             onClick={parseFromText}
             disabled={resolving}
-            className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-bg disabled:opacity-60"
+            className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-white disabled:opacity-60"
           >
             {resolving ? "..." : "Agregar"}
           </button>
@@ -267,7 +267,7 @@ export function QuickAddProducts({
       <button
         disabled={resolving}
         onClick={parseFromText}
-        className="w-full rounded-xl border border-gold/60 bg-gold px-3 py-2 font-sans font-bold text-[12px] text-bg disabled:opacity-60"
+        className="w-full rounded-xl border border-gold/60 bg-gold px-3 py-2 font-sans font-bold text-[12px] text-white disabled:opacity-60"
       >
         {resolving ? "Buscando información nutricional..." : "Agregar a la alacena"}
       </button>

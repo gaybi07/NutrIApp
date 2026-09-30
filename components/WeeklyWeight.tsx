@@ -74,7 +74,7 @@ export function WeeklyWeight({
           <button type="button" onClick={() => setOpen(false)} className="rounded-lg border border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted">
             Cancelar
           </button>
-          <button type="button" onClick={() => { handleSave(); setOpen(false); }} className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-sans text-[12px] font-bold text-bg">
+          <button type="button" onClick={() => { handleSave(); setOpen(false); }} className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-sans text-[12px] font-bold text-white">
             Guardar
           </button>
         </div>
@@ -100,7 +100,7 @@ export function WeeklyWeight({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="mt-3 w-full rounded-lg border border-gold/60 bg-gold px-3 py-2 font-sans text-[12px] font-bold text-bg"
+          className="mt-3 w-full rounded-lg border border-gold/60 bg-gold px-3 py-2 font-sans text-[12px] font-bold text-white"
         >
           Cargar peso semanal
         </button>

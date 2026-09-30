@@ -625,7 +625,7 @@ export function LiveWorkout({
           </div>
           <div className="mb-0.5 text-[15px] font-bold text-text">{assignedSession.routineNombre}</div>
           <div className="mb-3 text-[12px] text-textMuted">{assignedSession.routineSnapshot.length} ejercicios</div>
-          <button type="button" onClick={startAssignedSession} className="flex w-full items-center justify-center gap-1.5 rounded-lg p-3 font-sans text-sm font-bold bg-gold text-bg">
+          <button type="button" onClick={startAssignedSession} className="flex w-full items-center justify-center gap-1.5 rounded-lg p-3 font-sans text-sm font-bold bg-gold text-white">
             <Play size={20} strokeWidth={1.8} className="shrink-0" /> Arrancar sesión asignada
           </button>
         </div>
@@ -637,7 +637,7 @@ export function LiveWorkout({
               <button
                 type="button"
                 onClick={startSession}
-                className="flex w-full items-center justify-center gap-1.5 rounded-lg p-3 font-sans text-sm font-bold bg-gold text-bg"
+                className="flex w-full items-center justify-center gap-1.5 rounded-lg p-3 font-sans text-sm font-bold bg-gold text-white"
               >
                 <Play size={20} strokeWidth={1.8} className="shrink-0" /> Iniciar entrenamiento
               </button>
@@ -657,7 +657,7 @@ export function LiveWorkout({
             <button
               type="button"
               onClick={() => setPlanningOpen(true)}
-              className="flex w-full items-center justify-center gap-1.5 rounded-lg p-3 font-sans text-sm font-bold bg-gold text-bg"
+              className="flex w-full items-center justify-center gap-1.5 rounded-lg p-3 font-sans text-sm font-bold bg-gold text-white"
             >
               <ClipboardList size={20} strokeWidth={1.8} className="shrink-0" /> Cargar rutina
             </button>
@@ -741,7 +741,7 @@ export function LiveWorkout({
             <button
               type="button"
               onClick={() => startUnplanned()}
-              className="mb-3 w-full rounded-lg p-3 font-sans text-sm font-bold bg-gold text-bg"
+              className="mb-3 w-full rounded-lg p-3 font-sans text-sm font-bold bg-gold text-white"
             >
               ▶ Empezar vacío y sumar ejercicios sobre la marcha
             </button>
@@ -808,7 +808,7 @@ export function LiveWorkout({
                 type="button"
                 onClick={togglePause}
                 aria-label={isPaused ? "Seguir" : "Pausar"}
-                className={`rounded-lg border p-2 ${isPaused ? "border-gold bg-gold text-bg" : "border-border text-textMuted"}`}
+                className={`rounded-lg border p-2 ${isPaused ? "border-gold bg-gold text-white" : "border-border text-textMuted"}`}
               >
                 {isPaused ? <Play size={18} strokeWidth={1.8} /> : <Pause size={18} strokeWidth={1.8} />}
               </button>
@@ -823,7 +823,7 @@ export function LiveWorkout({
               <button
                 type="button"
                 onClick={handleFinish}
-                className="flex items-center gap-1 rounded-lg border border-gold/60 bg-gold px-2.5 py-2 font-mono text-[10px] uppercase tracking-wide text-bg"
+                className="flex items-center gap-1 rounded-lg border border-gold/60 bg-gold px-2.5 py-2 font-mono text-[10px] uppercase tracking-wide text-white"
               >
                 <CircleCheck size={18} strokeWidth={1.8} /> Finalizar
               </button>
@@ -1120,7 +1120,7 @@ export function LiveWorkout({
               <button
                 type="button"
                 onClick={() => doFinish(finalComment)}
-                className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg"
+                className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-white"
               >
                 Finalizar
               </button>
@@ -1176,7 +1176,7 @@ export function LiveWorkout({
             <button
               type="button"
               onClick={() => setReport(null)}
-              className="mt-3 w-full rounded-lg p-2.5 font-sans text-sm font-bold bg-gold text-bg"
+              className="mt-3 w-full rounded-lg p-2.5 font-sans text-sm font-bold bg-gold text-white"
             >
               Cerrar
             </button>

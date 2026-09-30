@@ -289,7 +289,7 @@ export function AuthPanel({
           onChange={(event) => setEmail(event.target.value)}
           className="min-w-0 flex-1"
         />
-        <button type="submit" className="rounded-lg px-3 text-xs font-bold bg-gold text-bg">
+        <button type="submit" className="rounded-lg px-3 text-xs font-bold bg-gold text-white">
           Enviar enlace
         </button>
       </div>
@@ -319,7 +319,7 @@ export function AuthPanel({
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
-            <button type="submit" className="rounded-lg px-3 py-2 text-xs font-bold bg-gold text-bg">
+            <button type="submit" className="rounded-lg px-3 py-2 text-xs font-bold bg-gold text-white">
               Ingresar
             </button>
           </div>

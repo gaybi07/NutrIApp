@@ -155,7 +155,7 @@ export function RoutineEditorModal({
           <button type="button" onClick={onClose} className="rounded-lg border border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted">
             Cancelar
           </button>
-          <button type="button" onClick={handleSave} className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg">
+          <button type="button" onClick={handleSave} className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-white">
             Guardar rutina
           </button>
         </div>

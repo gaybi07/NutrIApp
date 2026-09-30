@@ -196,7 +196,7 @@ export function PrepareDish({
                 type="button"
                 onClick={() => setFilter("todas")}
                 className={`rounded-full border px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
-                  filter === "todas" ? "border-gold bg-gold text-bg" : "border-border bg-bg/60 text-textMuted"
+                  filter === "todas" ? "border-gold bg-gold text-white" : "border-border bg-bg/60 text-textMuted"
                 }`}
               >
                 Todas
@@ -207,7 +207,7 @@ export function PrepareDish({
                   type="button"
                   onClick={() => setFilter(c.id)}
                   className={`rounded-full border px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
-                    filter === c.id ? "border-gold bg-gold text-bg" : "border-border bg-bg/60 text-textMuted"
+                    filter === c.id ? "border-gold bg-gold text-white" : "border-border bg-bg/60 text-textMuted"
                   }`}
                 >
                   {c.label}
@@ -270,7 +270,7 @@ export function PrepareDish({
               <button
                 type="button"
                 onClick={() => setStep("porciones")}
-                className="mt-2 w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-bg"
+                className="mt-2 w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-white"
               >
                 Listo, calcular porciones →
               </button>
@@ -300,7 +300,7 @@ export function PrepareDish({
               type="button"
               onClick={() => setPortionMode("iguales")}
               className={`flex-1 rounded-full px-3 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
-                portionMode === "iguales" ? "bg-gold text-bg" : "text-textMuted"
+                portionMode === "iguales" ? "bg-gold text-white" : "text-textMuted"
               }`}
             >
               Porciones iguales
@@ -309,7 +309,7 @@ export function PrepareDish({
               type="button"
               onClick={() => setPortionMode("variadas")}
               className={`flex-1 rounded-full px-3 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
-                portionMode === "variadas" ? "bg-gold text-bg" : "text-textMuted"
+                portionMode === "variadas" ? "bg-gold text-white" : "text-textMuted"
               }`}
             >
               Tamaños distintos
@@ -435,7 +435,7 @@ export function PrepareDish({
                 type="button"
                 onClick={confirm}
                 disabled={!perPortion || !dishName.trim()}
-                className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg disabled:opacity-40"
+                className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-white disabled:opacity-40"
               >
                 Guardar plato
               </button>
@@ -444,7 +444,7 @@ export function PrepareDish({
                 type="button"
                 onClick={confirmVariadas}
                 disabled={!dishName.trim() || totalWeightNum <= 0 || groupPreviews.length === 0}
-                className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg disabled:opacity-40"
+                className="rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-white disabled:opacity-40"
               >
                 Guardar plato
               </button>

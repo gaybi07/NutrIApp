@@ -143,7 +143,7 @@ export function RoutineManager({
               event.stopPropagation();
               setEditingRoutine("new");
             }}
-            className="rounded-full border border-gold/60 bg-gold px-2.5 py-1 font-mono text-[9px] uppercase tracking-wide text-bg"
+            className="rounded-full border border-gold/60 bg-gold px-2.5 py-1 font-mono text-[9px] uppercase tracking-wide text-white"
           >
             + Nueva rutina
           </button>

@@ -79,7 +79,7 @@ export function ExtraConsumption({
             type="button"
             onClick={() => setFilter("todas")}
             className={`rounded-full border px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
-              filter === "todas" ? "border-gold bg-gold text-bg" : "border-border bg-bg/60 text-textMuted"
+              filter === "todas" ? "border-gold bg-gold text-white" : "border-border bg-bg/60 text-textMuted"
             }`}
           >
             Todas
@@ -90,7 +90,7 @@ export function ExtraConsumption({
               type="button"
               onClick={() => setFilter(c.id)}
               className={`rounded-full border px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-wide ${
-                filter === c.id ? "border-gold bg-gold text-bg" : "border-border bg-bg/60 text-textMuted"
+                filter === c.id ? "border-gold bg-gold text-white" : "border-border bg-bg/60 text-textMuted"
               }`}
             >
               {c.label}
@@ -143,7 +143,7 @@ export function ExtraConsumption({
               </div>
             ))}
           </div>
-          <button type="button" onClick={confirm} className="mt-2 w-full rounded-lg p-3 font-sans font-bold text-sm bg-rust text-bg">
+          <button type="button" onClick={confirm} className="mt-2 w-full rounded-lg p-3 font-sans font-bold text-sm bg-rust text-white">
             Descontar de la alacena
           </button>
         </div>

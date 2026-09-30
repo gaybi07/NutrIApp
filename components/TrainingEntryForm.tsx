@@ -104,7 +104,7 @@ export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: 
                 type="button"
                 onClick={() => setNuevoTipo(t.id)}
                 className={`flex-1 rounded-lg border px-2 py-1.5 font-mono text-[10px] uppercase tracking-wide ${
-                  nuevoTipo === t.id ? "border-gold bg-gold text-bg" : "border-border bg-bg/40 text-textMuted"
+                  nuevoTipo === t.id ? "border-gold bg-gold text-white" : "border-border bg-bg/40 text-textMuted"
                 }`}
               >
                 {t.label}
@@ -122,7 +122,7 @@ export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: 
                     type="button"
                     onClick={() => setNuevaDisciplina(d)}
                     className={`rounded-full border px-2 py-1 font-mono text-[9px] uppercase tracking-wide ${
-                      nuevaDisciplina === d ? "border-gold bg-gold text-bg" : "border-border bg-bg/40 text-textMuted"
+                      nuevaDisciplina === d ? "border-gold bg-gold text-white" : "border-border bg-bg/40 text-textMuted"
                     }`}
                   >
                     {d}
@@ -179,7 +179,7 @@ export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: 
             <button
               type="button"
               onClick={addSession}
-              className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-bg"
+              className="shrink-0 rounded-lg border border-gold/60 bg-gold px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-white"
             >
               + Agregar
             </button>
@@ -190,7 +190,7 @@ export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: 
       <button
         type="button"
         onClick={handleSave}
-        className="w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-bg"
+        className="w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-white"
       >
         Guardar
       </button>

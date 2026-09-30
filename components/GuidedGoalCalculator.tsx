@@ -258,7 +258,7 @@ export function GuidedGoalCalculator({
           <button
             type="button"
             onClick={() => (fecha ? goNext() : setError("Elegí una fecha objetivo."))}
-            className="mt-3 w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-bg"
+            className="mt-3 w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-white"
           >
             Siguiente
           </button>
@@ -314,7 +314,7 @@ export function GuidedGoalCalculator({
                     modo &&
                     onApplyGoal(computation.gastoBase, computation.objetivo, { actual, meta, altura, edad, sexo, fecha, modo })
                   }
-                  className="mt-3 w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-bg"
+                  className="mt-3 w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-white"
                 >
                   Usar este objetivo ({computation.objetivo.toLocaleString("es-AR")} kcal/día)
                 </button>
@@ -379,7 +379,7 @@ function NumberField({
       <button
         type="button"
         onClick={onSubmit}
-        className="mt-3 w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-bg"
+        className="mt-3 w-full rounded-lg p-3 font-sans font-bold text-sm bg-gold text-white"
       >
         Siguiente
       </button>

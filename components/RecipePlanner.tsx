@@ -196,7 +196,7 @@ export function RecipePlanner({
               key={key}
               type="button"
               onClick={() => selectMeal(key as MealKey)}
-              className={`rounded-lg border px-2 py-2 text-[11px] font-semibold ${selectedMeal === key ? "border-gold bg-gold text-bg" : "border-border bg-bg/60 text-textMuted"}`}
+              className={`rounded-lg border px-2 py-2 text-[11px] font-semibold ${selectedMeal === key ? "border-gold bg-gold text-white" : "border-border bg-bg/60 text-textMuted"}`}
             >
               {label}
             </button>
@@ -217,7 +217,7 @@ export function RecipePlanner({
               type="button"
               onClick={() => setView("alacena")}
               className={`rounded-full px-3 py-1.5 font-mono text-[9.5px] uppercase tracking-wide ${
-                view === "alacena" ? "bg-gold text-bg" : "text-textMuted"
+                view === "alacena" ? "bg-gold text-white" : "text-textMuted"
               }`}
             >
               Con tu alacena
@@ -227,7 +227,7 @@ export function RecipePlanner({
               type="button"
               onClick={() => setView("ideas")}
               className={`rounded-full px-3 py-1.5 font-mono text-[9.5px] uppercase tracking-wide ${
-                view === "ideas" ? "bg-gold text-bg" : "text-textMuted"
+                view === "ideas" ? "bg-gold text-white" : "text-textMuted"
               }`}
             >
               Otras ideas
