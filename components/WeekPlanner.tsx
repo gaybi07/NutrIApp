@@ -409,6 +409,24 @@ export function WeekPlanner({
     return planOptionsByDate.get(pickerFor.fecha)?.[pickerFor.meal] || [];
   }, [pickerFor, planOptionsByDate]);
 
+  // Con Nutricionista: las comidas con opciones, en orden (día por día, desayuno a colación). Al elegir una, el
+  // selector pasa solo a la siguiente; también se puede ir adelante / atrás a mano.
+  const slots = useMemo(() => {
+    const list: { fecha: string; meal: MealKey }[] = [];
+    for (const fecha of nextWeekDates) {
+      const day = planOptionsByDate.get(fecha);
+      if (!day) continue;
+      for (const meal of MEAL_KEYS) if ((day[meal]?.length ?? 0) > 0) list.push({ fecha, meal });
+    }
+    return list;
+  }, [nextWeekDates, planOptionsByDate]);
+  const slotIndex = pickerFor ? slots.findIndex((sl) => sl.fecha === pickerFor.fecha && sl.meal === pickerFor.meal) : -1;
+  const goToSlot = (delta: number) => {
+    if (slotIndex < 0) return;
+    const next = slots[slotIndex + delta];
+    setPickerFor(next ?? null);
+  };
+
   return (
     <div>
       <div className="mb-3 flex items-center justify-between gap-2">
@@ -578,9 +596,21 @@ export function WeekPlanner({
             className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-surface p-4 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="font-display text-lg text-text">
-              {MEAL_LABELS[pickerFor.meal]} · {DOW_FULL[new Date(`${pickerFor.fecha}T00:00:00`).getDay()]}
+            <div className="flex items-baseline justify-between gap-2">
+              <div className="font-display text-lg text-text">
+                {MEAL_LABELS[pickerFor.meal]} · {DOW_FULL[new Date(`${pickerFor.fecha}T00:00:00`).getDay()]}
+              </div>
+              {hasNutricionistaLink && slotIndex >= 0 && (
+                <div className="shrink-0 font-mono text-[10px] text-textMuted">
+                  {slotIndex + 1} de {slots.length}
+                </div>
+              )}
             </div>
+            {hasNutricionistaLink && slotIndex >= 0 && (
+              <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-surfaceAlt">
+                <div className="h-full bg-gold" style={{ width: `${((slotIndex + 1) / slots.length) * 100}%` }} />
+              </div>
+            )}
             {!hasNutricionistaLink && (
               <div className="mt-3">
                 <label className="mb-1 block">Agregar algo distinto</label>
@@ -661,7 +691,11 @@ export function WeekPlanner({
                       <button
                         key={`plan-${opt.nombre}`}
                         type="button"
-                        onClick={() => assign(pickerFor.fecha, pickerFor.meal, chosen ? null : opt.nombre, false)}
+                        onClick={() => {
+                          assign(pickerFor.fecha, pickerFor.meal, chosen ? null : opt.nombre, false);
+                          // elegir una opción nueva pasa solo a la siguiente comida (sacarla no)
+                          if (!chosen) goToSlot(1);
+                        }}
                         className={`w-full rounded-lg border p-2.5 text-left ${chosen ? "border-gold bg-gold/10" : "border-sage/50 bg-sage/5"}`}
                       >
                         <div className="flex items-center justify-between gap-2">
@@ -776,6 +810,16 @@ export function WeekPlanner({
             {!hasNutricionistaLink && (personalSuggestions.length > 0 || catalogSuggestions.length > 0) && (
               <div className="mt-2 text-[10px] text-textMuted">
                 Las recetas del catálogo suman a la lista de compras; lo de tu memoria no (no sabemos los ingredientes exactos).
+              </div>
+            )}
+            {hasNutricionistaLink && slotIndex >= 0 && (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button type="button" disabled={slotIndex === 0} onClick={() => goToSlot(-1)} className={btn("neutral", "sm", true)}>
+                  ← Anterior
+                </button>
+                <button type="button" disabled={slotIndex >= slots.length - 1} onClick={() => goToSlot(1)} className={btn("secondary", "sm", true)}>
+                  Siguiente →
+                </button>
               </div>
             )}
             <button
