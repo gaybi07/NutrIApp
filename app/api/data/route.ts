@@ -218,7 +218,10 @@ export async function PUT(req: NextRequest) {
       alacena_hidden: settings.alacenaHidden || [],
       macros_hidden: settings.macrosHidden || [],
       actividad_hidden: settings.actividadHidden || [],
-      plan: settings.plan || "basico",
+      // `plan` NO se escribe desde acá: lo que manda el navegador no es de fiar
+      // (un guardado con settings sin cargar lo dejaba en "basico", y cualquiera
+      // podía ponerse un plan pago). Solo lo cambian el webhook de MercadoPago
+      // y el service role. Al insertar una fila nueva queda el default "basico".
     };
     let { error } = await supabase.from("user_settings").upsert(settingsRow);
     // Igual que en GET: si todavía no se corrió la migración de las columnas
@@ -228,7 +231,6 @@ export async function PUT(req: NextRequest) {
       const {
         inicio_order, comidas_order, alacena_order, macros_order, actividad_order,
         inicio_hidden, comidas_hidden, alacena_hidden, macros_hidden, actividad_hidden,
-        plan,
         ...baseRow
       } = settingsRow;
       ({ error } = await supabase.from("user_settings").upsert(baseRow));
