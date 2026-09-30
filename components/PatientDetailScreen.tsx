@@ -9,6 +9,7 @@ import { useTrainerComments } from "@/lib/useTrainerComments";
 import { useStudentReports } from "@/lib/useStudentReports";
 import { NutritionPlanBuilder } from "@/components/NutritionPlanBuilder";
 import { StudentPlanSelections } from "@/components/StudentPlanSelections";
+import { RateStudentCard } from "@/components/RateStudentCard";
 import { isoMonday, fmtDate, addDays, weekdayOf } from "@/lib/calculations";
 import { WEEKDAY_LABELS_SHORT } from "@/lib/types";
 
@@ -286,6 +287,7 @@ export function PatientDetailScreen({
 
         <div className="flex-1 overflow-y-auto p-3">
           {tab === "resumen" && (
+            <>
             <ResumenTab
               proteinaPromedio={metrics?.proteinaPromedio ?? null}
               pasosPromedio={metrics?.pasosPromedio ?? null}
@@ -294,6 +296,8 @@ export function PatientDetailScreen({
               adherenciaPromedio={adherence?.adherenciaPromedio ?? null}
               hasPlan={adherence?.hasPlan ?? false}
             />
+            <RateStudentCard studentId={studentId} disciplina="nutricion" />
+            </>
           )}
           {tab === "plan" && (
             <>

@@ -1,5 +1,6 @@
 "use client";
 
+import { RateStudentCard } from "@/components/RateStudentCard";
 import { useEffect, useMemo, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { useStudentMetrics } from "@/lib/useStudentMetrics";
@@ -487,7 +488,12 @@ export function StudentDetailScreen({
         </div>
 
         <div className="flex-1 overflow-y-auto p-3">
-          {tab === "resumen" && <ResumenTab metrics={metricsHook.metricsByStudent[studentId] ?? null} />}
+          {tab === "resumen" && (
+            <>
+              <ResumenTab metrics={metricsHook.metricsByStudent[studentId] ?? null} />
+              <RateStudentCard studentId={studentId} disciplina="fuerza" />
+            </>
+          )}
           {tab === "plan" && <TrainingPlanBuilder studentId={studentId} />}
           {tab === "entrenamientos" && <EntrenamientosTab weekDates={weekDates} week={detailHook.week} />}
           {tab === "incidencias" && (

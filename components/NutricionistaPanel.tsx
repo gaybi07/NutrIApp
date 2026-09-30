@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 import { Check, ChevronRight } from "lucide-react";
 import { useTrainerApplication, useTrainerAdmin } from "@/lib/useTrainerApplication";
+import { LinkLifecycle } from "@/components/LinkLifecycle";
+import { btn } from "@/components/buttonStyles";
 import { useTrainerLink, useTrainerStudents } from "@/lib/useTrainerLink";
 import { TrainerLinkRequest, TrainerStatus, TrainerStudent } from "@/lib/types";
 import { NutritionPlanBuilder } from "@/components/NutritionPlanBuilder";
@@ -79,6 +81,7 @@ export function OwnPatientLinkSection({ authenticated }: { authenticated: boolea
 
   return (
     <div>
+      <LinkLifecycle hook={linkHook} who="nutricionista" />
       <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Tu nutricionista</div>
       <div className="mb-3 text-[11px] text-textMuted">
         Esto es para cuando VOS sos paciente de otro nutricionista -- no tiene que ver con tus propios pacientes.
@@ -88,7 +91,13 @@ export function OwnPatientLinkSection({ authenticated }: { authenticated: boolea
       ) : linkHook.link ? (
         <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-bg/40 px-2.5 py-2">
           <span className="font-mono text-[11px] text-text">{linkHook.link.trainerEmail}</span>
-          <button type="button" onClick={linkHook.leave} className="font-mono text-[10px] text-rust">
+          <button
+            type="button"
+            onClick={linkHook.leave}
+            disabled={linkHook.busy || Boolean(linkHook.lockedUntil)}
+            title={linkHook.lockedUntil ? "Cambiaste de profesional hace poco" : undefined}
+            className={`${btn("danger", "sm")} shrink-0`}
+          >
             Desvincularme
           </button>
         </div>

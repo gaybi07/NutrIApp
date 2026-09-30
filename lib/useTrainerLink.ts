@@ -19,6 +19,13 @@ function routineFromRow(row: Record<string, unknown>): TrainerRoutine {
   };
 }
 
+export interface FeedbackPrompt {
+  trainerId: string;
+  trainerEmail: string;
+  disciplina: Disciplina;
+  momento: "mensual" | "desvinculacion";
+}
+
 function requestFromRow(row: Record<string, unknown>): TrainerLinkRequest {
   return {
     id: row.id as string,
@@ -47,6 +54,10 @@ export function useTrainerLink(authenticated: boolean, disciplina: Disciplina = 
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
+  // Bloqueo por cambio de profesional (student_link_locks) y calificación pendiente (mensual / al desvincularse).
+  const [lockedUntil, setLockedUntil] = useState<string | null>(null);
+  const [needsMonthlyFeedback, setNeedsMonthlyFeedback] = useState(false);
+  const [feedbackPrompt, setFeedbackPrompt] = useState<FeedbackPrompt | null>(null);
 
   const refetch = useCallback(async () => {
     if (!supabase) {
@@ -95,6 +106,26 @@ export function useTrainerLink(authenticated: boolean, disciplina: Disciplina = 
     // (aceptada/rechazada) solo importa si todavía no hay vínculo activo --
     // si ya está vinculado, mostrar la última solicitud resuelta no aporta nada.
     setMyRequest(requestRow && (requestRow.status === "pendiente" || !linkRow) ? requestFromRow(requestRow) : null);
+
+    // Si todavía no se corrió la migración del ciclo de vida, estas consultas fallan y simplemente no hay bloqueo ni aviso.
+    const { data: lockRow } = await supabase.from("student_link_locks").select("locked_until").eq("student_id", user.id).maybeSingle();
+    setLockedUntil(lockRow?.locked_until && new Date(lockRow.locked_until as string) > new Date() ? (lockRow.locked_until as string) : null);
+    if (linkRow) {
+      const { data: lastFeedback } = await supabase
+        .from("link_feedback")
+        .select("created_at")
+        .eq("student_id", user.id)
+        .eq("trainer_id", linkRow.trainer_id)
+        .eq("disciplina", disciplina)
+        .eq("author_role", "alumno")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const since = lastFeedback?.created_at ? new Date(lastFeedback.created_at as string) : new Date(linkRow.created_at as string);
+      setNeedsMonthlyFeedback(Date.now() - since.getTime() >= 30 * 24 * 60 * 60 * 1000);
+    } else {
+      setNeedsMonthlyFeedback(false);
+    }
     setLoaded(true);
   }, [disciplina]);
 
@@ -131,13 +162,71 @@ export function useTrainerLink(authenticated: boolean, disciplina: Disciplina = 
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (user) await supabase.from("trainer_links").delete().eq("student_id", user.id).eq("disciplina", disciplina);
+    if (user) {
+      const { error } = await supabase.from("trainer_links").delete().eq("student_id", user.id).eq("disciplina", disciplina);
+      if (error) {
+        // Ej. "Cambiaste de profesional hace poco: vas a poder volver a cambiar el 14/10" -- el vínculo sigue activo.
+        setStatus(error.message);
+        setBusy(false);
+        return;
+      }
+    }
+    setFeedbackPrompt({ trainerId: link.trainerId, trainerEmail: link.trainerEmail, disciplina, momento: "desvinculacion" });
     setLink(null);
     setStatus(disciplina === "nutricion" ? "Te desvinculaste de tu nutricionista." : "Te desvinculaste de tu entrenador.");
     setBusy(false);
+    refetch();
+  }, [link, disciplina, refetch]);
+
+  /** Calificación del cliente al profesional: estrellas + comentario (mensual o al desvincularse). */
+  const submitFeedback = useCallback(
+    async (prompt: FeedbackPrompt, stars: number, comentario: string) => {
+      if (!supabase) return false;
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return false;
+      const { error } = await supabase.from("link_feedback").insert({
+        student_id: user.id,
+        trainer_id: prompt.trainerId,
+        disciplina: prompt.disciplina,
+        author_role: "alumno",
+        stars,
+        comentario: comentario.trim() || null,
+        momento: prompt.momento,
+      });
+      if (error) {
+        setStatus(`No se pudo guardar tu calificación: ${error.message}`);
+        return false;
+      }
+      setFeedbackPrompt(null);
+      setNeedsMonthlyFeedback(false);
+      return true;
+    },
+    []
+  );
+
+  /** Abre el formulario de calificación mensual del profesional actual. */
+  const openMonthlyFeedback = useCallback(() => {
+    if (!link) return;
+    setFeedbackPrompt({ trainerId: link.trainerId, trainerEmail: link.trainerEmail, disciplina, momento: "mensual" });
   }, [link, disciplina]);
 
-  return { link, myRequest, loaded, busy, status, join, leave };
+  return {
+    link,
+    myRequest,
+    loaded,
+    busy,
+    status,
+    join,
+    leave,
+    lockedUntil,
+    needsMonthlyFeedback,
+    feedbackPrompt,
+    dismissFeedbackPrompt: () => setFeedbackPrompt(null),
+    openMonthlyFeedback,
+    submitFeedback,
+  };
 }
 
 /**
