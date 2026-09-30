@@ -14,11 +14,13 @@ export function BlurLock({
   active,
   title,
   onUpgrade,
+  hint = "Desbloquealo con un plan · Ver planes",
   children,
 }: {
   active: boolean;
   title: string;
   onUpgrade: () => void;
+  hint?: string;
   children: ReactNode;
 }) {
   if (!active) return <>{children}</>;
@@ -34,7 +36,7 @@ export function BlurLock({
       >
         <Lock size={26} strokeWidth={1.8} className="text-gold" />
         <span className="font-display text-sm text-text">{title}</span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-gold">Desbloquealo con un plan · Ver planes</span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-gold">{hint}</span>
       </button>
     </div>
   );
@@ -46,11 +48,13 @@ export function LockedCollapsible({
   eyebrow,
   title,
   onUpgrade,
+  hint,
   children,
 }: {
   eyebrow: string;
   title: string;
   onUpgrade: () => void;
+  hint?: string;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -65,7 +69,7 @@ export function LockedCollapsible({
       </button>
       {open && (
         <div className="px-3 pb-3">
-          <BlurLock active title={title} onUpgrade={onUpgrade}>{children}</BlurLock>
+          <BlurLock active title={title} onUpgrade={onUpgrade} hint={hint}>{children}</BlurLock>
         </div>
       )}
     </section>

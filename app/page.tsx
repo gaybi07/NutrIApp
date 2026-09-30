@@ -235,7 +235,10 @@ export default function Home() {
   const lockedTabs = isBasico ? PLAN_LOCKED_TABS : [];
   const tabLocked = lockedTabs.includes(activeTab);
   const actividadHidden = settings.actividadHidden;
-  const actividadBlurred = isBasico ? PLAN_LOCKED_ACTIVIDAD_BLOCKS : [];
+// Las herramientas de fuerza (rutinas, entrenamiento en vivo, planificación, reportes) salen de un Entrenador vinculado
+  // o del plan Autoentreno. Sin ninguno de los dos (Básico, o Premium solo con Nutricionista) queda el registro básico.
+  const entrenoBasic = isBasico || (!hasTrainerLink && clientPlan !== "autoentreno");
+  const actividadBlurred = entrenoBasic ? PLAN_LOCKED_ACTIVIDAD_BLOCKS : [];
   if (isApprovedTrainer) enabledTabs.push("entrenador");
   if (isApprovedNutricionista) enabledTabs.push("nutricionista");
   useEffect(() => {
@@ -551,8 +554,9 @@ export default function Home() {
 
       {activeTab === "actividad" && (
         <ActividadTab
-          basic={isBasico}
+          basic={entrenoBasic}
           blurred={actividadBlurred}
+          lockedHint={isBasico ? undefined : "Con un Entrenador o el plan Autoentreno"}
           onUpgrade={() => setPanel("planes")}
           entry={todayEntry}
           weekDates={weekDates}

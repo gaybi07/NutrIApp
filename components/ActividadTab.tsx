@@ -162,11 +162,14 @@ export function ActividadTab({
   basic,
   blurred,
   onUpgrade,
+  lockedHint,
 }: {
   /** Plan Básico: sin entrenamiento en vivo (basic) y con estos bloques bloqueados (colapsados, desenfocados al abrir). */
   basic?: boolean;
   blurred?: readonly ActividadBlockId[];
   onUpgrade?: () => void;
+  /** Texto del candado (según si falta un plan o un Entrenador). */
+  lockedHint?: string;
   entry: DayEntry;
   weekDates: string[];
   weekDays: (DayEntry | null)[];
@@ -313,7 +316,7 @@ export function ActividadTab({
             <div className="mb-1 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-text">
               <Lock size={14} strokeWidth={1.8} /> Entrenamiento en vivo
             </div>
-            <BlurLock active title="Entrenamiento en vivo" onUpgrade={onUpgrade || (() => {})}>
+            <BlurLock active title="Entrenamiento en vivo" onUpgrade={onUpgrade || (() => {})} hint={lockedHint}>
               <LiveWorkout
                 entry={entry}
                 routines={routines}
@@ -384,7 +387,7 @@ export function ActividadTab({
         {visibleOrder.map((blockId) => (
           <SortableSection key={blockId} id={blockId} onHide={blockId === "resumen" ? undefined : () => onHide(blockId)} dragDisabledOnDesktop>
             {blurred?.includes(blockId) && blocks[blockId] ? (
-              <LockedCollapsible eyebrow="Entreno" title={ACTIVIDAD_BLOCK_LABELS[blockId]} onUpgrade={onUpgrade || (() => {})}>
+              <LockedCollapsible eyebrow="Entreno" title={ACTIVIDAD_BLOCK_LABELS[blockId]} onUpgrade={onUpgrade || (() => {})} hint={lockedHint}>
                 {blocks[blockId]}
               </LockedCollapsible>
             ) : (
