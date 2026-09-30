@@ -220,6 +220,7 @@ export function useTrainerLink(authenticated: boolean, disciplina: Disciplina = 
     status,
     join,
     leave,
+    refetch,
     lockedUntil,
     needsMonthlyFeedback,
     feedbackPrompt,

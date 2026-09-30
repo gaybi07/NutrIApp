@@ -11,6 +11,7 @@ import { useMyNutritionPlan } from "@/lib/useMyNutritionPlan";
 import { GoalProgress } from "@/components/GoalProgress";
 import { TabBar, MainTab } from "@/components/TabBar";
 import { LockedTabNotice } from "@/components/LockedTabNotice";
+import { ProfesionalesTab } from "@/components/ProfesionalesTab";
 import { BlurLock } from "@/components/BlurLock";
 import { LockedBlockCard } from "@/components/LockedBlockCard";
 import { MacrosTab } from "@/components/MacrosTab";
@@ -245,6 +246,8 @@ export default function Home() {
   // o del plan Autoentreno. Sin ninguno de los dos (Básico, o Premium solo con Nutricionista) queda el registro básico.
   const entrenoBasic = isBasico || (!hasTrainerLink && clientPlan !== "autoentreno");
   const actividadBlurred = entrenoBasic ? PLAN_LOCKED_ACTIVIDAD_BLOCKS : [];
+  // "Profesionales" (cliente): aparece sola en cuanto hay al menos un profesional vinculado y reemplaza el ítem del menú.
+  if (hasTrainerLink || hasNutricionistaLink) enabledTabs.push("profesionales");
   if (isApprovedTrainer) enabledTabs.push("entrenador");
   if (isApprovedNutricionista) enabledTabs.push("nutricionista");
   useEffect(() => {
@@ -479,8 +482,7 @@ export default function Home() {
           onOpenNutricionista={isBasico ? undefined : () => setPanel("nutricionista")}
           isApprovedNutricionista={isApprovedNutricionista}
           onOpenPlanes={() => setPanel("planes")}
-          onOpenLinkToProfessional={() => setPanel("vincular-profesional")}
-          linkMenuLabel={hasFreeLinkSlot ? "Vincularme a un profesional" : "Mis profesionales"}
+          onOpenLinkToProfessional={hasTrainerLink || hasNutricionistaLink ? undefined : () => setPanel("vincular-profesional")}
           centerContent={
             <div className="flex w-full min-w-0 items-center justify-between gap-1">
               <button
@@ -629,6 +631,22 @@ export default function Home() {
           title="Gastos"
           unlocks={["Historial de compras con precio y marca", "Lo que gastás por semana y por producto"]}
           onUpgrade={() => setPanel("planes")}
+        />
+      )}
+      {activeTab === "profesionales" && (
+        <ProfesionalesTab
+          authenticated={authenticated}
+          hasFreeSlot={hasFreeLinkSlot}
+          nutritionGoalLine={nutritionGoal ? `${nutritionGoal.kcalPromedio} kcal por día · ${nutritionGoal.proteinPromedio} g de proteína` : null}
+          trainingGoalLine={trainingGoal ? `${trainingGoal.sesionesSemana} sesiones por semana · ~${trainingGoal.volumenPlanificado.toLocaleString("es-AR")} kg de volumen` : null}
+          nutritionStatus={
+            Object.keys(nutritionPlanNext.days).length > 0
+              ? "Tu plan de la semana que viene ya está publicado: elegí tus comidas."
+              : Object.keys(nutritionPlanThisWeek.days).length > 0
+                ? "Tu plan de esta semana está en Comidas."
+                : "Todavía no publicó un plan."
+          }
+          onGoToTab={setActiveTab}
         />
       )}
       {activeTab === "gastos" && !tabLocked && <PurchaseHistoryCard purchases={purchases} removePurchase={removePurchase} />}

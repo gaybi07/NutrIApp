@@ -12,6 +12,7 @@ const TABS: { id: MainTab; label: string }[] = [
   { id: "macros", label: "Macros" },
   { id: "actividad", label: "Entreno" },
   { id: "gastos", label: "Gastos" },
+  { id: "profesionales", label: "Profesionales" },
   { id: "entrenador", label: "Entrenador" },
   { id: "nutricionista", label: "Nutricion" },
 ];

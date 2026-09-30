@@ -42,6 +42,7 @@ const TAB_LABELS: Record<MainTab, string> = {
   // OPTIONAL_TABS) -- entrada solo para satisfacer Record<MainTab, ...>.
   entrenador: "Entrenador",
   nutricionista: "Nutricionista",
+  profesionales: "Profesionales",
 };
 
 /** Elegir el tema (oscuro/claro/neón) — separado del resto de Preferencias

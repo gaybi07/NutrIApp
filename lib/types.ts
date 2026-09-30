@@ -698,7 +698,7 @@ export const SUPPLEMENT_CATALOG: { nombre: string; dosis: string }[] = [
 export type WeekPlan = Record<string, Partial<Record<MealKey, string>>>; // fecha -> comida -> título de receta
 
 /** Las solapas de arriba que se pueden prender/apagar desde Preferencias — "inicio" no está acá porque siempre está fija. */
-export type MainTab = "inicio" | "alacena" | "comidas" | "macros" | "actividad" | "gastos" | "entrenador" | "nutricionista";
+export type MainTab = "inicio" | "alacena" | "comidas" | "macros" | "actividad" | "gastos" | "profesionales" | "entrenador" | "nutricionista";
 
 export const OPTIONAL_TABS: MainTab[] = ["alacena", "macros", "comidas", "actividad", "gastos"];
 export const DEFAULT_ENABLED_TABS: MainTab[] = ["inicio", "alacena", "comidas", "macros", "actividad", "gastos"];

@@ -33,6 +33,7 @@ const MODULE_INFO: Record<MainTab, { label: string; description: string }> = {
   // "entrenador" no es una solapa opcional -- aparece sola al aprobarse la
   // postulación (ver app/page.tsx), nunca se ofrece a elegir en este wizard.
   // Entrada solo para satisfacer Record<MainTab, ...>, nunca se lee.
+  profesionales: { label: "Profesionales", description: "Tu Entrenador y tu Nutricionista: lo que fijaron para vos, comentarios y cómo calificarlos." },
   entrenador: { label: "Entrenador", description: "" },
   // Mismo caso que "entrenador" -- ver comentario arriba.
   nutricionista: { label: "Nutricionista", description: "" },
