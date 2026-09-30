@@ -10,6 +10,7 @@ import { useStudentReports } from "@/lib/useStudentReports";
 import { NutritionPlanBuilder } from "@/components/NutritionPlanBuilder";
 import { StudentPlanSelections } from "@/components/StudentPlanSelections";
 import { RateStudentCard } from "@/components/RateStudentCard";
+import { ObjectivesManager } from "@/components/ObjectivesManager";
 import { isoMonday, fmtDate, addDays, weekdayOf } from "@/lib/calculations";
 import { WEEKDAY_LABELS_SHORT } from "@/lib/types";
 
@@ -296,6 +297,7 @@ export function PatientDetailScreen({
               adherenciaPromedio={adherence?.adherenciaPromedio ?? null}
               hasPlan={adherence?.hasPlan ?? false}
             />
+            <ObjectivesManager studentId={studentId} disciplina="nutricion" />
             <RateStudentCard studentId={studentId} disciplina="nutricion" />
             </>
           )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { RateStudentCard } from "@/components/RateStudentCard";
+import { ObjectivesManager } from "@/components/ObjectivesManager";
 import { useEffect, useMemo, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { useStudentMetrics } from "@/lib/useStudentMetrics";
@@ -491,6 +492,7 @@ export function StudentDetailScreen({
           {tab === "resumen" && (
             <>
               <ResumenTab metrics={metricsHook.metricsByStudent[studentId] ?? null} />
+              <ObjectivesManager studentId={studentId} disciplina="fuerza" />
               <RateStudentCard studentId={studentId} disciplina="fuerza" />
             </>
           )}

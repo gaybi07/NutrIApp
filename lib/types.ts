@@ -980,3 +980,49 @@ export const emptyDay = (fecha: string): DayEntry => ({
   pasos: 0,
   entreno: false,
 });
+
+// ---------- Objetivos medibles que fija el profesional (migration_2026-10-09_add_objectives.sql) ----------
+
+export type ObjectiveTipo = "peso" | "kcal" | "proteina" | "sesiones" | "minutos" | "carga" | "pasos" | "sueno" | "agua" | "custom";
+export type ObjectiveVentana = "dia" | "semana" | "total";
+
+export interface Objective {
+  id: string;
+  studentId: string;
+  trainerId: string;
+  disciplina: Disciplina;
+  tipo: ObjectiveTipo;
+  nombre: string;
+  meta: number;
+  unidad: string;
+  /** "min": llegar o superar la meta · "max": no pasarse de la meta. */
+  direccion: "min" | "max";
+  ventana: ObjectiveVentana;
+  /** Con ventana "dia": cuántos días de la semana tienen que cumplirse para dar la semana por cumplida. */
+  diasPorSemana: number;
+  /** Objetivos recurrentes: semanas seguidas cumpliéndolo para darlo por logrado. */
+  semanasSeguidas: number;
+  ejercicio: string | null;
+  fechaLimite: string | null;
+  estado: "activo" | "logrado" | "archivado";
+  logradoAt: string | null;
+  mensajeLogro: string | null;
+  createdAt: string;
+}
+
+/** Plantillas de objetivos: qué se mide, en qué unidad y con qué ventana. `disciplinas`: para quién tiene sentido. */
+export const OBJECTIVE_PRESETS: Record<
+  ObjectiveTipo,
+  { label: string; nombre: string; unidad: string; ventana: ObjectiveVentana; direccion: "min" | "max"; meta: number; disciplinas: Disciplina[]; fuente: string }
+> = {
+  peso: { label: "Peso objetivo", nombre: "Llegar a mi peso objetivo", unidad: "kg", ventana: "total", direccion: "max", meta: 70, disciplinas: ["nutricion"], fuente: "Se mide con el peso semanal que carga el cliente." },
+  kcal: { label: "Calorías por día", nombre: "No pasarme de las calorías del día", unidad: "kcal", ventana: "dia", direccion: "max", meta: 1800, disciplinas: ["nutricion"], fuente: "Se mide con las comidas cargadas." },
+  proteina: { label: "Proteína por día", nombre: "Llegar a la proteína del día", unidad: "g", ventana: "dia", direccion: "min", meta: 120, disciplinas: ["nutricion"], fuente: "Se mide con las comidas cargadas." },
+  agua: { label: "Agua por día", nombre: "Tomar agua todos los días", unidad: "litros", ventana: "dia", direccion: "min", meta: 2, disciplinas: ["nutricion", "fuerza"], fuente: "El cliente marca cada día si lo cumplió." },
+  sesiones: { label: "Sesiones por semana", nombre: "Entrenar la cantidad de sesiones de la semana", unidad: "sesiones", ventana: "semana", direccion: "min", meta: 3, disciplinas: ["fuerza"], fuente: "Se mide con los entrenamientos cargados." },
+  minutos: { label: "Minutos de entrenamiento por semana", nombre: "Entrenar los minutos de la semana", unidad: "min", ventana: "semana", direccion: "min", meta: 150, disciplinas: ["fuerza"], fuente: "Se mide con los entrenamientos cargados." },
+  carga: { label: "Progresión de carga", nombre: "Subir la carga de un ejercicio", unidad: "kg", ventana: "total", direccion: "min", meta: 60, disciplinas: ["fuerza"], fuente: "Se mide con el peso más alto cargado en ese ejercicio." },
+  pasos: { label: "Pasos por día", nombre: "Caminar los pasos del día", unidad: "pasos", ventana: "dia", direccion: "min", meta: 8000, disciplinas: ["nutricion", "fuerza"], fuente: "Se mide con los pasos cargados." },
+  sueno: { label: "Horas de sueño por día", nombre: "Dormir las horas del día", unidad: "h", ventana: "dia", direccion: "min", meta: 7.5, disciplinas: ["nutricion", "fuerza"], fuente: "Se mide con las horas de sueño cargadas." },
+  custom: { label: "Hábito propio", nombre: "", unidad: "", ventana: "dia", direccion: "min", meta: 1, disciplinas: ["nutricion", "fuerza"], fuente: "El cliente marca cada día si lo cumplió (sí / no)." },
+};
