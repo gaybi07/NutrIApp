@@ -16,6 +16,7 @@ import { MuscleGroupVolume } from "@/components/MuscleGroupVolume";
 import { DailySteps } from "@/components/DailySteps";
 import { Collapsible } from "@/components/Collapsible";
 import { LockedCollapsible } from "@/components/BlurLock";
+import { LockedBlockCard } from "@/components/LockedBlockCard";
 import { LiveWorkout } from "@/components/LiveWorkout";
 import { Award } from "lucide-react";
 
@@ -306,6 +307,13 @@ export function ActividadTab({
             assignedSession={assignedSession}
             onStartAssignedSession={onStartAssignedSession}
             onCompleteAssignedSession={onCompleteAssignedSession}
+          />
+        )}
+        {basic && (
+          <LockedBlockCard
+            title="Entrenamiento en vivo"
+            description="Sigue tu rutina serie por serie, con cronómetro y pesos. Requiere un plan pago."
+            onUpgrade={onUpgrade || (() => {})}
           />
         )}
       </Collapsible>
