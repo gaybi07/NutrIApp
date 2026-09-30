@@ -3,6 +3,9 @@
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import {
+  DayEntry,
+  DayMealOptions,
+  Weekday,
   MealKey,
   MEAL_LABELS,
   WeekPlan,
@@ -14,6 +17,7 @@ import { HouseholdInfo } from "@/lib/useHousehold";
 import { useSectionOrder } from "@/lib/useSectionOrder";
 import { SortableSection } from "@/components/SortableSection";
 import { countPlannedMeals, hasWeekActivity, SKIP_MEAL } from "@/components/WeekPlanner";
+import { TodayMeals, WeekAlmanaque } from "@/components/PlanAlmanaque";
 
 const MEAL_KEYS: MealKey[] = ["des", "alm", "mer", "cen", "col"];
 const DOW_SHORT = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -76,8 +80,18 @@ export function ComidasTab({
   household,
   hasNutricionistaLink,
   nutritionGoal,
+  days,
+  todayFecha,
+  planThisWeek,
+  planViewedWeek,
 }: {
   weekPlan: WeekPlan;
+  /** Registros reales, el día de hoy y el plan publicado por la Nutricionista (esta semana real y la
+   * que se está mirando con las flechas) -- alimentan "Lo que te toca comer hoy" y el almanaque. */
+  days: DayEntry[];
+  todayFecha: string;
+  planThisWeek: Partial<Record<Weekday, DayMealOptions>>;
+  planViewedWeek: Partial<Record<Weekday, DayMealOptions>>;
   /** Las 7 fechas de la semana que se está mirando con las flechas de
    * arriba (◂ Semana anterior / Semana siguiente ▸) -- distinta de "la
    * semana que viene" que siempre usa el Planificador para armar/importar. */
@@ -103,8 +117,14 @@ export function ComidasTab({
 
   const drag = useSectionOrder(blockOrder, onReorder);
 
+  const hasViewedPlan = Boolean(hasNutricionistaLink) && Object.keys(planViewedWeek).length > 0;
+  const hasTodayPlan = Boolean(hasNutricionistaLink) && Object.keys(planThisWeek).length > 0;
+
   return (
     <div>
+      {/* "Lo que te toca comer hoy" va siempre primero, abierto y fijo (no entra en el orden
+          arrastrable ni se puede apagar), igual que "Hoy" en Inicio. */}
+      {hasTodayPlan && <TodayMeals todayFecha={todayFecha} plan={planThisWeek} days={days} />}
       {nutritionGoal && (
         <div className="mb-3 rounded-xl border border-gold/40 bg-gold/5 p-3">
           <div className="mb-1 font-mono text-[9px] uppercase tracking-[0.15em] text-gold">Objetivo de tu Nutricionista</div>
@@ -117,7 +137,12 @@ export function ComidasTab({
           <div className="min-w-0 space-y-4 lg:columns-2 lg:gap-4 lg:space-y-0 xl:columns-3">
           {visibleOrder.map((blockId) => (
             <SortableSection key={blockId} id={blockId} onHide={() => onHide(blockId)} dragDisabledOnDesktop>
-              {blockId === "plan-semana" && <WeekPlanSummaryCard weekDates={weekDates} weekPlan={weekPlan} />}
+              {blockId === "plan-semana" &&
+                (hasViewedPlan ? (
+                  <WeekAlmanaque weekDates={weekDates} plan={planViewedWeek} days={days} todayFecha={todayFecha} />
+                ) : (
+                  <WeekPlanSummaryCard weekDates={weekDates} weekPlan={weekPlan} />
+                ))}
               {blockId === "planificador" && (() => {
                 const plannedCount = countPlannedMeals(weekPlan);
                 // Ahora que el plan se comparte entre los del grupo (ver

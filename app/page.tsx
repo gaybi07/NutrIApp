@@ -288,6 +288,10 @@ export default function Home() {
     (id) => (id === "hoy" || !inicioHidden.includes(id)) && !(id === "peso" && pesoCargadoEstaSemana)
   );
 
+  // Plan de la Nutricionista de la semana que se está mirando con las flechas (el de la semana real
+  // de hoy ya está en nutritionPlanThisWeek) -- alimenta el almanaque de Comidas.
+  const nutritionPlanViewed = useMyNutritionPlan(authenticated, hasNutricionistaLink, fmtDate(monday));
+
   const weekDates = useMemo(() => [...Array(7)].map((_, i) => fmtDate(addDays(monday, i))), [monday]);
   const weekDays = useMemo(() => weekDates.map((f) => days.find((d) => d.fecha === f) || null), [weekDates, days]);
   const presentDays = useMemo(() => weekDays.filter((d): d is NonNullable<typeof d> => !!d), [weekDays]);
@@ -862,6 +866,10 @@ export default function Home() {
           onOpenPlanificador={() => setPanel("planificador")}
           hasNutricionistaLink={hasNutricionistaLink}
           nutritionGoal={nutritionGoal}
+          days={days}
+          todayFecha={fmtDate(new Date())}
+          planThisWeek={nutritionPlanThisWeek.days}
+          planViewedWeek={nutritionPlanViewed.days}
           order={settings.comidasOrder}
           onReorder={(comidasOrder) => saveSettings({ ...settings, comidasOrder })}
           hidden={settings.comidasHidden}
