@@ -71,3 +71,15 @@ Pendientes en cuentas: nadie tiene reportes; ninguna tiene rutinas propias; entr
 3. Semana 1 completa, validada por el usuario.
 4. Semanas siguientes.
 5. Reporte y cómo lo ve el cliente.
+
+## 8. Ideas para tener en cuenta (aún sin construir)
+
+- **Nutrición según entrenamiento (Premium+ = paciente + alumno).** Hoy el plan nutricional es igual todos los días porque la cuenta solo es paciente. Con un Entrenador vinculado ya se sabe qué días se entrena (`assigned_sessions`): los días de entreno corresponde más proteína y más carbohidratos (y más kcal), y los días de descanso menos carbohidratos y menos grasas. Propuesta:
+  - En el armado del plan (vista del Nutricionista), mostrar al lado de cada día si ese día el paciente entrena y con qué intensidad, para que arme opciones distintas.
+  - En la app del paciente, el objetivo del día (kcal, proteína, carbos, grasas y densidades) debería variar según sea día de entreno o de descanso, en vez de ser un promedio fijo de la semana.
+  - Sin Entrenador vinculado sigue siendo constante, como ahora.
+- **Densidades.** Ya está: proteína cada 100 g y kcal por gramo, con objetivo derivado del plan del día. Falta decidir si el objetivo de densidad también debe cambiar entre días de entreno y de descanso.
+- **Pantalla del celular.** Revisar Comidas (Hoy, almanaque, lista de compras) y el planificador en pantalla chica.
+- **Vista del Nutricionista.** Ver el almanaque de cumplimiento del paciente en Adherencia, con las omisiones.
+- **Costos.** Subir el ticket de compras y distribuir el gasto (entre integrantes del grupo o por comida): pendiente de definir.
+- **Cambio de profesional.** Bloqueo de 14 días (mismo tipo) o 28 días (otro tipo): todavía no está construido.
