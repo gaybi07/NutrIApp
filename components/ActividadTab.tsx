@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { BarChart, Bar, XAxis, YAxis, ReferenceLine, ResponsiveContainer, Tooltip } from "recharts";
-import { DayEntry, INTENSITY_STYLES, Routine, TrainingSchedule, Weekday, ActividadBlockId, DEFAULT_ACTIVIDAD_ORDER, resolveOrder, WorkoutSuggestion, MuscleGroup, GoalMode, AssignedSession, ExerciseEntry } from "@/lib/types";
+import { DayEntry, INTENSITY_STYLES, Routine, TrainingSchedule, Weekday, ActividadBlockId, DEFAULT_ACTIVIDAD_ORDER, ACTIVIDAD_BLOCK_LABELS, resolveOrder, WorkoutSuggestion, MuscleGroup, GoalMode, AssignedSession, ExerciseEntry } from "@/lib/types";
 import { estimateTrainingCalories, getTrainingSessions, totalVolume, computeTrainingGoal } from "@/lib/calculations";
 import { useSectionOrder } from "@/lib/useSectionOrder";
 import { SortableSection } from "@/components/SortableSection";
@@ -15,6 +15,7 @@ import { TrainingGoal } from "@/components/TrainingGoal";
 import { MuscleGroupVolume } from "@/components/MuscleGroupVolume";
 import { DailySteps } from "@/components/DailySteps";
 import { Collapsible } from "@/components/Collapsible";
+import { LockedCollapsible } from "@/components/BlurLock";
 import { LiveWorkout } from "@/components/LiveWorkout";
 import { Award } from "lucide-react";
 
@@ -159,9 +160,13 @@ export function ActividadTab({
   muscleGroupTrend,
   goalMode,
   basic,
+  blurred,
+  onUpgrade,
 }: {
-  /** Plan Básico: solo el registro rápido de Hoy (pasos/entreno/sueño), sin entrenamiento en vivo. */
+  /** Plan Básico: sin entrenamiento en vivo (basic) y con estos bloques bloqueados (colapsados, desenfocados al abrir). */
   basic?: boolean;
+  blurred?: readonly ActividadBlockId[];
+  onUpgrade?: () => void;
   entry: DayEntry;
   weekDates: string[];
   weekDays: (DayEntry | null)[];
@@ -356,7 +361,13 @@ export function ActividadTab({
         <div className="min-w-0 space-y-4 lg:columns-2 lg:gap-4 lg:space-y-0 xl:columns-3">
         {visibleOrder.map((blockId) => (
           <SortableSection key={blockId} id={blockId} onHide={blockId === "resumen" ? undefined : () => onHide(blockId)} dragDisabledOnDesktop>
-            {blocks[blockId]}
+            {blurred?.includes(blockId) && blocks[blockId] ? (
+              <LockedCollapsible eyebrow="Entreno" title={ACTIVIDAD_BLOCK_LABELS[blockId]} onUpgrade={onUpgrade || (() => {})}>
+                {blocks[blockId]}
+              </LockedCollapsible>
+            ) : (
+              blocks[blockId]
+            )}
           </SortableSection>
         ))}
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
-import { KeyboardEvent, ReactNode, useEffect, useState } from "react";
+import { KeyboardEvent, ReactNode, useContext, useEffect, useState } from "react";
+import { ForceOpenContext } from "@/components/BlurLock";
 import { InfoHint } from "@/components/InfoHint";
 
 export function Collapsible({
@@ -33,7 +34,9 @@ export function Collapsible({
   locked?: boolean;
   children: ReactNode;
 }) {
-  const [open, setOpen] = useState(locked || defaultOpen);
+  const [openState, setOpen] = useState(locked || defaultOpen);
+  const forceOpen = useContext(ForceOpenContext);
+  const open = openState || forceOpen;
 
   useEffect(() => {
     if (!openOnDesktop) return;

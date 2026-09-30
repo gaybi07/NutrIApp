@@ -232,7 +232,8 @@ export default function Home() {
   const enabledTabs = resolveOrder(settings.enabledTabs, DEFAULT_ENABLED_TABS);
   const lockedTabs = isBasico ? PLAN_LOCKED_TABS : [];
   const tabLocked = lockedTabs.includes(activeTab);
-  const actividadHidden = isBasico ? [...(settings.actividadHidden || []), ...PLAN_LOCKED_ACTIVIDAD_BLOCKS] : settings.actividadHidden;
+  const actividadHidden = settings.actividadHidden;
+  const actividadBlurred = isBasico ? PLAN_LOCKED_ACTIVIDAD_BLOCKS : [];
   if (isApprovedTrainer) enabledTabs.push("entrenador");
   if (isApprovedNutricionista) enabledTabs.push("nutricionista");
   useEffect(() => {
@@ -516,6 +517,8 @@ export default function Home() {
       {activeTab === "actividad" && (
         <ActividadTab
           basic={isBasico}
+          blurred={actividadBlurred}
+          onUpgrade={() => setPanel("planes")}
           entry={todayEntry}
           weekDates={weekDates}
           weekDays={weekDays}

@@ -14,7 +14,7 @@ import { SECTION_HELP } from "@/lib/helpText";
 import { RankingCard } from "@/components/RankingCard";
 import { Ledger } from "@/components/Ledger";
 import { Collapsible } from "@/components/Collapsible";
-import { BlurLock } from "@/components/BlurLock";
+import { LockedCollapsible } from "@/components/BlurLock";
 
 const DOW = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 // Colores fijos de macros de la guía de diseño — iguales en Claro y Oscuro
@@ -314,9 +314,13 @@ export function MacrosTab({
         <div className="min-w-0 space-y-4 lg:columns-2 lg:gap-4 lg:space-y-0 xl:columns-3">
         {visibleOrder.map((blockId) => (
           <SortableSection key={blockId} id={blockId} onHide={() => onHide(blockId)} dragDisabledOnDesktop>
-            <BlurLock active={Boolean(blurred?.includes(blockId))} title={MACROS_BLOCK_LABELS[blockId]} onUpgrade={onUpgrade || (() => {})}>
-              {blocks[blockId]}
-            </BlurLock>
+            {blurred?.includes(blockId) ? (
+              <LockedCollapsible eyebrow="Macros" title={MACROS_BLOCK_LABELS[blockId]} onUpgrade={onUpgrade || (() => {})}>
+                {blocks[blockId]}
+              </LockedCollapsible>
+            ) : (
+              blocks[blockId]
+            )}
           </SortableSection>
         ))}
         </div>
