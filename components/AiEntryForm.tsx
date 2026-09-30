@@ -837,6 +837,34 @@ export function AiEntryForm({
         />
       </div>
 
+      {/* Lo ya cargado en esta comida desde Alacena / Buscar producto (varios
+          ítems sueltos) se puede guardar de una como preparación reusable:
+          después, en "Preparación", se elige y se ajusta la cantidad de cada
+          ingrediente. Mismo mecanismo que "Agregar a preparaciones" de
+          Modificar comidas, pero a mano en el momento de cargar. */}
+      {!disableAi && (mode === "alacena" || mode === "buscar") && entryForFecha && yaCargado.filter((item) => !item.grupoId).length > 1 && (
+        <button
+          type="button"
+          onClick={() => {
+            const nombre = window.prompt(`¿Cómo se llama esta preparación? (se guarda con los ${yaCargado.filter((item) => !item.grupoId).length} productos de ${MEAL_LABELS[meal].toLowerCase()})`);
+            if (!nombre || !nombre.trim()) return;
+            const loose = yaCargado.filter((item) => !item.grupoId);
+            const grouped = yaCargado.filter((item) => item.grupoId);
+            onUpsert(applyMealItems(entryForFecha, meal, [...grouped, ...tagGroup(loose, nombre.trim())]));
+            savePreparation(
+              nombre.trim(),
+              "",
+              loose.map((item) => ({ nombre: item.nombre, cantidad: item.gramos ?? 1, unidad: (item.gramos != null ? "g" : "u.") as "g" | "u." })),
+              meal
+            );
+            setStatus(`Guardado "${nombre.trim()}" en tus preparaciones. Lo elegís desde la pestaña Preparación.`);
+          }}
+          className="mt-2 w-full rounded-lg border border-dashed border-gold/50 px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-gold"
+        >
+          + Agregar {MEAL_LABELS[meal].toLowerCase()} a preparaciones ({yaCargado.filter((item) => !item.grupoId).length} productos)
+        </button>
+      )}
+
       {!disableAi && mode === "preparacion" && (
         <div className="mt-2">
           {!selectedPrep ? (
