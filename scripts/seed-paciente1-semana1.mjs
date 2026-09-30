@@ -116,10 +116,15 @@ function similarity(planned, actual) {
   return Math.max(0, Math.round(100 - (Math.abs(actual - planned) / planned) * 100));
 }
 
+// La semana "se va llenando": cargado hasta el viernes a mediodía (desayuno y almuerzo); sábado y domingo sin registro.
+const LAST_DAY_INDEX = 4;
+const FRIDAY_MEALS = ["des", "alm"];
+
 const rows = [];
 const omisiones = {};
 let sumPct = 0;
 FECHAS.forEach((fecha, i) => {
+  if (i > LAST_DAY_INDEX) return;
   const plan = planDays[DIAS[i]];
   const cfg = REAL[i];
   const row = { fecha };
@@ -128,6 +133,11 @@ FECHAS.forEach((fecha, i) => {
   omisiones[fecha] = [];
   for (const meal of MEALS) {
     const a = plan[meal][0];
+    if (i === LAST_DAY_INDEX && !FRIDAY_MEALS.includes(meal)) {
+      row[`${meal}_k`] = 0; row[`${meal}_p`] = 0; row[`${meal}_c`] = 0; row[`${meal}_g`] = 0; row[`${meal}_f`] = 0;
+      row[`${meal}_items`] = [];
+      continue;
+    }
     plannedKcal += a.kcal;
     if (cfg.omitir?.[meal]) {
       omisiones[fecha].push({ comida: meal, alimento: a.nombre, motivo: /alerg/i.test(cfg.omitir[meal]) ? "alergia" : /gusta/i.test(cfg.omitir[meal]) ? "no_le_gusta" : "otro", nota: cfg.omitir[meal] });
@@ -156,7 +166,7 @@ FECHAS.forEach((fecha, i) => {
   row.entreno = [true, false, true, false, true, false, false][i];
   rows.push(row);
 });
-console.log("Adherencia promedio simulada:", Math.round(sumPct / 7) + "%");
+console.log("Adherencia promedio simulada (lun-vie, viernes parcial):", Math.round(sumPct / (LAST_DAY_INDEX + 1)) + "%");
 
 const users = (await api("/auth/v1/admin/users?per_page=1000")).users;
 const userId = users.find((u) => u.email === "paciente1.demo@morphytest.app").id;
@@ -173,9 +183,14 @@ const full = rows.map((r) => ({ ...r, user_id: userId }));
 await api("/rest/v1/days?on_conflict=user_id,fecha", "POST", full, "resolution=merge-duplicates");
 console.log("Días reales cargados.");
 
+// Sábado y domingo: sin registro todavía
+for (const fecha of FECHAS.slice(LAST_DAY_INDEX + 1)) {
+  await api(`/rest/v1/days?user_id=eq.${userId}&fecha=eq.${fecha}`, "DELETE");
+}
+
 // Omisiones (alergia / no le gusta): necesita la columna days.omisiones (migration_2026-10-05)
 try {
-  for (const fecha of FECHAS) {
+  for (const fecha of FECHAS.slice(0, LAST_DAY_INDEX + 1)) {
     await api(`/rest/v1/days?user_id=eq.${userId}&fecha=eq.${fecha}`, "PATCH", { omisiones: omisiones[fecha] });
   }
   console.log("Omisiones guardadas.");
