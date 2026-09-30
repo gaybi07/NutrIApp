@@ -83,3 +83,5 @@ Pendientes en cuentas: nadie tiene reportes; ninguna tiene rutinas propias; entr
 - **Vista del Nutricionista.** Ver el almanaque de cumplimiento del paciente en Adherencia, con las omisiones.
 - **Costos.** Subir el ticket de compras y distribuir el gasto (entre integrantes del grupo o por comida): pendiente de definir.
 - **Cambio de profesional.** Bloqueo de 14 días (mismo tipo) o 28 días (otro tipo): todavía no está construido.
+
+- **Solapa "Profesionales" (cliente): primera versión.** Hoy muestra email, insignia Verificado, objetivo que fijó, estado de la semana, último comentario y acciones (calificar, desvincularme, vincularme con cupo libre). Falta: nombre, foto, presentación, especialidades, lugar de trabajo, contacto, promedio de estrellas y reportes; se completa con el perfil profesional.
