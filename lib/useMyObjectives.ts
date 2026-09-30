@@ -10,7 +10,7 @@ import { ObjectiveCheck } from "./objectiveProgress";
  * Lado CLIENTE: los objetivos que le fijaron sus profesionales, las marcas diarias de los que se marcan a mano
  * (agua, hábitos propios) y el registro del logro cuando la app detecta que se cumplió (mark_objective_achieved).
  */
-export function useMyObjectives(authenticated: boolean) {
+export function useMyObjectives(authenticated: boolean, onPointsChanged?: () => void) {
   const [objectives, setObjectives] = useState<Objective[]>([]);
   const [checks, setChecks] = useState<ObjectiveCheck[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -81,6 +81,7 @@ export function useMyObjectives(authenticated: boolean) {
       if (!supabase) return;
       await supabase.rpc("mark_objective_achieved", { p_objective_id: objectiveId });
       await refetch();
+      onPointsChanged?.();
     },
     [refetch]
   );

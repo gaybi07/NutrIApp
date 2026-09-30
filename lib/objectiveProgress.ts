@@ -200,3 +200,8 @@ export function computeObjectiveProgress(
     manual,
   };
 }
+
+/** Puntos que vale un objetivo al lograrse (espejo de objective_points() en la base, que es la que los registra). */
+export function objectivePoints(o: Pick<Objective, "ventana" | "semanasSeguidas">): number {
+  return o.ventana === "total" ? 150 : 50 + 25 * (o.semanasSeguidas || 1);
+}

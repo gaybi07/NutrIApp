@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Objective } from "@/lib/types";
-import { ObjectiveProgress } from "@/lib/objectiveProgress";
+import { ObjectiveProgress, objectivePoints } from "@/lib/objectiveProgress";
 import { btn } from "@/components/buttonStyles";
 
 export interface ObjectiveWithProgress {
@@ -53,10 +53,15 @@ export function MyObjectivesCard({
   items,
   onCheck,
   todayFecha,
+  totalPoints = 0,
+  pointsByObjective = {},
 }: {
   items: ObjectiveWithProgress[];
   onCheck: (objectiveId: string, fecha: string, cumplido: boolean, valor?: number) => void;
   todayFecha: string;
+  /** Puntos acumulados por objetivos logrados. */
+  totalPoints?: number;
+  pointsByObjective?: Record<string, number>;
 }) {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const achieved = items.filter((i) => i.objective.estado === "logrado" && !dismissed.has(i.objective.id));
@@ -70,6 +75,7 @@ export function MyObjectivesCard({
           <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-sage">Objetivo cumplido</div>
           <div className="font-display text-lg text-text">¡Lo lograste! {o.nombre}</div>
           <div className="mt-1 text-[12px] text-textMuted">
+            <b className="text-sage">+{pointsByObjective[o.id] || objectivePoints(o)} puntos · </b>
             Tu {TIPO_LABEL[o.disciplina] ?? "profesional"} ya fue avisado.
             {o.logradoAt ? ` (${new Date(o.logradoAt).toLocaleDateString("es-AR", { day: "numeric", month: "numeric" })})` : ""}
           </div>
@@ -89,7 +95,10 @@ export function MyObjectivesCard({
 
       {active.length > 0 && (
         <section className="rounded-2xl border border-border bg-surface/70 p-3">
-          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Objetivos de tus profesionales</div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Objetivos de tus profesionales</div>
+            <span className="shrink-0 rounded-full border border-gold/40 bg-gold/10 px-2 py-1 font-mono text-[10px] font-bold text-gold">⭐ {totalPoints} puntos</span>
+          </div>
           <div className="mt-2 space-y-2.5">
             {active.map((item) => {
               const { objective: o, progress } = item;
@@ -98,7 +107,9 @@ export function MyObjectivesCard({
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="text-[13px] font-semibold text-text">{o.nombre}</div>
-                      <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">{TIPO_LABEL[o.disciplina] ?? ""}</div>
+                      <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
+                        {TIPO_LABEL[o.disciplina] ?? ""} · vale {objectivePoints(o)} puntos
+                      </div>
                     </div>
                     <span className="shrink-0 font-sans text-lg font-bold text-text">{progress.percent}%</span>
                   </div>

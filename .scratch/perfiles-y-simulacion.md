@@ -85,3 +85,9 @@ Pendientes en cuentas: nadie tiene reportes; ninguna tiene rutinas propias; entr
 - **Cambio de profesional.** Bloqueo de 14 días (mismo tipo) o 28 días (otro tipo): todavía no está construido.
 
 - **Solapa "Profesionales" (cliente): primera versión.** Hoy muestra email, insignia Verificado, objetivo que fijó, estado de la semana, último comentario y acciones (calificar, desvincularme, vincularme con cupo libre). Falta: nombre, foto, presentación, especialidades, lugar de trabajo, contacto, promedio de estrellas y reportes; se completa con el perfil profesional.
+
+## 9. Puntos, mascota y tienda (idea del 2026-10-01)
+
+- **Ahora:** los objetivos logrados dan puntos (puntual 150; recurrente 50 + 25 por semana seguida). Libro de puntos en la base (`points_ledger`), los registra `mark_objective_achieved`.
+- **Después:** una mascota que evoluciona a medida que se logran objetivos, y una tienda donde gastar puntos (cosas para la mascota, mejoras). Todo se calcula del libro de puntos (sumas y gastos como filas negativas).
+- **Antes de la tienda:** el logro hoy lo detecta la app (cliente) y lo registra la base sin verificarlo; con puntos que se gastan hay que verificar el cumplimiento del lado del servidor para que no se pueda hacer trampa.

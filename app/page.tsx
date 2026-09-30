@@ -14,6 +14,7 @@ import { LockedTabNotice } from "@/components/LockedTabNotice";
 import { ProfesionalesTab } from "@/components/ProfesionalesTab";
 import { MyObjectivesCard } from "@/components/MyObjectivesCard";
 import { useMyObjectives } from "@/lib/useMyObjectives";
+import { useMyPoints } from "@/lib/useMyPoints";
 import { computeObjectiveProgress } from "@/lib/objectiveProgress";
 import { BlurLock } from "@/components/BlurLock";
 import { LockedBlockCard } from "@/components/LockedBlockCard";
@@ -356,7 +357,8 @@ export default function Home() {
 
   // Objetivos medibles que fijaron los profesionales: se miden solos con lo que se carga, y al cumplirse se marcan
   // como logrados (el profesional se entera y puede dejar un mensaje).
-  const myObjectives = useMyObjectives(authenticated);
+  const myPoints = useMyPoints(authenticated);
+  const myObjectives = useMyObjectives(authenticated, myPoints.refetch);
   const objectivesWithProgress = useMemo(
     () =>
       myObjectives.objectives.map((objective) => ({
@@ -816,7 +818,7 @@ export default function Home() {
                         extraLines={trainingGoal ? [`Entrenador: ${trainingGoal.sesionesSemana} sesiones por semana · ~${trainingGoal.volumenPlanificado.toLocaleString("es-AR")} kg de volumen`] : undefined} />}
                       {objectivesWithProgress.length > 0 && (
                         <div className={goalProgress ? "mt-3" : ""}>
-                          <MyObjectivesCard items={objectivesWithProgress} onCheck={myObjectives.saveCheck} todayFecha={fmtDate(new Date())} />
+                          <MyObjectivesCard items={objectivesWithProgress} onCheck={myObjectives.saveCheck} todayFecha={fmtDate(new Date())} totalPoints={myPoints.total} pointsByObjective={myPoints.byObjective} />
                         </div>
                       )}
                     </SortableSection>
