@@ -60,7 +60,7 @@ import { useNextWeekTrainingPlan } from "@/lib/useNextWeekTrainingPlan";
 import { useProductMemory } from "@/lib/useProductMemory";
 import { emptyDay, MealKey, MEAL_LABELS, DEFAULT_ENABLED_TABS, DEFAULT_INICIO_ORDER, resolveOrder } from "@/lib/types";
 import { SECTION_HELP } from "@/lib/helpText";
-import { TriangleAlert, Flame } from "lucide-react";
+import { TriangleAlert, Flame, Lock } from "lucide-react";
 
 export default function Home() {
   const { days, settings, loaded, syncError, upsertDay, saveDays, saveSettings } = useLocalDays();
@@ -718,8 +718,15 @@ export default function Home() {
                 if (blockId === "seguimiento") {
                   return (
                     <SortableSection key="seguimiento" id="seguimiento" onHide={() => hideInicioBlock("seguimiento")} dragDisabledOnDesktop>
-                      <BlurLock active={isBasico} title="Seguimiento semanal" onUpgrade={() => setPanel("planes")}>
-                      <Collapsible eyebrow="Semana" title="Seguimiento semanal" info={SECTION_HELP.semana} scrollable={false} openOnDesktop locked={isBasico}>
+                      <Collapsible
+                        eyebrow="Semana"
+                        title="Seguimiento semanal"
+                        info={SECTION_HELP.semana}
+                        scrollable={false}
+                        openOnDesktop={!isBasico}
+                        badge={isBasico ? <Lock size={14} strokeWidth={1.8} className="text-textMuted" /> : undefined}
+                      >
+                        <BlurLock active={isBasico} title="Seguimiento semanal" onUpgrade={() => setPanel("planes")}>
                         <div className="mb-2 font-display text-base leading-none text-text">Indicadores</div>
                         <SummaryCards
                           summary={summary}
@@ -736,6 +743,9 @@ export default function Home() {
                           weeklyWeights={settings.weeklyWeights}
                           fallbackWeightKg={currentWeightKg}
                         />
+                        
+                        {!isBasico && (
+                        <>
                         <div className="my-3 border-t border-dashed border-border" />
                         <Ledger
                           weekDates={weekDates}
@@ -748,8 +758,10 @@ export default function Home() {
                           weeklyWeights={settings.weeklyWeights}
                           fallbackWeightKg={currentWeightKg}
                         />
+                        </>
+                        )}
+                        </BlurLock>
                       </Collapsible>
-                      </BlurLock>
                     </SortableSection>
                   );
                 }

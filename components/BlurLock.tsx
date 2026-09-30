@@ -20,7 +20,7 @@ export function BlurLock({
   if (!active) return <>{children}</>;
   return (
     <div className="relative mb-3 overflow-hidden rounded-2xl">
-      <div aria-hidden className="pointer-events-none max-h-[420px] select-none overflow-hidden opacity-80 blur-[6px]">
+      <div aria-hidden className="pointer-events-none max-h-[560px] select-none overflow-hidden opacity-80 blur-[6px]">
         {children}
       </div>
       <button
