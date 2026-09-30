@@ -8,6 +8,8 @@ import { inventoryKey } from "@/lib/useInventory";
 import { btn, chip } from "@/components/buttonStyles";
 import { fmtDate, isoMonday, addDays } from "@/lib/calculations";
 import { useEscapeKey } from "@/lib/useEscapeKey";
+import { useHouseholdExports, ExportedMeal } from "@/lib/useHouseholdExports";
+import { HouseholdInfo } from "@/lib/useHousehold";
 
 const MEAL_KEYS: MealKey[] = ["des", "alm", "mer", "cen", "col"];
 const DOW = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -36,6 +38,7 @@ export function ShoppingListCard({
   planThisWeek,
   planNextWeek,
   onOpenPlanner,
+  household,
 }: {
   items: InventoryItem[];
   weekPlan: WeekPlan;
@@ -43,6 +46,8 @@ export function ShoppingListCard({
   planNextWeek: PlanDays;
   /** Abre el planificador de la semana que viene, donde se eligen las comidas. */
   onOpenPlanner: () => void;
+  /** Con Alacena compartida, la lista sale de las partes que exportó cada integrante, no solo de las tuyas. */
+  household: HouseholdInfo | null;
 }) {
   const [which, setWhich] = useState<"next" | "this">("next");
   const [status, setStatus] = useState("");
@@ -77,7 +82,24 @@ export function ShoppingListCard({
     return out;
   }, [dates, weekPlan, plan]);
 
-  const included = chosen;
+  const groupMode = Boolean(household && household.memberCount > 1);
+  const weekStartStr = dates[0];
+  const exports = useHouseholdExports(groupMode ? household!.id : null, weekStartStr);
+  const myExport: ExportedMeal[] = chosen.map((c) => ({ fecha: c.fecha, meal: c.meal, title: c.title, ingredients: c.ingredients }));
+  const myExportKey = myExport.map((m) => `${m.fecha}:${m.meal}:${m.title}`).join("|");
+  const exportedKey = (exports.mine?.items || []).map((m) => `${m.fecha}:${m.meal}:${m.title}`).join("|");
+  const allExported = groupMode ? exports.rows.length >= household!.memberCount : true;
+  const myExportStale = groupMode && Boolean(exports.mine) && exportedKey !== myExportKey;
+  const missingMembers = groupMode ? Math.max(0, household!.memberCount - exports.rows.length) : 0;
+
+  // La lista del grupo suma las partes exportadas de TODOS (la tuya se toma de lo exportado, no de lo que cambiaste después).
+  const included = useMemo(() => {
+    if (!groupMode) return chosen;
+    return exports.rows.flatMap((row) =>
+      row.items.map((it) => ({ key: `${row.user_id}|${it.fecha}|${it.meal}`, fecha: it.fecha, meal: it.meal, title: it.title, ingredients: it.ingredients }))
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupMode, chosen, exports.rows]);
   const selectionKey = useMemo(() => `${which}|` + included.map((c) => `${c.key}:${c.title}`).join("|"), [which, included]);
   const built = builtFor !== null;
   const [showFull, setShowFull] = useState(false);
@@ -178,15 +200,61 @@ export function ShoppingListCard({
           ) : (
             <div />
           )}
-          <button
-            type="button"
-            disabled={chosen.length === 0}
-            onClick={() => setBuiltFor(selectionKey)}
-            className={`${btn("primary", "md", true)} ${which === "next" ? "" : "col-span-2"}`}
-          >
-            {built ? "Actualizar lista" : "Armar lista de compras"}
-          </button>
+          {groupMode ? (
+            <button
+              type="button"
+              disabled={chosen.length === 0 || exports.busy || (Boolean(exports.mine) && !myExportStale)}
+              onClick={async () => {
+                await exports.exportMine(myExport);
+              }}
+              className={`${btn(exports.mine && !myExportStale ? "neutral" : "primary", "md", true)} ${which === "next" ? "" : "col-span-2"}`}
+            >
+              {exports.busy ? "Exportando..." : exports.mine ? (myExportStale ? "Actualizar mi parte" : "Mi parte exportada ✓") : "Exportar mi parte"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={chosen.length === 0}
+              onClick={() => setBuiltFor(selectionKey)}
+              className={`${btn("primary", "md", true)} ${which === "next" ? "" : "col-span-2"}`}
+            >
+              {built ? "Actualizar lista" : "Armar lista de compras"}
+            </button>
+          )}
         </div>
+
+        {groupMode && (
+          <div className="mt-2 rounded-lg border border-gold/40 bg-gold/5 p-2">
+            <div className="font-mono text-[9px] uppercase tracking-wide text-gold">Alacena compartida · {household!.name}</div>
+            <div className="mt-1 space-y-0.5 text-[12px]">
+              <div className={exports.mine ? "text-sage" : "text-text"}>
+                {exports.mine ? `✓ Vos exportaste tu parte (${exports.mine.items.length} comidas)` : "• Falta exportar tu parte"}
+                {myExportStale && <span className="text-textMuted"> · cambiaste comidas, actualizala</span>}
+              </div>
+              {exports.rows
+                .filter((r) => r.user_id !== exports.mine?.user_id)
+                .map((r) => (
+                  <div key={r.user_id} className="text-sage">
+                    ✓ {r.nombre || "Integrante"} exportó su parte ({r.items.length} comidas)
+                  </div>
+                ))}
+              {missingMembers > 0 && (
+                <div className="text-textMuted">
+                  • Falta{missingMembers === 1 ? "" : "n"} {missingMembers} integrante{missingMembers === 1 ? "" : "s"} por exportar
+                </div>
+              )}
+            </div>
+            {exports.error && <div className="mt-1 text-[11px] text-rust">Falta correr la actualización de la base del grupo (migration 2026-10-07).</div>}
+            <button
+              type="button"
+              disabled={!allExported || included.length === 0}
+              onClick={() => setBuiltFor(selectionKey)}
+              className={`${btn("primary", "md", true)} mt-2`}
+            >
+              {built ? "Actualizar lista del grupo" : allExported ? "Armar lista de compras del grupo" : "Esperando a que exporten todos"}
+            </button>
+          </div>
+        )}
       </div>
 
       {chosen.length === 0 && (

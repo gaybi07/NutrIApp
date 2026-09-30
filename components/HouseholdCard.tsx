@@ -5,6 +5,7 @@ import { CircleCheck } from "lucide-react";
 import { Collapsible } from "@/components/Collapsible";
 import { InventoryItem } from "@/lib/types";
 import { HouseholdInfo } from "@/lib/useHousehold";
+import { HouseholdExportBadge, HouseholdExportPanel } from "@/components/HouseholdExportStatus";
 import { SECTION_HELP } from "@/lib/helpText";
 
 /**
@@ -65,9 +66,15 @@ export function HouseholdCard({
   };
 
   return (
-    <Collapsible eyebrow="Alacena en grupo" title={household ? household.name : "Compartir alacena"} info={SECTION_HELP.hogar}>
+    <Collapsible
+      eyebrow="Alacena en grupo"
+      title={household ? household.name : "Compartir alacena"}
+      info={SECTION_HELP.hogar}
+      badge={household && household.memberCount > 1 ? <HouseholdExportBadge householdId={household.id} memberCount={household.memberCount} /> : undefined}
+    >
       {household ? (
         <>
+          {household.memberCount > 1 && <HouseholdExportPanel householdId={household.id} memberCount={household.memberCount} />}
           <div className="mb-3 flex items-center gap-1.5 text-[12px]">
             <span className="inline-flex items-center gap-1 text-sage">
               <CircleCheck size={16} strokeWidth={1.8} /> Estás conectado
