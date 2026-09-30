@@ -291,11 +291,15 @@ export default function Home() {
     return profileWeight || 75;
   }, [days, settings]);
 
-  const proteinTargetG = useMemo(() => proteinTargetForWeight(currentWeightKg), [currentWeightKg]);
+  // Con Nutricionista vinculado, lo que ella fija manda: kcal y proteína del día salen de su plan
+  // esta semana (una sola fuente para Hoy, Seguimiento, Objetivo y Macros), no de la calculadora.
+  const goalKcal = nutritionGoal?.kcalPromedio ?? settings.goal;
+  const proteinTarget = nutritionGoal?.proteinPromedio ?? proteinTargetForWeight(currentWeightKg);
+  const proteinTargetG = proteinTarget;
 
   const summary = useMemo(
-    () => summarizeWeek(presentDays, settings.tdeeFallback, settings.goal, settings.weeklyWeights, currentWeightKg, days),
-    [presentDays, settings, currentWeightKg, days]
+    () => summarizeWeek(presentDays, settings.tdeeFallback, goalKcal, settings.weeklyWeights, currentWeightKg, days),
+    [presentDays, settings, currentWeightKg, days, goalKcal]
   );
 
   const weightTrend = useMemo(() => {
@@ -311,11 +315,11 @@ export default function Home() {
       settings.calculatorProfile,
       currentWeightKg,
       weightTrend,
-      proteinTargetForWeight(currentWeightKg),
-      settings.goal,
+      proteinTarget,
+      goalKcal,
       earliestLoggedWeight(days, settings.weeklyWeights) ?? undefined
     );
-  }, [settings.calculatorProfile, currentWeightKg, weightTrend, settings.goal, days, settings.weeklyWeights]);
+  }, [settings.calculatorProfile, currentWeightKg, weightTrend, goalKcal, proteinTarget, days, settings.weeklyWeights]);
 
   const muscleGroupTrend = useMemo(
     () => computeMuscleGroupVolumeTrend(days, weekDates),
@@ -413,7 +417,7 @@ export default function Home() {
       <TipPopup
         presentDays={presentDays}
         summary={summary}
-        proteinTarget={proteinTargetForWeight(currentWeightKg)}
+        proteinTarget={proteinTarget}
         goalMode={settings.calculatorProfile?.modo}
         weightTrend={weightTrend}
         sleepAvg={sleepAvg}
@@ -492,8 +496,8 @@ export default function Home() {
       {activeTab === "macros" && (
         <MacrosTab
           entry={todayEntry}
-          goal={settings.goal}
-          proteinTarget={proteinTargetForWeight(currentWeightKg)}
+          goal={goalKcal}
+          proteinTarget={proteinTarget}
           weekDates={weekDates}
           weekDays={weekDays}
           onLogMeal={() => {
@@ -621,7 +625,7 @@ export default function Home() {
                     <SortableSection key="hoy" id="hoy" dragDisabledOnDesktop>
                       <TodayCard
                         entry={todayEntry}
-                        goal={settings.goal}
+                        goal={goalKcal}
                         tdeeFallback={settings.tdeeFallback}
                         pesoKg={currentWeightKg}
                         onLogMeal={(meal) => {
@@ -697,7 +701,7 @@ export default function Home() {
                         <div className="mb-2 rounded-xl border border-gold/40 bg-gold/5 p-3">
                           <div className="mb-1.5 font-mono text-[9px] uppercase tracking-[0.15em] text-gold">Objetivo de tus profesionales</div>
                           <div className="grid grid-cols-2 gap-2">
-                            {nutritionGoal && (
+                            {nutritionGoal && !goalProgress && (
                               <div>
                                 <div className="font-mono text-[8px] uppercase tracking-wide text-textMuted">Nutricionista</div>
                                 <div className="text-[13px] font-semibold text-text">{nutritionGoal.kcalPromedio} kcal/día</div>
@@ -714,7 +718,7 @@ export default function Home() {
                           </div>
                         </div>
                       )}
-                      {goalProgress && <GoalProgress progress={goalProgress} openOnDesktop />}
+                      {goalProgress && <GoalProgress progress={goalProgress} openOnDesktop setBy={nutritionGoal ? "Fijado por tu Nutricionista" : undefined} />}
                     </SortableSection>
                   );
                 }
@@ -732,15 +736,15 @@ export default function Home() {
                         <div className="mb-2 font-display text-base leading-none text-text">Indicadores</div>
                         <SummaryCards
                           summary={summary}
-                          goal={summary.avgGoal || settings.goal}
+                          goal={summary.avgGoal || goalKcal}
                           weight={settings.weeklyWeights?.[fmtDate(monday)]}
                         />
                         <div className="my-3 border-t border-dashed border-border" />
                         <WeeklyChart
                           weekDates={weekDates}
                           weekDays={weekDays}
-                          goal={settings.goal}
-                          avgGoal={summary.avgGoal || settings.goal}
+                          goal={goalKcal}
+                          avgGoal={summary.avgGoal || goalKcal}
                           avgGasto={settings.tdeeFallback}
                           weeklyWeights={settings.weeklyWeights}
                           fallbackWeightKg={currentWeightKg}
@@ -752,7 +756,7 @@ export default function Home() {
                         <Ledger
                           weekDates={weekDates}
                           weekDays={weekDays}
-                          goal={summary.avgGoal || settings.goal}
+                          goal={summary.avgGoal || goalKcal}
                           tdeeFallback={settings.tdeeFallback}
                           onUpsert={upsertDay}
                           variant="actividad"
@@ -793,7 +797,7 @@ export default function Home() {
           consumeAmounts={consumeAmounts}
           onUseRecipe={useRecipeAsMeal}
           goalMode={settings.calculatorProfile?.modo}
-          dailyGoal={settings.goal}
+          dailyGoal={goalKcal}
           consumedKcal={todayKcal}
           addStructuredItems={addStructuredItems}
           updateInventoryItem={updateInventoryItem}
@@ -1064,7 +1068,7 @@ export default function Home() {
                 items={inventory}
                 weekPlan={weekPlan}
                 onSave={saveWeekPlan}
-                dailyGoal={settings.goal}
+                dailyGoal={goalKcal}
                 proteinTargetG={proteinTargetG}
                 authenticated={authenticated}
                 hasNutricionistaLink={hasNutricionistaLink}

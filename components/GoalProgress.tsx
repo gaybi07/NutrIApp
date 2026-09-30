@@ -17,7 +17,8 @@ function fmtDateAr(iso: string) {
   return `${d.getDate()}/${d.getMonth() + 1}`;
 }
 
-export function GoalProgress({ progress, openOnDesktop }: { progress: GoalProgressInfo; openOnDesktop?: boolean }) {
+export function GoalProgress({ progress, openOnDesktop, setBy }: { progress: GoalProgressInfo; openOnDesktop?: boolean; setBy?: string }) {
+  const setByLine = setBy ? <div className="mb-2 font-mono text-[9px] uppercase tracking-wide text-gold">{setBy}</div> : null;
   const { modo, metaKg, fechaObjetivo, diasRestantes, kgTotalPlan, kgYaLogrados, kgRestantes, kgPorSemanaNecesario, ritmoRealSemanal, yaLlego, proteinTargetG, goalKcal, actualKg } =
     progress;
 
@@ -28,6 +29,7 @@ export function GoalProgress({ progress, openOnDesktop }: { progress: GoalProgre
   if (modo === "recomponer") {
     return (
       <Collapsible eyebrow="Objetivo" title="Recomposición corporal" info={SECTION_HELP.objetivo} openOnDesktop={openOnDesktop}>
+        {setByLine}
         <div className="grid grid-cols-2 gap-2 text-center">
           <div className="rounded-lg border border-border bg-bg/40 px-2 py-2">
             <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">Objetivo diario</div>
@@ -74,6 +76,7 @@ export function GoalProgress({ progress, openOnDesktop }: { progress: GoalProgre
 
   return (
     <Collapsible eyebrow="Objetivo" title={`${label.verbo} ${label.hacia} ${fmt(metaKg)}kg`} info={SECTION_HELP.objetivo} openOnDesktop={openOnDesktop}>
+      {setByLine}
       {yaLlego ? (
         <div className="flex items-center gap-1.5 rounded-lg border border-sage/40 bg-sage/10 px-3 py-2.5 text-[13px] text-sage">
           <CircleCheck size={16} strokeWidth={1.8} />
