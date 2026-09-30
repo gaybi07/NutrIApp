@@ -105,9 +105,8 @@ const OFF_TOSTADAS = o("Tostadas con mermelada light", 260, 8, 46, 4, "buena", "
 const REAL = [
   { factor: 0.98, des: 0, alm: 0, mer: 1, cen: 0, col: 0 },
   { factor: 1.06, des: 1, alm: 1, mer: "skip", cen: 1, col: 1, notas: { mer: ["otro", "No tuvo hambre a la tarde"] } },
-  { factor: 0.95, des: 0, alm: 1, mer: 2, cen: 1, col: 0, notas: { cen: ["alergia", "Alergia al pescado azul: en vez del salmón comió la omelette"] } },
-  { factor: 1.05, des: { off: OFF_TOSTADAS }, alm: 1, mer: 2, cen: 0, col: 1, notas: { des: ["no_le_gusta", "No le gusta la avena: comió tostadas con mermelada"] } },
-  { factor: 1.0, des: 2, alm: 1 }, // viernes a mediodía: solo desayuno y almuerzo
+  // Miércoles en adelante: vacío a propósito, se llena a mano en la app (probar la carga de un día real).
+  // Referencia de lo que se había simulado: mié = alergia al salmón (omelette), jue = no le gusta la avena.
 ];
 
 const itemId = (n) => `sim-${Date.now()}-${n}-${Math.random().toString(36).slice(2, 6)}`;
@@ -148,11 +147,11 @@ REAL.forEach((cfg, i) => {
   sumPct += pct;
   console.log(fecha, DIAS[i].padEnd(9), "plan(A)", plannedKcal, "real", actualKcal, `→ ${pct}%`);
   row.alimentos = MEALS.flatMap((m) => (row[`${m}_items`] || []).map((it) => it.nombre));
-  row.pasos = [8200, 9100, 7600, 10200, 6800][i];
-  row.entreno = [true, false, true, false, true][i];
+  row.pasos = [8200, 9100][i];
+  row.entreno = [true, false][i];
   rows.push(row);
 });
-console.log("Similitud de kcal vs. opción A (lun-vie, viernes parcial):", Math.round(sumPct / REAL.length) + "%");
+console.log("Similitud de kcal vs. opción A (lun-mar):", Math.round(sumPct / REAL.length) + "%");
 
 const users = (await api("/auth/v1/admin/users?per_page=1000")).users;
 const userId = users.find((u) => u.email === "paciente1.demo@morphytest.app").id;
@@ -163,8 +162,22 @@ if (plans.length === 0) throw new Error("No hay plan de nutrición para 2026-09-
 await api(`/rest/v1/training_plans?id=eq.${plans[0].id}`, "PATCH", { days: planDays, trainer_id: nutriId });
 console.log("Plan actualizado: 3 opciones por comida (perfecta / buena / ocasional), con cantidades.");
 
+// Semana que viene (5/10): plan publicado de la Nutricionista, SIN elecciones del paciente (las hace él en la app).
+{
+  const nextWeekDays = Object.fromEntries(DIAS.map((d, i) => [d, planForDay(i + 1)]));
+  const [base] = await api(`/rest/v1/training_plans?select=*&id=eq.${plans[0].id}`);
+  const { id: _id, created_at, updated_at, ...rest } = base;
+  const existingNext = await api(`/rest/v1/training_plans?select=id&student_id=eq.${userId}&disciplina=eq.nutricion&week_start=eq.2026-10-05`);
+  if (existingNext.length > 0) {
+    await api(`/rest/v1/training_plans?id=eq.${existingNext[0].id}`, "PATCH", { days: nextWeekDays, status: "publicado" });
+  } else {
+    await api("/rest/v1/training_plans", "POST", { ...rest, week_start: "2026-10-05", days: nextWeekDays, status: "publicado" });
+  }
+  console.log("Plan de la semana que viene (5/10) publicado, sin elecciones del paciente.");
+}
+
 await api("/rest/v1/days?on_conflict=user_id,fecha", "POST", rows.map((r) => ({ ...r, user_id: userId })), "resolution=merge-duplicates");
-console.log("Días reales cargados (hasta el viernes a mediodía).");
+console.log("Días reales cargados (lunes y martes); miércoles en adelante vacío.");
 
 for (const fecha of FECHAS.slice(REAL.length)) await api(`/rest/v1/days?user_id=eq.${userId}&fecha=eq.${fecha}`, "DELETE");
 

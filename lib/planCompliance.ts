@@ -19,6 +19,8 @@ export interface MealCompliance {
   label: string;
   /** La opción del plan que eligió (si comió una del plan). */
   matched?: MealOption;
+  /** Elegida para esa comida pero todavía no cargada: se ve con el color de su nivel, atenuado. */
+  provisional?: { option: MealOption; level: MealLevel };
   /** Diferencia de cantidad contra la opción elegida (0.12 = 12% más), si comió una del plan. */
   cantidadDiff?: number;
   real: { nombres: string[]; kcal: number; protein: number } | null;
@@ -62,12 +64,23 @@ export function classifyMeal(
   entry: DayEntry | undefined,
   meal: MealKey,
   fecha: string,
-  todayFecha: string
+  todayFecha: string,
+  /** Lo que eligió en el planificador para esa comida (título de la opción), si ya eligió. */
+  plannedTitle?: string
 ): MealCompliance | null {
   if (!options || options.length === 0) return null;
 
   const items = entry ? getMealItems(entry, meal) : [];
   if (items.length === 0) {
+    const chosen = plannedTitle ? options.find((opt) => opt.nombre === plannedTitle) : undefined;
+    if (chosen && fecha >= todayFecha) {
+      return {
+        status: "pendiente",
+        label: `Elegida: ${chosen.nombre}`,
+        provisional: { option: chosen, level: levelOf(chosen) },
+        real: null,
+      };
+    }
     return fecha < todayFecha
       ? { status: "saltada", label: STATUS_LABEL.saltada, real: null }
       : { status: "pendiente", label: STATUS_LABEL.pendiente, real: null };

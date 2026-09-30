@@ -8,6 +8,7 @@ import { usePatientNutritionAdherence } from "@/lib/usePatientNutritionAdherence
 import { useTrainerComments } from "@/lib/useTrainerComments";
 import { useStudentReports } from "@/lib/useStudentReports";
 import { NutritionPlanBuilder } from "@/components/NutritionPlanBuilder";
+import { StudentPlanSelections } from "@/components/StudentPlanSelections";
 import { isoMonday, fmtDate, addDays, weekdayOf } from "@/lib/calculations";
 import { WEEKDAY_LABELS_SHORT } from "@/lib/types";
 
@@ -239,6 +240,7 @@ export function PatientDetailScreen({
   const adherenceHook = usePatientNutritionAdherence();
 
   const weekStart = useMemo(() => fmtDate(isoMonday(fmtDate(new Date()))), []);
+  const selectionWeeks = useMemo(() => [weekStart, fmtDate(addDays(new Date(`${weekStart}T00:00:00`), 7))], [weekStart]);
   const weekDates = useMemo(() => [...Array(7)].map((_, i) => fmtDate(addDays(new Date(`${weekStart}T00:00:00`), i))), [weekStart]);
 
   useEffect(() => {
@@ -293,7 +295,12 @@ export function PatientDetailScreen({
               hasPlan={adherence?.hasPlan ?? false}
             />
           )}
-          {tab === "plan" && <NutritionPlanBuilder studentId={studentId} />}
+          {tab === "plan" && (
+            <>
+              <StudentPlanSelections studentId={studentId} weekStarts={selectionWeeks} />
+              <NutritionPlanBuilder studentId={studentId} />
+            </>
+          )}
           {tab === "nutricion" && (
             <AdherenciaTab weekDates={weekDates} dias={adherence?.dias ?? null} loaded={adherenceHook.loadingId !== studentId} />
           )}

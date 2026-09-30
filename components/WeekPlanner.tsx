@@ -5,6 +5,9 @@ import { InventoryItem, MealKey, MealOption, MEAL_LABELS, WeekPlan, WEEKDAYS } f
 import { isoMonday, addDays, fmtDate } from "@/lib/calculations";
 import { Recipe, RecipeIngredient, RECIPES } from "@/lib/recipes";
 import { inventoryKey } from "@/lib/useInventory";
+import { LevelChip, quantities } from "@/components/PlanAlmanaque";
+import { usePlanSelection } from "@/lib/usePlanSelection";
+import { btn } from "@/components/buttonStyles";
 import { fuzzyNameMatch } from "@/lib/foodText";
 import { useMealMemory, MealMemoryEntry } from "@/lib/useMealMemory";
 import { useMyNutritionPlan } from "@/lib/useMyNutritionPlan";
@@ -216,6 +219,8 @@ export function WeekPlanner({
   const nextWeekDates = useMemo(() => getNextWeekDates(), []);
 
   const myPlan = useMyNutritionPlan(authenticated, hasNutricionistaLink, nextWeekDates[0]);
+  const selection = usePlanSelection(authenticated, hasNutricionistaLink, nextWeekDates[0]);
+  const [sendStatus, setSendStatus] = useState("");
 
   // Opciones del Plan Nutricional del paciente, por fecha de la semana que
   // viene -- se resuelve el weekday de cada fecha (WEEKDAYS[date.getDay()])
@@ -276,21 +281,10 @@ export function WeekPlanner({
     setTimeout(() => setImportStatus(""), 6000);
   };
 
-  // Con Nutricionista vinculado, su plan se carga solo -- ya no hace falta
-  // tocar "Importar" (planOptionsByDate solo tiene datos cuando hay Nutri
-  // vinculado, ver el guard de useMyNutritionPlan/hasLink, así que esto
-  // nunca corre para alguien sin vínculo). Se guarda con qué semana ya se
-  // auto-importó para no repetir el guardado en cada re-render.
-  const autoImportedForRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!hasPlanToImport) return;
-    if (autoImportedForRef.current === nextWeekDates[0]) return;
-    autoImportedForRef.current = nextWeekDates[0];
-    importNutritionPlan();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasPlanToImport, nextWeekDates]);
+  // Ya NO se carga solo: la persona elige qué le gusta de las opciones que armó la Nutricionista (y puede
+  // completar todo de una con la opción perfecta desde "Completar con las opciones A").
 
-  const assign = (fecha: string, meal: MealKey, recipeTitle: string | null) => {
+  const assign = (fecha: string, meal: MealKey, recipeTitle: string | null, closePicker = true) => {
     const next: WeekPlan = { ...weekPlan };
     const dayPlan = { ...(next[fecha] || {}) };
     if (recipeTitle) dayPlan[meal] = recipeTitle;
@@ -298,7 +292,7 @@ export function WeekPlanner({
     if (Object.keys(dayPlan).length > 0) next[fecha] = dayPlan;
     else delete next[fecha];
     onSave(next);
-    setPickerFor(null);
+    if (closePicker) setPickerFor(null);
   };
 
   // Ingredientes de todo lo elegido para la semana -- de la receta del
@@ -428,8 +422,16 @@ export function WeekPlanner({
       </div>
 
       {hasPlanToImport && (
-        <div className="mb-3 rounded-lg border border-dashed border-sage/50 bg-sage/5 px-3 py-2 text-center font-mono text-[10px] uppercase tracking-wide text-sage">
-          <span className="inline-flex items-center gap-1"><Salad size={16} strokeWidth={1.8} /> Tu Nutricionista planificó esta semana ✓</span>
+        <div className="mb-3 rounded-lg border border-dashed border-sage/50 bg-sage/5 px-3 py-2 text-center text-[12px] text-text">
+          <span className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wide text-sage">
+            <Salad size={16} strokeWidth={1.8} /> Tu Nutricionista armó el plan de esta semana
+          </span>
+          <div className="mt-1 text-textMuted">
+            Tocá cada comida y elegí la opción que más te gusta. Podés contarle por qué la elegiste o sugerirle un cambio.
+          </div>
+          <button type="button" onClick={importNutritionPlan} className={`${btn("secondary", "sm")} mt-2`}>
+            Completar con las opciones A
+          </button>
           {importStatus && <div className="mt-1 normal-case tracking-normal text-textMuted">{importStatus}</div>}
         </div>
       )}
@@ -444,6 +446,43 @@ export function WeekPlanner({
           />
         ))}
       </div>
+
+      {hasNutricionistaLink && hasPlanToImport && (
+        <div className="mt-3 rounded-xl border border-border bg-surface/70 p-3">
+          <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.15em] text-gold">Paso 2 · Enviar a tu Nutricionista</div>
+          <div className="mb-2 text-[12px] text-textMuted">
+            Le mandás lo que elegiste y tus comentarios. Después tu selección aparece en el almanaque de Comidas como provisoria.
+          </div>
+          <textarea
+            value={selection.comentario}
+            onChange={(event) => selection.setComentario(event.target.value)}
+            placeholder="Comentario general para tu Nutricionista (opcional)"
+            rows={2}
+            maxLength={500}
+            className="w-full text-[12px]"
+          />
+          <button
+            type="button"
+            disabled={selection.sending || totalPlannedCount === 0}
+            onClick={async () => {
+              setSendStatus("");
+              const ok = await selection.send(weekPlan, nextWeekDates);
+              if (ok) setSendStatus("Enviado ✓");
+            }}
+            className={`${btn("primary", "md", true)} mt-2`}
+          >
+            {selection.sending ? "Enviando..." : selection.sentAt ? "Volver a enviar mi selección" : "Enviar mi selección"}
+          </button>
+          {selection.sentAt && !selection.error && (
+            <div className="mt-1.5 text-[11px] text-sage">
+              Enviado el {new Date(selection.sentAt).toLocaleDateString("es-AR", { day: "numeric", month: "numeric" })} a las{" "}
+              {new Date(selection.sentAt).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })} ✓
+            </div>
+          )}
+          {sendStatus && !selection.error && <div className="mt-1.5 text-[11px] text-sage">{sendStatus}</div>}
+          {selection.error && <div className="mt-1.5 text-[11px] text-rust">No se pudo enviar: {selection.error}</div>}
+        </div>
+      )}
 
       <div className="mt-3 rounded-xl border border-gold/30 bg-gold/10 p-3">
         <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.15em] text-gold">Lista de compras de la semana</div>
@@ -615,25 +654,66 @@ export function WeekPlanner({
 
               {planSuggestions.length > 0 && (
                 <div className="space-y-1.5">
-                  <div className="font-mono text-[9px] uppercase tracking-wide text-sage">Tu plan nutricional</div>
-                  {planSuggestions.map((opt) => (
-                    <button
-                      key={`plan-${opt.nombre}`}
-                      type="button"
-                      onClick={() => assign(pickerFor.fecha, pickerFor.meal, opt.nombre)}
-                      className="w-full rounded-lg border border-sage/50 bg-sage/5 p-2.5 text-left"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-sm font-semibold">{opt.nombre}</div>
-                        <div className="font-mono text-[9px] uppercase tracking-wide text-sage">Nutricionista</div>
-                      </div>
-                      <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">
-                        {opt.kcal} kcal · {opt.protein}g prot
-                        {!opt.ingredientes?.length && " · sin ingredientes cargados (no suma a la lista de compras)"}
-                      </div>
-                      {opt.explicacion && <div className="mt-1 text-[11px] text-textMuted">{opt.explicacion}</div>}
-                    </button>
-                  ))}
+                  <div className="font-mono text-[9px] uppercase tracking-wide text-sage">Tu plan nutricional · elegí una</div>
+                  {planSuggestions.map((opt) => {
+                    const chosen = weekPlan[pickerFor.fecha]?.[pickerFor.meal] === opt.nombre;
+                    return (
+                      <button
+                        key={`plan-${opt.nombre}`}
+                        type="button"
+                        onClick={() => assign(pickerFor.fecha, pickerFor.meal, chosen ? null : opt.nombre, false)}
+                        className={`w-full rounded-lg border p-2.5 text-left ${chosen ? "border-gold bg-gold/10" : "border-sage/50 bg-sage/5"}`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-sm font-semibold">
+                            {chosen && <span className="mr-1 text-gold">✓</span>}
+                            {opt.nombre} <LevelChip option={opt} />
+                          </div>
+                          <div className="shrink-0 font-mono text-[9px] uppercase tracking-wide text-textMuted">
+                            {opt.kcal} kcal · {opt.protein}g
+                          </div>
+                        </div>
+                        {quantities(opt) && <div className="mt-1 text-[11px] text-textMuted">{quantities(opt)}</div>}
+                        {!opt.ingredientes?.length && (
+                          <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">
+                            sin ingredientes cargados (no suma a la lista de compras)
+                          </div>
+                        )}
+                        {opt.explicacion && <div className="mt-1 text-[11px] italic text-textMuted">{opt.explicacion}</div>}
+                      </button>
+                    );
+                  })}
+                  {weekPlan[pickerFor.fecha]?.[pickerFor.meal] && planSuggestions.some((o) => o.nombre === weekPlan[pickerFor.fecha]?.[pickerFor.meal]) && (
+                    <div className="rounded-lg border border-border bg-bg/40 p-2.5">
+                      <div className="mb-1 font-mono text-[9px] uppercase tracking-wide text-textMuted">Para tu Nutricionista (opcional)</div>
+                      <textarea
+                        value={selection.feedback[pickerFor.fecha]?.[pickerFor.meal]?.motivo || ""}
+                        onChange={(event) =>
+                          selection.setFeedbackFor(pickerFor.fecha, pickerFor.meal, {
+                            ...selection.feedback[pickerFor.fecha]?.[pickerFor.meal],
+                            motivo: event.target.value,
+                          })
+                        }
+                        placeholder="¿Por qué elegiste esta? (ej: me queda cómoda, me gusta)"
+                        rows={2}
+                        maxLength={300}
+                        className="w-full text-[12px]"
+                      />
+                      <textarea
+                        value={selection.feedback[pickerFor.fecha]?.[pickerFor.meal]?.sugerencia || ""}
+                        onChange={(event) =>
+                          selection.setFeedbackFor(pickerFor.fecha, pickerFor.meal, {
+                            ...selection.feedback[pickerFor.fecha]?.[pickerFor.meal],
+                            sugerencia: event.target.value,
+                          })
+                        }
+                        placeholder="¿Querés sugerir algún cambio? (ej: cambiar el pollo por pescado)"
+                        rows={2}
+                        maxLength={300}
+                        className="mt-1.5 w-full text-[12px]"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -701,9 +781,9 @@ export function WeekPlanner({
             <button
               type="button"
               onClick={() => setPickerFor(null)}
-              className="mt-3 w-full rounded-lg border border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-textMuted"
+              className={`${btn(hasNutricionistaLink ? "primary" : "neutral", "md", true)} mt-3`}
             >
-              Cerrar
+              {hasNutricionistaLink ? "Listo" : "Cerrar"}
             </button>
           </div>
         </div>

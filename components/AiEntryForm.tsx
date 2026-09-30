@@ -7,6 +7,7 @@ import { fmtDate, addDays, getMealItems, applyMealItems, suggestedMeal, macrosFo
 import { useMyNutritionPlan } from "@/lib/useMyNutritionPlan";
 import { LevelChip, quantities } from "@/components/PlanAlmanaque";
 import { btn } from "@/components/buttonStyles";
+import { ingredientsToText, inventoryMessage } from "@/lib/planInventory";
 import { RECIPES } from "@/lib/recipes";
 import { MealItemsList, MealItemsInventoryDelta } from "@/components/MealItemsList";
 import { SavePreparationToggle } from "@/components/SavePreparationToggle";
@@ -232,8 +233,10 @@ export function AiEntryForm({
       fiber: 0,
     };
     onUpsert(applyMealItems(existing, meal, [...getMealItems(existing, meal), item]));
-    setStatus(`Agregado "${option.nombre}" a ${MEAL_LABELS[meal]} ✓`);
-    setTimeout(() => setStatus(""), 3500);
+    const text = ingredientsToText(option);
+    const descuento = text ? inventoryMessage(onConsumeInventory?.(text)) : "";
+    setStatus(`Agregado "${option.nombre}" a ${MEAL_LABELS[meal]} ✓ ${descuento}`.trim());
+    setTimeout(() => setStatus(""), 7000);
   };
 
   const handleImportPlanned = (title: string) => {

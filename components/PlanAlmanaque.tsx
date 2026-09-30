@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DayEntry, DayMealOptions, MealKey, MEAL_LABELS, MEAL_LEVEL_LABELS, MealLevel, MealOption, Weekday, WEEKDAYS } from "@/lib/types";
+import { DayEntry, DayMealOptions, MealKey, MEAL_LABELS, MEAL_LEVEL_LABELS, MealLevel, MealOption, Weekday, WeekPlan, WEEKDAYS } from "@/lib/types";
 import { classifyMeal, levelOf, MealCompliance, MealStatus } from "@/lib/planCompliance";
 import { getMealItems } from "@/lib/calculations";
 import { btn } from "@/components/buttonStyles";
@@ -41,6 +41,26 @@ export function LevelChip({ option }: { option: MealOption }) {
       {MEAL_LEVEL_LABELS[level]}
     </span>
   );
+}
+
+/** Fondo / texto / borde de un casillero según su estado; lo provisorio usa el color del nivel atenuado y borde punteado. */
+function cellStyle(compliance: MealCompliance | null) {
+  if (compliance?.provisional) {
+    const level = LEVEL_STYLE[compliance.provisional.level];
+    return {
+      background: `color-mix(in srgb, ${level.bg} 28%, transparent)`,
+      color: "rgb(var(--color-text))",
+      border: `1.5px dashed ${level.bg}`,
+      mark: STATUS_STYLE[compliance.provisional.level].mark,
+    };
+  }
+  const style = STATUS_STYLE[compliance?.status ?? "pendiente"];
+  return {
+    background: style.bg,
+    color: style.text,
+    border: compliance?.status === "pendiente" ? "1px dashed rgb(var(--color-border))" : `1px solid ${style.bg}`,
+    mark: style.mark,
+  };
 }
 
 function weekdayOf(fecha: string): Weekday {
@@ -184,16 +204,20 @@ export function TodayMeals({
   todayFecha,
   plan,
   days,
+  weekPlan,
   onAddPlanned,
 }: {
   todayFecha: string;
   plan: PlanDays;
   days: DayEntry[];
+  /** Lo que eligió en el planificador: aparece ya marcado como "tu elección". */
+  weekPlan: WeekPlan;
   /** Carga la opción elegida como comida de hoy. */
-  onAddPlanned: (meal: MealKey, option: MealOption) => void;
+  onAddPlanned: (meal: MealKey, option: MealOption) => string | void;
 }) {
   const [open, setOpen] = useState<MealKey | null>(null);
   const [picked, setPicked] = useState<Partial<Record<MealKey, number>>>({});
+  const [notice, setNotice] = useState("");
   const dayOptions = plan[weekdayOf(todayFecha)];
   if (!dayOptions) return null;
   const entry = days.find((d) => d.fecha === todayFecha);
@@ -206,11 +230,13 @@ export function TodayMeals({
         {MEAL_KEYS.map((meal) => {
           const options = dayOptions[meal];
           if (!options || options.length === 0) return null;
-          const compliance = classifyMeal(options, entry, meal, todayFecha, todayFecha);
+          const plannedTitle = weekPlan[todayFecha]?.[meal];
+          const compliance = classifyMeal(options, entry, meal, todayFecha, todayFecha, plannedTitle);
           const style = STATUS_STYLE[compliance?.status ?? "pendiente"];
           const alreadyLoaded = Boolean(compliance?.real);
           const matchedIndex = compliance?.matched ? options.findIndex((opt) => opt.nombre === compliance.matched!.nombre) : -1;
-          const selectedIndex = alreadyLoaded ? matchedIndex : picked[meal] ?? -1;
+          const chosenIndex = plannedTitle ? options.findIndex((opt) => opt.nombre === plannedTitle) : -1;
+          const selectedIndex = alreadyLoaded ? matchedIndex : picked[meal] ?? chosenIndex;
           return (
             <div key={meal} className="rounded-xl border border-border bg-bg/30 p-2.5">
               <div className="flex items-center justify-between gap-2">
@@ -226,7 +252,9 @@ export function TodayMeals({
                     <StatusBadge compliance={compliance} />
                   </button>
                 ) : (
-                  <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">Elegí una opción</span>
+                  <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
+                    {chosenIndex >= 0 && picked[meal] === undefined ? "Tu elección" : "Elegí una opción"}
+                  </span>
                 )}
               </div>
 
@@ -273,8 +301,10 @@ export function TodayMeals({
                 <button
                   type="button"
                   onClick={() => {
-                    onAddPlanned(meal, options[selectedIndex]);
+                    const message = onAddPlanned(meal, options[selectedIndex]);
                     setPicked((prev) => ({ ...prev, [meal]: undefined }));
+                    setNotice(typeof message === "string" ? message : "");
+                    setTimeout(() => setNotice(""), 7000);
                   }}
                   className={`${btn("primary", "md", true)} mt-2`}
                 >
@@ -293,12 +323,13 @@ export function TodayMeals({
           );
         })}
       </div>
+      {notice && <div className="mt-2 rounded-lg border border-sage/40 bg-sage/10 px-2.5 py-2 text-[12px] text-sage">{notice}</div>}
       {open && dayOptions[open] && (
         <MealDetailSheet
           fecha={todayFecha}
           meal={open}
           options={dayOptions[open]!}
-          compliance={classifyMeal(dayOptions[open], entry, open, todayFecha, todayFecha)}
+          compliance={classifyMeal(dayOptions[open], entry, open, todayFecha, todayFecha, weekPlan[todayFecha]?.[open])}
           entry={entry}
           onClose={() => setOpen(null)}
         />
@@ -313,11 +344,14 @@ export function WeekAlmanaque({
   plan,
   days,
   todayFecha,
+  weekPlan,
 }: {
   weekDates: string[];
   plan: PlanDays;
   days: DayEntry[];
   todayFecha: string;
+  /** Lo elegido en el planificador: se ve como provisorio hasta que se carga de verdad. */
+  weekPlan: WeekPlan;
 }) {
   const [open, setOpen] = useState<{ fecha: string; meal: MealKey } | null>(null);
   const first = new Date(`${weekDates[0]}T00:00:00`);
@@ -356,8 +390,8 @@ export function WeekAlmanaque({
               if (!options || options.length === 0) {
                 return <div key={fecha} className="aspect-square rounded-lg bg-bg/30" />;
               }
-              const compliance = classifyMeal(options, days.find((d) => d.fecha === fecha), meal, fecha, todayFecha);
-              const style = STATUS_STYLE[compliance?.status ?? "pendiente"];
+              const compliance = classifyMeal(options, days.find((d) => d.fecha === fecha), meal, fecha, todayFecha, weekPlan[fecha]?.[meal]);
+              const style = cellStyle(compliance);
               return (
                 <button
                   key={fecha}
@@ -366,9 +400,9 @@ export function WeekAlmanaque({
                   onClick={() => setOpen({ fecha, meal })}
                   className="flex aspect-square items-center justify-center rounded-lg text-[13px] font-bold"
                   style={{
-                    background: style.bg,
-                    color: style.text,
-                    border: compliance?.status === "pendiente" ? "1px dashed rgb(var(--color-border))" : `1px solid ${style.bg}`,
+                    background: style.background,
+                    color: style.color,
+                    border: style.border,
                     outline: fecha === todayFecha ? "2px solid rgb(var(--color-accent) / 0.5)" : undefined,
                     outlineOffset: fecha === todayFecha ? 1 : undefined,
                   }}
@@ -388,7 +422,7 @@ export function WeekAlmanaque({
             ["buena", "Buena"],
             ["ocasional", "Ocasional / fuera del plan"],
             ["fuera_lejos", "Lejos del objetivo / salteada"],
-            ["pendiente", "Pendiente"],
+            ["pendiente", "Pendiente (punteado: elegida, sin cargar)"],
           ] as [MealStatus, string][]
         ).map(([status, label]) => (
           <span key={status} className="inline-flex items-center gap-1">
@@ -406,7 +440,7 @@ export function WeekAlmanaque({
           fecha={open.fecha}
           meal={open.meal}
           options={openOptions}
-          compliance={classifyMeal(openOptions, openEntry, open.meal, open.fecha, todayFecha)}
+          compliance={classifyMeal(openOptions, openEntry, open.meal, open.fecha, todayFecha, weekPlan[open.fecha]?.[open.meal])}
           entry={openEntry}
           onClose={() => setOpen(null)}
         />
