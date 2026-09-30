@@ -262,6 +262,7 @@ export default function Home() {
   // Plan de la Nutricionista de la semana que se está mirando con las flechas (el de la semana real
   // de hoy ya está en nutritionPlanThisWeek) -- alimenta el almanaque de Comidas.
   const nutritionPlanViewed = useMyNutritionPlan(authenticated, hasNutricionistaLink, fmtDate(monday));
+  const nutritionPlanNext = useMyNutritionPlan(authenticated, hasNutricionistaLink, fmtDate(addDays(isoMonday(fmtDate(new Date())), 7)));
 
   const weekDates = useMemo(() => [...Array(7)].map((_, i) => fmtDate(addDays(monday, i))), [monday]);
   const weekDays = useMemo(() => weekDates.map((f) => days.find((d) => d.fecha === f) || null), [weekDates, days]);
@@ -863,6 +864,8 @@ export default function Home() {
           todayFecha={fmtDate(new Date())}
           planThisWeek={nutritionPlanThisWeek.days}
           planViewedWeek={nutritionPlanViewed.days}
+          planNextWeek={nutritionPlanNext.days}
+          inventory={inventory}
           onAddPlannedMeal={addPlannedMeal}
           order={settings.comidasOrder}
           onReorder={(comidasOrder) => saveSettings({ ...settings, comidasOrder })}

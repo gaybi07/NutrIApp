@@ -5,6 +5,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import {
   DayEntry,
   DayMealOptions,
+  InventoryItem,
   MealOption,
   Weekday,
   MealKey,
@@ -19,6 +20,7 @@ import { useSectionOrder } from "@/lib/useSectionOrder";
 import { SortableSection } from "@/components/SortableSection";
 import { countPlannedMeals, hasWeekActivity, SKIP_MEAL } from "@/components/WeekPlanner";
 import { TodayMeals, WeekAlmanaque } from "@/components/PlanAlmanaque";
+import { ShoppingListCard } from "@/components/ShoppingListCard";
 
 const MEAL_KEYS: MealKey[] = ["des", "alm", "mer", "cen", "col"];
 const DOW_SHORT = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -85,6 +87,8 @@ export function ComidasTab({
   todayFecha,
   planThisWeek,
   planViewedWeek,
+  planNextWeek,
+  inventory,
   onAddPlannedMeal,
 }: {
   weekPlan: WeekPlan;
@@ -94,6 +98,9 @@ export function ComidasTab({
   todayFecha: string;
   planThisWeek: Partial<Record<Weekday, DayMealOptions>>;
   planViewedWeek: Partial<Record<Weekday, DayMealOptions>>;
+  /** Plan de la Nutricionista de la semana que viene y lo que hay en la Alacena: alimentan la lista de compras. */
+  planNextWeek: Partial<Record<Weekday, DayMealOptions>>;
+  inventory: InventoryItem[];
   /** Carga la opción del plan elegida en "Lo que te toca comer" como comida de hoy. */
   onAddPlannedMeal: (meal: MealKey, option: MealOption) => string | void;
   /** Las 7 fechas de la semana que se está mirando con las flechas de
@@ -147,6 +154,7 @@ export function ComidasTab({
                 ) : (
                   <WeekPlanSummaryCard weekDates={weekDates} weekPlan={weekPlan} />
                 ))}
+              {blockId === "compras" && <ShoppingListCard items={inventory} weekPlan={weekPlan} planThisWeek={planThisWeek} planNextWeek={planNextWeek} />}
               {blockId === "planificador" && (() => {
                 const plannedCount = countPlannedMeals(weekPlan);
                 // Ahora que el plan se comparte entre los del grupo (ver

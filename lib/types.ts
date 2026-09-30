@@ -748,13 +748,15 @@ export const INICIO_BLOCK_LABELS: Record<InicioBlockId, string> = {
  * orden ahora. */
 // "Comidas" (planificación: qué voy a comer) quedó separada de "Alacena"
 // (stock: qué tengo) -- antes convivían en una sola solapa.
-export type ComidasBlockId = "plan-semana" | "planificador";
-export const DEFAULT_COMIDAS_ORDER: ComidasBlockId[] = ["plan-semana", "planificador"];
+export type ComidasBlockId = "plan-semana" | "compras" | "planificador";
+export const DEFAULT_COMIDAS_ORDER: ComidasBlockId[] = ["plan-semana", "compras", "planificador"];
 export const COMIDAS_BLOCK_LABELS: Record<ComidasBlockId, string> = {
   // Solo lectura -- lo planificado (propio o del Nutricionista) para la
   // semana que estás mirando con las flechas de arriba, sea cual sea
   // ("planificador" en cambio siempre edita/importa la semana que viene).
   "plan-semana": "Plan semanal",
+  // Elegir qué comidas de la semana entran, ver qué hay en la Alacena y qué falta, y copiar / mandar por WhatsApp.
+  compras: "Lista de compras",
   // Antes era su propia sección aparte ("Compras") con el mismo nombre que
   // el botón de Alacena -- unificada ahí adentro, como la opción "Con
   // ticket" al agregar productos.
