@@ -7,6 +7,7 @@ import { fuzzyNameMatch } from "@/lib/foodText";
 import { inventoryKey } from "@/lib/useInventory";
 import { btn, chip } from "@/components/buttonStyles";
 import { fmtDate, isoMonday, addDays } from "@/lib/calculations";
+import { useEscapeKey } from "@/lib/useEscapeKey";
 
 const MEAL_KEYS: MealKey[] = ["des", "alm", "mer", "cen", "col"];
 const DOW = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -79,6 +80,8 @@ export function ShoppingListCard({
   const included = chosen;
   const selectionKey = useMemo(() => `${which}|` + included.map((c) => `${c.key}:${c.title}`).join("|"), [which, included]);
   const built = builtFor !== null;
+  const [showFull, setShowFull] = useState(false);
+  useEscapeKey(() => setShowFull(false), showFull);
   const stale = built && builtFor !== selectionKey;
 
   // Comidas que el plan ofrece esa semana (las que no se eligen quedan pendientes en el almanaque)
@@ -193,72 +196,108 @@ export function ShoppingListCard({
       )}
 
       {built && chosen.length > 0 && (
-        <>
+        <div className="mt-3">
           {stale && (
-            <div className="mt-2 rounded-lg border border-gold/40 bg-gold/10 px-2.5 py-1.5 text-[12px] text-text">
+            <div className="mb-2 rounded-lg border border-gold/40 bg-gold/10 px-2.5 py-1.5 text-[12px] text-text">
               Cambiaste tus comidas después de armar la lista. Tocá <b>Actualizar lista</b> para recalcularla.
             </div>
           )}
-          <div className="mb-1 mt-3 font-mono text-[9px] uppercase tracking-wide text-textMuted">Lo que necesitás y lo que tenés en la Alacena</div>
           {rows.length === 0 ? (
             <div className="rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">
               Las comidas elegidas no traen ingredientes con cantidad, así que no puedo calcular la lista.
             </div>
+          ) : missing.length === 0 ? (
+            <div className="rounded-lg border border-sage/40 bg-sage/10 px-3 py-2 text-[12px] text-sage">
+              Ya tenés todo lo que necesitás en la Alacena ✓
+            </div>
           ) : (
-            <div className="space-y-1">
-              {rows.map((r) => (
-                <div
-                  key={`${r.name}|${r.unit}`}
-                  className={`flex items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 text-[12px] ${
-                    r.missing > 0 ? "border-rust/40 bg-rust/10" : "border-sage/40 bg-sage/10"
-                  }`}
-                >
-                  <span className="min-w-0 flex-1 truncate text-text">{r.name}</span>
-                  <span className="shrink-0 font-mono text-[10px] text-textMuted">
-                    necesitás {fmtQty(r.quantity, r.unit)} · tenés {fmtQty(r.have, r.unit)}
-                  </span>
-                  <span className={`shrink-0 font-mono text-[10px] font-bold ${r.missing > 0 ? "text-rust" : "text-sage"}`}>
-                    {r.missing > 0 ? `faltan ${fmtQty(r.missing, r.unit)}` : "✓ tenés"}
-                  </span>
+            <div className="rounded-xl border border-gold/40 bg-gold/5 p-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-[13px] text-text">
+                  Te falta comprar <b>{missing.length}</b> producto{missing.length === 1 ? "" : "s"}
+                  {covered.length > 0 ? <span className="text-textMuted"> · ya tenés {covered.length}</span> : null}
                 </div>
-              ))}
-            </div>
-          )}
-
-          {withoutIngredients.length > 0 && (
-            <div className="mt-2 text-[11px] text-textMuted">
-              Sin ingredientes cargados (no suman): {Array.from(new Set(withoutIngredients.map((c) => c.title))).join(", ")}.
-            </div>
-          )}
-
-          {missing.length > 0 ? (
-            <div className="mt-3 border-t border-dashed border-border pt-3">
-              <div className="mb-1 text-[12px] text-text">
-                Te falta comprar <b>{missing.length}</b> producto{missing.length === 1 ? "" : "s"}
-                {covered.length > 0 ? ` (ya tenés ${covered.length})` : ""}.
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <button type="button" onClick={copy} className={btn("primary", "md", true)}>
-                  Copiar lista
+                <button type="button" onClick={() => setShowFull(true)} className={`${btn("neutral", "sm")} shrink-0`}>
+                  Ver lista
                 </button>
-                <a
-                  href={`https://wa.me/?text=${encodeURIComponent(text)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={btn("secondary", "md", true)}
-                >
+              </div>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <a href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer" className={btn("primary", "sm", true)}>
                   Enviar por WhatsApp
                 </a>
+                <button type="button" onClick={copy} className={btn("secondary", "sm", true)}>
+                  Copiar
+                </button>
               </div>
-              <button type="button" onClick={download} className={`${btn("neutral", "sm", true)} mt-2`}>
-                Guardar en un archivo (.txt)
-              </button>
               {status && <div className="mt-1.5 text-[11px] text-sage">{status}</div>}
             </div>
-          ) : (
-            rows.length > 0 && <div className="mt-3 text-[12px] text-sage">Ya tenés todo lo que necesitás en la Alacena ✓</div>
           )}
-        </>
+        </div>
+      )}
+
+      {showFull && (
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-bg/80 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => setShowFull(false)}>
+          <div
+            className="flex max-h-[88vh] w-full max-w-md flex-col rounded-t-2xl border border-border bg-surface shadow-2xl sm:rounded-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-2 border-b border-border p-4 pb-3">
+              <div>
+                <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-gold">Lista de compras</div>
+                <div className="font-display text-lg text-text">Semana del {rangeLabel}</div>
+              </div>
+              <button type="button" onClick={() => setShowFull(false)} className={btn("neutral", "sm")}>
+                Cerrar
+              </button>
+            </div>
+            <div className="overflow-y-auto p-4 pt-3">
+              {missing.length > 0 && (
+                <>
+                  <div className="mb-1 font-mono text-[9px] uppercase tracking-wide text-rust">Te falta comprar ({missing.length})</div>
+                  <div className="space-y-1">
+                    {missing.map((r) => (
+                      <div key={`${r.name}|${r.unit}`} className="flex items-center justify-between gap-2 rounded-lg border border-rust/40 bg-rust/10 px-2.5 py-1.5 text-[12px]">
+                        <span className="min-w-0 flex-1 truncate text-text">{r.name}</span>
+                        <span className="shrink-0 font-mono text-[10px] font-bold text-rust">{fmtQty(r.missing, r.unit)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+              {covered.length > 0 && (
+                <>
+                  <div className="mb-1 mt-3 font-mono text-[9px] uppercase tracking-wide text-sage">Ya tenés en la Alacena ({covered.length})</div>
+                  <div className="space-y-1">
+                    {covered.map((r) => (
+                      <div key={`${r.name}|${r.unit}`} className="flex items-center justify-between gap-2 rounded-lg border border-sage/40 bg-sage/10 px-2.5 py-1.5 text-[12px]">
+                        <span className="min-w-0 flex-1 truncate text-text">{r.name}</span>
+                        <span className="shrink-0 font-mono text-[10px] text-sage">✓ {fmtQty(r.quantity, r.unit)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+              {withoutIngredients.length > 0 && (
+                <div className="mt-3 text-[11px] text-textMuted">
+                  Sin ingredientes cargados (no suman): {Array.from(new Set(withoutIngredients.map((c) => c.title))).join(", ")}.
+                </div>
+              )}
+            </div>
+            {missing.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 border-t border-border p-3">
+                <a href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer" className={btn("primary", "sm", true)}>
+                  WhatsApp
+                </a>
+                <button type="button" onClick={copy} className={btn("secondary", "sm", true)}>
+                  Copiar
+                </button>
+                <button type="button" onClick={download} className={btn("neutral", "sm", true)}>
+                  .txt
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </section>
   );
