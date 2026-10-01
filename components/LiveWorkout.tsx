@@ -68,6 +68,9 @@ interface DraftExercise {
   suggestionNote?: string;
   sets: DraftSet[];
   grupoMuscular?: MuscleGroup;
+  /** Heredados de la rutina: peso por mancuerna y % de peso corporal (cuentan en el volumen). */
+  mancuernas?: boolean;
+  pesoCorporalPct?: number;
   /** Se agregó en vivo durante una rutina asignada, no estaba en el plan --
    * a diferencia de un ejercicio planificado, este SÍ se puede quitar y
    * agregarle/sacarle series libremente (nunca fue parte de lo fijado por
@@ -262,6 +265,8 @@ export function LiveWorkout({
         suggestionNote: suggestion?.nota,
         sets: Array.from({ length: e.series }, () => defaultSet(peso)),
         grupoMuscular: e.grupoMuscular,
+        mancuernas: e.mancuernas,
+        pesoCorporalPct: e.pesoCorporalPct,
       };
     });
 
@@ -307,6 +312,8 @@ export function LiveWorkout({
         suggestionNote: suggestion?.nota,
         sets: Array.from({ length: e.series }, () => defaultSet(peso)),
         grupoMuscular: e.grupoMuscular,
+        mancuernas: e.mancuernas,
+        pesoCorporalPct: e.pesoCorporalPct,
       };
     });
     setSession({
@@ -459,7 +466,7 @@ export function LiveWorkout({
       const avgReps = sets.length ? Math.round(sets.reduce((a, s) => a + s.repeticiones, 0) / sets.length) : ex.plannedRepeticiones;
       const pesos = sets.map((s) => s.peso).filter((p): p is number => p != null);
       const avgPeso = pesos.length ? Math.round((pesos.reduce((a, b) => a + b, 0) / pesos.length) * 2) / 2 : undefined;
-      finalExercises.push({ nombre: ex.nombre, series: sets.length, repeticiones: avgReps, peso: avgPeso, sets, grupoMuscular: ex.grupoMuscular });
+      finalExercises.push({ nombre: ex.nombre, series: sets.length, repeticiones: avgReps, peso: avgPeso, sets, grupoMuscular: ex.grupoMuscular, mancuernas: ex.mancuernas, pesoCorporalPct: ex.pesoCorporalPct });
       doneSets.forEach((s) => counts[s.intensidad!]++);
 
       if (doneSets.length > 0) {

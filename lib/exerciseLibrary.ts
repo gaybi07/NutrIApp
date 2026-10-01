@@ -156,3 +156,24 @@ export function loadExerciseLibrary(): Promise<LibraryExercise[]> {
   }
   return inflight;
 }
+
+const plainName = (name: string | undefined) =>
+  (name || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+/** Mancuernas: explícito si lo marcó la persona; si no, "mancuernas" en plural cuenta las dos, en singular una. */
+export function usesTwoDumbbells(e: { nombre?: string; mancuernas?: boolean }): boolean {
+  if (e.mancuernas !== undefined) return e.mancuernas;
+  return /mancuernas/.test(plainName(e.nombre));
+}
+
+/** Porcentaje del peso corporal que se mueve: explícito si lo marcó la persona; si no, por nombre (dominadas y fondos 100%, flexiones 65%). */
+export function bodyweightPct(e: { nombre?: string; pesoCorporalPct?: number }): number {
+  if (e.pesoCorporalPct !== undefined) return e.pesoCorporalPct;
+  const n = plainName(e.nombre);
+  if (/dominada|fondos|muscle up/.test(n)) return 100;
+  if (/flexion/.test(n)) return 65;
+  return 0;
+}

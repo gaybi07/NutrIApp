@@ -416,7 +416,7 @@ export default function Home() {
   const achievementClaims = useAchievementClaims(authenticated, achievements, myPoints.refetch);
 
   const muscleGroupTrend = useMemo(
-    () => computeMuscleGroupVolumeTrend(days, weekDates),
+    () => computeMuscleGroupVolumeTrend(days, weekDates, currentWeightKg),
     [days, weekDates]
   );
 
@@ -619,6 +619,7 @@ export default function Home() {
           basic={entrenoBasic}
           blurred={actividadBlurred}
           lockedHint={isBasico ? undefined : "Con un Entrenador o el plan Autoentreno"}
+          bodyKg={currentWeightKg}
           onUpgrade={() => setPanel("planes")}
           entry={todayEntry}
           weekDates={weekDates}

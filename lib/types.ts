@@ -207,6 +207,12 @@ export interface ExerciseEntry {
   peso?: number; // kg, opcional (ej. ejercicios con peso corporal)
   sets?: ExerciseSetEntry[];
   grupoMuscular?: MuscleGroup;
+  /** El peso cargado es POR MANCUERNA: el volumen cuenta las dos (peso × 2). Si no se define, se deduce del nombre
+   * ("mancuernas" en plural = dos; "mancuerna" en singular = una). */
+  mancuernas?: boolean;
+  /** Ejercicio con peso corporal: porcentaje de tu peso que se mueve (100 = todo, ej. dominadas y fondos; 65 flexiones).
+   * Se suma al peso extra que cargues. 0 = no usa peso corporal. Si no se define, se deduce del nombre. */
+  pesoCorporalPct?: number;
 }
 
 /** De dónde salió una Routine -- "asignada" es de solo lectura para el

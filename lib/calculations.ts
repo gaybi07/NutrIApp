@@ -1,4 +1,4 @@
-import { inferMuscleGroupFromName } from "@/lib/exerciseLibrary";
+import { bodyweightPct, inferMuscleGroupFromName, usesTwoDumbbells } from "@/lib/exerciseLibrary";
 import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, TrainingSession, GoalMode, ExerciseEntry, ExerciseSetEntry, Weekday, WEEKDAYS, MealItem, InventoryNutrition, WorkoutVerdict, TrainingSchedule, MuscleGroup, MUSCLE_GROUP_LABELS } from "./types";
 
 /**
@@ -369,29 +369,36 @@ export function estimateTrainingCalories(d: DayEntry): number {
  * sin peso (corporal) suman igual con peso 1, para que sigan contando en la
  * tendencia. Si hay `sets` (detalle real serie por serie), se usa eso en vez
  * del resumen series/repeticiones/peso. */
-function exerciseVolume(e: ExerciseEntry): number {
-  if (e.sets && e.sets.length > 0) return e.sets.reduce((s, set) => s + set.repeticiones * (set.peso || 1), 0);
-  return e.series * e.repeticiones * (e.peso || 1);
+function exerciseVolume(e: ExerciseEntry, bodyKg = 0): number {
+  // Carga por repetición: el peso cargado (×2 si es por mancuerna) + la parte de tu peso corporal que se mueve.
+  const mult = usesTwoDumbbells(e) ? 2 : 1;
+  const bw = bodyKg > 0 ? (bodyKg * bodyweightPct(e)) / 100 : 0;
+  const load = (peso: number | undefined) => {
+    const l = (peso || 0) * mult + bw;
+    return l > 0 ? l : 1; // sin peso ni peso corporal: cuenta 1 por repetición (como antes)
+  };
+  if (e.sets && e.sets.length > 0) return e.sets.reduce((s, set) => s + set.repeticiones * load(set.peso), 0);
+  return e.series * e.repeticiones * load(e.peso);
 }
 
 /** Volumen total entrenado, sumado entre todos los ejercicios de ese día (con o sin grupo muscular etiquetado). */
-export function totalVolume(ejercicios: ExerciseEntry[] | undefined): number {
+export function totalVolume(ejercicios: ExerciseEntry[] | undefined, bodyKg = 0): number {
   if (!ejercicios || ejercicios.length === 0) return 0;
-  return ejercicios.reduce((total, e) => total + exerciseVolume(e), 0);
+  return ejercicios.reduce((total, e) => total + exerciseVolume(e, bodyKg), 0);
 }
 
 /** Volumen entrenado ese día, agrupado por grupo muscular -- solo cuenta los
  * ejercicios que tienen `grupoMuscular` etiquetado (los agregados a mano sin
  * pasar por la biblioteca quedan afuera del desglose, aunque sí cuentan en
  * `totalVolume`). Devuelve los 6 grupos siempre, en 0 si no hubo nada. */
-export function volumeByMuscleGroup(ejercicios: ExerciseEntry[] | undefined): Record<MuscleGroup, number> {
+export function volumeByMuscleGroup(ejercicios: ExerciseEntry[] | undefined, bodyKg = 0): Record<MuscleGroup, number> {
   const result = Object.fromEntries(Object.keys(MUSCLE_GROUP_LABELS).map((g) => [g, 0])) as Record<MuscleGroup, number>;
   if (!ejercicios) return result;
   for (const e of ejercicios) {
     // Si el ejercicio no trae el grupo (cargado a mano / rutina propia), se deduce por el nombre.
     const group = e.grupoMuscular ?? inferMuscleGroupFromName(e.nombre);
     if (!group) continue;
-    result[group] += exerciseVolume(e);
+    result[group] += exerciseVolume(e, bodyKg);
   }
   return result;
 }
@@ -403,7 +410,8 @@ export function volumeByMuscleGroup(ejercicios: ExerciseEntry[] | undefined): Re
  * prop en el tab que llama a esto. */
 export function computeMuscleGroupVolumeTrend(
   days: DayEntry[],
-  weekDates: string[]
+  weekDates: string[],
+  bodyKgFallback = 0
 ): Record<MuscleGroup, { actual: number; anterior: number }> {
   const groups = Object.keys(MUSCLE_GROUP_LABELS) as MuscleGroup[];
   const result = Object.fromEntries(groups.map((g) => [g, { actual: 0, anterior: 0 }])) as Record<
@@ -418,7 +426,7 @@ export function computeMuscleGroupVolumeTrend(
 
   for (const day of days) {
     if (!actualSet.has(day.fecha) && !previousSet.has(day.fecha)) continue;
-    const volumes = volumeByMuscleGroup(day.ejercicios);
+    const volumes = volumeByMuscleGroup(day.ejercicios, day.pesoKg || bodyKgFallback);
     const bucket = actualSet.has(day.fecha) ? "actual" : "anterior";
     for (const group of groups) result[group][bucket] += volumes[group];
   }

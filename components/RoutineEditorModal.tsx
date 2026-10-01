@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ExerciseEntry, MuscleGroup, MUSCLE_GROUP_LABELS } from "@/lib/types";
 import { clampNumber } from "@/lib/inputLimits";
 import { ExercisePicker } from "@/components/ExercisePicker";
-import { LibraryExercise, muscleGroupFor } from "@/lib/exerciseLibrary";
+import { LibraryExercise, bodyweightPct, muscleGroupFor, usesTwoDumbbells } from "@/lib/exerciseLibrary";
 import { Search } from "lucide-react";
 
 const MUSCLE_GROUPS: MuscleGroup[] = ["pecho", "espalda", "hombros", "piernas", "brazos", "core"];
@@ -124,6 +124,30 @@ export function RoutineEditorModal({
                     placeholder="—"
                     onChange={(event) => updateExercise(i, { peso: event.target.value ? clampNumber(Number(event.target.value), 999) : undefined })}
                   />
+                </div>
+              </div>
+              <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+                <label className="flex items-center gap-1.5 rounded-md border border-border bg-bg/30 px-2 py-1.5 text-[11px] text-text">
+                  <input
+                    type="checkbox"
+                    checked={usesTwoDumbbells(ex)}
+                    onChange={(event) => updateExercise(i, { mancuernas: event.target.checked })}
+                    className="h-3.5 w-3.5"
+                  />
+                  Mancuernas (peso por mancuerna)
+                </label>
+                <div>
+                  <select
+                    value={String(bodyweightPct(ex))}
+                    onChange={(event) => updateExercise(i, { pesoCorporalPct: Number(event.target.value) })}
+                    aria-label="Peso corporal"
+                  >
+                    <option value="0">Sin peso corporal</option>
+                    <option value="100">Peso corporal 100% (dominadas, fondos)</option>
+                    <option value="65">Peso corporal 65% (flexiones)</option>
+                    <option value="50">Peso corporal 50%</option>
+                    <option value="25">Peso corporal 25%</option>
+                  </select>
                 </div>
               </div>
               <div className="mt-1.5">

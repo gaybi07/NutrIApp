@@ -163,6 +163,7 @@ export function ActividadTab({
   blurred,
   onUpgrade,
   lockedHint,
+  bodyKg = 0,
 }: {
   /** Plan Básico: sin entrenamiento en vivo (basic) y con estos bloques bloqueados (colapsados, desenfocados al abrir). */
   basic?: boolean;
@@ -170,6 +171,8 @@ export function ActividadTab({
   onUpgrade?: () => void;
   /** Texto del candado (según si falta un plan o un Entrenador). */
   lockedHint?: string;
+  /** Tu peso actual: para contar el peso corporal en ejercicios como dominadas y fondos. */
+  bodyKg?: number;
   entry: DayEntry;
   weekDates: string[];
   weekDays: (DayEntry | null)[];
@@ -234,7 +237,7 @@ export function ActividadTab({
   const stepsData = weekDates.map((fecha, i) => weekRow(fecha, weekDays[i], (d) => d.pasos || 0));
   const trainingData = weekDates.map((fecha, i) => weekRow(fecha, weekDays[i], (d) => estimateTrainingCalories(d)));
   const sleepData = weekDates.map((fecha, i) => weekRow(fecha, weekDays[i], (d) => d.suenoHoras || 0));
-  const volumeData = weekDates.map((fecha, i) => weekRow(fecha, weekDays[i], (d) => totalVolume(d.ejercicios)));
+  const volumeData = weekDates.map((fecha, i) => weekRow(fecha, weekDays[i], (d) => totalVolume(d.ejercicios, d.pesoKg || bodyKg)));
 
   const blocks: Record<ActividadBlockId, ReactNode> = {
     resumen: (
