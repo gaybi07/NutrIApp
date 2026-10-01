@@ -98,7 +98,13 @@ export function useMyReports(authenticated: boolean, hasLink: boolean) {
       setLoaded(true);
       return;
     }
-    const { data } = await supabase.from("reports").select("*").order("period_start", { ascending: false });
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) {
+      setLoaded(true);
+      return;
+    }
+    const { data } = await supabase.from("reports").select("*").eq("student_id", userId).order("period_start", { ascending: false });
     setReports((data || []).map(fromRow));
     setLoaded(true);
   }, [hasLink]);

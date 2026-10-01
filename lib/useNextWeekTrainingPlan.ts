@@ -21,9 +21,17 @@ export function useNextWeekTrainingPlan(authenticated: boolean, hasTrainerLink: 
       return;
     }
     const nextMonday = fmtDate(addDays(isoMonday(fmtDate(new Date())), 7));
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) {
+      setReady(false);
+      setLoaded(true);
+      return;
+    }
     const { data } = await supabase
       .from("training_plans")
       .select("id")
+      .eq("student_id", userId)
       .eq("week_start", nextMonday)
       .eq("disciplina", "fuerza")
       .eq("status", "publicado")

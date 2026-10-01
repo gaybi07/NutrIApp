@@ -24,9 +24,17 @@ export function useMyNutritionPlan(authenticated: boolean, hasLink: boolean, wee
       setLoaded(true);
       return;
     }
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) {
+      setDays({});
+      setLoaded(true);
+      return;
+    }
     const { data } = await supabase
       .from("training_plans")
       .select("days")
+      .eq("student_id", userId)
       .eq("week_start", weekStart)
       .eq("disciplina", "nutricion")
       .eq("status", "publicado")

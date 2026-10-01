@@ -41,18 +41,24 @@ export function usePlanSelection(authenticated: boolean, hasLink: boolean, weekS
     }
     // 2) lo ya enviado (si existe) pisa el borrador
     if (!supabase) return;
-    supabase
-      .from("plan_selections")
-      .select("feedback, comentario, sent_at")
-      .eq("week_start", weekStart)
-      .eq("disciplina", "nutricion")
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!data) return;
-        setFeedbackState((data.feedback as PlanFeedback) || {});
-        setComentarioState((data.comentario as string) || "");
-        setSentAt((data.sent_at as string) || null);
-      });
+    const client = supabase;
+    client.auth.getUser().then(({ data: userData }) => {
+      const userId = userData.user?.id;
+      if (!userId) return;
+      client
+        .from("plan_selections")
+        .select("feedback, comentario, sent_at")
+        .eq("student_id", userId)
+        .eq("week_start", weekStart)
+        .eq("disciplina", "nutricion")
+        .maybeSingle()
+        .then(({ data }) => {
+          if (!data) return;
+          setFeedbackState((data.feedback as PlanFeedback) || {});
+          setComentarioState((data.comentario as string) || "");
+          setSentAt((data.sent_at as string) || null);
+        });
+    });
   }, [authenticated, hasLink, weekStart]);
 
   const persistDraft = useCallback(

@@ -72,7 +72,14 @@ export function useMyTrainerComments(authenticated: boolean, hasLink: boolean) {
       setLoaded(true);
       return;
     }
-    const { data } = await supabase.from("trainer_comments").select("*").order("created_at", { ascending: false });
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) {
+      setLoaded(true);
+      return;
+    }
+    // Solo los comentarios que ME hicieron (siendo profesional también se ven los que yo escribí a mis alumnos).
+    const { data } = await supabase.from("trainer_comments").select("*").eq("student_id", userId).order("created_at", { ascending: false });
     setComments((data || []).map(fromRow));
     setLoaded(true);
   }, [hasLink]);
