@@ -458,6 +458,25 @@ export function LiveWorkout({
     setSession((prev) => (prev?.rest && !(prev.rest.exIndex === exIndex && prev.rest.setIndex === setIndex) ? closeRest(prev) : prev));
   };
 
+  // Biserie en vivo: unir un ejercicio con el anterior (o separarlo). Si queda un ejercicio solo en el grupo, se disuelve.
+  const toggleBiserie = (index: number) =>
+    setSession((prev) => {
+      if (!prev || index === 0) return prev;
+      const list = prev.exercises;
+      const current = list[index];
+      const before = list[index - 1];
+      let next: DraftExercise[];
+      if (current.biserie && current.biserie === before.biserie) {
+        const id = current.biserie;
+        next = list.map((e, i) => (i === index ? { ...e, biserie: undefined } : e));
+        if (next.filter((e) => e.biserie === id).length < 2) next = next.map((e) => (e.biserie === id ? { ...e, biserie: undefined } : e));
+      } else {
+        const id = before.biserie ?? Math.random().toString(36).slice(2, 8);
+        next = list.map((e, i) => (i === index || i === index - 1 ? { ...e, biserie: id } : e));
+      }
+      return { ...prev, exercises: next };
+    });
+
   const stopRest = () => setSession((prev) => (prev ? closeRest(prev) : prev));
 
   // Dropset: convertir una serie en dropset y sumar / quitar caídas (a veces 1, a veces 2 extra). Cada caída sugiere el
@@ -955,8 +974,19 @@ export function LiveWorkout({
               const open = openIndex === i;
               return (
                 <div key={i} className={`overflow-hidden rounded-lg border border-border bg-bg/40 ${inBiserie ? "border-l-4 border-l-gold" : ""}`}>
+                  {i > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => toggleBiserie(i)}
+                      className={`w-full border-b border-border px-2.5 py-1 text-left font-mono text-[8.5px] uppercase tracking-wide ${
+                        ex.biserie && ex.biserie === session.exercises[i - 1]?.biserie ? "bg-gold/15 text-gold" : "text-textMuted"
+                      }`}
+                    >
+                      {ex.biserie && ex.biserie === session.exercises[i - 1]?.biserie ? "✓ Junto con el anterior (tocá para separar)" : "+ Unir con el anterior (biserie / triserie)"}
+                    </button>
+                  )}
                   {inBiserie && session.exercises[i - 1]?.biserie !== ex.biserie && (
-                    <div className="bg-gold/10 px-2.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.14em] text-gold">Biserie · van juntos</div>
+                    <div className="bg-gold/10 px-2.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.14em] text-gold">{({ 2: "Biserie", 3: "Triserie" } as Record<number, string>)[session.exercises.filter((e) => e.biserie === ex.biserie).length] ?? "Circuito"} · van juntos</div>
                   )}
                   <button
                     type="button"
