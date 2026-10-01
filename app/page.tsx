@@ -350,10 +350,14 @@ export default function Home() {
   const goalKcal = (!ownDeficitMethod && nutritionGoal?.kcalPromedio) || settings.goal;
   const proteinTarget = (!ownDeficitMethod && nutritionGoal?.proteinPromedio) || proteinTargetForWeight(currentWeightKg);
   const proteinTargetG = proteinTarget;
+  // Meta variable (sube/baja con pasos y entrenamiento) solo si hay alguien que planifique el entrenamiento: con Nutricionista
+  // pero sin Entrenador no se sabe cuánto se va a gastar, así que la meta es constante. Sin profesionales, elige la persona.
+  const goalStyleLocked = hasNutricionistaLink && !hasTrainerLink && !ownDeficitMethod;
+  const goalFixed = goalStyleLocked || settings.goalStyle === "constante";
 
   const summary = useMemo(
-    () => summarizeWeek(presentDays, settings.tdeeFallback, goalKcal, settings.weeklyWeights, currentWeightKg, days, settings.goalStyle === "constante"),
-    [presentDays, settings, currentWeightKg, days, goalKcal]
+    () => summarizeWeek(presentDays, settings.tdeeFallback, goalKcal, settings.weeklyWeights, currentWeightKg, days, goalFixed),
+    [presentDays, settings, currentWeightKg, days, goalKcal, goalFixed]
   );
 
   const weightTrend = useMemo(() => {
@@ -748,7 +752,7 @@ export default function Home() {
                         entry={todayEntry}
                         goal={goalKcal}
                         tdeeFallback={settings.tdeeFallback}
-                        fixedGoal={settings.goalStyle === "constante"}
+                        fixedGoal={goalFixed}
                         pesoKg={currentWeightKg}
                         onLogMeal={(meal) => {
                           setAiMeal(meal);
@@ -883,7 +887,7 @@ export default function Home() {
                           avgGasto={settings.tdeeFallback}
                           weeklyWeights={settings.weeklyWeights}
                           fallbackWeightKg={currentWeightKg}
-                          fixedGoal={settings.goalStyle === "constante"}
+                          fixedGoal={goalFixed}
                         />
                         
                         {!isBasico && (
@@ -1292,7 +1296,7 @@ export default function Home() {
             >
               Cerrar
             </button>
-            <GoalStyleSettings settings={settings} onSave={saveSettings} />
+            <GoalStyleSettings settings={settings} onSave={saveSettings} locked={goalStyleLocked} />
           </div>
         </div>
       )}
