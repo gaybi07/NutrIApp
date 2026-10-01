@@ -180,6 +180,10 @@ export interface ExerciseSetEntry {
   repeticiones: number;
   peso?: number; // kg, opcional (ej. ejercicios con peso corporal)
   intensidad: TrainingIntensity;
+  /** Dropset: caídas extra encadenadas a esta serie, cada una con menos peso. Cuentan en el volumen y no suman series. */
+  caidas?: { repeticiones: number; peso?: number }[];
+  /** Descanso medido después de esta serie, en segundos (sin los ~20 s de trabajo de la serie siguiente). */
+  descansoSeg?: number;
 }
 
 /** Agrupación gruesa (6 grupos) para medir volumen entrenado por zona del
@@ -213,6 +217,10 @@ export interface ExerciseEntry {
   /** Ejercicio con peso corporal: porcentaje de tu peso que se mueve (100 = todo, ej. dominadas y fondos; 65 flexiones).
    * Se suma al peso extra que cargues. 0 = no usa peso corporal. Si no se define, se deduce del nombre. */
   pesoCorporalPct?: number;
+  /** Biserie: los ejercicios que comparten este id van juntos y se muestran agrupados. */
+  biserie?: string;
+  /** Dropset planificado: caídas extra en la última serie, cada una `reduccionPct`% más liviana que la anterior. */
+  dropsets?: { caidas: number; reduccionPct: number };
 }
 
 /** De dónde salió una Routine -- "asignada" es de solo lectura para el

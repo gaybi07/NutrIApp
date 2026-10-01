@@ -377,7 +377,12 @@ function exerciseVolume(e: ExerciseEntry, bodyKg = 0): number {
     const l = (peso || 0) * mult + bw;
     return l > 0 ? l : 1; // sin peso ni peso corporal: cuenta 1 por repetición (como antes)
   };
-  if (e.sets && e.sets.length > 0) return e.sets.reduce((s, set) => s + set.repeticiones * load(set.peso), 0);
+  if (e.sets && e.sets.length > 0) {
+    return e.sets.reduce(
+      (s, set) => s + set.repeticiones * load(set.peso) + (set.caidas || []).reduce((a, c) => a + (c.repeticiones || 0) * load(c.peso), 0),
+      0
+    );
+  }
   return e.series * e.repeticiones * load(e.peso);
 }
 

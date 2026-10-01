@@ -58,6 +58,10 @@ interface DraftSet {
   repeticiones?: number;
   peso?: number;
   intensidad?: TrainingIntensity;
+  /** Dropset: caídas extra a esta serie (menos peso cada una). */
+  caidas?: { repeticiones?: number; peso?: number }[];
+  /** Descanso medido después de esta serie (s). */
+  descansoSeg?: number;
 }
 
 interface DraftExercise {
@@ -71,6 +75,9 @@ interface DraftExercise {
   /** Heredados de la rutina: peso por mancuerna y % de peso corporal (cuentan en el volumen). */
   mancuernas?: boolean;
   pesoCorporalPct?: number;
+  /** Biserie (agrupa ejercicios) y dropset planificado, heredados de la rutina. */
+  biserie?: string;
+  dropsets?: { caidas: number; reduccionPct: number };
   /** Se agregó en vivo durante una rutina asignada, no estaba en el plan --
    * a diferencia de un ejercicio planificado, este SÍ se puede quitar y
    * agregarle/sacarle series libremente (nunca fue parte de lo fijado por
@@ -109,6 +116,22 @@ export interface LiveSession {
    * (ver togglePause), así "ahora - startedAt" sigue dando el tiempo
    * REALMENTE entrenado sin necesitar un acumulador aparte. */
   pausedAt?: number;
+  /** Descanso en curso: arranca solo al marcar cómo fue una serie y se corta al tocar la siguiente. */
+  rest?: { startedAt: number; exIndex: number; setIndex: number };
+}
+
+/** Segundos de trabajo de la serie siguiente que se restan al descanso medido (el reloj sigue corriendo mientras la hacés). */
+const WORK_SECONDS = 20;
+
+/** Corta el descanso en curso y lo guarda en la serie que lo arrancó: tiempo medido menos 20 s de trabajo. */
+function closeRest(session: LiveSession): LiveSession {
+  const rest = session.rest;
+  if (!rest) return session;
+  const secs = Math.max(0, Math.round((Date.now() - rest.startedAt) / 1000 - WORK_SECONDS));
+  const exercises = session.exercises.map((ex, i) =>
+    i !== rest.exIndex ? ex : { ...ex, sets: ex.sets.map((st, j) => (j === rest.setIndex ? { ...st, descansoSeg: secs } : st)) }
+  );
+  return { ...session, exercises, rest: undefined };
 }
 
 function loadStoredSession(fecha: string): LiveSession | null {
@@ -150,6 +173,22 @@ function ElapsedTimer({ startedAt, pausedAt, className }: { startedAt: number; p
     return () => clearInterval(id);
   }, [pausedAt]);
   return <span className={className}>{formatElapsed((pausedAt ?? now) - startedAt)}</span>;
+}
+
+/** Cronómetro de descanso (solo mide, no cuenta hacia atrás). Aislado en su componente por la misma razón que ElapsedTimer. */
+function RestBar({ startedAt, onStop }: { startedAt: number; onStop: () => void }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <button type="button" onClick={onStop} className="mb-2 flex w-full items-center justify-between gap-2 rounded-lg border border-gold/40 bg-gold/10 px-2.5 py-1.5 text-left">
+      <span className="font-mono text-[9px] uppercase tracking-wide text-gold">Descanso</span>
+      <span className="font-mono text-base font-bold tabular-nums text-text">{formatElapsed(now - startedAt)}</span>
+      <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">tocá para cortar</span>
+    </button>
+  );
 }
 
 const VERDICT_LABEL: Record<WorkoutVerdict, { icon: string; text: string; color: string }> = {
@@ -263,10 +302,16 @@ export function LiveWorkout({
         plannedRepeticiones: e.repeticiones,
         plannedPeso: e.peso,
         suggestionNote: suggestion?.nota,
-        sets: Array.from({ length: e.series }, () => defaultSet(peso)),
+        sets: Array.from({ length: e.series }, (_, k) => {
+          const st = defaultSet(peso);
+          // Dropset planificado: la última serie arranca con sus caídas vacías (el peso sugerido se calcula al mostrarlas).
+          return e.dropsets && k === e.series - 1 ? { ...st, caidas: Array.from({ length: e.dropsets.caidas }, () => ({})) } : st;
+        }),
         grupoMuscular: e.grupoMuscular,
         mancuernas: e.mancuernas,
         pesoCorporalPct: e.pesoCorporalPct,
+        biserie: e.biserie,
+        dropsets: e.dropsets,
       };
     });
 
@@ -310,10 +355,16 @@ export function LiveWorkout({
         plannedRepeticiones: e.repeticiones,
         plannedPeso: e.peso,
         suggestionNote: suggestion?.nota,
-        sets: Array.from({ length: e.series }, () => defaultSet(peso)),
+        sets: Array.from({ length: e.series }, (_, k) => {
+          const st = defaultSet(peso);
+          // Dropset planificado: la última serie arranca con sus caídas vacías (el peso sugerido se calcula al mostrarlas).
+          return e.dropsets && k === e.series - 1 ? { ...st, caidas: Array.from({ length: e.dropsets.caidas }, () => ({})) } : st;
+        }),
         grupoMuscular: e.grupoMuscular,
         mancuernas: e.mancuernas,
         pesoCorporalPct: e.pesoCorporalPct,
+        biserie: e.biserie,
+        dropsets: e.dropsets,
       };
     });
     setSession({
@@ -387,13 +438,58 @@ export function LiveWorkout({
   const updateSet = (exIndex: number, setIndex: number, patch: Partial<DraftSet>) => {
     setSession((prev) => {
       if (!prev) return prev;
-      const exercises = prev.exercises.map((ex, i) => {
+      // Tocar OTRA serie corta el descanso en curso.
+      let base = prev;
+      if (prev.rest && !(prev.rest.exIndex === exIndex && prev.rest.setIndex === setIndex)) base = closeRest(prev);
+      const was = base.exercises[exIndex]?.sets[setIndex]?.intensidad;
+      const exercises = base.exercises.map((ex, i) => {
         if (i !== exIndex) return ex;
         return { ...ex, sets: ex.sets.map((s, j) => (j === setIndex ? { ...s, ...patch } : s)) };
       });
+      const next: LiveSession = { ...base, exercises };
+      // Al marcar por primera vez cómo fue la serie, arranca solo el descanso.
+      if (patch.intensidad != null && was == null) return { ...next, rest: { startedAt: Date.now(), exIndex, setIndex } };
+      return next;
+    });
+  };
+
+  /** Se tocó/enfocó una serie: si hay un descanso en curso de otra serie, se corta. */
+  const touchSet = (exIndex: number, setIndex: number) => {
+    setSession((prev) => (prev?.rest && !(prev.rest.exIndex === exIndex && prev.rest.setIndex === setIndex) ? closeRest(prev) : prev));
+  };
+
+  const stopRest = () => setSession((prev) => (prev ? closeRest(prev) : prev));
+
+  // Dropset: convertir una serie en dropset y sumar / quitar caídas (a veces 1, a veces 2 extra). Cada caída sugiere el
+  // peso de la anterior menos el % del ejercicio (20% por defecto), redondeado a 0,5 kg; se puede escribir encima.
+  const dropWeightSuggestion = (ex: DraftExercise, set: DraftSet, k: number) => {
+    const pct = ex.dropsets?.reduccionPct ?? 20;
+    const prevPeso = k === 0 ? set.peso ?? ex.plannedPeso : set.caidas?.[k - 1]?.peso;
+    return prevPeso != null ? Math.max(0, Math.round(prevPeso * (1 - pct / 100) * 2) / 2) : undefined;
+  };
+
+  const updateSetField = (exIndex: number, setIndex: number, fn: (set: DraftSet, ex: DraftExercise) => Partial<DraftSet>) => {
+    setSession((prev) => {
+      if (!prev) return prev;
+      const exercises = prev.exercises.map((ex, i) =>
+        i !== exIndex ? ex : { ...ex, sets: ex.sets.map((s, j) => (j === setIndex ? { ...s, ...fn(s, ex) } : s)) }
+      );
       return { ...prev, exercises };
     });
   };
+
+  const addDrop = (exIndex: number, setIndex: number) =>
+    updateSetField(exIndex, setIndex, (set, ex) => {
+      const caidas = set.caidas ?? [];
+      return { caidas: [...caidas, { peso: dropWeightSuggestion(ex, set, caidas.length) }] };
+    });
+  const updateDrop = (exIndex: number, setIndex: number, k: number, patch: { repeticiones?: number; peso?: number }) =>
+    updateSetField(exIndex, setIndex, (set) => ({ caidas: (set.caidas ?? []).map((c, idx) => (idx === k ? { ...c, ...patch } : c)) }));
+  const removeDrop = (exIndex: number, setIndex: number, k: number) =>
+    updateSetField(exIndex, setIndex, (set) => {
+      const caidas = (set.caidas ?? []).filter((_, idx) => idx !== k);
+      return { caidas: caidas.length > 0 ? caidas : undefined };
+    });
 
   // Los tres desvíos de un ejercicio PLANIFICADO -- nunca lo sacan de la
   // sesión, solo lo marcan (ver comentario en DraftExercise). Reemplazar/
@@ -456,17 +552,22 @@ export function LiveWorkout({
 
     for (const ex of session.exercises) {
       const doneSets = ex.sets.filter((s) => s.intensidad != null);
-      const sets: ExerciseSetEntry[] = ex.sets.map((s) => ({
-        // Si quedó vacío (nunca se escribió encima del placeholder), se
-        // guarda con lo planificado en vez de con "nada".
-        repeticiones: s.repeticiones ?? ex.plannedRepeticiones,
-        peso: s.peso,
-        intensidad: s.intensidad || "moderado",
-      }));
+      const sets: ExerciseSetEntry[] = ex.sets.map((s) => {
+        const caidas = (s.caidas ?? []).filter((c) => c.repeticiones != null && c.repeticiones > 0).map((c) => ({ repeticiones: c.repeticiones!, peso: c.peso }));
+        return {
+          // Si quedó vacío (nunca se escribió encima del placeholder), se
+          // guarda con lo planificado en vez de con "nada".
+          repeticiones: s.repeticiones ?? ex.plannedRepeticiones,
+          peso: s.peso,
+          intensidad: s.intensidad || "moderado",
+          ...(caidas.length > 0 ? { caidas } : {}),
+          ...(s.descansoSeg != null ? { descansoSeg: s.descansoSeg } : {}),
+        };
+      });
       const avgReps = sets.length ? Math.round(sets.reduce((a, s) => a + s.repeticiones, 0) / sets.length) : ex.plannedRepeticiones;
       const pesos = sets.map((s) => s.peso).filter((p): p is number => p != null);
       const avgPeso = pesos.length ? Math.round((pesos.reduce((a, b) => a + b, 0) / pesos.length) * 2) / 2 : undefined;
-      finalExercises.push({ nombre: ex.nombre, series: sets.length, repeticiones: avgReps, peso: avgPeso, sets, grupoMuscular: ex.grupoMuscular, mancuernas: ex.mancuernas, pesoCorporalPct: ex.pesoCorporalPct });
+      finalExercises.push({ nombre: ex.nombre, series: sets.length, repeticiones: avgReps, peso: avgPeso, sets, grupoMuscular: ex.grupoMuscular, mancuernas: ex.mancuernas, pesoCorporalPct: ex.pesoCorporalPct, biserie: ex.biserie, dropsets: ex.dropsets });
       doneSets.forEach((s) => counts[s.intensidad!]++);
 
       if (doneSets.length > 0) {
@@ -613,6 +714,7 @@ export function LiveWorkout({
   };
 
   const isPaused = Boolean(session?.pausedAt);
+  const openIndexOpen = openIndex != null;
 
   return (
     <div className="mt-3 border-t border-border pt-3">
@@ -837,6 +939,8 @@ export function LiveWorkout({
             </div>
           </div>
 
+          {session.rest && !openIndexOpen && <RestBar key={session.rest.startedAt} startedAt={session.rest.startedAt} onStop={stopRest} />}
+
           {session.exercises.length === 0 && (
             <div className="mb-2 rounded-lg border border-dashed border-border p-3 text-center text-[12px] text-textMuted">
               Agregá tu primer ejercicio para arrancar.
@@ -845,11 +949,15 @@ export function LiveWorkout({
 
           <div className="space-y-2">
             {session.exercises.map((ex, i) => {
+              const inBiserie = Boolean(ex.biserie) && (session.exercises[i - 1]?.biserie === ex.biserie || session.exercises[i + 1]?.biserie === ex.biserie);
               const doneCount = ex.sets.filter((s) => s.intensidad != null).length;
               const complete = ex.sets.length > 0 && doneCount === ex.sets.length;
               const open = openIndex === i;
               return (
-                <div key={i} className="overflow-hidden rounded-lg border border-border bg-bg/40">
+                <div key={i} className={`overflow-hidden rounded-lg border border-border bg-bg/40 ${inBiserie ? "border-l-4 border-l-gold" : ""}`}>
+                  {inBiserie && session.exercises[i - 1]?.biserie !== ex.biserie && (
+                    <div className="bg-gold/10 px-2.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.14em] text-gold">Biserie · van juntos</div>
+                  )}
                   <button
                     type="button"
                     onClick={() => setOpenIndex((prev) => (prev === i ? null : i))}
@@ -864,6 +972,9 @@ export function LiveWorkout({
                         <span className="shrink-0 rounded-full border border-border px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-wide text-textMuted">
                           Fuera de plan
                         </span>
+                      )}
+                      {(ex.dropsets || ex.sets.some((st) => (st.caidas?.length ?? 0) > 0)) && (
+                        <span className="shrink-0 rounded-full border border-gold/50 px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-wide text-gold">Dropset</span>
                       )}
                     </div>
                     <span className="shrink-0 font-mono text-[10px] text-textMuted">
@@ -909,6 +1020,7 @@ export function LiveWorkout({
                           />
                         </div>
                       </div>
+                      {session.rest && <RestBar key={session.rest.startedAt} startedAt={session.rest.startedAt} onStop={stopRest} />}
                       {ex.suggestionNote && (
                         <div className="mb-2 flex items-start gap-1 rounded-lg border border-gold/30 bg-gold/10 px-2 py-1.5 text-[11px] text-textMuted">
                           <Lightbulb size={16} strokeWidth={1.8} className="shrink-0" /> {ex.suggestionNote}
@@ -931,7 +1043,7 @@ export function LiveWorkout({
                       )}
                       <div className="space-y-1.5">
                         {ex.sets.map((set, j) => (
-                          <div key={j} className="rounded-lg border border-border bg-bg/60 p-2">
+                          <div key={j} className="rounded-lg border border-border bg-bg/60 p-2" onFocusCapture={() => touchSet(i, j)} onClick={() => touchSet(i, j)}>
                             <div className="mb-1 flex items-center justify-between">
                               <span className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
                                 Serie {j + 1}
@@ -1003,6 +1115,63 @@ export function LiveWorkout({
                                 );
                               })}
                             </div>
+                            {set.descansoSeg != null && (
+                              <div className="mt-1 font-mono text-[9px] text-textMuted">Descanso después: {formatElapsed(set.descansoSeg * 1000)}</div>
+                            )}
+                            {(set.caidas?.length ?? 0) === 0 ? (
+                              <button
+                                type="button"
+                                onClick={() => addDrop(i, j)}
+                                className="mt-1.5 w-full rounded-md border border-dashed border-gold/40 px-2 py-1 font-mono text-[9px] uppercase tracking-wide text-gold"
+                              >
+                                + Convertir en dropset
+                              </button>
+                            ) : (
+                              <div className="mt-1.5 rounded-md border border-gold/40 bg-gold/5 p-1.5">
+                                <div className="mb-1 font-mono text-[8.5px] uppercase tracking-wide text-gold">Dropset · {set.caidas!.length} caída{set.caidas!.length === 1 ? "" : "s"}</div>
+                                {set.caidas!.map((c, k) => (
+                                  <div key={k} className="mb-1 grid grid-cols-[1fr_1fr_auto] items-end gap-1.5">
+                                    <div>
+                                      <label className="mb-0.5 block font-mono text-[8px] uppercase text-textMuted">Reps</label>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max="999"
+                                        value={c.repeticiones ?? ""}
+                                        placeholder="—"
+                                        onChange={(event) =>
+                                          updateDrop(i, j, k, { repeticiones: event.target.value === "" ? undefined : clampNumber(Number(event.target.value), 999) })
+                                        }
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="mb-0.5 block font-mono text-[8px] uppercase text-textMuted">Peso (kg)</label>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max="999"
+                                        step="0.5"
+                                        value={c.peso ?? ""}
+                                        placeholder={String(dropWeightSuggestion(ex, set, k) ?? "—")}
+                                        onChange={(event) =>
+                                          updateDrop(i, j, k, { peso: event.target.value === "" ? undefined : clampNumber(Number(event.target.value), 999) })
+                                        }
+                                      />
+                                    </div>
+                                    <button type="button" onClick={() => removeDrop(i, j, k)} className="pb-1.5 font-mono text-[11px] text-rust" aria-label={`Quitar caída ${k + 1}`}>
+                                      ×
+                                    </button>
+                                  </div>
+                                ))}
+                                <button
+                                  type="button"
+                                  onClick={() => addDrop(i, j)}
+                                  className="w-full rounded-md border border-dashed border-gold/40 px-2 py-1 font-mono text-[9px] uppercase tracking-wide text-gold"
+                                >
+                                  + Otra caída
+                                </button>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>

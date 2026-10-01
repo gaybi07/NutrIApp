@@ -39,6 +39,22 @@ export function RoutineEditorModal({
   const addExercise = () => setEjercicios((prev) => [...prev, emptyExercise()]);
   const removeExercise = (index: number) => setEjercicios((prev) => prev.filter((_, i) => i !== index));
 
+  // Biserie: unir un ejercicio con el anterior (comparten un id) o separarlos. Si se saca uno de un par, el otro queda suelto.
+  const toggleBiserie = (index: number) =>
+    setEjercicios((prev) => {
+      if (index === 0) return prev;
+      const current = prev[index];
+      const before = prev[index - 1];
+      if (current.biserie && current.biserie === before.biserie) {
+        const id = current.biserie;
+        const next = prev.map((e, i) => (i === index ? { ...e, biserie: undefined } : e));
+        const remaining = next.filter((e) => e.biserie === id).length;
+        return remaining < 2 ? next.map((e) => (e.biserie === id ? { ...e, biserie: undefined } : e)) : next;
+      }
+      const id = before.biserie ?? Math.random().toString(36).slice(2, 8);
+      return prev.map((e, i) => (i === index || i === index - 1 ? { ...e, biserie: id } : e));
+    });
+
   const pickFromLibrary = (exercise: LibraryExercise) => {
     if (libraryTarget === null) return;
     const nombreEjercicio = exercise.nameEs || exercise.name;
@@ -71,7 +87,18 @@ export function RoutineEditorModal({
         />
         <div className="mt-3 space-y-2">
           {ejercicios.map((ex, i) => (
-            <div key={i} className="rounded-lg border border-border bg-bg/40 p-2.5">
+            <div key={i} className={`rounded-lg border border-border bg-bg/40 p-2.5 ${ex.biserie ? "border-l-4 border-l-gold" : ""}`}>
+              {i > 0 && (
+                <button
+                  type="button"
+                  onClick={() => toggleBiserie(i)}
+                  className={`mb-1.5 w-full rounded-md border px-2 py-1 font-mono text-[9px] uppercase tracking-wide ${
+                    ex.biserie && ex.biserie === ejercicios[i - 1].biserie ? "border-gold bg-gold/15 text-gold" : "border-dashed border-border text-textMuted"
+                  }`}
+                >
+                  {ex.biserie && ex.biserie === ejercicios[i - 1].biserie ? "✓ Biserie con el anterior (tocá para separar)" : "+ Unir con el anterior (biserie)"}
+                </button>
+              )}
               <div className="flex items-center justify-between gap-2">
                 <input
                   type="text"
@@ -149,6 +176,38 @@ export function RoutineEditorModal({
                     <option value="25">Peso corporal 25%</option>
                   </select>
                 </div>
+              </div>
+              <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+                <div>
+                  <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">Dropset (última serie)</label>
+                  <select
+                    value={ex.dropsets?.caidas ?? 0}
+                    onChange={(event) => {
+                      const caidas = Number(event.target.value);
+                      updateExercise(i, { dropsets: caidas > 0 ? { caidas, reduccionPct: ex.dropsets?.reduccionPct ?? 20 } : undefined });
+                    }}
+                  >
+                    <option value={0}>Sin dropset</option>
+                    <option value={1}>1 caída</option>
+                    <option value={2}>2 caídas</option>
+                    <option value={3}>3 caídas</option>
+                  </select>
+                </div>
+                {ex.dropsets && (
+                  <div>
+                    <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">Cada caída baja</label>
+                    <select
+                      value={ex.dropsets.reduccionPct}
+                      onChange={(event) => updateExercise(i, { dropsets: { caidas: ex.dropsets!.caidas, reduccionPct: Number(event.target.value) } })}
+                    >
+                      {[10, 15, 20, 25, 30, 40].map((pct) => (
+                        <option key={pct} value={pct}>
+                          {pct}% menos peso
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
               <div className="mt-1.5">
                 <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">Grupo muscular</label>
