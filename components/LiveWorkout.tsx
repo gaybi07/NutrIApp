@@ -1,5 +1,6 @@
 "use client";
 
+import { biserieColor } from "@/lib/biserie";
 import { useEffect, useState } from "react";
 import {
   DayEntry,
@@ -77,6 +78,8 @@ interface DraftExercise {
   pesoCorporalPct?: number;
   /** Biserie (agrupa ejercicios) y dropset planificado, heredados de la rutina. */
   biserie?: string;
+  /** Biserie tal como la planificó la rutina: no cambia en vivo, sirve para comparar planificado vs real en el reporte. */
+  biseriePlan?: string;
   dropsets?: { caidas: number; reduccionPct: number };
   /** Se agregó en vivo durante una rutina asignada, no estaba en el plan --
    * a diferencia de un ejercicio planificado, este SÍ se puede quitar y
@@ -311,6 +314,7 @@ export function LiveWorkout({
         mancuernas: e.mancuernas,
         pesoCorporalPct: e.pesoCorporalPct,
         biserie: e.biserie,
+        biseriePlan: e.biserie,
         dropsets: e.dropsets,
       };
     });
@@ -364,6 +368,7 @@ export function LiveWorkout({
         mancuernas: e.mancuernas,
         pesoCorporalPct: e.pesoCorporalPct,
         biserie: e.biserie,
+        biseriePlan: e.biserie,
         dropsets: e.dropsets,
       };
     });
@@ -458,6 +463,10 @@ export function LiveWorkout({
     setSession((prev) => (prev?.rest && !(prev.rest.exIndex === exIndex && prev.rest.setIndex === setIndex) ? closeRest(prev) : prev));
   };
 
+  // Una biserie queda bloqueada en cuanto se marcó cómo fue alguna serie de cualquiera de sus ejercicios.
+  const isBiserieLocked = (list: DraftExercise[], id: string | undefined) =>
+    Boolean(id) && list.some((e) => e.biserie === id && e.sets.some((st) => st.intensidad != null));
+
   // Biserie en vivo: unir un ejercicio con el anterior (o separarlo). Si queda un ejercicio solo en el grupo, se disuelve.
   const toggleBiserie = (index: number) =>
     setSession((prev) => {
@@ -468,6 +477,8 @@ export function LiveWorkout({
       let next: DraftExercise[];
       if (current.biserie && current.biserie === before.biserie) {
         const id = current.biserie;
+        // Bloqueada: si ya se cargó alguna serie de un ejercicio del grupo, no se puede desvincular.
+        if (isBiserieLocked(list, id)) return prev;
         next = list.map((e, i) => (i === index ? { ...e, biserie: undefined } : e));
         if (next.filter((e) => e.biserie === id).length < 2) next = next.map((e) => (e.biserie === id ? { ...e, biserie: undefined } : e));
       } else {
@@ -586,7 +597,7 @@ export function LiveWorkout({
       const avgReps = sets.length ? Math.round(sets.reduce((a, s) => a + s.repeticiones, 0) / sets.length) : ex.plannedRepeticiones;
       const pesos = sets.map((s) => s.peso).filter((p): p is number => p != null);
       const avgPeso = pesos.length ? Math.round((pesos.reduce((a, b) => a + b, 0) / pesos.length) * 2) / 2 : undefined;
-      finalExercises.push({ nombre: ex.nombre, series: sets.length, repeticiones: avgReps, peso: avgPeso, sets, grupoMuscular: ex.grupoMuscular, mancuernas: ex.mancuernas, pesoCorporalPct: ex.pesoCorporalPct, biserie: ex.biserie, dropsets: ex.dropsets });
+      finalExercises.push({ nombre: ex.nombre, series: sets.length, repeticiones: avgReps, peso: avgPeso, sets, grupoMuscular: ex.grupoMuscular, mancuernas: ex.mancuernas, pesoCorporalPct: ex.pesoCorporalPct, biserie: ex.biserie, biseriePlan: ex.biseriePlan, dropsets: ex.dropsets });
       doneSets.forEach((s) => counts[s.intensidad!]++);
 
       if (doneSets.length > 0) {
@@ -649,6 +660,22 @@ export function LiveWorkout({
               ejercicioNombre: ex.nombre,
               detalle: ex.comentario,
             });
+          }
+          // Planificado vs real: se planificó en biserie y hoy no quedó junto con sus compañeros.
+          if (ex.biseriePlan) {
+            const partners = session.exercises.filter((o) => o.biseriePlan === ex.biseriePlan);
+            const togetherNow = Boolean(ex.biserie) && partners.every((o) => o.biserie === ex.biserie);
+            if (!togetherNow) {
+              incidents.push({
+                fecha: entry.fecha,
+                routineId: incidentRoutineId,
+                routineNombre: incidentRoutineNombre,
+                trainerRoutineId: incidentTrainerRoutineId,
+                tipo: "comentario",
+                ejercicioNombre: ex.nombre,
+                detalle: `Planificado en biserie con ${partners.filter((o) => o !== ex).map((o) => o.nombre).join(" y ")}; se hizo por separado`,
+              });
+            }
           }
           if (sets.length > ex.plannedSeries) {
             const extra = sets.length - ex.plannedSeries;
@@ -973,20 +1000,29 @@ export function LiveWorkout({
               const complete = ex.sets.length > 0 && doneCount === ex.sets.length;
               const open = openIndex === i;
               return (
-                <div key={i} className={`overflow-hidden rounded-lg border border-border bg-bg/40 ${inBiserie ? "border-l-4 border-l-gold" : ""}`}>
+                <div key={i} className={`overflow-hidden rounded-lg border border-border bg-bg/40 ${inBiserie ? "border-l-4" : ""}`} style={inBiserie ? { borderLeftColor: biserieColor(session.exercises, ex.biserie) } : undefined}>
                   {i > 0 && (
                     <button
                       type="button"
                       onClick={() => toggleBiserie(i)}
+                      disabled={Boolean(ex.biserie) && ex.biserie === session.exercises[i - 1]?.biserie && isBiserieLocked(session.exercises, ex.biserie)}
                       className={`w-full border-b border-border px-2.5 py-1 text-left font-mono text-[8.5px] uppercase tracking-wide ${
                         ex.biserie && ex.biserie === session.exercises[i - 1]?.biserie ? "bg-gold/15 text-gold" : "text-textMuted"
                       }`}
                     >
-                      {ex.biserie && ex.biserie === session.exercises[i - 1]?.biserie ? "✓ Junto con el anterior (tocá para separar)" : "+ Unir con el anterior (biserie / triserie)"}
+                      {ex.biserie && ex.biserie === session.exercises[i - 1]?.biserie
+                        ? isBiserieLocked(session.exercises, ex.biserie)
+                          ? "🔒 Juntos con el anterior (ya cargaste series, no se puede separar)"
+                          : ex.biseriePlan === ex.biserie
+                            ? "✓ Juntos como estaba planificado (tocá para hacerlos por separado)"
+                            : "✓ Junto con el anterior (tocá para separar)"
+                        : ex.biseriePlan && session.exercises[i - 1]?.biseriePlan === ex.biseriePlan
+                          ? "Planificados juntos · hoy por separado (tocá para volver a unir)"
+                          : "+ Unir con el anterior (biserie / triserie)"}
                     </button>
                   )}
                   {inBiserie && session.exercises[i - 1]?.biserie !== ex.biserie && (
-                    <div className="bg-gold/10 px-2.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.14em] text-gold">{({ 2: "Biserie", 3: "Triserie" } as Record<number, string>)[session.exercises.filter((e) => e.biserie === ex.biserie).length] ?? "Circuito"} · van juntos</div>
+                    <div className="px-2.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.14em]" style={{ color: biserieColor(session.exercises, ex.biserie), backgroundColor: "rgba(127,127,127,0.12)" }}>{({ 2: "Biserie", 3: "Triserie" } as Record<number, string>)[session.exercises.filter((e) => e.biserie === ex.biserie).length] ?? "Circuito"} · van juntos</div>
                   )}
                   <button
                     type="button"

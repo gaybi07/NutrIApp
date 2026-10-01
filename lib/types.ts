@@ -219,6 +219,8 @@ export interface ExerciseEntry {
   pesoCorporalPct?: number;
   /** Biserie: los ejercicios que comparten este id van juntos y se muestran agrupados. */
   biserie?: string;
+  /** Cómo estaba planificada la biserie (id de la rutina); si difiere de `biserie`, se hizo distinto a lo planificado. */
+  biseriePlan?: string;
   /** Dropset planificado: caídas extra en la última serie, cada una `reduccionPct`% más liviana que la anterior. */
   dropsets?: { caidas: number; reduccionPct: number };
 }

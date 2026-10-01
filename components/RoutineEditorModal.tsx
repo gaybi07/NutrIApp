@@ -1,5 +1,6 @@
 "use client";
 
+import { biserieColor } from "@/lib/biserie";
 import { useState } from "react";
 import { ExerciseEntry, MuscleGroup, MUSCLE_GROUP_LABELS } from "@/lib/types";
 import { clampNumber } from "@/lib/inputLimits";
@@ -87,13 +88,14 @@ export function RoutineEditorModal({
         />
         <div className="mt-3 space-y-2">
           {ejercicios.map((ex, i) => (
-            <div key={i} className={`rounded-lg border border-border bg-bg/40 p-2.5 ${ex.biserie ? "border-l-4 border-l-gold" : ""}`}>
+            <div key={i} className={`rounded-lg border border-border bg-bg/40 p-2.5 ${ex.biserie ? "border-l-4" : ""}`} style={ex.biserie ? { borderLeftColor: biserieColor(ejercicios, ex.biserie) } : undefined}>
               {i > 0 && (
                 <button
                   type="button"
                   onClick={() => toggleBiserie(i)}
+                  style={ex.biserie && ex.biserie === ejercicios[i - 1].biserie ? { borderColor: biserieColor(ejercicios, ex.biserie), color: biserieColor(ejercicios, ex.biserie) } : undefined}
                   className={`mb-1.5 w-full rounded-md border px-2 py-1 font-mono text-[9px] uppercase tracking-wide ${
-                    ex.biserie && ex.biserie === ejercicios[i - 1].biserie ? "border-gold bg-gold/15 text-gold" : "border-dashed border-border text-textMuted"
+                    ex.biserie && ex.biserie === ejercicios[i - 1].biserie ? "" : "border-dashed border-border text-textMuted"
                   }`}
                 >
                   {ex.biserie && ex.biserie === ejercicios[i - 1].biserie ? "✓ Biserie con el anterior (tocá para separar)" : "+ Unir con el anterior (biserie)"}
