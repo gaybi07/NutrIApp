@@ -868,6 +868,19 @@ export default function Home() {
                       )}
                       {goalProgress && <GoalProgress progress={goalProgress} openOnDesktop setBy={nutritionGoal ? (trainingGoal ? "Objetivo validado por tus profesionales" : "Objetivo validado por tu Nutricionista") : trainingGoal ? "Objetivo validado por tu Entrenador" : undefined}
                         extraLines={trainingGoal ? [`Entrenador: ${trainingGoal.sesionesSemana} sesiones por semana · ~${trainingGoal.volumenPlanificado.toLocaleString("es-AR")} kg de volumen`] : undefined} />}
+                      {nutritionGoal && (
+                        <button
+                          type="button"
+                          onClick={() => setPanel("meta-diaria")}
+                          className="mt-2 flex w-full items-center justify-between gap-2 rounded-lg border border-gold/40 px-3 py-2 text-left"
+                        >
+                          <span className="text-[12px] text-text">
+                            Meta diaria: <b>{goalFixed ? "constante" : "variable"}</b>
+                            {goalStyleLocked ? " (fija sin Entrenador)" : ""}
+                          </span>
+                          <span className="font-mono text-[9px] uppercase tracking-wide text-gold">{goalStyleLocked ? "Ver" : "Cambiar"}</span>
+                        </button>
+                      )}
                       {objectivesWithProgress.length > 0 && (
                         <div className={goalProgress ? "mt-3" : ""}>
                           <MyObjectivesCard items={objectivesWithProgress} onCheck={myObjectives.saveCheck} todayFecha={fmtDate(new Date())} totalPoints={myPoints.total} pointsByObjective={myPoints.byObjective} />
