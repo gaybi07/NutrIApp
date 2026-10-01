@@ -899,8 +899,8 @@ export default function Home() {
                           <BodyGoalCard
                             goal={settings.calculatorProfile.metaCorporal}
                             measurements={bodyMeasurements.items}
-                            suggestedMetric={settings.calculatorProfile.modo === "aumentar" ? "brazo" : "cintura"}
-                            requireCore={hasNutricionistaLink}
+                            dailyDeficit={summary.avgDeficit > 0 ? summary.avgDeficit : Math.max(0, settings.tdeeFallback - goalKcal)}
+                            sexo={settings.calculatorProfile.sexo}
                             onSaveGoal={(metaCorporal) => saveSettings((prev) => (prev.calculatorProfile ? { ...prev, calculatorProfile: { ...prev.calculatorProfile, metaCorporal } } : prev))}
                             onSaveMeasurement={bodyMeasurements.save}
                           />

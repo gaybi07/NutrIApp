@@ -1,79 +1,65 @@
 "use client";
 
 import { useState } from "react";
-import { BODY_METRICS, CORE_METRICS, BodyGoal, BodyMeasurement, BodyMetric, computeBodyGoalProgress, earliestValue, latestValue } from "@/lib/bodyGoal";
+import { BODY_METRICS, CORE_METRICS, BodyGoal, BodyMeasurement, computeBodyGoalProgress, estimateBodyGoal, latestValue } from "@/lib/bodyGoal";
 import { btn } from "@/components/buttonStyles";
 import { fmtDate } from "@/lib/calculations";
 
 const num = (v: string) => (v.trim() === "" ? undefined : Number(v.replace(",", ".")));
 const fmt = (n: number) => n.toLocaleString("es-AR", { maximumFractionDigits: 1 });
+const fmtAr = (iso: string) => iso.split("-").reverse().join("/");
+
+/** Cada cuántos días se piden las medidas. */
+export const MEASURE_EVERY_DAYS = 21;
 
 /**
- * Objetivo corporal medible: estado inicial → meta con fecha (cintura, % de grasa, etc.). Sirve para recomponer, perder o
- * aumentar. Se arma una vez y después se agregan mediciones; la barra sale de inicial → actual → meta.
+ * Objetivo corporal medible (solo con Nutricionista). Nunca lo escribe la persona: lo propone el profesional o una
+ * estimación según su dieta y la fecha. Se pide cintura, cadera y cuello; si no las pasa, sigue usando la app sin objetivo.
  */
 export function BodyGoalCard({
   goal,
   measurements,
-  suggestedMetric,
-  requireCore = false,
+  dailyDeficit,
+  sexo,
   onSaveGoal,
   onSaveMeasurement,
 }: {
   goal: BodyGoal | undefined;
   measurements: BodyMeasurement[];
-  /** Qué medida sugerir al armar el objetivo (cintura para recomponer). */
-  suggestedMetric: BodyMetric;
-  /** Con Nutricionista: cintura, cadera y cuello son obligatorias en cada medición. */
-  requireCore?: boolean;
+  /** Déficit diario promedio en kcal (0 o menos = mantenimiento / recomposición). */
+  dailyDeficit: number;
+  sexo: "hombre" | "mujer";
   onSaveGoal: (goal: BodyGoal | undefined) => void;
   onSaveMeasurement: (m: BodyMeasurement) => Promise<string | null>;
 }) {
   const today = fmtDate(new Date());
-  const [mode, setMode] = useState<"none" | "goal" | "measure">("none");
+  const [mode, setMode] = useState<"none" | "measure" | "estimate">("none");
   const [error, setError] = useState<string | null>(null);
-
-  // Formulario del objetivo
-  const [medida, setMedida] = useState<BodyMetric>(goal?.medida ?? suggestedMetric);
-  const [inicial, setInicial] = useState(goal ? String(goal.inicial) : "");
-  const [meta, setMeta] = useState(goal ? String(goal.meta) : "");
-  const [fecha, setFecha] = useState(goal?.fecha ?? "");
-
-  // Formulario de la medición
   const [values, setValues] = useState<Record<string, string>>({});
-  // La medición se abrió para poder armar el objetivo (con Nutricionista piden cintura, cadera y cuello).
+  const [weeks, setWeeks] = useState(12);
+  // La medición se abrió para poder pedir la estimación (hacen falta cintura, cadera y cuello).
   const [forGoal, setForGoal] = useState(false);
-  const coreMissing = requireCore && CORE_METRICS.some((id) => latestValue(measurements, id) == null);
 
-  const metric = BODY_METRICS.find((m) => m.id === (goal?.medida ?? medida))!;
+  const coreMissing = CORE_METRICS.some((id) => latestValue(measurements, id) == null);
   const progress = goal ? computeBodyGoalProgress(goal, measurements, today) : null;
+  const metric = goal ? BODY_METRICS.find((m) => m.id === goal.medida)! : null;
 
-  const openGoalForm = () => {
+  const openEstimate = () => {
+    setError(null);
     if (coreMissing) {
       setForGoal(true);
-      setError(null);
       setMode("measure");
-      return;
-    }
-    // El punto de partida natural es tu primera medición de esa medida (con su fecha), no la de hoy.
-    const first = earliestValue(measurements, medida);
-    if (!goal && first && !inicial) setInicial(String(first.value));
-    setError(null);
-    setMode("goal");
+    } else setMode("estimate");
   };
 
-  const submitGoal = () => {
-    const i = num(inicial);
-    const m = num(meta);
-    if (i == null || m == null || !fecha) return setError("Completá el valor inicial, la meta y la fecha.");
-    if (i === m) return setError("La meta tiene que ser distinta del valor inicial.");
-    if (fecha <= today) return setError("La fecha objetivo tiene que ser futura.");
-    const first = earliestValue(measurements, medida);
-    const desde = goal && goal.medida === medida && goal.inicial === i ? goal.desde : first && first.value === i ? first.fecha : today;
-    onSaveGoal({ medida, inicial: i, meta: m, desde, fecha });
-    // Si el valor inicial no sale de una medición ya cargada, queda como la primera de hoy (la barra arranca en 0%).
-    if (!(first && first.value === i)) void onSaveMeasurement({ fecha: today, [medida]: i });
-    setError(null);
+  const proposal = (() => {
+    const cintura = latestValue(measurements, "cintura");
+    return cintura ? estimateBodyGoal({ actual: cintura.value, desde: cintura.fecha, semanas: weeks, dailyDeficit, sexo, todayIso: today }) : null;
+  })();
+
+  const acceptProposal = () => {
+    if (!proposal) return;
+    onSaveGoal(proposal);
     setMode("none");
   };
 
@@ -84,47 +70,51 @@ export function BodyGoalCard({
       if (v != null && !Number.isNaN(v)) m[b.id] = v;
     }
     m.peso = num(values.peso ?? "");
-    m.altura = num(values.altura ?? "");
-    if (requireCore && (goal || forGoal)) {
-      const missing = CORE_METRICS.filter((id) => m[id] == null).map((id) => BODY_METRICS.find((b) => b.id === id)!.label.split(" (")[0].toLowerCase());
-      if (missing.length > 0) return setError(`Tu Nutricionista necesita estas medidas: te falta ${missing.join(", ")}.`);
-    } else if (BODY_METRICS.every((b) => m[b.id] == null) && m.peso == null) return setError("Cargá al menos una medida.");
+    if (forGoal) {
+      const missing = CORE_METRICS.filter((id) => m[id] == null && latestValue(measurements, id) == null).map((id) =>
+        BODY_METRICS.find((b) => b.id === id)!.label.split(" (")[0].toLowerCase()
+      );
+      if (missing.length > 0) return setError(`Para la estimación hacen falta las tres: te falta ${missing.join(", ")}.`);
+    } else if (goal && CORE_METRICS.some((id) => m[id] == null)) {
+      return setError("Tu Nutricionista pide cintura, cadera y cuello en cada medición.");
+    }
+    if (BODY_METRICS.every((b) => m[b.id] == null) && m.peso == null) return setError("Cargá al menos una medida.");
     const err = await onSaveMeasurement(m);
     if (err) return setError("No se pudo guardar: " + err);
     setValues({});
     setError(null);
     if (forGoal) {
       setForGoal(false);
-      setMode("goal");
+      setMode("estimate");
       return;
     }
     setMode("none");
   };
 
+  const lastAny = [...measurements].sort((a, b) => (a.fecha < b.fecha ? 1 : -1))[0];
+  const daysSinceAny = lastAny ? Math.round((new Date(`${today}T00:00:00`).getTime() - new Date(`${lastAny.fecha}T00:00:00`).getTime()) / 86400000) : null;
+  const dueForMeasure = daysSinceAny == null || daysSinceAny >= MEASURE_EVERY_DAYS;
+
   return (
     <section className="rounded-2xl border border-border bg-surface/70 p-3">
       <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Objetivo corporal</div>
 
-      {!goal || !progress ? (
+      {!goal || !progress || !metric ? (
         <>
           <div className="mt-1 text-[12px] text-textMuted">
-            Ponele un número a tu objetivo: elegí una medida (la cintura es la más simple), tu valor de hoy y adónde querés llegar.
+            Es opcional. Tu Nutricionista puede proponértelo, o podés pedir una estimación de cuánto te conviene bajar de cintura para una fecha, según tu dieta.
           </div>
-          {requireCore && (
-            <div className="mt-1.5 rounded-lg border border-gold/30 bg-gold/5 px-2.5 py-1.5 text-[11px] text-textMuted">
-              Tu Nutricionista pide cintura, cadera y cuello para armar el objetivo. Si preferís no pasarlas, seguís usando la app igual, sin objetivo corporal.
-            </div>
-          )}
-          {mode !== "goal" && (
-            <button type="button" onClick={openGoalForm} className={`${btn("primary", "sm", true)} mt-2`}>
-              Armar mi objetivo
-            </button>
-          )}
+          <div className="mt-1.5 rounded-lg border border-gold/30 bg-gold/5 px-2.5 py-1.5 text-[11px] text-textMuted">
+            Para armarlo se piden cintura, cadera y cuello. Si preferís no pasarlas, seguís usando la app igual, sin objetivo corporal.
+          </div>
         </>
       ) : (
         <>
           <div className="mt-0.5 font-display text-xl text-text">
             {metric.label}: {fmt(goal.inicial)} → {fmt(goal.meta)} {metric.unit}
+          </div>
+          <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">
+            {goal.propuestoPor === "profesional" ? "Lo propuso tu Nutricionista" : "Estimación según tu dieta"} · para el {fmtAr(goal.fecha)}
           </div>
           {progress.yaLlego ? (
             <div className="mt-2 rounded-lg border border-sage/40 bg-sage/10 px-3 py-2 text-[13px] text-sage">¡Llegaste a tu meta!</div>
@@ -142,9 +132,7 @@ export function BodyGoalCard({
               </div>
               <div className="mt-1 flex justify-between font-mono text-[9px] text-textMuted">
                 <span>Empezaste en {fmt(goal.inicial)}</span>
-                <span>
-                  {progress.diasRestantes > 0 ? `${progress.diasRestantes} días para la fecha` : "La fecha ya pasó"}
-                </span>
+                <span>{progress.diasRestantes > 0 ? `${progress.diasRestantes} días para la fecha` : "La fecha ya pasó"}</span>
               </div>
               {progress.pctEsperado != null && (
                 <div className={`mt-1.5 text-[12px] ${progress.pct >= progress.pctEsperado ? "text-sage" : "text-gold"}`}>
@@ -153,46 +141,47 @@ export function BodyGoalCard({
               )}
             </>
           )}
-          {(progress.diasDesdeUltima == null || progress.diasDesdeUltima >= 14) && (
-            <div className="mt-2 rounded-lg border border-yellow-500/60 bg-yellow-400/15 px-2.5 py-1.5 text-[12px] text-text">
-              {progress.diasDesdeUltima == null ? "Todavía no cargaste ninguna medición." : `Hace ${progress.diasDesdeUltima} días que no te medís.`} Medite esta semana.
-            </div>
-          )}
         </>
       )}
 
-      {mode === "goal" && (
+      {dueForMeasure && mode === "none" && (goal || !coreMissing) && (
+        <div className="mt-2 rounded-lg border border-yellow-500/60 bg-yellow-400/15 px-2.5 py-1.5 text-[12px] text-text">
+          {daysSinceAny == null ? "Todavía no cargaste ninguna medición." : `Hace ${daysSinceAny} días que no te medís (se piden cada ${MEASURE_EVERY_DAYS}).`} Medite esta semana.
+        </div>
+      )}
+
+      {mode === "estimate" && (
         <div className="mt-2 space-y-2 rounded-lg border border-border bg-bg/40 p-2.5">
           <div>
-            <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">Qué medís</label>
-            <select value={medida} onChange={(event) => setMedida(event.target.value as BodyMetric)}>
-              {BODY_METRICS.filter((b) => CORE_METRICS.includes(b.id) || b.id === "grasa_pct" || b.id === goal?.medida).map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.label} ({b.unit})
+            <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">¿En cuánto tiempo?</label>
+            <select value={weeks} onChange={(event) => setWeeks(Number(event.target.value))}>
+              {[6, 9, 12, 16].map((w) => (
+                <option key={w} value={w}>
+                  {w} semanas
                 </option>
               ))}
             </select>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">Valor de hoy</label>
-              <input type="number" inputMode="decimal" step="0.1" value={inicial} onChange={(event) => setInicial(event.target.value)} />
+          {proposal ? (
+            <div className="rounded-lg border border-gold/40 bg-gold/5 px-2.5 py-2">
+              <div className="font-mono text-[9px] uppercase tracking-wide text-gold">Estimación</div>
+              <div className="font-display text-lg text-text">
+                Cintura {fmt(proposal.inicial)} → {fmt(proposal.meta)} cm
+              </div>
+              <div className="text-[11px] text-textMuted">
+                Para el {fmtAr(proposal.fecha)}, con tu dieta actual
+                {dailyDeficit > 0 ? ` (déficit de ~${Math.round(dailyDeficit)} kcal por día)` : " (en mantenimiento, recomposición suave)"}. Es una estimación, no una promesa.
+              </div>
             </div>
-            <div>
-              <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">Meta</label>
-              <input type="number" inputMode="decimal" step="0.1" value={meta} onChange={(event) => setMeta(event.target.value)} />
-            </div>
-          </div>
-          <div>
-            <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">Fecha objetivo</label>
-            <input type="date" value={fecha} min={today} onChange={(event) => setFecha(event.target.value)} />
-          </div>
+          ) : (
+            <div className="text-[12px] text-textMuted">Necesito tu medición de cintura para estimar.</div>
+          )}
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => setMode("none")} className={btn("neutral", "sm")}>
-              Cancelar
+              No, gracias
             </button>
-            <button type="button" onClick={submitGoal} className={btn("primary", "sm")}>
-              Guardar
+            <button type="button" onClick={acceptProposal} disabled={!proposal} className={btn("primary", "sm")}>
+              Aceptar objetivo
             </button>
           </div>
         </div>
@@ -201,15 +190,15 @@ export function BodyGoalCard({
       {mode === "measure" && (
         <div className="mt-2 space-y-2 rounded-lg border border-border bg-bg/40 p-2.5">
           <div className="text-[11px] text-textMuted">
-            {requireCore && (goal || forGoal)
-              ? "Para tener un objetivo corporal, tu Nutricionista pide cintura, cadera y cuello en cada medición. Las demás medidas las cargás aparte, en «Mis medidas», en el menú."
-              : "Cargá lo que te mediste hoy (todo es opcional)."}
+            {goal || forGoal
+              ? "Tu Nutricionista pide cintura, cadera y cuello. Las demás medidas las cargás aparte, en «Mis medidas», en el menú."
+              : "Cargá lo que te mediste hoy."}
           </div>
           <div className="grid grid-cols-2 gap-2">
             {[{ id: "peso", label: "Peso", unit: "kg" }, ...BODY_METRICS.filter((b) => CORE_METRICS.includes(b.id))].map((b) => (
               <div key={b.id}>
                 <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">
-                  {b.label} ({b.unit}){requireCore && (goal || forGoal) && CORE_METRICS.includes(b.id as never) ? " *" : ""}
+                  {b.label} ({b.unit}){(goal || forGoal) && CORE_METRICS.includes(b.id as never) ? " *" : ""}
                 </label>
                 <input
                   type="number"
@@ -241,20 +230,22 @@ export function BodyGoalCard({
 
       {error && <div className="mt-2 text-[12px] text-rust">{error}</div>}
 
-      {mode === "none" && goal && (
+      {mode === "none" && (
         <div className="mt-2 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setError(null);
-              setMode("measure");
-            }}
-            className={btn("primary", "sm")}
-          >
-            + Cargar medición
-          </button>
-          <button type="button" onClick={openGoalForm} className={btn("secondary", "sm")}>
-            Cambiar objetivo
+          {(goal || !coreMissing) && (
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                setMode("measure");
+              }}
+              className={btn("primary", "sm")}
+            >
+              + Cargar medición
+            </button>
+          )}
+          <button type="button" onClick={openEstimate} className={btn(goal || !coreMissing ? "secondary" : "primary", "sm", !goal && coreMissing)}>
+            {goal ? "Pedir nueva estimación" : "Pedir una estimación"}
           </button>
         </div>
       )}

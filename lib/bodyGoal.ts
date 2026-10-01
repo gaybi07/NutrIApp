@@ -46,6 +46,8 @@ export interface BodyGoal {
   desde: string;
   /** Fecha objetivo (YYYY-MM-DD). */
   fecha: string;
+  /** Quién lo propuso: una estimación según la dieta o el profesional. Nunca la propia persona. */
+  propuestoPor?: "estimacion" | "profesional";
 }
 
 export type BodyMeasurement = { fecha: string; peso?: number; altura?: number } & { [K in BodyMetric]?: number };
@@ -99,5 +101,36 @@ export function computeBodyGoalProgress(goal: BodyGoal, measurements: BodyMeasur
     diasRestantes: Math.round((startOfDay(goal.fecha) - startOfDay(todayIso)) / DAY),
     ultimaFecha: last?.fecha ?? null,
     diasDesdeUltima: last ? Math.round((startOfDay(todayIso) - startOfDay(last.fecha)) / DAY) : null,
+  };
+}
+
+/**
+ * Estimación de cuánto bajar de cintura para una fecha, según el déficit de la dieta. Regla práctica: ~1 cm de cintura
+ * por kg de grasa perdida en hombres (~1,2 en mujeres); con un tope de 1 kg de grasa por semana. Sin déficit
+ * (mantenimiento / recomposición) se propone una baja suave de ~0,3 cm por semana. Es una orientación, no una promesa.
+ */
+export function estimateBodyGoal(input: {
+  actual: number;
+  desde: string;
+  semanas: number;
+  dailyDeficit: number;
+  sexo: "hombre" | "mujer";
+  todayIso: string;
+}): BodyGoal {
+  const { actual, desde, semanas, dailyDeficit, sexo, todayIso } = input;
+  const cmPorKg = sexo === "mujer" ? 1.2 : 1;
+  const kgPorSemana = dailyDeficit > 0 ? Math.min(1, (dailyDeficit * 7) / 7700) : 0;
+  const cmPorSemana = dailyDeficit > 0 ? kgPorSemana * cmPorKg : 0.3;
+  const baja = Math.round(cmPorSemana * semanas * 10) / 10;
+  const fecha = new Date(`${todayIso}T00:00:00`);
+  fecha.setDate(fecha.getDate() + semanas * 7);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return {
+    medida: "cintura",
+    inicial: actual,
+    meta: Math.round((actual - baja) * 10) / 10,
+    desde,
+    fecha: `${fecha.getFullYear()}-${pad(fecha.getMonth() + 1)}-${pad(fecha.getDate())}`,
+    propuestoPor: "estimacion",
   };
 }
