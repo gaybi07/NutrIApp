@@ -285,7 +285,7 @@ export function SectionsSettings({
       <div className="flex flex-col gap-4">
         {renderGroup(
           "Inicio",
-          DEFAULT_INICIO_ORDER.filter((id) => id !== "hoy"), // "hoy" nunca se apaga -- ver comentario en page.tsx
+          DEFAULT_INICIO_ORDER.filter((id) => id !== "hoy" && id !== "logros"), // "hoy" nunca se apaga -- ver comentario en page.tsx
           INICIO_BLOCK_LABELS,
           settings.inicioHidden,
           (id) => onSave((prev) => ({ ...prev, inicioHidden: toggleHidden(prev.inicioHidden, id) }))

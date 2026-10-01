@@ -830,7 +830,6 @@ export default function Home() {
                   );
                 }
                 if (blockId === "objetivo") {
-                  if (!goalProgress && !nutritionGoal && !trainingGoal && objectivesWithProgress.length === 0 && !linkPending) return null;
                   return (
                     <SortableSection key="objetivo" id="objetivo" onHide={() => hideInicioBlock("objetivo")} dragDisabledOnDesktop>
                       {linkPending && (
@@ -883,16 +882,15 @@ export default function Home() {
                           <MyObjectivesCard items={objectivesWithProgress} onCheck={myObjectives.saveCheck} todayFecha={fmtDate(new Date())} totalPoints={myPoints.total} pointsByObjective={myPoints.byObjective} />
                         </div>
                       )}
+                      {/* Todo lo de objetivos y logros vive acá, en una sola sección. */}
+                      <div className="mt-3">
+                        <AchievementsCard achievements={achievements} claimed={achievementClaims.claimed} totalPoints={myPoints.total} />
+                      </div>
                     </SortableSection>
                   );
                 }
-                if (blockId === "logros") {
-                  return (
-                    <SortableSection key="logros" id="logros" onHide={() => hideInicioBlock("logros")} dragDisabledOnDesktop>
-                      <AchievementsCard achievements={achievements} claimed={achievementClaims.claimed} totalPoints={myPoints.total} />
-                    </SortableSection>
-                  );
-                }
+                // "Logros y puntos" ahora vive dentro del bloque "Tu objetivo" (todo junto en una sola sección).
+                if (blockId === "logros") return null;
                 if (blockId === "seguimiento") {
                   return (
                     <SortableSection key="seguimiento" id="seguimiento" onHide={() => hideInicioBlock("seguimiento")} dragDisabledOnDesktop>
