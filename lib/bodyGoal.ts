@@ -32,6 +32,9 @@ export const BODY_METRICS: { id: BodyMetric; label: string; unit: string }[] = [
   { id: "tobillos", label: "Tobillos", unit: "cm" },
 ];
 
+/** Las medidas clave: con Nutricionista vinculado son obligatorias en cada medición; el resto es opcional y suma al progreso. */
+export const CORE_METRICS: BodyMetric[] = ["cintura", "cadera", "cuello"];
+
 /** Todas las columnas numéricas de una medición (además de las medidas: peso y altura). */
 export const MEASUREMENT_FIELDS: string[] = ["peso", "altura", ...BODY_METRICS.map((m) => m.id)];
 

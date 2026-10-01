@@ -898,6 +898,7 @@ export default function Home() {
                             goal={settings.calculatorProfile.metaCorporal}
                             measurements={bodyMeasurements.items}
                             suggestedMetric={settings.calculatorProfile.modo === "aumentar" ? "brazo" : "cintura"}
+                            requireCore={hasNutricionistaLink}
                             onSaveGoal={(metaCorporal) => saveSettings((prev) => (prev.calculatorProfile ? { ...prev, calculatorProfile: { ...prev.calculatorProfile, metaCorporal } } : prev))}
                             onSaveMeasurement={bodyMeasurements.save}
                           />
