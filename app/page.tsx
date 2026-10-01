@@ -238,7 +238,8 @@ export default function Home() {
   // Cupos de vínculo con profesionales: Premium 1, Premium+ 2. Con todos usados, el acceso pasa a "Mis profesionales".
   const linkSlots = clientPlan === "premium_plus" ? 2 : 1;
   const hasFreeLinkSlot = (hasTrainerLink ? 1 : 0) + (hasNutricionistaLink ? 1 : 0) < linkSlots;
-  const comidasBasic = isBasico || (!hasNutricionistaLink && clientPlan !== "autoentreno");
+  // Un Nutricionista aprobado también arma su propia nutrición (se auto-gestiona), igual que un Entrenador aprobado su entrenamiento.
+  const comidasBasic = isBasico || (!hasNutricionistaLink && !isApprovedNutricionista && clientPlan !== "autoentreno");
   const macrosBlurred = comidasBasic ? PLAN_LOCKED_MACROS_BLOCKS : [];
 
   // "entrenador" no es una preferencia (no vive en settings.enabledTabs, no
@@ -251,7 +252,7 @@ export default function Home() {
   const actividadHidden = settings.actividadHidden;
 // Las herramientas de fuerza (rutinas, entrenamiento en vivo, planificación, reportes) salen de un Entrenador vinculado
   // o del plan Autoentreno. Sin ninguno de los dos (Básico, o Premium solo con Nutricionista) queda el registro básico.
-  const entrenoBasic = isBasico || (!hasTrainerLink && clientPlan !== "autoentreno");
+  const entrenoBasic = isBasico || (!hasTrainerLink && !isApprovedTrainer && clientPlan !== "autoentreno");
   const actividadBlurred = entrenoBasic ? PLAN_LOCKED_ACTIVIDAD_BLOCKS : [];
   // "Profesionales" (cliente): aparece sola en cuanto hay al menos un profesional vinculado y reemplaza el ítem del menú.
   if (hasTrainerLink || hasNutricionistaLink) enabledTabs.push("profesionales");
