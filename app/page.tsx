@@ -352,7 +352,8 @@ export default function Home() {
   const proteinTargetG = proteinTarget;
   // Meta variable (sube/baja con pasos y entrenamiento) solo si hay alguien que planifique el entrenamiento: con Nutricionista
   // pero sin Entrenador no se sabe cuánto se va a gastar, así que la meta es constante. Sin profesionales, elige la persona.
-  const goalStyleLocked = hasNutricionistaLink && !hasTrainerLink && !ownDeficitMethod;
+  // Autoentreno planifica su propio entrenamiento (con IA), así que ahí también puede ser variable.
+  const goalStyleLocked = hasNutricionistaLink && !hasTrainerLink && settings.plan !== "autoentreno" && !ownDeficitMethod;
   const goalFixed = goalStyleLocked || settings.goalStyle === "constante";
 
   const summary = useMemo(

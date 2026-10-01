@@ -87,7 +87,7 @@ export function GoalStyleSettings({ settings, onSave, locked = false }: { settin
       <h2 className="font-display text-xl leading-none mb-4">Meta diaria</h2>
       {locked && (
         <div className="mb-3 rounded-lg border border-gold/30 bg-gold/10 px-3 py-2 text-[11px] text-textMuted">
-          Con tu Nutricionista y sin Entrenador, la meta es constante: nadie planifica tus entrenamientos, así que no se puede saber cuánto vas a gastar. Con un Entrenador podés pasar a variable.
+          Con tu Nutricionista y sin Entrenador, la meta es constante: nadie planifica tus entrenamientos, así que no se puede saber cuánto vas a gastar. Con un Entrenador o el plan Autoentreno podés pasar a variable.
         </div>
       )}
       <div className="flex flex-col gap-2">
