@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/browser";
-import { BodyMeasurement } from "@/lib/bodyGoal";
+import { BodyMeasurement, MEASUREMENT_FIELDS } from "@/lib/bodyGoal";
 
 /** Mediciones corporales propias (body_measurements, migration_2026-10-14). Sin la migración, lista vacía. */
 export function useBodyMeasurements(authenticated: boolean) {
@@ -15,21 +15,19 @@ export function useBodyMeasurements(authenticated: boolean) {
     if (!userId) return;
     const { data, error } = await supabase
       .from("body_measurements")
-      .select("fecha, peso, grasa_pct, cintura, cadera, pecho, brazo, muslo")
+      .select("*")
       .eq("user_id", userId)
       .order("fecha", { ascending: true });
     if (error || !data) return;
     setItems(
-      data.map((r) => ({
-        fecha: r.fecha as string,
-        peso: r.peso == null ? undefined : Number(r.peso),
-        grasa_pct: r.grasa_pct == null ? undefined : Number(r.grasa_pct),
-        cintura: r.cintura == null ? undefined : Number(r.cintura),
-        cadera: r.cadera == null ? undefined : Number(r.cadera),
-        pecho: r.pecho == null ? undefined : Number(r.pecho),
-        brazo: r.brazo == null ? undefined : Number(r.brazo),
-        muslo: r.muslo == null ? undefined : Number(r.muslo),
-      }))
+      data.map((r) => {
+        const m: BodyMeasurement = { fecha: r.fecha as string };
+        for (const f of MEASUREMENT_FIELDS) {
+          const v = (r as Record<string, unknown>)[f];
+          if (v != null) (m as Record<string, unknown>)[f] = Number(v);
+        }
+        return m;
+      })
     );
   }, []);
 
@@ -44,22 +42,17 @@ export function useBodyMeasurements(authenticated: boolean) {
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id;
       if (!userId) return "No hay sesión.";
-      const { error } = await supabase.from("body_measurements").upsert({
-        user_id: userId,
-        fecha: m.fecha,
-        peso: m.peso ?? null,
-        grasa_pct: m.grasa_pct ?? null,
-        cintura: m.cintura ?? null,
-        cadera: m.cadera ?? null,
-        pecho: m.pecho ?? null,
-        brazo: m.brazo ?? null,
-        muslo: m.muslo ?? null,
-      });
+      // No pisa lo ya cargado ese mismo día: se suma a la medición existente.
+      const existing = items.find((x) => x.fecha === m.fecha);
+      const merged: Record<string, unknown> = { ...existing, ...Object.fromEntries(Object.entries(m).filter(([, v]) => v != null)) };
+      const row: Record<string, unknown> = { user_id: userId, fecha: m.fecha };
+      for (const f of MEASUREMENT_FIELDS) row[f] = merged[f] ?? null;
+      const { error } = await supabase.from("body_measurements").upsert(row);
       if (error) return error.message;
       await refetch();
       return null;
     },
-    [refetch]
+    [refetch, items]
   );
 
   return { items, save, refetch };

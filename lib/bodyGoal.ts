@@ -1,14 +1,39 @@
 /** Objetivo corporal medible (cintura, % de grasa, etc.): estado inicial → meta, con fecha. Vive dentro de calculatorProfile. */
-export type BodyMetric = "cintura" | "grasa_pct" | "cadera" | "pecho" | "brazo" | "muslo";
+export type BodyMetric =
+  | "cintura"
+  | "grasa_pct"
+  | "cadera"
+  | "gluteos"
+  | "pecho"
+  | "hombros"
+  | "brazo"
+  | "cuello"
+  | "muneca"
+  | "muslo"
+  | "cuadriceps"
+  | "gemelos"
+  | "tobillos";
 
+/** Medidas que se pueden cargar (y elegir como objetivo). `brazo` es el bíceps; `cadera` la de apoyo del pantalón;
+ * `muslo` la apertura de cadera; `gluteos` la circunferencia máxima de glúteos/cadera. */
 export const BODY_METRICS: { id: BodyMetric; label: string; unit: string }[] = [
   { id: "cintura", label: "Cintura", unit: "cm" },
   { id: "grasa_pct", label: "% de grasa", unit: "%" },
-  { id: "cadera", label: "Cadera", unit: "cm" },
-  { id: "pecho", label: "Pecho", unit: "cm" },
-  { id: "brazo", label: "Brazo", unit: "cm" },
-  { id: "muslo", label: "Muslo", unit: "cm" },
+  { id: "cadera", label: "Cadera (donde apoya el pantalón)", unit: "cm" },
+  { id: "gluteos", label: "Glúteos / cadera máxima", unit: "cm" },
+  { id: "pecho", label: "Pecho (bajo los brazos)", unit: "cm" },
+  { id: "hombros", label: "Hombros", unit: "cm" },
+  { id: "brazo", label: "Bíceps", unit: "cm" },
+  { id: "cuello", label: "Cuello", unit: "cm" },
+  { id: "muneca", label: "Muñeca", unit: "cm" },
+  { id: "muslo", label: "Muslo (apertura de cadera)", unit: "cm" },
+  { id: "cuadriceps", label: "Cuádriceps", unit: "cm" },
+  { id: "gemelos", label: "Gemelos", unit: "cm" },
+  { id: "tobillos", label: "Tobillos", unit: "cm" },
 ];
+
+/** Todas las columnas numéricas de una medición (además de las medidas: peso y altura). */
+export const MEASUREMENT_FIELDS: string[] = ["peso", "altura", ...BODY_METRICS.map((m) => m.id)];
 
 export interface BodyGoal {
   medida: BodyMetric;
@@ -20,16 +45,7 @@ export interface BodyGoal {
   fecha: string;
 }
 
-export interface BodyMeasurement {
-  fecha: string;
-  peso?: number;
-  grasa_pct?: number;
-  cintura?: number;
-  cadera?: number;
-  pecho?: number;
-  brazo?: number;
-  muslo?: number;
-}
+export type BodyMeasurement = { fecha: string; peso?: number; altura?: number } & { [K in BodyMetric]?: number };
 
 export interface BodyGoalProgress {
   goal: BodyGoal;
@@ -47,6 +63,13 @@ export interface BodyGoalProgress {
 
 const DAY = 86400000;
 const startOfDay = (iso: string) => new Date(`${iso}T00:00:00`).getTime();
+
+/** La medición más vieja de una medida: el estado inicial natural de un objetivo. */
+export function earliestValue(measurements: BodyMeasurement[], metric: BodyMetric): { fecha: string; value: number } | null {
+  const sorted = [...measurements].filter((m) => m[metric] != null).sort((a, b) => (a.fecha < b.fecha ? -1 : 1));
+  const m = sorted[0];
+  return m ? { fecha: m.fecha, value: m[metric] as number } : null;
+}
 
 export function latestValue(measurements: BodyMeasurement[], metric: BodyMetric): { fecha: string; value: number } | null {
   const sorted = [...measurements].filter((m) => m[metric] != null).sort((a, b) => (a.fecha < b.fecha ? 1 : -1));

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BODY_METRICS, BodyGoal, BodyMeasurement, BodyMetric, computeBodyGoalProgress, latestValue } from "@/lib/bodyGoal";
+import { BODY_METRICS, BodyGoal, BodyMeasurement, BodyMetric, computeBodyGoalProgress, earliestValue } from "@/lib/bodyGoal";
 import { btn } from "@/components/buttonStyles";
 import { fmtDate } from "@/lib/calculations";
 
@@ -43,8 +43,9 @@ export function BodyGoalCard({
   const progress = goal ? computeBodyGoalProgress(goal, measurements, today) : null;
 
   const openGoalForm = () => {
-    const last = latestValue(measurements, medida);
-    if (!goal && last && !inicial) setInicial(String(last.value));
+    // El punto de partida natural es tu primera medición de esa medida (con su fecha), no la de hoy.
+    const first = earliestValue(measurements, medida);
+    if (!goal && first && !inicial) setInicial(String(first.value));
     setError(null);
     setMode("goal");
   };
@@ -55,9 +56,11 @@ export function BodyGoalCard({
     if (i == null || m == null || !fecha) return setError("Completá el valor inicial, la meta y la fecha.");
     if (i === m) return setError("La meta tiene que ser distinta del valor inicial.");
     if (fecha <= today) return setError("La fecha objetivo tiene que ser futura.");
-    onSaveGoal({ medida, inicial: i, meta: m, desde: goal && goal.medida === medida && goal.inicial === i ? goal.desde : today, fecha });
-    // El valor inicial también queda como primera medición, para que la barra arranque en 0%.
-    void onSaveMeasurement({ fecha: today, [medida]: i });
+    const first = earliestValue(measurements, medida);
+    const desde = goal && goal.medida === medida && goal.inicial === i ? goal.desde : first && first.value === i ? first.fecha : today;
+    onSaveGoal({ medida, inicial: i, meta: m, desde, fecha });
+    // Si el valor inicial no sale de una medición ya cargada, queda como la primera de hoy (la barra arranca en 0%).
+    if (!(first && first.value === i)) void onSaveMeasurement({ fecha: today, [medida]: i });
     setError(null);
     setMode("none");
   };
@@ -69,6 +72,7 @@ export function BodyGoalCard({
       if (v != null && !Number.isNaN(v)) m[b.id] = v;
     }
     m.peso = num(values.peso ?? "");
+    m.altura = num(values.altura ?? "");
     if (BODY_METRICS.every((b) => m[b.id] == null) && m.peso == null) return setError("Cargá al menos una medida.");
     const err = await onSaveMeasurement(m);
     if (err) return setError("No se pudo guardar: " + err);
@@ -173,7 +177,7 @@ export function BodyGoalCard({
         <div className="mt-2 space-y-2 rounded-lg border border-border bg-bg/40 p-2.5">
           <div className="text-[11px] text-textMuted">Cargá lo que te mediste hoy (todo es opcional).</div>
           <div className="grid grid-cols-2 gap-2">
-            {[{ id: "peso", label: "Peso", unit: "kg" }, ...BODY_METRICS].map((b) => (
+            {[{ id: "peso", label: "Peso", unit: "kg" }, { id: "altura", label: "Altura", unit: "cm" }, ...BODY_METRICS].map((b) => (
               <div key={b.id}>
                 <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">
                   {b.label} ({b.unit})
