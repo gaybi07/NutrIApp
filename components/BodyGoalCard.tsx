@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BODY_METRICS, CORE_METRICS, BodyGoal, BodyMeasurement, BodyMetric, computeBodyGoalProgress, earliestValue } from "@/lib/bodyGoal";
+import { BODY_METRICS, CORE_METRICS, BodyGoal, BodyMeasurement, BodyMetric, computeBodyGoalProgress, earliestValue, latestValue } from "@/lib/bodyGoal";
 import { btn } from "@/components/buttonStyles";
 import { fmtDate } from "@/lib/calculations";
 
@@ -42,11 +42,20 @@ export function BodyGoalCard({
   // Formulario de la medición
   const [values, setValues] = useState<Record<string, string>>({});
   const [showMore, setShowMore] = useState(false);
+  // La medición se abrió para poder armar el objetivo (con Nutricionista piden cintura, cadera y cuello).
+  const [forGoal, setForGoal] = useState(false);
+  const coreMissing = requireCore && CORE_METRICS.some((id) => latestValue(measurements, id) == null);
 
   const metric = BODY_METRICS.find((m) => m.id === (goal?.medida ?? medida))!;
   const progress = goal ? computeBodyGoalProgress(goal, measurements, today) : null;
 
   const openGoalForm = () => {
+    if (coreMissing) {
+      setForGoal(true);
+      setError(null);
+      setMode("measure");
+      return;
+    }
     // El punto de partida natural es tu primera medición de esa medida (con su fecha), no la de hoy.
     const first = earliestValue(measurements, medida);
     if (!goal && first && !inicial) setInicial(String(first.value));
@@ -77,7 +86,7 @@ export function BodyGoalCard({
     }
     m.peso = num(values.peso ?? "");
     m.altura = num(values.altura ?? "");
-    if (requireCore) {
+    if (requireCore && (goal || forGoal)) {
       const missing = CORE_METRICS.filter((id) => m[id] == null).map((id) => BODY_METRICS.find((b) => b.id === id)!.label.split(" (")[0].toLowerCase());
       if (missing.length > 0) return setError(`Tu Nutricionista necesita estas medidas: te falta ${missing.join(", ")}.`);
     } else if (BODY_METRICS.every((b) => m[b.id] == null) && m.peso == null) return setError("Cargá al menos una medida.");
@@ -85,6 +94,11 @@ export function BodyGoalCard({
     if (err) return setError("No se pudo guardar: " + err);
     setValues({});
     setError(null);
+    if (forGoal) {
+      setForGoal(false);
+      setMode("goal");
+      return;
+    }
     setMode("none");
   };
 
@@ -97,6 +111,11 @@ export function BodyGoalCard({
           <div className="mt-1 text-[12px] text-textMuted">
             Ponele un número a tu objetivo: elegí una medida (la cintura es la más simple), tu valor de hoy y adónde querés llegar.
           </div>
+          {requireCore && (
+            <div className="mt-1.5 rounded-lg border border-gold/30 bg-gold/5 px-2.5 py-1.5 text-[11px] text-textMuted">
+              Tu Nutricionista pide cintura, cadera y cuello para armar el objetivo. Si preferís no pasarlas, seguís usando la app igual, sin objetivo corporal.
+            </div>
+          )}
           {mode !== "goal" && (
             <button type="button" onClick={openGoalForm} className={`${btn("primary", "sm", true)} mt-2`}>
               Armar mi objetivo
@@ -183,15 +202,15 @@ export function BodyGoalCard({
       {mode === "measure" && (
         <div className="mt-2 space-y-2 rounded-lg border border-border bg-bg/40 p-2.5">
           <div className="text-[11px] text-textMuted">
-            {requireCore
-              ? "Tu Nutricionista pide cintura, cadera y cuello en cada medición. Lo demás es opcional y suma a tu progreso."
+            {requireCore && (goal || forGoal)
+              ? "Para tener un objetivo corporal, tu Nutricionista pide cintura, cadera y cuello en cada medición. Lo demás es opcional y suma a tu progreso."
               : "Cargá lo que te mediste hoy (todo es opcional)."}
           </div>
           <div className="grid grid-cols-2 gap-2">
             {[{ id: "peso", label: "Peso", unit: "kg" }, ...BODY_METRICS.filter((b) => CORE_METRICS.includes(b.id))].map((b) => (
               <div key={b.id}>
                 <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">
-                  {b.label} ({b.unit}){requireCore && CORE_METRICS.includes(b.id as never) ? " *" : ""}
+                  {b.label} ({b.unit}){requireCore && (goal || forGoal) && CORE_METRICS.includes(b.id as never) ? " *" : ""}
                 </label>
                 <input
                   type="number"
@@ -223,8 +242,15 @@ export function BodyGoalCard({
             ))}
           </div>
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setMode("none")} className={btn("neutral", "sm")}>
-              Cancelar
+            <button
+              type="button"
+              onClick={() => {
+                setForGoal(false);
+                setMode("none");
+              }}
+              className={btn("neutral", "sm")}
+            >
+              {forGoal ? "No quiero pasarlas" : "Cancelar"}
             </button>
             <button type="button" onClick={submitMeasurement} className={btn("primary", "sm")}>
               Guardar medición
