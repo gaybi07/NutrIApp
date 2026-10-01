@@ -238,6 +238,21 @@ export default function Home() {
   // Nutricionista vinculado o del plan Autoentreno. Con Entrenador solo (o Básico) queda la carga básica de comidas.
   // Cupos de vínculo con profesionales: Premium 1, Premium+ 2. Con todos usados, el acceso pasa a "Mis profesionales".
   const linkSlots = clientPlan === "premium_plus" ? 2 : 1;
+  // Falta vincular profesional(es) del plan: Premium necesita 1, Premium+ los dos (Nutricionista y Entrenador).
+  const linkPending =
+    clientPlan === "premium"
+      ? !hasTrainerLink && !hasNutricionistaLink
+      : clientPlan === "premium_plus"
+        ? !hasTrainerLink || !hasNutricionistaLink
+        : false;
+  const missingLinkText =
+    clientPlan === "premium_plus"
+      ? !hasTrainerLink && !hasNutricionistaLink
+        ? "tu Entrenador y tu Nutricionista"
+        : !hasTrainerLink
+          ? "tu Entrenador"
+          : "tu Nutricionista"
+      : "tu profesional";
   const hasFreeLinkSlot = (hasTrainerLink ? 1 : 0) + (hasNutricionistaLink ? 1 : 0) < linkSlots;
   // Un Nutricionista aprobado también arma su propia nutrición (se auto-gestiona), igual que un Entrenador aprobado su entrenamiento.
   const comidasBasic = isBasico || (!hasNutricionistaLink && !isApprovedNutricionista && clientPlan !== "autoentreno");
@@ -802,12 +817,6 @@ export default function Home() {
                   // -- el chequeo se hace ACÁ (no dentro de PendingLinkCard)
                   // para no dejar el envoltorio de SortableSection (borde,
                   // manito de arrastre, foquito) montado alrededor de nada.
-                  const linkPending =
-                    clientPlan === "premium"
-                      ? !hasTrainerLink && !hasNutricionistaLink
-                      : clientPlan === "premium_plus"
-                        ? !hasTrainerLink || !hasNutricionistaLink
-                        : false;
                   if (!linkPending) return null;
                   return (
                     <SortableSection key="vinculo" id="vinculo" onHide={() => hideInicioBlock("vinculo")} dragDisabledOnDesktop>
@@ -821,9 +830,21 @@ export default function Home() {
                   );
                 }
                 if (blockId === "objetivo") {
-                  if (!goalProgress && !nutritionGoal && !trainingGoal && objectivesWithProgress.length === 0) return null;
+                  if (!goalProgress && !nutritionGoal && !trainingGoal && objectivesWithProgress.length === 0 && !linkPending) return null;
                   return (
                     <SortableSection key="objetivo" id="objetivo" onHide={() => hideInicioBlock("objetivo")} dragDisabledOnDesktop>
+                      {linkPending && (
+                        <button
+                          type="button"
+                          onClick={() => setPanel("vincular-profesional")}
+                          className="mb-2 w-full rounded-xl border border-yellow-500/60 bg-yellow-400/15 p-3 text-left"
+                        >
+                          <div className="font-mono text-[9px] uppercase tracking-[0.15em] text-yellow-500">Falta vincular</div>
+                          <div className="mt-0.5 text-[12px] text-text">
+                            Vinculá {missingLinkText} para tener objetivos de entrenamiento y nutrición validados, y poder elegir una meta variable o constante. Tocá para vincular.
+                          </div>
+                        </button>
+                      )}
                       {((nutritionGoal && !goalProgress) || trainingGoal) && !goalProgress && (
                         <div className="mb-2 rounded-xl border border-gold/40 bg-gold/5 p-3">
                           <div className="mb-1.5 font-mono text-[9px] uppercase tracking-[0.15em] text-gold">Objetivo de tus profesionales</div>
