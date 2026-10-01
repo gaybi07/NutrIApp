@@ -589,7 +589,7 @@ export function AlacenaCard({
                 <X size={16} strokeWidth={1.8} />
               </button>
             </div>
-            <PrepareDish items={items} consumeAmounts={consumeAmounts} addStructuredItems={addStructuredItems} />
+            <PrepareDish items={items} consumeAmounts={consumeAmounts} addStructuredItems={addStructuredItems} productMemory={productMemory} updateItem={updateItem} />
           </div>
         </div>
       )}

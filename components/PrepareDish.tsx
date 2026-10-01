@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { InventoryCategory, InventoryItem, InventoryNutrition, INVENTORY_CATEGORIES, INVENTORY_CATEGORY_LABELS } from "@/lib/types";
 import { nutritionForAmount } from "@/lib/calculations";
-import { AiShoppingItem } from "@/components/QuickAddProducts";
+import { AiShoppingItem, QuickAddProducts } from "@/components/QuickAddProducts";
+import { ProductMemoryApi } from "@/lib/useProductMemory";
+import { btn } from "@/components/buttonStyles";
 
 type BasketEntry = { itemId: string; amount: number };
 
@@ -22,10 +24,15 @@ export function PrepareDish({
   items,
   consumeAmounts,
   addStructuredItems,
+  productMemory,
+  updateItem,
 }: {
   items: InventoryItem[];
   consumeAmounts: (amounts: Array<{ id: string; quantity: number }>) => void;
   addStructuredItems: (entries: AiShoppingItem[]) => void;
+  /** Para subir a la Alacena un ingrediente que falta, sin salir de la preparación. */
+  productMemory?: ProductMemoryApi;
+  updateItem?: (id: string, patch: Partial<InventoryItem>) => void;
 }) {
   const [filter, setFilter] = useState<InventoryCategory | "todas">("todas");
   const [basket, setBasket] = useState<BasketEntry[]>([]);
@@ -47,6 +54,35 @@ export function PrepareDish({
   ]);
 
   const available = useMemo(() => items.filter((i) => i.quantity > 0), [items]);
+
+  // "¿Te falta algo?": subir un ingrediente a la Alacena ahí mismo. Lo que se suma mientras el panel está abierto
+  // entra solo a la preparación (por la cantidad que se subió) y se puede validar su valor nutricional en el acto.
+  const [showAdd, setShowAdd] = useState(false);
+  const snapshot = useRef<Map<string, number>>(new Map());
+  const [justAdded, setJustAdded] = useState<string[]>([]);
+  const [nutritionDrafts, setNutritionDrafts] = useState<Record<string, InventoryNutrition>>({});
+
+  useEffect(() => {
+    if (!showAdd) return;
+    const added: { id: string; delta: number }[] = [];
+    for (const it of items) {
+      const prev = snapshot.current.get(it.id) ?? 0;
+      if (it.quantity > prev) added.push({ id: it.id, delta: it.quantity - prev });
+    }
+    snapshot.current = new Map(items.map((i) => [i.id, i.quantity]));
+    if (added.length === 0) return;
+    setBasket((prev) => {
+      const next = [...prev];
+      for (const a of added) {
+        const idx = next.findIndex((b) => b.itemId === a.id);
+        if (idx >= 0) next[idx] = { ...next[idx], amount: next[idx].amount + a.delta };
+        else next.push({ itemId: a.id, amount: a.delta });
+      }
+      return next;
+    });
+    setJustAdded((prev) => Array.from(new Set([...prev, ...added.map((a) => a.id)])));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, showAdd]);
 
   const presentCategories = useMemo(() => {
     const set = new Set(available.map((i) => i.category || "otros"));
@@ -190,6 +226,76 @@ export function PrepareDish({
 
       {step === "elegir" && (
         <>
+          {productMemory && (
+            <div className="mb-3 rounded-xl border border-dashed border-gold/50 bg-gold/5 p-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[12px] text-text">¿Te falta algún ingrediente en la Alacena?</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    snapshot.current = new Map(items.map((i) => [i.id, i.quantity]));
+                    setShowAdd((v) => !v);
+                  }}
+                  className={`${btn(showAdd ? "neutral" : "secondary", "sm")} shrink-0`}
+                >
+                  {showAdd ? "Listo" : "+ Subirlo ahora"}
+                </button>
+              </div>
+              {showAdd && (
+                <div className="mt-2">
+                  <QuickAddProducts addStructuredItems={addStructuredItems} productMemory={productMemory} compact />
+                  <div className="mt-1 text-[10px] text-textMuted">
+                    Ej: 500 g carne molida. Se sube a la Alacena y entra a tu preparación con esa cantidad.
+                  </div>
+                  {justAdded.map((id) => {
+                    const item = items.find((i) => i.id === id);
+                    if (!item) return null;
+                    const base: InventoryNutrition = item.nutritionPer100g ?? EMPTY_TOTALS;
+                    const draft = nutritionDrafts[id] ?? base;
+                    const set = (field: keyof InventoryNutrition, value: string) =>
+                      setNutritionDrafts((prev) => ({ ...prev, [id]: { ...draft, [field]: Number(value) || 0 } }));
+                    return (
+                      <div key={id} className="mt-2 rounded-lg border border-border bg-surface p-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[12px] font-semibold text-text">
+                            {item.name} <span className="font-normal text-textMuted">· en la preparación</span>
+                          </span>
+                          <span className={`font-mono text-[9px] uppercase ${item.nutritionConfirmed ? "text-sage" : "text-gold"}`}>
+                            {item.nutritionConfirmed ? "✓ Validado" : item.nutritionPer100g ? "Estimado por IA" : "Sin valores"}
+                          </span>
+                        </div>
+                        {!item.nutritionConfirmed && updateItem && (
+                          <>
+                            <div className="mt-1 text-[10px] text-textMuted">
+                              Valor nutricional cada 100 {item.unit === "u." ? "unidad" : item.unit}: revisalo y confirmalo.
+                            </div>
+                            <div className="mt-1 grid grid-cols-5 gap-1">
+                              {(["kcal", "protein", "carbs", "fat", "fiber"] as (keyof InventoryNutrition)[]).map((f) => (
+                                <label key={f} className="block">
+                                  <span className="block font-mono text-[8px] uppercase text-textMuted">{f === "protein" ? "prot" : f === "carbs" ? "carb" : f === "fat" ? "gras" : f === "fiber" ? "fibra" : "kcal"}</span>
+                                  <input type="number" min="0" value={draft[f] || ""} onChange={(event) => set(f, event.target.value)} className="w-full text-[12px]" />
+                                </label>
+                              ))}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateItem(id, { nutritionPer100g: draft, nutritionConfirmed: true });
+                                productMemory.remember({ name: item.name, nutritionPer100g: draft });
+                              }}
+                              className={`${btn("primary", "sm", true)} mt-1.5`}
+                            >
+                              Confirmar valores
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
           {presentCategories.length > 1 && (
             <div className="mb-2 flex flex-wrap gap-1.5">
               <button

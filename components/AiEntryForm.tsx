@@ -670,31 +670,54 @@ export function AiEntryForm({
         </div>
       )}
 
-      {planOptions.length > 0 && (
-        <div className="mt-2.5 rounded-xl border border-gold/50 bg-gold/10 p-2.5">
-          <div className="mb-1.5 font-mono text-[9px] uppercase tracking-wide text-gold">Del plan de tu Nutricionista · {MEAL_LABELS[meal]}</div>
-          <div className="space-y-1.5">
-            {planOptions.map((option, index) => (
-              <div key={option.nombre} className="rounded-lg border border-border/70 bg-bg/30 p-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[13px] text-text">
-                      {option.nombre} <LevelChip option={option} />
-                    </div>
-                    <div className="font-mono text-[10px] text-textMuted">
-                      {option.kcal} kcal · {option.protein} g prot
-                    </div>
-                    {quantities(option) && <div className="text-[11px] text-textMuted">{quantities(option)}</div>}
-                  </div>
-                  <button type="button" onClick={() => addPlanOption(option)} className={`${btn("primary", "sm")} shrink-0`}>
-                    + Agregar
-                  </button>
-                </div>
+      {planOptions.length > 0 && (() => {
+        // Comida ya cargada: sus opciones del plan quedan bloqueadas (en gris) para no cargarla dos veces ni pisar lo que
+        // ya está. Para cambiarla hay que quitar lo cargado primero (arriba, en "Ya cargado en ...").
+        const locked = yaCargado.length > 0;
+        const eaten = new Set(yaCargado.map((item) => item.grupoNombre || item.nombre));
+        return (
+          <div className={`mt-2.5 rounded-xl border p-2.5 ${locked ? "border-border bg-bg/30" : "border-gold/50 bg-gold/10"}`}>
+            <div className={`mb-1.5 font-mono text-[9px] uppercase tracking-wide ${locked ? "text-textMuted" : "text-gold"}`}>
+              Del plan de tu Nutricionista · {MEAL_LABELS[meal]}
+            </div>
+            {locked && (
+              <div className="mb-1.5 flex items-center gap-1.5 text-[11px] text-textMuted">
+                <Lock size={12} strokeWidth={1.8} className="shrink-0" />
+                {MEAL_LABELS[meal]} ya está cargado. Para cargar una opción distinta, quitá primero lo que cargaste.
               </div>
-            ))}
+            )}
+            <div className="space-y-1.5">
+              {planOptions.map((option) => {
+                const isEaten = eaten.has(option.nombre);
+                return (
+                  <div key={option.nombre} className={`rounded-lg border p-2 ${locked ? "border-border/60 bg-bg/20 opacity-70" : "border-border/70 bg-bg/30"}`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className={`text-[13px] ${locked ? "text-textMuted" : "text-text"}`}>
+                          {option.nombre} <LevelChip option={option} />
+                        </div>
+                        <div className="font-mono text-[10px] text-textMuted">
+                          {option.kcal} kcal · {option.protein} g prot
+                        </div>
+                        {quantities(option) && !locked && <div className="text-[11px] text-textMuted">{quantities(option)}</div>}
+                      </div>
+                      {locked ? (
+                        <span className={`shrink-0 font-mono text-[9px] uppercase tracking-wide ${isEaten ? "text-sage" : "text-textMuted"}`}>
+                          {isEaten ? "✓ Cargada" : "Bloqueada"}
+                        </span>
+                      ) : (
+                        <button type="button" onClick={() => addPlanOption(option)} className={`${btn("primary", "sm")} shrink-0`}>
+                          + Agregar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {showPlanned && plannedTitle && (
         <div className="mt-2.5 rounded-xl border border-gold/50 bg-gold/10 p-2.5">

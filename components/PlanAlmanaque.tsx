@@ -298,10 +298,13 @@ export function TodayMeals({
 
               {isOpen && (
                 <>
+                  {alreadyLoaded && (
+                    <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-textMuted">
+                      🔒 Ya cargaste esta comida. Para cargar una opción distinta, quitá primero lo cargado.
+                    </div>
+                  )}
                   <div className="mt-1.5 space-y-1.5">
                     {options.map((option, index) => {
-                      // Ya cargada: solo la opción que comió (las otras se ven tocando el color)
-                      if (alreadyLoaded && index !== selectedIndex && selectedIndex >= 0) return null;
                       const selected = selectedIndex === index;
                       return (
                         <button
