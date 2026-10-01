@@ -40,7 +40,23 @@ export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: 
     setNuevaDisciplina("");
   };
 
+  // Una sesión registrada con el Entrenamiento en vivo (tiene ejercicios y su reporte con la misma duración) está
+  // protegida: no se puede quitar sin confirmar, porque se pierde su duración y deja de coincidir con los ejercicios.
+  const liveMinutes = entry.entrenamientoReporte?.minutos;
+  const isLive = (session: TrainingSession) =>
+    (entry.ejercicios?.length ?? 0) > 0 && session.tipo === "fuerza" && liveMinutes != null && session.minutos === liveMinutes;
+
   const removeSession = (index: number) => {
+    const session = sessions[index];
+    if (
+      session &&
+      isLive(session) &&
+      !window.confirm(
+        `Este entrenamiento se registró en vivo (${session.minutos} min, ${entry.ejercicios?.length} ejercicios). Si lo quitás, se pierde su duración. ¿Seguro que querés quitarlo?`
+      )
+    ) {
+      return;
+    }
     setSessions((prev) => prev.filter((_, i) => i !== index));
   };
 
@@ -79,6 +95,11 @@ export function TrainingEntryForm({ entry, onSave }: { entry: DayEntry; onSave: 
                       {session.tipo === "aerobico" ? session.disciplina || "Aeróbico" : "Fuerza"} · {style.label} · {session.minutos} min · +
                       {sessionCalories(session.intensidad, session.minutos, entry.pesoKg)} kcal
                     </span>
+                    {isLive(session) && (
+                      <span className="shrink-0 rounded-full bg-sage/20 px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase leading-none text-sage" title="Registrado con el entrenamiento en vivo">
+                        En vivo
+                      </span>
+                    )}
                   </div>
                   <button
                     type="button"
