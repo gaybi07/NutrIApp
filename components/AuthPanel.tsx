@@ -10,6 +10,7 @@ export function AuthPanel({
   onUserEmailChange,
   onOpenTheme,
   onOpenFontSize,
+  onOpenGoalStyle,
   onOpenTabs,
   onOpenSections,
   onOpenTools,
@@ -28,6 +29,7 @@ export function AuthPanel({
   onUserEmailChange?: (email: string | null) => void;
   onOpenTheme?: () => void;
   onOpenFontSize?: () => void;
+  onOpenGoalStyle?: () => void;
   onOpenTabs?: () => void;
   onOpenSections?: () => void;
   onOpenTools?: () => void;
@@ -165,6 +167,16 @@ export function AuthPanel({
                 className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
               >
                 Tamaño de letra
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onOpenGoalStyle?.();
+                }}
+                className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
+              >
+                Meta diaria
               </button>
               <button
                 type="button"

@@ -47,7 +47,8 @@ import { PendingLinkCard } from "@/components/PendingLinkCard";
 import { TrainingEntryForm } from "@/components/TrainingEntryForm";
 import { StepsEntryForm } from "@/components/StepsEntryForm";
 import { SleepEntryForm } from "@/components/SleepEntryForm";
-import { ThemeSettings, FontSizeSettings, TabsSettings, ToolsSettings, SectionsSettings } from "@/components/Preferences";
+import { ThemeSettings, FontSizeSettings,
+  GoalStyleSettings, TabsSettings, ToolsSettings, SectionsSettings } from "@/components/Preferences";
 import { TrainerPanel } from "@/components/TrainerPanel";
 import { NutricionistaPanel } from "@/components/NutricionistaPanel";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
@@ -133,7 +134,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<MainTab>("inicio");
   const [panel, setPanel] = useState<
     | "calc" | "ai" | "pasos" | "entreno" | "sueno" | "datos" | "planificador"
-    | "tema" | "tamano-letra" | "solapas" | "herramientas" | "secciones" | "entrenador"
+    | "tema" | "tamano-letra" | "meta-diaria" | "solapas" | "herramientas" | "secciones" | "entrenador"
     | "nutricionista" | "ver-comidas" | "suplementos" | "planes" | "vincular-profesional"
     | null
   >(null);
@@ -351,7 +352,7 @@ export default function Home() {
   const proteinTargetG = proteinTarget;
 
   const summary = useMemo(
-    () => summarizeWeek(presentDays, settings.tdeeFallback, goalKcal, settings.weeklyWeights, currentWeightKg, days),
+    () => summarizeWeek(presentDays, settings.tdeeFallback, goalKcal, settings.weeklyWeights, currentWeightKg, days, settings.goalStyle === "constante"),
     [presentDays, settings, currentWeightKg, days, goalKcal]
   );
 
@@ -529,6 +530,7 @@ export default function Home() {
           onUserEmailChange={setUserEmail}
           onOpenTheme={() => setPanel("tema")}
           onOpenFontSize={() => setPanel("tamano-letra")}
+          onOpenGoalStyle={() => setPanel("meta-diaria")}
           onOpenTabs={() => setPanel("solapas")}
           onOpenSections={() => setPanel("secciones")}
           onOpenTools={() => setPanel("herramientas")}
@@ -746,6 +748,7 @@ export default function Home() {
                         entry={todayEntry}
                         goal={goalKcal}
                         tdeeFallback={settings.tdeeFallback}
+                        fixedGoal={settings.goalStyle === "constante"}
                         pesoKg={currentWeightKg}
                         onLogMeal={(meal) => {
                           setAiMeal(meal);
@@ -880,6 +883,7 @@ export default function Home() {
                           avgGasto={settings.tdeeFallback}
                           weeklyWeights={settings.weeklyWeights}
                           fallbackWeightKg={currentWeightKg}
+                          fixedGoal={settings.goalStyle === "constante"}
                         />
                         
                         {!isBasico && (
@@ -1272,6 +1276,23 @@ export default function Home() {
               Cerrar
             </button>
             <FontSizeSettings settings={settings} onSave={saveSettings} />
+          </div>
+        </div>
+      )}
+
+      {panel === "meta-diaria" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>
+          <div
+            className="relative my-4 max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-3 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              onClick={() => setPanel(null)}
+              className="absolute right-3 top-3 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-textMuted"
+            >
+              Cerrar
+            </button>
+            <GoalStyleSettings settings={settings} onSave={saveSettings} />
           </div>
         </div>
       )}

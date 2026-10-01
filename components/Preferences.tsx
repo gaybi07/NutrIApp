@@ -75,6 +75,33 @@ export function ThemeSettings({ settings, onSave }: { settings: Settings; onSave
   );
 }
 
+export function GoalStyleSettings({ settings, onSave }: { settings: Settings; onSave: (settings: Settings) => void }) {
+  const style = settings.goalStyle || "variable";
+  const options: { value: "variable" | "constante"; label: string; description: string }[] = [
+    { value: "variable", label: "Variable", description: "La meta del día sube o baja según tus pasos y tu entrenamiento. Comés más los días activos y menos los de descanso." },
+    { value: "constante", label: "Constante", description: "La misma meta todos los días, sin cálculos. Más simple si buscás algo menos específico." },
+  ];
+  return (
+    <div>
+      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold mb-1">Preferencias</div>
+      <h2 className="font-display text-xl leading-none mb-4">Meta diaria</h2>
+      <div className="flex flex-col gap-2">
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onSave({ ...settings, goalStyle: opt.value })}
+            className={`rounded-lg border px-3 py-2.5 text-left transition-colors ${style === opt.value ? "border-gold bg-gold/10" : "border-border"}`}
+          >
+            <div className={`font-sans text-sm font-bold ${style === opt.value ? "text-gold" : "text-text"}`}>{opt.label}</div>
+            <div className="text-[11px] text-textMuted mt-0.5">{opt.description}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function FontSizeSettings({ settings, onSave }: { settings: Settings; onSave: (settings: Settings) => void }) {
   const fontSize = settings.fontSize || "chico";
   const setFontSize = (value: FontSize) => onSave({ ...settings, fontSize: value });

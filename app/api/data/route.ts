@@ -115,7 +115,7 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
 
-  const SETTINGS_COLUMNS = "goal, tdee_fallback, weekly_weights, calculator_profile, tour_done, week_plan, routines, training_schedule, theme, enabled_tabs, font_size, inicio_order, comidas_order, alacena_order, macros_order, actividad_order, inicio_hidden, comidas_hidden, alacena_hidden, macros_hidden, actividad_hidden, plan";
+  const SETTINGS_COLUMNS = "goal, tdee_fallback, weekly_weights, calculator_profile, goal_style, tour_done, week_plan, routines, training_schedule, theme, enabled_tabs, font_size, inicio_order, comidas_order, alacena_order, macros_order, actividad_order, inicio_hidden, comidas_hidden, alacena_hidden, macros_hidden, actividad_hidden, plan";
   const SETTINGS_COLUMNS_BASE = "goal, tdee_fallback, weekly_weights, calculator_profile, tour_done, week_plan, routines, training_schedule, theme, enabled_tabs, font_size";
 
   const [daysResult, settingsResultFull] = await Promise.all([
@@ -142,6 +142,7 @@ export async function GET() {
       ? {
           goal: settingsResult.data.goal,
           tdeeFallback: settingsResult.data.tdee_fallback,
+          goalStyle: ((settingsResult.data as Record<string, unknown>).goal_style as "variable" | "constante" | null) || undefined,
           weeklyWeights: ((settingsResult.data as Record<string, unknown>).weekly_weights as Record<string, number>) || {},
           calculatorProfile: (settingsResult.data as Record<string, unknown>).calculator_profile || undefined,
           tourDone: Boolean((settingsResult.data as Record<string, unknown>).tour_done),
@@ -204,6 +205,7 @@ export async function PUT(req: NextRequest) {
       tdee_fallback: settings.tdeeFallback,
       weekly_weights: settings.weeklyWeights || {},
       calculator_profile: settings.calculatorProfile || null,
+      goal_style: settings.goalStyle || null,
       tour_done: settings.tourDone || false,
       week_plan: settings.weekPlan || {},
       routines: settings.routines || [],
@@ -232,7 +234,7 @@ export async function PUT(req: NextRequest) {
     // el resto del guardado.
     if (error?.message?.includes("does not exist")) {
       const {
-        inicio_order, comidas_order, alacena_order, macros_order, actividad_order,
+        goal_style, inicio_order, comidas_order, alacena_order, macros_order, actividad_order,
         inicio_hidden, comidas_hidden, alacena_hidden, macros_hidden, actividad_hidden,
         ...baseRow
       } = settingsRow;

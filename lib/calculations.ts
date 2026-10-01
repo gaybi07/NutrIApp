@@ -487,7 +487,8 @@ export function weekdayOf(fecha: string): Weekday {
 }
 
 /** Ajusta el objetivo base con la actividad registrada en ese día. */
-export function dayGoal(d: DayEntry, goal: number, tdeeFallback: number, pesoKg?: number): number {
+export function dayGoal(d: DayEntry, goal: number, tdeeFallback: number, pesoKg?: number, fixed = false): number {
+  if (fixed) return Math.round(goal);
   return Math.round(Math.max(0, goal + estimateGasto(d, tdeeFallback, pesoKg) - tdeeFallback));
 }
 
@@ -520,7 +521,8 @@ export function summarizeWeek(
   goal: number,
   weeklyWeights?: Record<string, number>,
   fallbackWeightKg: number = DEFAULT_PESO_KG,
-  allDays: DayEntry[] = days
+  allDays: DayEntry[] = days,
+  fixedGoal = false
 ): WeekSummary {
   const present = days.filter((d) => dayTotal(d) > 0);
   const n = present.length || 1;
@@ -530,7 +532,7 @@ export function summarizeWeek(
   const avgSteps = Math.round(present.reduce((a, d) => a + (d.pasos || 0), 0) / n);
   const gastos = present.map((d) => estimateGasto(d, tdeeFallback, pesoFor(d)));
   const avgGasto = Math.round(gastos.reduce((a, b) => a + b, 0) / (gastos.length || 1));
-  const avgGoal = Math.round(present.reduce((a, d) => a + dayGoal(d, goal, tdeeFallback, pesoFor(d)), 0) / n);
+  const avgGoal = Math.round(present.reduce((a, d) => a + dayGoal(d, goal, tdeeFallback, pesoFor(d), fixedGoal), 0) / n);
   const trainedDays = present.filter((d) => d.entreno).length;
   const deficitAcumulado = present.reduce((a, d) => a + dayDeficit(d, tdeeFallback, pesoFor(d)), 0);
   const avgDeficit = Math.round(deficitAcumulado / (present.length || 1));

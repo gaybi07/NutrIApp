@@ -70,6 +70,7 @@ export function WeeklyChart({
   avgGasto,
   weeklyWeights,
   fallbackWeightKg = DEFAULT_PESO_KG,
+  fixedGoal = false,
 }: {
   weekDates: string[];
   weekDays: (DayEntry | null)[];
@@ -79,6 +80,7 @@ export function WeeklyChart({
   /** Para resolver el peso real de CADA día (ver resolveWeightForDate). */
   weeklyWeights?: Record<string, number>;
   fallbackWeightKg?: number;
+  fixedGoal?: boolean;
 }) {
   const knownDays = weekDays.filter((x): x is DayEntry => !!x);
   const data: ChartRow[] = weekDates.map((fecha, i) => {
@@ -95,7 +97,7 @@ export function WeeklyChart({
       col: d.colK || 0,
       pasos: d.pasos || 0,
       sessions: getTrainingSessions(d),
-      goal: dayGoal(d, goal, avgGasto, pesoKg),
+      goal: dayGoal(d, goal, avgGasto, pesoKg, fixedGoal),
       gasto: estimateGasto(d, avgGasto, pesoKg),
       deficit: dayDeficit(d, avgGasto, pesoKg),
     };

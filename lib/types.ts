@@ -890,6 +890,7 @@ export interface Settings {
   tdeeFallback: number; // gasto de referencia cuando no hay pasos cargados
   weeklyWeights?: Record<string, number>; // peso registrado por semana, usando el lunes como clave
   calculatorProfile?: CalculatorProfile;
+  goalStyle?: "variable" | "constante"; // variable (default): la meta del día sube/baja con pasos y entrenamiento; constante: siempre la misma kcal
   tourDone?: boolean; // si ya vio el tour guiado de la app (se muestra una sola vez, tras el onboarding)
   weekPlan?: WeekPlan; // planificador de comidas por día, se sincroniza entre dispositivos
   routines?: Routine[]; // rutinas de entrenamiento reusables
