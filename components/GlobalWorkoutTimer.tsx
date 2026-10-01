@@ -80,6 +80,9 @@ export function GlobalWorkoutTimer({ onOpen, hidden }: { onOpen: () => void; hid
             {isPaused ? "Entrenamiento en pausa" : "Entrenamiento en curso"}
           </span>
           <span className={`block font-mono text-lg font-bold tabular-nums ${isPaused ? "text-gold" : "text-text"}`}>{elapsedLabel}</span>
+          {session.rest && !isPaused && (
+            <span className="block font-mono text-[11px] tabular-nums text-gold">Descanso {formatElapsed(now - session.rest.startedAt)}</span>
+          )}
         </span>
         <span className="shrink-0 rounded-lg bg-gold px-3 py-2 font-sans text-[12px] font-bold text-white">Volver ›</span>
       </button>
