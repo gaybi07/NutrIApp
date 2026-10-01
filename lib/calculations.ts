@@ -1,3 +1,4 @@
+import { inferMuscleGroupFromName } from "@/lib/exerciseLibrary";
 import { DayEntry, MealKey, MEAL_LABELS, TrainingIntensity, TrainingSession, GoalMode, ExerciseEntry, ExerciseSetEntry, Weekday, WEEKDAYS, MealItem, InventoryNutrition, WorkoutVerdict, TrainingSchedule, MuscleGroup, MUSCLE_GROUP_LABELS } from "./types";
 
 /**
@@ -387,8 +388,10 @@ export function volumeByMuscleGroup(ejercicios: ExerciseEntry[] | undefined): Re
   const result = Object.fromEntries(Object.keys(MUSCLE_GROUP_LABELS).map((g) => [g, 0])) as Record<MuscleGroup, number>;
   if (!ejercicios) return result;
   for (const e of ejercicios) {
-    if (!e.grupoMuscular) continue;
-    result[e.grupoMuscular] += exerciseVolume(e);
+    // Si el ejercicio no trae el grupo (cargado a mano / rutina propia), se deduce por el nombre.
+    const group = e.grupoMuscular ?? inferMuscleGroupFromName(e.nombre);
+    if (!group) continue;
+    result[group] += exerciseVolume(e);
   }
   return result;
 }
