@@ -1,3 +1,4 @@
+import { BODY_METRICS, BodyGoalProgress } from "@/lib/bodyGoal";
 import { DayEntry, MealKey } from "@/lib/types";
 import { addDays, fmtDate, isoMonday } from "@/lib/calculations";
 import { getMealItems } from "@/lib/calculations";
@@ -51,9 +52,11 @@ export function computeAchievements(input: {
   objectives: { objective: Objective; progress: ObjectiveProgress }[];
   weeklyWeights: Record<string, number> | undefined;
   goalProgress: GoalProgressInfo | null;
+  /** Progreso del objetivo corporal medible (cintura, % de grasa...), si lo armó. */
+  bodyProgress?: BodyGoalProgress | null;
   today: string;
 }): Achievement[] {
-  const { days, objectives, weeklyWeights, goalProgress, today } = input;
+  const { days, objectives, weeklyWeights, goalProgress, bodyProgress, today } = input;
   const byFecha = new Map(days.map((d) => [d.fecha, d]));
   const out: Achievement[] = [];
   const add = (a: Omit<Achievement, "puntos">) => out.push({ ...a, puntos: ACHIEVEMENT_POINTS[a.kind] });
@@ -128,6 +131,17 @@ export function computeAchievements(input: {
       add({ kind: `propio_${step}`, clave: `${base}|${step}`, periodo: "propio", label: `Tu objetivo: ${step}% del camino`, done: pct >= step, hint: `Vas ${Math.max(0, Math.round(pct))}%` });
     }
     add({ kind: "propio_logrado", clave: base, periodo: "propio", label: "Llegaste a tu objetivo", done: goalProgress.yaLlego, hint: `Te faltan ${Math.max(0, Math.round(goalProgress.kgRestantes * 10) / 10)} kg` });
+  }
+
+  // El objetivo corporal medible da los mismos hitos que el de peso (misma tabla de puntos, otra clave).
+  if (bodyProgress && bodyProgress.goal.inicial !== bodyProgress.goal.meta) {
+    const g = bodyProgress.goal;
+    const base = `corp|${g.medida}|${g.meta}`;
+    const name = BODY_METRICS.find((m) => m.id === g.medida)?.label.toLowerCase() ?? g.medida;
+    for (const step of [25, 50, 75]) {
+      add({ kind: `propio_${step}`, clave: `${base}|${step}`, periodo: "propio", label: `Tu ${name}: ${step}% del camino`, done: bodyProgress.pct >= step, hint: `Vas ${bodyProgress.pct}%` });
+    }
+    add({ kind: "propio_logrado", clave: base, periodo: "propio", label: `Llegaste a tu meta de ${name}`, done: bodyProgress.yaLlego, hint: `Te faltan ${Math.round(bodyProgress.restante * 10) / 10}` });
   }
 
   return out;

@@ -49,7 +49,7 @@ export function GoalProgress({ progress, openOnDesktop, setBy, extraLines }: { p
           </div>
         </div>
         <div className="mt-2 text-center text-[12px] text-textMuted">
-          Sin meta de peso: la proteína alta es lo que sostiene el músculo mientras recomponés.
+          Sin meta de peso: la proteína alta sostiene el músculo mientras recomponés. Tu meta se mide con el objetivo corporal (cintura o % de grasa), acá abajo.
         </div>
       </Collapsible>
     );

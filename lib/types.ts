@@ -125,6 +125,8 @@ export interface CalculatorProfile {
   sexo: "hombre" | "mujer";
   fecha: string;
   modo: GoalMode;
+  /** Objetivo corporal medible (cintura, % de grasa...): inicial → meta con fecha. Ver lib/bodyGoal.ts. */
+  metaCorporal?: import("./bodyGoal").BodyGoal;
 }
 
 /** "fuerza" es el default implícito de las sesiones viejas (sin este campo,

@@ -63,6 +63,9 @@ import { useSharedWeekPlan } from "@/lib/useSharedWeekPlan";
 import { useHousehold } from "@/lib/useHousehold";
 import { useTrainerApplication } from "@/lib/useTrainerApplication";
 import { useTrainerLink } from "@/lib/useTrainerLink";
+import { computeBodyGoalProgress } from "@/lib/bodyGoal";
+import { BodyGoalCard } from "@/components/BodyGoalCard";
+import { useBodyMeasurements } from "@/lib/useBodyMeasurements";
 import { GlobalWorkoutTimer } from "@/components/GlobalWorkoutTimer";
 import { useMyAssignedSessions } from "@/lib/useAssignedSessions";
 import { useNextWeekTrainingPlan } from "@/lib/useNextWeekTrainingPlan";
@@ -412,6 +415,7 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [objectivesWithProgress]);
 
+  const bodyMeasurements = useBodyMeasurements(authenticated);
   const goalProgress = useMemo(() => {
     if (!settings.calculatorProfile) return null;
     return computeGoalProgress(
@@ -426,6 +430,10 @@ export default function Home() {
 
   // Logros diarios / semanales / mensuales y de los objetivos propios: se detectan con lo que se carga y se reclaman en
   // la base (que decide los puntos).
+  const bodyProgress = useMemo(() => {
+    const g = settings.calculatorProfile?.metaCorporal;
+    return g ? computeBodyGoalProgress(g, bodyMeasurements.items, fmtDate(new Date())) : null;
+  }, [settings.calculatorProfile, bodyMeasurements.items]);
   const achievements = useMemo(
     () =>
       computeAchievements({
@@ -433,9 +441,10 @@ export default function Home() {
         objectives: objectivesWithProgress,
         weeklyWeights: settings.weeklyWeights,
         goalProgress,
+        bodyProgress,
         today: fmtDate(new Date()),
       }),
-    [days, objectivesWithProgress, settings.weeklyWeights, goalProgress]
+    [days, objectivesWithProgress, settings.weeklyWeights, goalProgress, bodyProgress]
   );
   const achievementClaims = useAchievementClaims(authenticated, achievements, myPoints.refetch);
 
@@ -883,6 +892,17 @@ export default function Home() {
                         </div>
                       )}
                       {/* Todo lo de objetivos y logros vive acá, en una sola sección. */}
+                      {settings.calculatorProfile && (
+                        <div className="mt-3">
+                          <BodyGoalCard
+                            goal={settings.calculatorProfile.metaCorporal}
+                            measurements={bodyMeasurements.items}
+                            suggestedMetric={settings.calculatorProfile.modo === "aumentar" ? "brazo" : "cintura"}
+                            onSaveGoal={(metaCorporal) => saveSettings((prev) => (prev.calculatorProfile ? { ...prev, calculatorProfile: { ...prev.calculatorProfile, metaCorporal } } : prev))}
+                            onSaveMeasurement={bodyMeasurements.save}
+                          />
+                        </div>
+                      )}
                       <div className="mt-3">
                         <AchievementsCard achievements={achievements} claimed={achievementClaims.claimed} totalPoints={myPoints.total} />
                       </div>
@@ -1032,7 +1052,7 @@ export default function Home() {
               tdeeFallback={settings.tdeeFallback}
               initialProfile={settings.calculatorProfile}
               onApplyGoal={(gasto, objetivo, calculatorProfile) => {
-                saveSettings({ ...settings, tdeeFallback: gasto, goal: objetivo, calculatorProfile });
+                saveSettings({ ...settings, tdeeFallback: gasto, goal: objetivo, calculatorProfile: { ...calculatorProfile, metaCorporal: settings.calculatorProfile?.metaCorporal } });
                 setPanel(null);
               }}
             />
