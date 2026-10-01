@@ -343,8 +343,11 @@ export default function Home() {
 
   // Con Nutricionista vinculado, lo que ella fija manda: kcal y proteína del día salen de su plan
   // esta semana (una sola fuente para Hoy, Seguimiento, Objetivo y Macros), no de la calculadora.
-  const goalKcal = nutritionGoal?.kcalPromedio ?? settings.goal;
-  const proteinTarget = nutritionGoal?.proteinPromedio ?? proteinTargetForWeight(currentWeightKg);
+  // Excepción de la cuenta de Gabi: mide el déficit a su manera (gasto basal + pasos + entrenamiento, comiendo ~2100 los días
+  // activos y menos los de descanso), así que su meta diaria sigue siendo la propia y no el promedio del plan.
+  const ownDeficitMethod = userEmail === "jgabrielrosa8@gmail.com";
+  const goalKcal = (!ownDeficitMethod && nutritionGoal?.kcalPromedio) || settings.goal;
+  const proteinTarget = (!ownDeficitMethod && nutritionGoal?.proteinPromedio) || proteinTargetForWeight(currentWeightKg);
   const proteinTargetG = proteinTarget;
 
   const summary = useMemo(
