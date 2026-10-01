@@ -41,7 +41,6 @@ export function BodyGoalCard({
 
   // Formulario de la medición
   const [values, setValues] = useState<Record<string, string>>({});
-  const [showMore, setShowMore] = useState(false);
   // La medición se abrió para poder armar el objetivo (con Nutricionista piden cintura, cadera y cuello).
   const [forGoal, setForGoal] = useState(false);
   const coreMissing = requireCore && CORE_METRICS.some((id) => latestValue(measurements, id) == null);
@@ -167,7 +166,7 @@ export function BodyGoalCard({
           <div>
             <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">Qué medís</label>
             <select value={medida} onChange={(event) => setMedida(event.target.value as BodyMetric)}>
-              {BODY_METRICS.map((b) => (
+              {BODY_METRICS.filter((b) => CORE_METRICS.includes(b.id) || b.id === "grasa_pct" || b.id === goal?.medida).map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.label} ({b.unit})
                 </option>
@@ -203,7 +202,7 @@ export function BodyGoalCard({
         <div className="mt-2 space-y-2 rounded-lg border border-border bg-bg/40 p-2.5">
           <div className="text-[11px] text-textMuted">
             {requireCore && (goal || forGoal)
-              ? "Para tener un objetivo corporal, tu Nutricionista pide cintura, cadera y cuello en cada medición. Lo demás es opcional y suma a tu progreso."
+              ? "Para tener un objetivo corporal, tu Nutricionista pide cintura, cadera y cuello en cada medición. Las demás medidas las cargás aparte, en «Mis medidas», en el menú."
               : "Cargá lo que te mediste hoy (todo es opcional)."}
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -211,25 +210,6 @@ export function BodyGoalCard({
               <div key={b.id}>
                 <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">
                   {b.label} ({b.unit}){requireCore && (goal || forGoal) && CORE_METRICS.includes(b.id as never) ? " *" : ""}
-                </label>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  step="0.1"
-                  value={values[b.id] ?? ""}
-                  onChange={(event) => setValues((prev) => ({ ...prev, [b.id]: event.target.value }))}
-                />
-              </div>
-            ))}
-          </div>
-          <button type="button" onClick={() => setShowMore((v) => !v)} className={btn("neutral", "sm", true)}>
-            {showMore ? "Menos medidas" : "Más medidas (opcional)"}
-          </button>
-          <div className={`grid grid-cols-2 gap-2 ${showMore ? "" : "hidden"}`}>
-            {[{ id: "altura", label: "Altura", unit: "cm" }, ...BODY_METRICS.filter((b) => !CORE_METRICS.includes(b.id))].map((b) => (
-              <div key={b.id}>
-                <label className="mb-0.5 block font-mono text-[8.5px] uppercase text-textMuted">
-                  {b.label} ({b.unit})
                 </label>
                 <input
                   type="number"

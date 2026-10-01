@@ -11,6 +11,7 @@ export function AuthPanel({
   onOpenTheme,
   onOpenFontSize,
   onOpenGoalStyle,
+  onOpenMeasures,
   onOpenTabs,
   onOpenSections,
   onOpenTools,
@@ -30,6 +31,7 @@ export function AuthPanel({
   onOpenTheme?: () => void;
   onOpenFontSize?: () => void;
   onOpenGoalStyle?: () => void;
+  onOpenMeasures?: () => void;
   onOpenTabs?: () => void;
   onOpenSections?: () => void;
   onOpenTools?: () => void;
@@ -177,6 +179,16 @@ export function AuthPanel({
                 className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
               >
                 Meta diaria
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onOpenMeasures?.();
+                }}
+                className="block w-full border-t border-border px-3 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-surfaceAlt"
+              >
+                Mis medidas
               </button>
               <button
                 type="button"

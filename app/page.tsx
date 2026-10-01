@@ -64,6 +64,7 @@ import { useHousehold } from "@/lib/useHousehold";
 import { useTrainerApplication } from "@/lib/useTrainerApplication";
 import { useTrainerLink } from "@/lib/useTrainerLink";
 import { computeBodyGoalProgress } from "@/lib/bodyGoal";
+import { MeasurementsPanel } from "@/components/MeasurementsPanel";
 import { BodyGoalCard } from "@/components/BodyGoalCard";
 import { useBodyMeasurements } from "@/lib/useBodyMeasurements";
 import { GlobalWorkoutTimer } from "@/components/GlobalWorkoutTimer";
@@ -137,7 +138,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<MainTab>("inicio");
   const [panel, setPanel] = useState<
     | "calc" | "ai" | "pasos" | "entreno" | "sueno" | "datos" | "planificador"
-    | "tema" | "tamano-letra" | "meta-diaria" | "solapas" | "herramientas" | "secciones" | "entrenador"
+    | "tema" | "tamano-letra" | "meta-diaria" | "medidas" | "solapas" | "herramientas" | "secciones" | "entrenador"
     | "nutricionista" | "ver-comidas" | "suplementos" | "planes" | "vincular-profesional"
     | null
   >(null);
@@ -560,6 +561,7 @@ export default function Home() {
           onOpenTheme={() => setPanel("tema")}
           onOpenFontSize={() => setPanel("tamano-letra")}
           onOpenGoalStyle={() => setPanel("meta-diaria")}
+          onOpenMeasures={() => setPanel("medidas")}
           onOpenTabs={() => setPanel("solapas")}
           onOpenSections={() => setPanel("secciones")}
           onOpenTools={() => setPanel("herramientas")}
@@ -892,7 +894,7 @@ export default function Home() {
                         </div>
                       )}
                       {/* Todo lo de objetivos y logros vive acá, en una sola sección. */}
-                      {settings.calculatorProfile && (
+                      {settings.calculatorProfile && hasNutricionistaLink && (
                         <div className="mt-3">
                           <BodyGoalCard
                             goal={settings.calculatorProfile.metaCorporal}
@@ -1348,6 +1350,17 @@ export default function Home() {
               Cerrar
             </button>
             <GoalStyleSettings settings={settings} onSave={saveSettings} locked={goalStyleLocked} />
+          </div>
+        </div>
+      )}
+
+      {panel === "medidas" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>
+          <div
+            className="relative my-4 max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-4 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <MeasurementsPanel measurements={bodyMeasurements.items} onSave={bodyMeasurements.save} onClose={() => setPanel(null)} />
           </div>
         </div>
       )}
