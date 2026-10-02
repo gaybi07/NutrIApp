@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { DayMealOptions, InventoryItem, MealKey, MEAL_LABELS, Weekday, WeekPlan, WEEKDAYS } from "@/lib/types";
 import { RECIPES } from "@/lib/recipes";
-import { fuzzyNameMatch, shoppingName } from "@/lib/foodText";
+import { fuzzyNameMatch, shoppingName, shoppingSection, SHOPPING_SECTIONS } from "@/lib/foodText";
 import { inventoryKey } from "@/lib/useInventory";
 import { btn, chip } from "@/components/buttonStyles";
 import { fmtDate, isoMonday, addDays } from "@/lib/calculations";
@@ -183,8 +183,13 @@ export function ShoppingListCard({
 
   const text = useMemo(() => {
     if (missing.length === 0) return "";
-    const lines = missing.map((r) => `- ${fmtQty(r.missing, r.unit)} ${r.name}`);
-    return [`Lista de compras — semana del ${rangeLabel}`, "", ...lines].join("\n");
+    const out = [`Lista de compras — semana del ${rangeLabel}`];
+    for (const section of SHOPPING_SECTIONS) {
+      const inSection = missing.filter((r) => shoppingSection(r.name) === section);
+      if (inSection.length === 0) continue;
+      out.push("", `*${section}*`, ...inSection.map((r) => `- ${fmtQty(r.missing, r.unit)} ${r.name}`));
+    }
+    return out.join("\n");
   }, [missing, rangeLabel]);
 
   const copy = async () => {
@@ -406,14 +411,25 @@ export function ShoppingListCard({
               {missing.length > 0 && (
                 <>
                   <div className="mb-1 font-mono text-[9px] uppercase tracking-wide text-rust">Te falta comprar ({missing.length})</div>
-                  <div className="space-y-1">
-                    {missing.map((r) => (
-                      <div key={`${r.name}|${r.unit}`} className="flex items-center justify-between gap-2 rounded-lg border border-rust/40 bg-rust/10 px-2.5 py-1.5 text-[12px]">
-                        <span className="min-w-0 flex-1 truncate text-text">{r.name}</span>
-                        <span className="shrink-0 font-mono text-[10px] font-bold text-rust">{fmtQty(r.missing, r.unit)}</span>
+                  {SHOPPING_SECTIONS.map((section) => {
+                    const inSection = missing.filter((r) => shoppingSection(r.name) === section);
+                    if (inSection.length === 0) return null;
+                    return (
+                      <div key={section} className="mt-2">
+                        <div className="mb-1 font-mono text-[9px] uppercase tracking-wide text-gold">
+                          {section} ({inSection.length})
+                        </div>
+                        <div className="space-y-1">
+                          {inSection.map((r) => (
+                            <div key={`${r.name}|${r.unit}`} className="flex items-center justify-between gap-2 rounded-lg border border-rust/40 bg-rust/10 px-2.5 py-1.5 text-[12px]">
+                              <span className="min-w-0 flex-1 truncate text-text">{r.name}</span>
+                              <span className="shrink-0 font-mono text-[10px] font-bold text-rust">{fmtQty(r.missing, r.unit)}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </>
               )}
               {covered.length > 0 && (

@@ -184,3 +184,24 @@ export function shoppingName(name: string): string {
   if (!cleaned) return name;
   return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 }
+
+// Secciones del súper para ordenar la lista de compras. El orden de las reglas importa: lo más específico va primero.
+export const SHOPPING_SECTIONS = ["Frutas y verduras", "Carnes y pollo", "Pescados", "Fiambres", "Lácteos y huevos", "Harinas y cereales", "Otros"] as const;
+export type ShoppingSection = (typeof SHOPPING_SECTIONS)[number];
+
+const SECTION_RULES: [RegExp, ShoppingSection][] = [
+  [/merluza|pescado|salmon|atun|caballa|sardina|trucha|lenguado|corvina|surubi|camaron|langostino|calamar/, "Pescados"],
+  [/jamon|salame|mortadela|fiambre|bondiola|panceta|lomito|paleta|pate|chorizo|salchicha|bacon/, "Fiambres"],
+  [/pollo|pechuga|pata muslo|suprema|carne|vaca|vacuna|novillo|cerdo|lomo|bife|asado|cuadril|nalga|peceto|hamburguesa|milanesa|cordero|molida|picada|osobuco|matambre/, "Carnes y pollo"],
+  [/huevo|clara|yogur|leche|queso|ricota|manteca|crema|cottage|muzarella|mozzarella|dulce de leche|proteina en polvo/, "Lácteos y huevos"],
+  [/pan\b|pan |tostada|galleta|arroz|fideo|pasta|harina|avena|cereal|granola|quinoa|polenta|lenteja|garbanzo|poroto|tapa|empanada|wrap|tortilla|cuscus|semola|chia|semilla/, "Harinas y cereales"],
+  [/fruta|manzana|banana|naranja|mandarina|pera|kiwi|frutilla|arandano|uva|durazno|ciruela|melon|sandia|limon|palta|ananá|anana|mango|cereza|frutos rojos|tomate|lechuga|zanahoria|cebolla|papa|batata|boniato|calabaza|zapallo|zucchini|zuchini|espinaca|rucula|brocoli|coliflor|pepino|morron|pimiento|choclo|berenjena|repollo|apio|acelga|verdura|hojas|ensalada|puerro|remolacha|champi|hongo|ajo|perejil|albahaca|brotes|arveja|chaucha/, "Frutas y verduras"],
+];
+
+export function shoppingSection(name: string): ShoppingSection {
+  const n = (name || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+  return SECTION_RULES.find(([re]) => re.test(n))?.[1] ?? "Otros";
+}
