@@ -560,14 +560,14 @@ export function WeekPlanner({
           <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-gold">Lista del grupo · {household!.name}</div>
           <div className="mt-1 space-y-0.5 text-[12px]">
             <div className={exportsHook.mine ? "text-sage" : "text-text"}>
-              {exportsHook.mine ? `✓ Ya exportaste tu parte (${exportsHook.mine.items.length} comidas)` : "• Falta exportar tu parte"}
+              {exportsHook.mine ? `✓ Ya exportaste a la cena compartida (${exportsHook.mine.items.length} comidas)` : "• Falta que exportes tus comidas a la cena compartida"}
               {myExportStale && <span className="text-textMuted"> · cambiaste comidas, actualizala</span>}
             </div>
             {exportsHook.rows
               .filter((r) => r.user_id !== exportsHook.mine?.user_id)
               .map((r) => (
                 <div key={r.user_id} className="text-sage">
-                  ✓ {r.nombre || "Integrante"} exportó su parte ({r.items.length} comidas)
+                  ✓ {r.nombre || "Integrante"} exportó a la cena compartida ({r.items.length} comidas)
                 </div>
               ))}
             {missingMembers > 0 && (
@@ -584,9 +584,9 @@ export function WeekPlanner({
             onClick={async () => {
               await exportsHook.exportMine(myExport);
             }}
-            className={`${btn(exportsHook.mine && !myExportStale ? "neutral" : "primary", "md", true)} mt-2`}
+            className={`${btn(exportsHook.mine && !myExportStale ? "neutral" : "secondary", "md", true)} mt-2`}
           >
-            {exportsHook.busy ? "Exportando..." : exportsHook.mine ? (myExportStale ? "Actualizar mi parte" : "Mi parte exportada ✓") : "Exportar mi parte al grupo"}
+            {exportsHook.busy ? "Exportando..." : exportsHook.mine ? (myExportStale ? "Actualizar lo exportado" : "Exportado a la cena compartida ✓") : "Exportar a la cena compartida"}
           </button>
         </div>
       )}

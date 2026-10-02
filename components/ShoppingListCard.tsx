@@ -207,9 +207,9 @@ export function ShoppingListCard({
               onClick={async () => {
                 await exports.exportMine(myExport);
               }}
-              className={`${btn(exports.mine && !myExportStale ? "neutral" : "primary", "md", true)} ${which === "next" ? "" : "col-span-2"}`}
+              className={`${btn(exports.mine && !myExportStale ? "neutral" : "secondary", "md", true)} ${which === "next" ? "" : "col-span-2"}`}
             >
-              {exports.busy ? "Exportando..." : exports.mine ? (myExportStale ? "Actualizar mi parte" : "Mi parte exportada ✓") : "Exportar mi parte"}
+              {exports.busy ? "Exportando..." : exports.mine ? (myExportStale ? "Actualizar lo exportado" : "Exportado a la cena compartida ✓") : "Exportar a la cena compartida"}
             </button>
           ) : (
             <button
@@ -228,14 +228,14 @@ export function ShoppingListCard({
             <div className="font-mono text-[9px] uppercase tracking-wide text-gold">Alacena compartida · {household!.name}</div>
             <div className="mt-1 space-y-0.5 text-[12px]">
               <div className={exports.mine ? "text-sage" : "text-text"}>
-                {exports.mine ? `✓ Vos exportaste tu parte (${exports.mine.items.length} comidas)` : "• Falta exportar tu parte"}
+                {exports.mine ? `✓ Vos exportaste a la cena compartida (${exports.mine.items.length} comidas)` : "• Falta que exportes tus comidas a la cena compartida"}
                 {myExportStale && <span className="text-textMuted"> · cambiaste comidas, actualizala</span>}
               </div>
               {exports.rows
                 .filter((r) => r.user_id !== exports.mine?.user_id)
                 .map((r) => (
                   <div key={r.user_id} className="text-sage">
-                    ✓ {r.nombre || "Integrante"} exportó su parte ({r.items.length} comidas)
+                    ✓ {r.nombre || "Integrante"} exportó a la cena compartida ({r.items.length} comidas)
                   </div>
                 ))}
               {missingMembers > 0 && (

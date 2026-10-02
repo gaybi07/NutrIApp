@@ -60,7 +60,7 @@ export function HouseholdExportPanel({ householdId, memberCount }: { householdId
         </div>
         {others.map((row) => (
           <div key={row.user_id} className="text-sage">
-            ✓ {row.nombre || "Integrante"} exportó su parte ({row.items.length} comida{row.items.length === 1 ? "" : "s"})
+            ✓ {row.nombre || "Integrante"} exportó a la cena compartida ({row.items.length} comida{row.items.length === 1 ? "" : "s"})
           </div>
         ))}
         {missing > 0 && (
