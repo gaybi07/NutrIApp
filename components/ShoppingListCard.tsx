@@ -54,6 +54,25 @@ export function ShoppingListCard({
   // La lista NO se arma sola: recién cuando se toca "Armar lista". Se guarda con qué selección se armó, para
   // avisar si después se cambian las comidas elegidas.
   const [builtFor, setBuiltFor] = useState<string | null>(null);
+  // La lista armada se recuerda por semana en este navegador: al volver no hace falta tocar "Armar lista" otra vez.
+  // (Se recalcula sola con lo elegido y con lo que hay en la Alacena; lo guardado es solo que ya estaba armada.)
+  const [rememberedWeeks, setRememberedWeeks] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("registro:listaArmada") || "[]");
+    } catch {
+      return [];
+    }
+  });
+  const markBuilt = (weekStart: string, key: string) => {
+    setBuiltFor(key);
+    setRememberedWeeks((prev) => {
+      const next = prev.includes(weekStart) ? prev : [...prev.slice(-5), weekStart];
+      try {
+        localStorage.setItem("registro:listaArmada", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
 
   const thisMonday = useMemo(() => isoMonday(fmtDate(new Date())), []);
   const dates = useMemo(() => weekDatesFrom(which === "next" ? addDays(thisMonday, 7) : thisMonday), [which, thisMonday]);
@@ -101,10 +120,10 @@ export function ShoppingListCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupMode, chosen, exports.rows]);
   const selectionKey = useMemo(() => `${which}|` + included.map((c) => `${c.key}:${c.title}`).join("|"), [which, included]);
-  const built = builtFor !== null;
+  const built = builtFor !== null || (chosen.length > 0 && rememberedWeeks.includes(dates[0]));
   const [showFull, setShowFull] = useState(false);
   useEscapeKey(() => setShowFull(false), showFull);
-  const stale = built && builtFor !== selectionKey;
+  const stale = builtFor !== null && builtFor !== selectionKey;
 
   // Comidas que el plan ofrece esa semana (las que no se eligen quedan pendientes en el almanaque)
   const offeredCount = useMemo(() => {
@@ -216,7 +235,7 @@ export function ShoppingListCard({
             <button
               type="button"
               disabled={chosen.length === 0}
-              onClick={() => setBuiltFor(selectionKey)}
+              onClick={() => markBuilt(dates[0], selectionKey)}
               className={`${btn("primary", "md", true)} ${which === "next" ? "" : "col-span-2"}`}
             >
               {built ? "Actualizar lista" : "Armar lista de compras"}
@@ -249,7 +268,7 @@ export function ShoppingListCard({
             <button
               type="button"
               disabled={!allExported || included.length === 0}
-              onClick={() => setBuiltFor(selectionKey)}
+              onClick={() => markBuilt(dates[0], selectionKey)}
               className={`${btn("primary", "md", true)} mt-2`}
             >
               {built ? "Actualizar lista del grupo" : allExported ? "Armar lista de compras del grupo" : "Esperando a que exporten todos"}
