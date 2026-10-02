@@ -54,6 +54,8 @@ export function ShoppingListCard({
   // La lista NO se arma sola: recién cuando se toca "Armar lista". Se guarda con qué selección se armó, para
   // avisar si después se cambian las comidas elegidas.
   const [builtFor, setBuiltFor] = useState<string | null>(null);
+  // Con la lista armada: descontar lo que ya hay en la Alacena (solo lo que falta) o mostrar TODO lo que piden las comidas.
+  const [useStock, setUseStock] = useState(true);
   // La lista armada se recuerda por semana en este navegador: al volver no hace falta tocar "Armar lista" otra vez.
   // (Se recalcula sola con lo elegido y con lo que hay en la Alacena; lo guardado es solo que ya estaba armada.)
   const [rememberedWeeks, setRememberedWeeks] = useState<string[]>(() => {
@@ -112,31 +114,13 @@ export function ShoppingListCard({
   const missingMembers = groupMode ? Math.max(0, household!.memberCount - exports.rows.length) : 0;
 
   // La lista del grupo suma las partes exportadas de TODOS (la tuya se toma de lo exportado, no de lo que cambiaste después).
-  // Comidas que NO entran a la lista (ej. la cena, si se come afuera o se resuelve aparte). Se recuerda en este navegador.
-  const [excludedMeals, setExcludedMeals] = useState<MealKey[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("registro:listaSinComidas") || "[]");
-    } catch {
-      return [];
-    }
-  });
-  const toggleMeal = (meal: MealKey) =>
-    setExcludedMeals((prev) => {
-      const next = prev.includes(meal) ? prev.filter((m) => m !== meal) : [...prev, meal];
-      try {
-        localStorage.setItem("registro:listaSinComidas", JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-
-  const includedAll = useMemo(() => {
+  const included = useMemo(() => {
     if (!groupMode) return chosen;
     return exports.rows.flatMap((row) =>
       row.items.map((it) => ({ key: `${row.user_id}|${it.fecha}|${it.meal}`, fecha: it.fecha, meal: it.meal, title: it.title, ingredients: it.ingredients }))
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupMode, chosen, exports.rows]);
-  const included = useMemo(() => includedAll.filter((c) => !excludedMeals.includes(c.meal)), [includedAll, excludedMeals]);
   const selectionKey = useMemo(() => `${which}|` + included.map((c) => `${c.key}:${c.title}`).join("|"), [which, included]);
   const built = builtFor !== null || (chosen.length > 0 && rememberedWeeks.includes(dates[0]));
   const [showFull, setShowFull] = useState(false);
@@ -168,11 +152,11 @@ export function ShoppingListCard({
       .map((needed) => {
         const key = inventoryKey(needed.name);
         const stock = items.find((item) => item.unit === needed.unit && fuzzyNameMatch(key, inventoryKey(item.name)));
-        const have = stock ? stock.quantity : 0;
+        const have = useStock && stock ? stock.quantity : 0;
         return { ...needed, have, missing: Math.max(0, needed.quantity - have) };
       })
       .sort((a, b) => Number(b.missing > 0) - Number(a.missing > 0) || a.name.localeCompare(b.name, "es"));
-  }, [included, items]);
+  }, [included, items, useStock]);
 
   const missing = rows.filter((r) => r.missing > 0);
   const covered = rows.filter((r) => r.missing === 0);
@@ -229,17 +213,6 @@ export function ShoppingListCard({
         </div>
         <div className="mt-0.5 text-[11px] text-textMuted">
           Primero elegí qué comidas vas a seguir; las que no elijas (un evento, una salida) quedan pendientes en el almanaque. Después armás la lista.
-        </div>
-        <div className="mt-2">
-          <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">Comidas que entran a la lista</div>
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            {MEAL_KEYS.map((meal) => (
-              <button key={meal} type="button" onClick={() => toggleMeal(meal)} className={chip(!excludedMeals.includes(meal))}>
-                {excludedMeals.includes(meal) ? "✕ " : "✓ "}
-                {MEAL_LABELS[meal]}
-              </button>
-            ))}
-          </div>
         </div>
         <div className="mt-2 grid grid-cols-2 gap-2">
           {which === "next" ? (
@@ -317,6 +290,16 @@ export function ShoppingListCard({
           {stale && (
             <div className="mb-2 rounded-lg border border-gold/40 bg-gold/10 px-2.5 py-1.5 text-[12px] text-text">
               Cambiaste tus comidas después de armar la lista. Tocá <b>Actualizar lista</b> para recalcularla.
+            </div>
+          )}
+          {rows.length > 0 && (
+            <div className="mb-2 flex flex-wrap items-center gap-1.5">
+              <button type="button" onClick={() => setUseStock(true)} className={chip(useStock)}>
+                Descontar lo que ya tengo
+              </button>
+              <button type="button" onClick={() => setUseStock(false)} className={chip(!useStock)}>
+                Todo lo que piden las comidas
+              </button>
             </div>
           )}
           {rows.length === 0 ? (
