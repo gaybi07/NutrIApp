@@ -91,3 +91,14 @@ Pendientes en cuentas: nadie tiene reportes; ninguna tiene rutinas propias; entr
 - **Ahora:** los objetivos logrados dan puntos (puntual 150; recurrente 50 + 25 por semana seguida). Libro de puntos en la base (`points_ledger`), los registra `mark_objective_achieved`.
 - **Después:** una mascota que evoluciona a medida que se logran objetivos, y una tienda donde gastar puntos (cosas para la mascota, mejoras). Todo se calcula del libro de puntos (sumas y gastos como filas negativas).
 - **Antes de la tienda:** el logro hoy lo detecta la app (cliente) y lo registra la base sin verificarlo; con puntos que se gastan hay que verificar el cumplimiento del lado del servidor para que no se pueda hacer trampa.
+
+## 10. Niveles profesionales y estado "Preaprobado" (acuerdo del 2026-10-02, sin construir)
+
+- **Niveles** (cupos de pacientes y precio mensual): Profesional 1 = hasta 5, $20.000 · Profesional 2 = hasta 10, $30.000 · Profesional 3 = hasta 20, $40.000. Niveles 4 y 5 más adelante.
+- **Plus** (+$5.000 sobre cualquier nivel → 25.000 / 35.000 / 45.000): suma lo que no es su disciplina. Un Entrenador puede vincularse a un Nutricionista, o planificarse él mismo la nutrición (autoentreno); un Nutricionista, igual con el entrenamiento. Elige: vincularse a un profesional o hacerlo solo.
+- **Vincularse como cliente a otro profesional:** paga además la diferencia Básico → Premium (la misma de siempre).
+- **Más de 20 pacientes:** lo habilita el admin tras auditar el perfil: que al menos el 75% de sus pacientes cumpla objetivos, metas y logros reales. No es automático.
+- **Ser profesional deja de ser gratis.** Flujo: manda el título → el admin lo verifica → si está todo bien, se le pide pagar → recién al pagar se da de alta. Entre la verificación y el pago queda **Preaprobado**: la cuenta sigue como Básico, sin poder ejercer (cero pacientes) ni tener su autogestión gratis de su disciplina. Hay que mostrar esa vista.
+- **Cobros: maquetado.** El pago NO tiene que funcionar todavía; se prueba la app. A un conocido que quiera probarla como profesional se le dan los permisos a mano, gratis.
+- **Cuentas ya aprobadas** (entrenador.demo, nutricionista.demo, la de Gabi): son cuentas de base, quedan activas y sin pago.
+- Idea de fondo: la app es una herramienta para el trabajo del profesional, no un medio para que ganen plata con cada paciente (eso, si se hace, es más adelante).
