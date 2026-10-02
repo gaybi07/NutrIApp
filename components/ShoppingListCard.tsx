@@ -208,7 +208,7 @@ export function ShoppingListCard({
   };
 
   return (
-    <section className="rounded-2xl border border-border bg-surface/70 p-3">
+    <section id="lista-compras" className="scroll-mt-20 rounded-2xl border border-border bg-surface/70 p-3">
       <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Lista de compras</div>
       <div className="mb-2 font-display text-xl text-text">Semana del {rangeLabel}</div>
 

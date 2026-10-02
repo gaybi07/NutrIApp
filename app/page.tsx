@@ -1287,6 +1287,8 @@ export default function Home() {
                 onOpenGroupList={() => {
                   setPanel(null);
                   setActiveTab("comidas");
+                  // Cuando Comidas termina de dibujarse, baja hasta la lista de compras (si no, queda arriba y parece que no pasó nada).
+                  setTimeout(() => document.getElementById("lista-compras")?.scrollIntoView({ behavior: "smooth", block: "start" }), 350);
                 }}
               />
             </div>
