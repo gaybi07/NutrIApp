@@ -112,13 +112,31 @@ export function ShoppingListCard({
   const missingMembers = groupMode ? Math.max(0, household!.memberCount - exports.rows.length) : 0;
 
   // La lista del grupo suma las partes exportadas de TODOS (la tuya se toma de lo exportado, no de lo que cambiaste después).
-  const included = useMemo(() => {
+  // Comidas que NO entran a la lista (ej. la cena, si se come afuera o se resuelve aparte). Se recuerda en este navegador.
+  const [excludedMeals, setExcludedMeals] = useState<MealKey[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("registro:listaSinComidas") || "[]");
+    } catch {
+      return [];
+    }
+  });
+  const toggleMeal = (meal: MealKey) =>
+    setExcludedMeals((prev) => {
+      const next = prev.includes(meal) ? prev.filter((m) => m !== meal) : [...prev, meal];
+      try {
+        localStorage.setItem("registro:listaSinComidas", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+  const includedAll = useMemo(() => {
     if (!groupMode) return chosen;
     return exports.rows.flatMap((row) =>
       row.items.map((it) => ({ key: `${row.user_id}|${it.fecha}|${it.meal}`, fecha: it.fecha, meal: it.meal, title: it.title, ingredients: it.ingredients }))
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupMode, chosen, exports.rows]);
+  const included = useMemo(() => includedAll.filter((c) => !excludedMeals.includes(c.meal)), [includedAll, excludedMeals]);
   const selectionKey = useMemo(() => `${which}|` + included.map((c) => `${c.key}:${c.title}`).join("|"), [which, included]);
   const built = builtFor !== null || (chosen.length > 0 && rememberedWeeks.includes(dates[0]));
   const [showFull, setShowFull] = useState(false);
@@ -211,6 +229,17 @@ export function ShoppingListCard({
         </div>
         <div className="mt-0.5 text-[11px] text-textMuted">
           Primero elegí qué comidas vas a seguir; las que no elijas (un evento, una salida) quedan pendientes en el almanaque. Después armás la lista.
+        </div>
+        <div className="mt-2">
+          <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">Comidas que entran a la lista</div>
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {MEAL_KEYS.map((meal) => (
+              <button key={meal} type="button" onClick={() => toggleMeal(meal)} className={chip(!excludedMeals.includes(meal))}>
+                {excludedMeals.includes(meal) ? "✕ " : "✓ "}
+                {MEAL_LABELS[meal]}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="mt-2 grid grid-cols-2 gap-2">
           {which === "next" ? (
