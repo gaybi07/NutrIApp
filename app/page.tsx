@@ -64,6 +64,8 @@ import { useHousehold } from "@/lib/useHousehold";
 import { useTrainerApplication } from "@/lib/useTrainerApplication";
 import { useTrainerLink } from "@/lib/useTrainerLink";
 import { computeBodyGoalProgress } from "@/lib/bodyGoal";
+import { ProfileModal } from "@/components/ProfileModal";
+import { initialsOf, useMyProfiles } from "@/lib/useProfiles";
 import { MeasurementsPanel } from "@/components/MeasurementsPanel";
 import { BodyGoalCard } from "@/components/BodyGoalCard";
 import { useBodyMeasurements } from "@/lib/useBodyMeasurements";
@@ -138,7 +140,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<MainTab>("inicio");
   const [panel, setPanel] = useState<
     | "calc" | "ai" | "pasos" | "entreno" | "sueno" | "datos" | "planificador"
-    | "tema" | "tamano-letra" | "meta-diaria" | "medidas" | "solapas" | "herramientas" | "secciones" | "entrenador"
+    | "tema" | "tamano-letra" | "meta-diaria" | "medidas" | "perfil" | "solapas" | "herramientas" | "secciones" | "entrenador"
     | "nutricionista" | "ver-comidas" | "suplementos" | "planes" | "vincular-profesional"
     | null
   >(null);
@@ -417,6 +419,7 @@ export default function Home() {
   }, [objectivesWithProgress]);
 
   const bodyMeasurements = useBodyMeasurements(authenticated);
+  const myProfiles = useMyProfiles(authenticated);
   const goalProgress = useMemo(() => {
     if (!settings.calculatorProfile) return null;
     return computeGoalProgress(
@@ -562,6 +565,8 @@ export default function Home() {
           onOpenFontSize={() => setPanel("tamano-letra")}
           onOpenGoalStyle={() => setPanel("meta-diaria")}
           onOpenMeasures={() => setPanel("medidas")}
+          onOpenProfile={() => setPanel("perfil")}
+          profileInitials={initialsOf(myProfiles.personal.nombre, myProfiles.personal.alias, userEmail)}
           onOpenTabs={() => setPanel("solapas")}
           onOpenSections={() => setPanel("secciones")}
           onOpenTools={() => setPanel("herramientas")}
@@ -1352,6 +1357,24 @@ export default function Home() {
             <GoalStyleSettings settings={settings} onSave={saveSettings} locked={goalStyleLocked} />
           </div>
         </div>
+      )}
+
+      {panel === "perfil" && (
+        <ProfileModal
+          email={userEmail}
+          personal={myProfiles.personal}
+          savePersonal={myProfiles.savePersonal}
+          plan={clientPlan}
+          modo={settings.calculatorProfile?.modo}
+          sexo={settings.calculatorProfile?.sexo}
+          objectiveNames={myObjectives.objectives.filter((o) => o.estado === "activo").map((o) => o.nombre)}
+          points={myPoints.total}
+          achievementsDone={achievements.filter((a) => a.done || achievementClaims.claimed.has(`${a.kind}|${a.clave}`)).length}
+          isProfessional={isApprovedTrainer || isApprovedNutricionista}
+          pro={myProfiles.pro}
+          savePro={myProfiles.savePro}
+          onClose={() => setPanel(null)}
+        />
       )}
 
       {panel === "medidas" && (

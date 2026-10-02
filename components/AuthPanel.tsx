@@ -12,6 +12,8 @@ export function AuthPanel({
   onOpenFontSize,
   onOpenGoalStyle,
   onOpenMeasures,
+  onOpenProfile,
+  profileInitials = "?",
   onOpenTabs,
   onOpenSections,
   onOpenTools,
@@ -32,6 +34,9 @@ export function AuthPanel({
   onOpenFontSize?: () => void;
   onOpenGoalStyle?: () => void;
   onOpenMeasures?: () => void;
+  /** Abre "Mi perfil" (botón con las iniciales, al lado del engranaje). */
+  onOpenProfile?: () => void;
+  profileInitials?: string;
   onOpenTabs?: () => void;
   onOpenSections?: () => void;
   onOpenTools?: () => void;
@@ -138,6 +143,16 @@ export function AuthPanel({
       <div className="relative -mx-3 mb-3 flex items-center gap-2 border-b border-border bg-surface px-3 py-2.5 lg:mx-0 lg:rounded-xl lg:border">
         <MorphyLogo size={22} className="shrink-0" />
         <div className="flex min-w-0 flex-1 items-center">{centerContent}</div>
+        {onOpenProfile && (
+          <button
+            type="button"
+            onClick={onOpenProfile}
+            aria-label="Mi perfil"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gold/60 bg-gold/15 font-mono text-[11px] font-bold text-gold transition-colors hover:brightness-110"
+          >
+            {profileInitials}
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setMenuOpen((open) => !open)}

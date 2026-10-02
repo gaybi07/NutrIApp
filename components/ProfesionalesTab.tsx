@@ -6,6 +6,8 @@ import { useTrainerLink } from "@/lib/useTrainerLink";
 import { useMyTrainerComments } from "@/lib/useTrainerComments";
 import { LinkLifecycle } from "@/components/LinkLifecycle";
 import { btn } from "@/components/buttonStyles";
+import { ProfessionalProfileView, fetchProfessionalProfile, initialsOf } from "@/lib/useProfiles";
+import { ProfessionalLinkedCard } from "@/components/ProfileCards";
 
 type HookResult = ReturnType<typeof useTrainerLink>;
 
@@ -34,6 +36,7 @@ function ProfessionalCard({
   lastComment?: { texto: string; createdAt: string; unread: boolean } | null;
 }) {
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [profile, setProfile] = useState<ProfessionalProfileView | null | "loading" | "empty">(null);
   const link = hook.link;
   if (!link) return null;
   const tipo = TIPO[disciplina];
@@ -88,6 +91,26 @@ function ProfessionalCard({
             </span>
           </div>
           <div className="mt-0.5 text-[12px] text-text">{lastComment.texto}</div>
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={async () => {
+          if (profile) return setProfile(null);
+          setProfile("loading");
+          const view = await fetchProfessionalProfile(link.trainerId);
+          setProfile(view ?? "empty");
+        }}
+        className={`${btn("secondary", "sm", true)} mt-3`}
+      >
+        {profile ? "Ocultar perfil" : "Ver perfil"}
+      </button>
+      {profile === "loading" && <div className="mt-2 text-[12px] text-textMuted">Cargando perfil...</div>}
+      {profile === "empty" && <div className="mt-2 text-[12px] text-textMuted">Este profesional todavía no completó su perfil.</div>}
+      {profile && profile !== "loading" && profile !== "empty" && (
+        <div className="mt-2">
+          <ProfessionalLinkedCard view={profile} initials={initialsOf(profile.nombre, profile.alias, link.trainerEmail)} />
         </div>
       )}
 
