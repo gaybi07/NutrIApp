@@ -32,6 +32,21 @@ function fmtQty(quantity: number, unit: Ingredient["unit"]) {
  * lo que falta. Se copia, se manda por WhatsApp o se descarga. Las comidas salen de lo que la persona eligió en el
  * planificador (weekPlan), con los ingredientes de las opciones de la Nutricionista o de las recetas del catálogo.
  */
+/** Ingredientes sumados de una parte exportada (sin descontar la Alacena), para revisar qué exportó cada uno. */
+function sumExport(items: ExportedMeal[]) {
+  const totals = new Map<string, Ingredient>();
+  for (const it of items) {
+    for (const raw of it.ingredients || []) {
+      const ing = { ...raw, name: shoppingName(raw.name) };
+      const key = `${inventoryKey(ing.name)}|${ing.unit}`;
+      const existing = totals.get(key);
+      if (existing) existing.quantity += ing.quantity;
+      else totals.set(key, { ...ing });
+    }
+  }
+  return Array.from(totals.values()).sort((a, b) => a.name.localeCompare(b.name, "es"));
+}
+
 export function ShoppingListCard({
   items,
   weekPlan,
@@ -266,6 +281,43 @@ export function ShoppingListCard({
                 </div>
               )}
             </div>
+            {exports.rows.length > 0 && (
+              <div className="mt-2 space-y-1.5">
+                {[...exports.rows]
+                  .sort((a, b) => (a.user_id === exports.mine?.user_id ? -1 : b.user_id === exports.mine?.user_id ? 1 : 0))
+                  .map((r) => {
+                    const mineRow = r.user_id === exports.mine?.user_id;
+                    const sums = sumExport(r.items);
+                    const noIngredients = r.items.filter((it) => !it.ingredients || it.ingredients.length === 0).length;
+                    return (
+                      <details key={r.user_id} className="rounded-lg border border-border bg-bg/40 px-2.5 py-1.5">
+                        <summary className="cursor-pointer text-[12px] text-text">
+                          {mineRow ? "Tu lista" : `Lista de ${r.nombre || "Integrante"}`}{" "}
+                          <span className="text-textMuted">
+                            · {r.items.length} comidas · {sums.length} productos
+                          </span>
+                        </summary>
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          {sums.map((i) => (
+                            <span key={`${i.name}-${i.unit}`} className="rounded-full border border-border bg-bg px-2 py-0.5 font-mono text-[10px] text-text">
+                              {fmtQty(i.quantity, i.unit)} {i.name}
+                            </span>
+                          ))}
+                        </div>
+                        {noIngredients > 0 && (
+                          <div className="mt-1 text-[11px] text-rust">
+                            {noIngredients} comida{noIngredients === 1 ? "" : "s"} sin ingredientes con cantidad (no suman a la lista).
+                          </div>
+                        )}
+                        <div className="mt-1 font-mono text-[9px] text-textMuted">
+                          Exportada el {new Date(r.exported_at).toLocaleDateString("es-AR", { day: "numeric", month: "numeric" })} a las{" "}
+                          {new Date(r.exported_at).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
+                        </div>
+                      </details>
+                    );
+                  })}
+              </div>
+            )}
             {exports.error && <div className="mt-1 text-[11px] text-rust">Falta correr la actualización de la base del grupo (migration 2026-10-07).</div>}
             <button
               type="button"
@@ -273,7 +325,7 @@ export function ShoppingListCard({
               onClick={() => markBuilt(dates[0], selectionKey)}
               className={`${btn("primary", "md", true)} mt-2`}
             >
-              {built ? "Actualizar lista del grupo" : allExported ? "Armar lista de compras del grupo" : "Esperando a que exporten todos"}
+              {built ? "Actualizar lista compartida" : allExported ? "Armar lista compartida" : "Esperando a que exporten todos"}
             </button>
           </div>
         )}
