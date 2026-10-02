@@ -120,20 +120,26 @@ export default function Home() {
   const sharedPurchases = useSharedPurchases(household.household?.id ?? null);
   const { purchases, addPurchases, removePurchase } = household.household ? sharedPurchases : localPurchases;
 
-  // Igual que la alacena: el plan de la semana que viene se comparte entre
-  // los dos integrantes del grupo apenas hay uno armado (households.week_plan)
-  // -- así cualquiera ve si el otro ya planificó, en vez de cada cuenta
-  // teniendo su propio plan invisible para el resto (como pasaba antes con
-  // settings.weekPlan, que ahora solo se usa sin grupo).
+  // Cada integrante tiene SU plan semanal (de su propio plan nutricional); lo que se comparte es la lista: cada uno
+  // "exporta a la cena compartida" y de ahí sale una sola lista del grupo. Antes el plan de la semana era uno solo
+  // para todo el grupo (households.week_plan): al pasar a plan propio, se copia una única vez lo que ya había armado
+  // el grupo para no perder lo elegido, y desde ahí cada uno cambia lo suyo sin pisar al otro.
   const sharedWeekPlan = useSharedWeekPlan(household.household?.id ?? null);
-  const weekPlan = household.household ? sharedWeekPlan.weekPlan : settings.weekPlan || {};
-  const saveWeekPlan = useCallback(
-    (next: typeof weekPlan) => {
-      if (household.household) sharedWeekPlan.savePlan(next);
-      else saveSettings({ ...settings, weekPlan: next });
-    },
-    [household.household, sharedWeekPlan, settings, saveSettings]
-  );
+  const weekPlan = settings.weekPlan || {};
+  const saveWeekPlan = useCallback((next: typeof weekPlan) => saveSettings({ ...settings, weekPlan: next }), [settings, saveSettings]);
+  useEffect(() => {
+    const householdId = household.household?.id;
+    if (!householdId || !sharedWeekPlan.loaded || Object.keys(settings.weekPlan || {}).length > 0) return;
+    if (Object.keys(sharedWeekPlan.weekPlan).length === 0) return;
+    const flag = `registro:weekplan-seeded:${householdId}`;
+    try {
+      if (localStorage.getItem(flag)) return;
+      localStorage.setItem(flag, "1");
+    } catch {
+      return;
+    }
+    saveSettings({ ...settings, weekPlan: sharedWeekPlan.weekPlan });
+  }, [household.household?.id, sharedWeekPlan.loaded, sharedWeekPlan.weekPlan, settings, saveSettings]);
 
   const productMemory = useProductMemory();
   const [weekOffset, setWeekOffset] = useState(0);
