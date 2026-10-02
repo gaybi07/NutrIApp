@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { DayMealOptions, InventoryItem, MealKey, MEAL_LABELS, Weekday, WeekPlan, WEEKDAYS } from "@/lib/types";
 import { RECIPES } from "@/lib/recipes";
-import { fuzzyNameMatch } from "@/lib/foodText";
+import { fuzzyNameMatch, shoppingName } from "@/lib/foodText";
 import { inventoryKey } from "@/lib/useInventory";
 import { btn, chip } from "@/components/buttonStyles";
 import { fmtDate, isoMonday, addDays } from "@/lib/calculations";
@@ -119,8 +119,9 @@ export function ShoppingListCard({
   const rows = useMemo(() => {
     const totals = new Map<string, Ingredient>();
     for (const c of included) {
-      for (const ing of c.ingredients || []) {
-        const key = `${ing.name}|${ing.unit}`;
+      for (const raw of c.ingredients || []) {
+        const ing = { ...raw, name: shoppingName(raw.name) };
+        const key = `${inventoryKey(ing.name)}|${ing.unit}`;
         const existing = totals.get(key);
         if (existing) existing.quantity += ing.quantity;
         else totals.set(key, { ...ing });

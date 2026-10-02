@@ -169,3 +169,18 @@ export function parseInventoryText(text: string): ParsedInventoryEntry[] {
       return { name: match[nameIndex].trim().toLowerCase(), quantity: amount * multiplier, unit, unitExplicit };
     });
 }
+
+// Nombre para la lista de compras: sin la preparación ni los detalles entre paréntesis. El plan pide "brócoli cocido al vapor"
+// o "pollo al horno", pero en el súper se compra "brócoli" o "pollo": así la lista es la de lo que de verdad hay que comprar
+// y, si ya lo compraste (o lo tenés en la Alacena) con ese nombre simple, se cruza solo.
+const PREPARATION =
+  /\s*\b(cocid[oa]s?|hervid[oa]s?|al vapor|a la plancha|al horno|a la parrilla|asad[oa]s?|grillad[oa]s?|saltead[oa]s?|frit[oa]s?|rallad[oa]s?|picad[oa]s?|en cubos)\b/gi;
+export function shoppingName(name: string): string {
+  const cleaned = name
+    .replace(/\s*\([^)]*\)/g, "")
+    .replace(PREPARATION, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  if (!cleaned) return name;
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+}

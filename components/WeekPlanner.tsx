@@ -10,7 +10,7 @@ import { usePlanSelection } from "@/lib/usePlanSelection";
 import { btn } from "@/components/buttonStyles";
 import { useHouseholdExports, ExportedMeal } from "@/lib/useHouseholdExports";
 import { HouseholdInfo } from "@/lib/useHousehold";
-import { fuzzyNameMatch } from "@/lib/foodText";
+import { fuzzyNameMatch, shoppingName } from "@/lib/foodText";
 import { useMealMemory, MealMemoryEntry } from "@/lib/useMealMemory";
 import { useMyNutritionPlan } from "@/lib/useMyNutritionPlan";
 import { SECTION_HELP } from "@/lib/helpText";
@@ -375,8 +375,9 @@ export function WeekPlanner({
   const shoppingList = useMemo(() => {
     const totals = new Map<string, { name: string; quantity: number; unit: InventoryItem["unit"] }>();
     for (const ingredients of selectedIngredientLists) {
-      for (const ing of ingredients) {
-        const key = `${ing.name}|${ing.unit}`;
+      for (const raw of ingredients) {
+        const ing = { ...raw, name: shoppingName(raw.name) };
+        const key = `${ing.name.toLowerCase()}|${ing.unit}`;
         const existing = totals.get(key);
         if (existing) existing.quantity += ing.quantity;
         else totals.set(key, { ...ing });
@@ -384,7 +385,7 @@ export function WeekPlanner({
     }
     return Array.from(totals.values())
       .map((needed) => {
-        const stock = items.find((item) => item.unit === needed.unit && (item.name.includes(needed.name) || needed.name.includes(item.name)));
+        const stock = items.find((item) => item.unit === needed.unit && fuzzyNameMatch(inventoryKey(item.name), inventoryKey(needed.name)));
         const have = stock ? stock.quantity : 0;
         return { ...needed, missing: Math.max(0, needed.quantity - have) };
       })
