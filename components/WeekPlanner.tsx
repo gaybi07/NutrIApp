@@ -210,6 +210,7 @@ export function WeekPlanner({
   authenticated,
   hasNutricionistaLink,
   household,
+  onOpenGroupList,
 }: {
   items: InventoryItem[];
   weekPlan: WeekPlan;
@@ -220,6 +221,8 @@ export function WeekPlanner({
   hasNutricionistaLink: boolean;
   /** Grupo compartido: cada integrante exporta su parte de la semana y después se arma la lista del grupo. */
   household?: HouseholdInfo | null;
+  /** Cierra el planificador y lleva a Comidas, donde se arma y se exporta la lista final del grupo. */
+  onOpenGroupList?: () => void;
 }) {
   const [pickerFor, setPickerFor] = useState<{ fecha: string; meal: MealKey } | null>(null);
   const [customText, setCustomText] = useState("");
@@ -576,7 +579,7 @@ export function WeekPlanner({
                 • Falta{missingMembers === 1 ? "" : "n"} {missingMembers} integrante{missingMembers === 1 ? "" : "s"} por exportar
               </div>
             )}
-            {missingMembers === 0 && exportsHook.rows.length > 0 && <div className="text-sage">✓ Ya exportaron todos: armá la lista final en Comidas → Lista de compras.</div>}
+            {missingMembers === 0 && exportsHook.rows.length > 0 && <div className="text-sage">✓ Ya exportaron todos. Ahora podés armar la lista final del grupo.</div>}
           </div>
           {exportsHook.error && <div className="mt-1 text-[11px] text-rust">No se pudo exportar: {exportsHook.error}</div>}
           <button
@@ -589,6 +592,11 @@ export function WeekPlanner({
           >
             {exportsHook.busy ? "Exportando..." : exportsHook.mine ? (myExportStale ? "Actualizar lo exportado" : "Exportado a la cena compartida ✓") : "Exportar a la cena compartida"}
           </button>
+          {missingMembers === 0 && exportsHook.rows.length > 0 && onOpenGroupList && (
+            <button type="button" onClick={onOpenGroupList} className={`${btn("primary", "md", true)} mt-2`}>
+              Ver la lista de compras del grupo
+            </button>
+          )}
         </div>
       )}
 

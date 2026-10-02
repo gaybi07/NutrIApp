@@ -1284,6 +1284,10 @@ export default function Home() {
                 authenticated={authenticated}
                 hasNutricionistaLink={hasNutricionistaLink}
                 household={household.household}
+                onOpenGroupList={() => {
+                  setPanel(null);
+                  setActiveTab("comidas");
+                }}
               />
             </div>
           </div>
