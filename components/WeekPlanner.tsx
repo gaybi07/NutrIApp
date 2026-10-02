@@ -8,6 +8,8 @@ import { inventoryKey } from "@/lib/useInventory";
 import { LevelChip, quantities } from "@/components/PlanAlmanaque";
 import { usePlanSelection } from "@/lib/usePlanSelection";
 import { btn } from "@/components/buttonStyles";
+import { useHouseholdExports, ExportedMeal } from "@/lib/useHouseholdExports";
+import { HouseholdInfo } from "@/lib/useHousehold";
 import { fuzzyNameMatch } from "@/lib/foodText";
 import { useMealMemory, MealMemoryEntry } from "@/lib/useMealMemory";
 import { useMyNutritionPlan } from "@/lib/useMyNutritionPlan";
@@ -207,6 +209,7 @@ export function WeekPlanner({
   proteinTargetG,
   authenticated,
   hasNutricionistaLink,
+  household,
 }: {
   items: InventoryItem[];
   weekPlan: WeekPlan;
@@ -215,6 +218,8 @@ export function WeekPlanner({
   proteinTargetG: number;
   authenticated: boolean;
   hasNutricionistaLink: boolean;
+  /** Grupo compartido: cada integrante exporta su parte de la semana y después se arma la lista del grupo. */
+  household?: HouseholdInfo | null;
 }) {
   const [pickerFor, setPickerFor] = useState<{ fecha: string; meal: MealKey } | null>(null);
   const [customText, setCustomText] = useState("");
@@ -344,6 +349,28 @@ export function WeekPlanner({
   }, [weekPlan, nextWeekDates, importedIngredients]);
 
   const plannedCount = useMemo(() => selectedIngredientLists.length, [selectedIngredientLists]);
+
+  // Grupo compartido: mi parte de la semana (lo elegido, con sus ingredientes) para exportar a la lista del grupo.
+  const groupMode = Boolean(household && household.memberCount > 1);
+  const exportsHook = useHouseholdExports(groupMode ? household!.id : null, nextWeekDates[0]);
+  const myExport: ExportedMeal[] = useMemo(() => {
+    const out: ExportedMeal[] = [];
+    for (const fecha of nextWeekDates) {
+      const dayPlan = weekPlan[fecha];
+      if (!dayPlan) continue;
+      for (const meal of MEAL_KEYS) {
+        const title = dayPlan[meal];
+        if (!title || title.startsWith("__")) continue;
+        const ings = RECIPES.find((r) => r.title === title)?.ingredients ?? importedIngredients.get(title) ?? null;
+        out.push({ fecha, meal, title, ingredients: ings ? ings.map((i) => ({ name: i.name, quantity: i.quantity, unit: i.unit as "g" | "ml" | "u." })) : null });
+      }
+    }
+    return out;
+  }, [weekPlan, nextWeekDates, importedIngredients]);
+  const exportedKey = (exportsHook.mine?.items || []).map((m) => `${m.fecha}:${m.meal}:${m.title}`).join("|");
+  const myExportKey = myExport.map((m) => `${m.fecha}:${m.meal}:${m.title}`).join("|");
+  const myExportStale = Boolean(exportsHook.mine) && exportedKey !== myExportKey;
+  const missingMembers = groupMode ? Math.max(0, household!.memberCount - exportsHook.rows.length) : 0;
 
   const shoppingList = useMemo(() => {
     const totals = new Map<string, { name: string; quantity: number; unit: InventoryItem["unit"] }>();
@@ -525,6 +552,42 @@ export function WeekPlanner({
           )}
           {sendStatus && !selection.error && <div className="mt-1.5 text-[11px] text-sage">{sendStatus}</div>}
           {selection.error && <div className="mt-1.5 text-[11px] text-rust">No se pudo enviar: {selection.error}</div>}
+        </div>
+      )}
+
+      {groupMode && (
+        <div className="mt-3 rounded-xl border border-gold/40 bg-gold/5 p-3">
+          <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-gold">Lista del grupo · {household!.name}</div>
+          <div className="mt-1 space-y-0.5 text-[12px]">
+            <div className={exportsHook.mine ? "text-sage" : "text-text"}>
+              {exportsHook.mine ? `✓ Ya exportaste tu parte (${exportsHook.mine.items.length} comidas)` : "• Falta exportar tu parte"}
+              {myExportStale && <span className="text-textMuted"> · cambiaste comidas, actualizala</span>}
+            </div>
+            {exportsHook.rows
+              .filter((r) => r.user_id !== exportsHook.mine?.user_id)
+              .map((r) => (
+                <div key={r.user_id} className="text-sage">
+                  ✓ {r.nombre || "Integrante"} exportó su parte ({r.items.length} comidas)
+                </div>
+              ))}
+            {missingMembers > 0 && (
+              <div className="text-textMuted">
+                • Falta{missingMembers === 1 ? "" : "n"} {missingMembers} integrante{missingMembers === 1 ? "" : "s"} por exportar
+              </div>
+            )}
+            {missingMembers === 0 && exportsHook.rows.length > 0 && <div className="text-sage">✓ Ya exportaron todos: armá la lista final en Comidas → Lista de compras.</div>}
+          </div>
+          {exportsHook.error && <div className="mt-1 text-[11px] text-rust">No se pudo exportar: {exportsHook.error}</div>}
+          <button
+            type="button"
+            disabled={myExport.length === 0 || exportsHook.busy || (Boolean(exportsHook.mine) && !myExportStale)}
+            onClick={async () => {
+              await exportsHook.exportMine(myExport);
+            }}
+            className={`${btn(exportsHook.mine && !myExportStale ? "neutral" : "primary", "md", true)} mt-2`}
+          >
+            {exportsHook.busy ? "Exportando..." : exportsHook.mine ? (myExportStale ? "Actualizar mi parte" : "Mi parte exportada ✓") : "Exportar mi parte al grupo"}
+          </button>
         </div>
       )}
 

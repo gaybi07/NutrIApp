@@ -1277,6 +1277,7 @@ export default function Home() {
                 proteinTargetG={proteinTargetG}
                 authenticated={authenticated}
                 hasNutricionistaLink={hasNutricionistaLink}
+                household={household.household}
               />
             </div>
           </div>
