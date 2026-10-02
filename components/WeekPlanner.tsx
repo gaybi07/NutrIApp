@@ -119,10 +119,13 @@ function DayPlanRow({
   fecha,
   dayPlan,
   onPick,
+  onSkipDay,
 }: {
   fecha: string;
   dayPlan: Partial<Record<MealKey, string>>;
   onPick: (meal: MealKey) => void;
+  /** Marca (o desmarca) todo el día como "no voy a planificar". */
+  onSkipDay: (skip: boolean) => void;
 }) {
   const complete = REQUIRED_MEAL_KEYS.every((meal) => dayPlan[meal] !== undefined);
   const [open, setOpen] = useState(!complete);
@@ -132,6 +135,7 @@ function DayPlanRow({
   }, [complete]);
 
   const date = new Date(`${fecha}T00:00:00`);
+  const wholeDaySkipped = MEAL_KEYS.every((meal) => dayPlan[meal] === undefined || isSkipped(dayPlan[meal])) && REQUIRED_MEAL_KEYS.every((meal) => isSkipped(dayPlan[meal]));
   const resolvedCount = REQUIRED_MEAL_KEYS.filter((meal) => dayPlan[meal] !== undefined).length;
 
   return (
@@ -182,6 +186,13 @@ function DayPlanRow({
               </button>
             );
           })}
+          <button
+            type="button"
+            onClick={() => onSkipDay(!wholeDaySkipped)}
+            className={`col-span-2 ${btn("neutral", "sm", true)}`}
+          >
+            {wholeDaySkipped ? "Volver a planificar este día" : "No planifico este día"}
+          </button>
         </div>
       )}
     </div>
@@ -293,6 +304,20 @@ export function WeekPlanner({
     else delete next[fecha];
     onSave(next);
     if (closePicker) setPickerFor(null);
+  };
+
+  // Todo el día de una: marca las comidas sin elegir como "no planificado" (lo ya elegido se respeta), o limpia las marcas.
+  const assignDay = (fecha: string, skip: boolean) => {
+    const next: WeekPlan = { ...weekPlan };
+    const dayPlan = { ...(next[fecha] || {}) };
+    for (const meal of MEAL_KEYS) {
+      if (skip) {
+        if (dayPlan[meal] === undefined) dayPlan[meal] = SKIP_MEAL;
+      } else if (dayPlan[meal] === SKIP_MEAL) delete dayPlan[meal];
+    }
+    if (Object.keys(dayPlan).length > 0) next[fecha] = dayPlan;
+    else delete next[fecha];
+    onSave(next);
   };
 
   // Ingredientes de todo lo elegido para la semana -- de la receta del
@@ -461,6 +486,7 @@ export function WeekPlanner({
             fecha={fecha}
             dayPlan={weekPlan[fecha] || {}}
             onPick={(meal) => setPickerFor({ fecha, meal })}
+            onSkipDay={(skip) => assignDay(fecha, skip)}
           />
         ))}
       </div>
