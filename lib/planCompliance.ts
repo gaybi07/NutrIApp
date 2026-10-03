@@ -58,6 +58,9 @@ function sameDish(a: string, b: string) {
   return short.length >= 8 && long.includes(short);
 }
 
+/** Marca dentro de `omisiones` para "esta comida me la salté": no es un alimento sino la comida entera. */
+export const SKIPPED_MEAL_MARK = "__comida__";
+
 /** `null` si esa comida no está planificada ese día (no hay nada que comparar). */
 export function classifyMeal(
   options: MealOption[] | undefined,
@@ -71,6 +74,9 @@ export function classifyMeal(
   if (!options || options.length === 0) return null;
 
   const items = entry ? getMealItems(entry, meal) : [];
+  if (items.length === 0 && entry?.omisiones?.some((o) => o.comida === meal && o.alimento === SKIPPED_MEAL_MARK)) {
+    return { status: "saltada", label: STATUS_LABEL.saltada, real: null };
+  }
   if (items.length === 0) {
     const chosen = plannedTitle ? options.find((opt) => opt.nombre === plannedTitle) : undefined;
     if (chosen && fecha >= todayFecha) {

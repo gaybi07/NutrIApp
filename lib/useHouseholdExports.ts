@@ -74,11 +74,12 @@ export function useHouseholdExports(householdId: string | null, weekStart: strin
       setBusy(true);
       setError("");
       try {
-        const { data: userData } = await supabase.auth.getUser();
-        const user = userData.user;
-        if (!user) throw new Error("No hay sesión.");
+        // getSession lee la sesión guardada (no hace una llamada a la red como getUser, que en algunos celulares se cuelga).
+        const { data: sessionData } = await supabase.auth.getSession();
+        const user = sessionData.session?.user;
+        if (!user) throw new Error("No hay sesión: cerrá sesión y volvé a entrar.");
         const nombre = (user.email || "").split("@")[0] || "Integrante";
-        const { error: upsertError } = await supabase.from("household_week_selections").upsert(
+        const save = supabase.from("household_week_selections").upsert(
           {
             household_id: householdId,
             user_id: user.id,
@@ -89,6 +90,8 @@ export function useHouseholdExports(householdId: string | null, weekStart: strin
           },
           { onConflict: "household_id,user_id,week_start" }
         );
+        const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Tardó demasiado: revisá tu conexión y probá de nuevo.")), 20000));
+        const { error: upsertError } = await Promise.race([save, timeout]);
         if (upsertError) throw new Error(upsertError.message);
         await refetch();
         return true;

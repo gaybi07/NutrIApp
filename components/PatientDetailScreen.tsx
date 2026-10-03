@@ -124,7 +124,7 @@ function AdherenciaTab({
                       {o.motivo === "alergia" ? "Alergia" : o.motivo === "no_le_gusta" ? "No le gusta" : "Otro"}
                     </span>
                     <span>
-                      <span className="font-semibold">{o.alimento}</span>
+                      <span className="font-semibold">{o.alimento === "__comida__" ? "No hizo esta comida" : o.alimento}</span>
                       {o.nota ? <span className="text-textMuted"> — {o.nota}</span> : null}
                     </span>
                   </div>

@@ -38,6 +38,7 @@ import { DataImport } from "@/components/DataImport";
 import { MealMemoryImport } from "@/components/MealMemoryImport";
 import { TodayCard } from "@/components/TodayCard";
 import { CasaCuentas } from "@/components/CasaCuentas";
+import { SKIPPED_MEAL_MARK } from "@/lib/planCompliance";
 import { PurchaseHistoryCard } from "@/components/PurchaseHistoryCard";
 import { WeekMealsCard } from "@/components/WeekMealsCard";
 import { MealsEditor } from "@/components/MealsEditor";
@@ -1036,6 +1037,15 @@ export default function Home() {
           planNextWeek={nutritionPlanNext.days}
           inventory={inventory}
           onAddPlannedMeal={addPlannedMeal}
+          onSkipMeal={(meal, skipped) => {
+            const fecha = fmtDate(new Date());
+            const existing = days.find((d) => d.fecha === fecha) || emptyDay(fecha);
+            const others = (existing.omisiones || []).filter((o) => !(o.comida === meal && o.alimento === SKIPPED_MEAL_MARK));
+            upsertDay({
+              ...existing,
+              omisiones: skipped ? [...others, { comida: meal, alimento: SKIPPED_MEAL_MARK, motivo: "otro", nota: "No la hice" }] : others,
+            });
+          }}
           order={settings.comidasOrder}
           onReorder={(comidasOrder) => saveSettings({ ...settings, comidasOrder })}
           hidden={settings.comidasHidden}

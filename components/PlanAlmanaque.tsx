@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { DayEntry, DayMealOptions, MealKey, MEAL_LABELS, MEAL_LEVEL_LABELS, MealLevel, MealOption, Weekday, WeekPlan, WEEKDAYS } from "@/lib/types";
-import { classifyMeal, levelOf, MealCompliance, MealStatus } from "@/lib/planCompliance";
+import { classifyMeal, levelOf, MealCompliance, MealStatus, SKIPPED_MEAL_MARK } from "@/lib/planCompliance";
 import { getMealItems, suggestedMeal } from "@/lib/calculations";
 import { btn } from "@/components/buttonStyles";
 import { useEscapeKey } from "@/lib/useEscapeKey";
@@ -209,6 +209,7 @@ export function TodayMeals({
   days,
   weekPlan,
   onAddPlanned,
+  onSkipMeal,
 }: {
   todayFecha: string;
   plan: PlanDays;
@@ -217,6 +218,8 @@ export function TodayMeals({
   weekPlan: WeekPlan;
   /** Carga la opción elegida como comida de hoy. */
   onAddPlanned: (meal: MealKey, option: MealOption) => string | void;
+  /** Marca (o desmarca) que hoy no hizo esa comida: queda en rojo como saltada. */
+  onSkipMeal?: (meal: MealKey, skipped: boolean) => void;
 }) {
   const [open, setOpen] = useState<MealKey | null>(null);
   const [picked, setPicked] = useState<Partial<Record<MealKey, number>>>({});
@@ -301,6 +304,19 @@ export function TodayMeals({
                   {alreadyLoaded && (
                     <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-textMuted">
                       🔒 Ya cargaste esta comida. Para cargar una opción distinta, quitá primero lo cargado.
+                    </div>
+                  )}
+                  {!alreadyLoaded && onSkipMeal && (
+                    <div className="mt-1.5 flex justify-end">
+                      {entry?.omisiones?.some((o) => o.comida === meal && o.alimento === SKIPPED_MEAL_MARK) ? (
+                        <button type="button" onClick={() => onSkipMeal(meal, false)} className={btn("neutral", "sm")}>
+                          Deshacer: sí la hice
+                        </button>
+                      ) : (
+                        <button type="button" onClick={() => onSkipMeal(meal, true)} className={btn("danger", "sm")}>
+                          Me la salté
+                        </button>
+                      )}
                     </div>
                   )}
                   <div className="mt-1.5 space-y-1.5">
