@@ -1,11 +1,10 @@
 /**
- * Cómo salió un día contra el objetivo COMPLETO del día, mirando kcal y proteína a la vez. Son cuatro franjas.
- * Se mide el peor de los dos desvíos: en kcal cuenta pasarse del objetivo, en proteína cuenta quedar por debajo.
+ * Cómo salió un día contra el objetivo COMPLETO del día, mirando kcal y proteína a la vez. Son cuatro franjas:
  *   violeta   -> (brillante) kcal dentro del objetivo y proteína 15% o más por encima del objetivo.
- *   verde     -> cumplido: kcal dentro del objetivo y proteína en el objetivo.
- *   amarillo  -> falló por poco: el peor de los dos desvíos es de hasta 15%.
- *   rojo      -> falló: el peor desvío es de más de 15%.
- * Si cumple una cosa pero falla la otra por poco, queda en amarillo; si la falla por mucho, en rojo.
+ *   verde     -> cumplido: kcal dentro del objetivo y proteína a 95% del objetivo o más (hasta 5% menos se acepta).
+ *   amarillo  -> proteína entre 75% y 95% del objetivo, o kcal pasadas hasta 10% (con la proteína a 75% o más).
+ *   rojo      -> kcal pasadas más de 10%, o proteína por debajo del 75% del objetivo.
+ * Cuando una cosa se cumple y la otra falla, manda la peor de las dos.
  */
 export type DayGoalStatus = "violeta" | "verde" | "amarillo" | "rojo";
 
@@ -16,20 +15,19 @@ export const DAY_STATUS_ORDER: DayGoalStatus[] = ["violeta", "verde", "amarillo"
 export const DAY_STATUS_SCORE: Record<DayGoalStatus, number> = { violeta: 3, verde: 2, amarillo: 1, rojo: 0 };
 
 export function dayGoalStatus(kcal: number, kcalGoal: number, protein: number, proteinGoal: number): DayGoalStatus {
-  const kcalOver = kcalGoal > 0 ? Math.max(0, kcal / kcalGoal - 1) : 0;
-  const protUnder = proteinGoal > 0 ? Math.max(0, 1 - protein / proteinGoal) : 0;
-  const worst = Math.max(kcalOver, protUnder);
-  if (worst > 0.15) return "rojo";
-  if (worst > 0) return "amarillo";
-  if (proteinGoal > 0 && protein / proteinGoal >= 1.15) return "violeta";
+  const kcalRatio = kcalGoal > 0 ? kcal / kcalGoal : 0;
+  const protRatio = proteinGoal > 0 ? protein / proteinGoal : 1;
+  if (kcalRatio > 1.1 || protRatio < 0.75) return "rojo";
+  if (kcalRatio > 1 || protRatio < 0.95) return "amarillo";
+  if (protRatio >= 1.15) return "violeta";
   return "verde";
 }
 
 export const DAY_STATUS_LABEL: Record<DayGoalStatus, string> = {
   violeta: "Día brillante: kcal en objetivo y 15% o más de proteína extra",
-  verde: "Día cumplido: kcal en objetivo y proteína cumplida",
-  amarillo: "Fallaste por poco (hasta 15%) en kcal o proteína",
-  rojo: "Fallaste por más de 15%",
+  verde: "Día cumplido: kcal en objetivo y proteína al 95% o más",
+  amarillo: "Proteína entre 75% y 95%, o hasta 10% más de kcal",
+  rojo: "Más de 10% de kcal de más, o proteína por debajo del 75%",
 };
 
 /**
