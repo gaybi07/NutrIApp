@@ -37,6 +37,7 @@ import { AuthPanel } from "@/components/AuthPanel";
 import { DataImport } from "@/components/DataImport";
 import { MealMemoryImport } from "@/components/MealMemoryImport";
 import { TodayCard } from "@/components/TodayCard";
+import { CasaCuentas } from "@/components/CasaCuentas";
 import { PurchaseHistoryCard } from "@/components/PurchaseHistoryCard";
 import { WeekMealsCard } from "@/components/WeekMealsCard";
 import { MealsEditor } from "@/components/MealsEditor";
@@ -749,7 +750,12 @@ export default function Home() {
           onGoToTab={setActiveTab}
         />
       )}
-      {activeTab === "gastos" && !tabLocked && <PurchaseHistoryCard purchases={purchases} removePurchase={removePurchase} />}
+      {activeTab === "gastos" && !tabLocked && (
+        <div className="space-y-4">
+          <CasaCuentas authenticated={authenticated} household={household.household} purchases={purchases} />
+          <PurchaseHistoryCard purchases={purchases} removePurchase={removePurchase} />
+        </div>
+      )}
 
       {activeTab === "entrenador" && (
         <div className="mx-auto max-w-lg">
