@@ -38,6 +38,7 @@ import { DataImport } from "@/components/DataImport";
 import { MealMemoryImport } from "@/components/MealMemoryImport";
 import { TodayCard } from "@/components/TodayCard";
 import { btn } from "@/components/buttonStyles";
+import { MonthCalendar } from "@/components/MonthCalendar";
 import { WeekGoalGrid } from "@/components/WeekGoalGrid";
 import { CasaCuentas } from "@/components/CasaCuentas";
 import { SKIPPED_MEAL_MARK } from "@/lib/planCompliance";
@@ -138,7 +139,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<MainTab>("inicio");
   const [panel, setPanel] = useState<
     | "calc" | "ai" | "pasos" | "entreno" | "sueno" | "datos" | "planificador"
-    | "tema" | "tamano-letra" | "meta-diaria" | "medidas" | "perfil" | "solapas" | "herramientas" | "secciones" | "entrenador"
+    | "tema" | "tamano-letra" | "meta-diaria" | "medidas" | "perfil" | "mes" | "solapas" | "herramientas" | "secciones" | "entrenador"
     | "nutricionista" | "ver-comidas" | "suplementos" | "planes" | "vincular-profesional"
     | null
   >(null);
@@ -995,6 +996,7 @@ export default function Home() {
                             pesoKg={currentWeightKg}
                             fixedGoal={goalFixed}
                             proteinTarget={proteinTargetG}
+                            onOpenMonth={() => setPanel("mes")}
                           />
                         </>
                       </section>
@@ -1119,6 +1121,7 @@ export default function Home() {
           inventory={inventory}
           onAddPlannedMeal={addPlannedMeal}
           onSkipMeal={skipTodayMeal}
+          onOpenMonth={isBasico ? undefined : () => setPanel("mes")}
           order={settings.comidasOrder}
           onReorder={(comidasOrder) => saveSettings({ ...settings, comidasOrder })}
           hidden={settings.comidasHidden}
@@ -1452,6 +1455,19 @@ export default function Home() {
             <GoalStyleSettings settings={settings} onSave={saveSettings} locked={goalStyleLocked} />
           </div>
         </div>
+      )}
+
+      {panel === "mes" && !isBasico && (
+        <MonthCalendar
+          days={days}
+          todayFecha={fmtDate(new Date())}
+          goal={goalKcal}
+          tdeeFallback={settings.tdeeFallback}
+          pesoKg={currentWeightKg}
+          fixedGoal={goalFixed}
+          proteinTarget={proteinTargetG}
+          onClose={() => setPanel(null)}
+        />
       )}
 
       {panel === "perfil" && (

@@ -20,6 +20,7 @@ import { useSectionOrder } from "@/lib/useSectionOrder";
 import { SortableSection } from "@/components/SortableSection";
 import { countPlannedMeals, hasWeekActivity, SKIP_MEAL } from "@/components/WeekPlanner";
 import { TodayMeals, WeekAlmanaque } from "@/components/PlanAlmanaque";
+import { btn } from "@/components/buttonStyles";
 import { ShoppingListCard } from "@/components/ShoppingListCard";
 
 const MEAL_KEYS: MealKey[] = ["des", "alm", "mer", "cen", "col"];
@@ -91,6 +92,7 @@ export function ComidasTab({
   inventory,
   onAddPlannedMeal,
   onSkipMeal,
+  onOpenMonth,
 }: {
   weekPlan: WeekPlan;
   /** Registros reales, el día de hoy y el plan publicado por la Nutricionista (esta semana real y la
@@ -105,6 +107,8 @@ export function ComidasTab({
   /** Carga la opción del plan elegida en "Lo que te toca comer" como comida de hoy. */
   onAddPlannedMeal: (meal: MealKey, option: MealOption) => string | void;
   onSkipMeal?: (meal: MealKey, skipped: boolean) => void;
+  /** Abre el almanaque del mes (cuadraditos de colores por día). */
+  onOpenMonth?: () => void;
   /** Las 7 fechas de la semana que se está mirando con las flechas de
    * arriba (◂ Semana anterior / Semana siguiente ▸) -- distinta de "la
    * semana que viene" que siempre usa el Planificador para armar/importar. */
@@ -138,6 +142,11 @@ export function ComidasTab({
       {/* "Lo que te toca comer hoy" va siempre primero, abierto y fijo (no entra en el orden
           arrastrable ni se puede apagar), igual que "Hoy" en Inicio. */}
       {hasTodayPlan && <TodayMeals todayFecha={todayFecha} plan={planThisWeek} days={days} weekPlan={weekPlan} onAddPlanned={onAddPlannedMeal} onSkipMeal={onSkipMeal} />}
+      {onOpenMonth && (
+        <button type="button" onClick={onOpenMonth} className={`${btn("secondary", "md", true)} mb-3`}>
+          Ver el almanaque del mes
+        </button>
+      )}
       {nutritionGoal && (
         <div className="mb-3 rounded-xl border border-gold/40 bg-gold/5 p-3">
           <div className="mb-1 font-mono text-[9px] uppercase tracking-[0.15em] text-gold">Objetivo de tu Nutricionista</div>

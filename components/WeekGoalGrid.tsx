@@ -3,19 +3,30 @@
 import { useState } from "react";
 import { DayEntry } from "@/lib/types";
 import { dayGoal, dayProt, dayTotal } from "@/lib/calculations";
+import { btn } from "@/components/buttonStyles";
 import { DAY_STATUS_LABEL, DAY_STATUS_ORDER, DayGoalStatus, dayGoalStatus } from "@/lib/dayStatus";
 
 const DOW = ["D", "L", "M", "M", "J", "V", "S"];
 const DOW_FULL = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
 
-const STATUS_BG: Record<DayGoalStatus, string> = {
+export const STATUS_BG: Record<DayGoalStatus, string> = {
+  brillante: "radial-gradient(circle at 30% 25%, #f5f3ff 0%, #c4b5fd 22%, #8b5cf6 58%, #6d28d9 100%)",
   violeta: "rgb(var(--color-accent))",
   verde: "rgb(var(--color-sage))",
   amarillo: "rgb(var(--color-carbs))",
   rojo: "rgb(var(--color-rust))",
   multicolor: "conic-gradient(from 0deg, #ef4444, #f59e0b, #22c55e, #3b82f6, #a855f7, #ef4444)",
 };
-const STATUS_TEXT: Record<DayGoalStatus, string> = { violeta: "#ffffff", verde: "#0f3d2d", amarillo: "#4a2f00", rojo: "#ffffff", multicolor: "#ffffff" };
+export const STATUS_TEXT: Record<DayGoalStatus, string> = { brillante: "#ffffff", violeta: "#ffffff", verde: "#0f3d2d", amarillo: "#4a2f00", rojo: "#ffffff", multicolor: "#ffffff" };
+
+/** Estilo de un casillero ya cerrado; el día "brillante" lleva un borde luminoso y un halo para que se note de lejos. */
+export function statusCellStyle(status: DayGoalStatus): React.CSSProperties {
+  const base: React.CSSProperties = { background: STATUS_BG[status], color: STATUS_TEXT[status] };
+  if (status === "brillante") {
+    return { ...base, border: "2px solid #f5f3ff", boxShadow: "0 0 6px 1px #ddd6fe, 0 0 16px 3px rgba(139, 92, 246, 0.85), inset 0 0 8px rgba(255,255,255,0.65)", textShadow: "0 0 6px rgba(255,255,255,0.9)" };
+  }
+  return base;
+}
 
 /**
  * Cuadrícula de la semana: un casillero por día, coloreado según cómo salió contra el objetivo completo del día
@@ -31,6 +42,7 @@ export function WeekGoalGrid({
   pesoKg,
   fixedGoal,
   proteinTarget,
+  onOpenMonth,
 }: {
   weekDates: string[];
   weekDays: (DayEntry | null)[];
@@ -40,6 +52,8 @@ export function WeekGoalGrid({
   pesoKg: number;
   fixedGoal: boolean;
   proteinTarget: number;
+  /** Abre el almanaque del mes. */
+  onOpenMonth?: () => void;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -69,7 +83,7 @@ export function WeekGoalGrid({
             className={`flex aspect-square flex-col items-center justify-center rounded-lg border font-mono ${
               c.painted ? "border-transparent" : c.isToday ? "relative overflow-hidden border-2 border-gold text-text" : "border-dashed border-border text-textMuted"
             } ${c.future ? "opacity-50" : ""}`}
-            style={c.painted ? { background: STATUS_BG[c.painted], color: STATUS_TEXT[c.painted] } : undefined}
+            style={c.painted ? statusCellStyle(c.painted) : undefined}
           >
             {/* Hoy: el color de cómo va el día, bien transparente, adentro de un recuadro violeta que marca "hoy". */}
             {c.isToday && c.status && <span aria-hidden className="absolute inset-0" style={{ background: STATUS_BG[c.status], opacity: 0.3 }} />}
@@ -97,7 +111,7 @@ export function WeekGoalGrid({
       <div className="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-2">
         {DAY_STATUS_ORDER.map((s) => (
           <div key={s} className="flex items-center gap-1.5 text-[10px] text-textMuted">
-            <span className="inline-block h-3 w-3 shrink-0 rounded" style={{ background: STATUS_BG[s] }} />
+            <span className="inline-block h-3 w-3 shrink-0 rounded" style={s === "brillante" ? statusCellStyle(s) : { background: STATUS_BG[s] }} />
             {DAY_STATUS_LABEL[s]}
           </div>
         ))}
@@ -105,6 +119,11 @@ export function WeekGoalGrid({
         </div>
       )}
 
+      {onOpenMonth && (
+        <button type="button" onClick={onOpenMonth} className={`${btn("secondary", "sm", true)} mt-2`}>
+          Ver el mes completo
+        </button>
+      )}
       {!picked && <div className="mt-1.5 text-center font-mono text-[9px] uppercase tracking-wide text-textMuted">Tocá un día para ver el detalle</div>}
     </div>
   );
