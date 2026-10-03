@@ -67,12 +67,14 @@ export function WeekGoalGrid({
             onClick={() => setSelected((prev) => (prev === c.fecha ? null : c.fecha))}
             aria-label={`${DOW_FULL[c.date.getDay()]} ${c.date.getDate()}`}
             className={`flex aspect-square flex-col items-center justify-center rounded-lg border font-mono ${
-              c.painted ? "border-transparent" : c.isToday ? "border-text/60 text-text" : "border-dashed border-border text-textMuted"
+              c.painted ? "border-transparent" : c.isToday ? "relative overflow-hidden border-2 border-gold text-text" : "border-dashed border-border text-textMuted"
             } ${c.future ? "opacity-50" : ""}`}
             style={c.painted ? { background: STATUS_BG[c.painted], color: STATUS_TEXT[c.painted] } : undefined}
           >
-            <span className="text-[9px] uppercase leading-none opacity-80">{DOW[c.date.getDay()]}</span>
-            <span className="mt-0.5 text-[13px] font-bold leading-none">{c.date.getDate()}</span>
+            {/* Hoy: el color de cómo va el día, bien transparente, adentro de un recuadro violeta que marca "hoy". */}
+            {c.isToday && c.status && <span aria-hidden className="absolute inset-0" style={{ background: STATUS_BG[c.status], opacity: 0.3 }} />}
+            <span className="relative text-[9px] uppercase leading-none opacity-80">{DOW[c.date.getDay()]}</span>
+            <span className="relative mt-0.5 text-[13px] font-bold leading-none">{c.date.getDate()}</span>
           </button>
         ))}
       </div>
@@ -87,7 +89,7 @@ export function WeekGoalGrid({
               <div>
                 {picked.kcal.toLocaleString("es-AR")} de {picked.kcalGoal.toLocaleString("es-AR")} kcal · {picked.prot} de {proteinTarget} g de proteína
               </div>
-              <div className="text-textMuted">{picked.isToday ? "El día sigue en curso: el color se define cuando termina." : DAY_STATUS_LABEL[picked.status]}</div>
+              <div className="text-textMuted">{picked.isToday ? "El día sigue en curso: el color final se define cuando termina." : DAY_STATUS_LABEL[picked.status]}</div>
             </>
           ) : (
             <div className="text-textMuted">{picked.future ? "Todavía no llegó." : "No cargaste nada ese día."}</div>
