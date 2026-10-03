@@ -685,13 +685,15 @@ export function WeekPlanner({
               onClick={() => {
                 setShowExport((prev) => !prev);
                 setCopyStatus("");
+                // El texto aparece debajo del botón: se baja hasta él para que se vea que pasó algo.
+                setTimeout(() => document.getElementById("planner-lista-texto")?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
               }}
               className="w-full rounded-lg border border-gold/60 bg-gold/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-gold"
             >
-              {showExport ? "Ocultar" : <span className="inline-flex items-center gap-1"><Share2 size={16} strokeWidth={1.8} /> Exportar lista</span>}
+              {showExport ? "Ocultar" : <span className="inline-flex items-center gap-1"><Share2 size={16} strokeWidth={1.8} /> Copiar o enviar la lista</span>}
             </button>
             {showExport && (
-              <div className="mt-2">
+              <div id="planner-lista-texto" className="mt-2">
                 <textarea
                   readOnly
                   rows={Math.min(20, shoppingListText.split("\n").length)}
