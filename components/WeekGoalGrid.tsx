@@ -10,33 +10,24 @@ const DOW = ["D", "L", "M", "M", "J", "V", "S"];
 const DOW_FULL = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
 
 export const STATUS_BG: Record<DayGoalStatus, string> = {
-  brillante: "radial-gradient(circle at 30% 25%, #f5f3ff 0%, #c4b5fd 22%, #8b5cf6 58%, #6d28d9 100%)",
-  verdeBrillante: "radial-gradient(circle at 30% 25%, #ecfdf5 0%, #86efac 24%, #22c55e 60%, #15803d 100%)",
-  celeste: "#38bdf8",
+  violeta: "radial-gradient(circle at 30% 25%, #f5f3ff 0%, #c4b5fd 22%, #8b5cf6 58%, #6d28d9 100%)",
+  verde: "radial-gradient(circle at 30% 25%, #ecfdf5 0%, #86efac 24%, #22c55e 60%, #15803d 100%)",
   amarillo: "#facc15",
-  naranja: "#f97316",
   rojo: "rgb(var(--color-rust))",
 };
-export const STATUS_TEXT: Record<DayGoalStatus, string> = {
-  brillante: "#ffffff",
-  verdeBrillante: "#ffffff",
-  celeste: "#0c4a6e",
-  amarillo: "#422006",
-  naranja: "#431407",
-  rojo: "#ffffff",
-};
+export const STATUS_TEXT: Record<DayGoalStatus, string> = { violeta: "#ffffff", verde: "#ffffff", amarillo: "#422006", rojo: "#ffffff" };
 
-/** Los dos mejores días llevan brillo (borde luminoso y halo); el resto es de color común. */
-export const isGlow = (s: DayGoalStatus) => s === "brillante" || s === "verdeBrillante";
+/** Los dos mejores niveles llevan brillo (borde luminoso y halo); amarillo y rojo son de color común. */
+export const isGlow = (s: DayGoalStatus) => s === "violeta" || s === "verde";
 
-/** Estilo de un casillero ya cerrado; el día "brillante" lleva un borde luminoso y un halo para que se note de lejos. */
+/** Estilo de un casillero ya cerrado. */
 export function statusCellStyle(status: DayGoalStatus): React.CSSProperties {
   const base: React.CSSProperties = { background: STATUS_BG[status], color: STATUS_TEXT[status] };
-  if (status === "brillante") {
+  if (status === "violeta") {
     return { ...base, border: "2px solid #f5f3ff", boxShadow: "0 0 6px 1px #ddd6fe, 0 0 16px 3px rgba(139, 92, 246, 0.85), inset 0 0 8px rgba(255,255,255,0.65)", textShadow: "0 0 6px rgba(255,255,255,0.9)" };
   }
-  if (status === "verdeBrillante") {
-    return { ...base, border: "2px solid #f0fdf4", boxShadow: "0 0 6px 1px #bbf7d0, 0 0 16px 3px rgba(34, 197, 94, 0.8), inset 0 0 8px rgba(255,255,255,0.6)", textShadow: "0 0 6px rgba(255,255,255,0.9)" };
+  if (status === "verde") {
+    return { ...base, border: "2px solid #f0fdf4", boxShadow: "0 0 6px 1px #bbf7d0, 0 0 14px 2px rgba(34, 197, 94, 0.7), inset 0 0 8px rgba(255,255,255,0.55)", textShadow: "0 0 6px rgba(255,255,255,0.9)" };
   }
   return base;
 }

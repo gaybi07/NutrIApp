@@ -6,6 +6,7 @@ import { addDays, dayGoal, dayProt, dayTotal, fmtDate, getMealItems, getTraining
 import { DAY_STATUS_LABEL, DAY_STATUS_ORDER, dayGoalStatus } from "@/lib/dayStatus";
 import { STATUS_BG, isGlow, statusCellStyle } from "@/components/WeekGoalGrid";
 import { btn } from "@/components/buttonStyles";
+import { computeMonthStandard } from "@/lib/monthStandard";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 
 const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -62,6 +63,11 @@ export function MonthCalendar({
     return { entry, kcal, prot, kcalGoal, status };
   };
 
+  const monthKey = `${cursor.year}-${String(cursor.month + 1).padStart(2, "0")}`;
+  const standard = useMemo(
+    () => computeMonthStandard(days, monthKey, todayFecha, goal, tdeeFallback, pesoKg, fixedGoal, proteinTarget),
+    [days, monthKey, todayFecha, goal, tdeeFallback, pesoKg, fixedGoal, proteinTarget]
+  );
   const picked = selected ? { fecha: selected, ...info(selected) } : null;
   const pickedDate = picked ? new Date(`${picked.fecha}T00:00:00`) : null;
   const shift = (delta: number) => {
@@ -99,6 +105,22 @@ export function MonthCalendar({
         </div>
 
         <div className="overflow-y-auto p-4 pt-3">
+          <div className="mb-3 flex items-center gap-2 rounded-lg border border-border bg-bg/40 px-3 py-2">
+            <span
+              className="inline-block h-6 w-6 shrink-0 rounded-md"
+              style={standard.status ? (isGlow(standard.status) ? statusCellStyle(standard.status) : { background: STATUS_BG[standard.status] }) : { border: "1px dashed rgb(var(--color-text-muted))" }}
+            />
+            <div className="min-w-0 text-[12px] text-text">
+              <div className="font-mono text-[9px] uppercase tracking-wide text-textMuted">Color del mes</div>
+              {standard.status ? (
+                <span>
+                  {standard.status === "violeta" ? "Violeta" : standard.status === "verde" ? "Verde" : standard.status === "amarillo" ? "Amarillo" : "Rojo"} · {standard.counted} días registrados
+                </span>
+              ) : (
+                <span className="text-textMuted">Juntando datos ({standard.counted} de 7 días mínimos)</span>
+              )}
+            </div>
+          </div>
           <div className="mb-1 grid grid-cols-7 gap-1.5 text-center font-mono text-[9px] uppercase text-textMuted">
             {DOW_HEAD.map((d, i) => (
               <span key={i}>{d}</span>

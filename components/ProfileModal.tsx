@@ -6,6 +6,8 @@ import { ClientPlan } from "@/lib/types";
 import { PersonalProfile, ProfessionalProfileData, ProfessionalProfileView, fetchProfessionalProfile, initialsOf } from "@/lib/useProfiles";
 import { Avatar, ProfessionalLinkedCard, ProfessionalShortCard } from "@/components/ProfileCards";
 import { btn, chip } from "@/components/buttonStyles";
+import { MonthStandard } from "@/lib/monthStandard";
+import { STATUS_BG, isGlow, statusCellStyle } from "@/components/WeekGoalGrid";
 
 const PLAN_LABEL: Record<ClientPlan, string> = { basico: "Básico", premium: "Premium", autoentreno: "Autoentreno", premium_plus: "Premium+" };
 const MODO_LABEL = { perder: "Perdiendo grasa (déficit)", recomponer: "Recomposición", aumentar: "Ganando masa (volumen)" } as const;
@@ -20,6 +22,8 @@ export interface ProfileModalProps {
   objectiveNames: string[];
   points: number;
   achievementsDone: number;
+  /** Estandarte: el color de cada mes reciente (el actual primero). */
+  standards?: MonthStandard[];
   /** Solo si es profesional aprobado: aparece la pestaña "Profesional". */
   isProfessional: boolean;
   pro: ProfessionalProfileData;
@@ -35,7 +39,7 @@ const Field = ({ label, children }: { label: string; children: React.ReactNode }
 );
 
 export function ProfileModal(props: ProfileModalProps) {
-  const { email, personal, savePersonal, plan, modo, sexo, objectiveNames, points, achievementsDone, isProfessional, pro, savePro, onClose } = props;
+  const { email, personal, savePersonal, plan, modo, sexo, objectiveNames, points, achievementsDone, standards, isProfessional, pro, savePro, onClose } = props;
   const [tab, setTab] = useState<"personal" | "profesional">("personal");
   const initials = initialsOf(personal.nombre, personal.alias, email);
 
@@ -79,6 +83,7 @@ export function ProfileModal(props: ProfileModalProps) {
             objectiveNames={objectiveNames}
             points={points}
             achievementsDone={achievementsDone}
+            standards={standards}
           />
         ) : (
           <ProfessionalTab personal={personal} pro={pro} savePro={savePro} initials={initials} />
@@ -97,7 +102,8 @@ function PersonalTab({
   objectiveNames,
   points,
   achievementsDone,
-}: Pick<ProfileModalProps, "personal" | "savePersonal" | "plan" | "modo" | "sexo" | "objectiveNames" | "points" | "achievementsDone">) {
+  standards,
+}: Pick<ProfileModalProps, "personal" | "savePersonal" | "plan" | "modo" | "sexo" | "objectiveNames" | "points" | "achievementsDone" | "standards">) {
   const [nombre, setNombre] = useState(personal.nombre);
   const [alias, setAlias] = useState(personal.alias);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
@@ -164,6 +170,38 @@ function PersonalTab({
           </ul>
         )}
       </div>
+
+      {standards && standards.length > 0 && (
+        <div className="rounded-xl border border-border bg-bg/40 p-3">
+          <div className="font-mono text-[9px] uppercase tracking-wide text-gold">Estandarte del mes</div>
+          <div
+            className="mt-1.5 flex items-center justify-between gap-2 rounded-lg px-3 py-3"
+            style={standards[0].status ? (isGlow(standards[0].status) ? statusCellStyle(standards[0].status) : { background: STATUS_BG[standards[0].status], color: "#1c1917" }) : { border: "1px dashed rgb(var(--color-text-muted))" }}
+          >
+            <span className="font-display text-lg">
+              {standards[0].status
+                ? { violeta: "Violeta", verde: "Verde", amarillo: "Amarillo", rojo: "Rojo" }[standards[0].status]
+                : "Juntando datos"}
+            </span>
+            <span className="font-mono text-[10px] uppercase tracking-wide opacity-90">{standards[0].counted} días registrados</span>
+          </div>
+          {standards.length > 1 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {standards.slice(1).map((m) => (
+                <span
+                  key={m.month}
+                  title={m.month}
+                  className="rounded-md px-2 py-1 font-mono text-[9px] uppercase"
+                  style={m.status ? (isGlow(m.status) ? statusCellStyle(m.status) : { background: STATUS_BG[m.status], color: "#1c1917" }) : { border: "1px dashed rgb(var(--color-text-muted))", color: "rgb(var(--color-text-muted))" }}
+                >
+                  {m.month.slice(5)}/{m.month.slice(2, 4)}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="mt-1.5 text-[11px] text-textMuted">Cuanto más violeta, mejor el mes. Se arma con tus días cerrados.</div>
+        </div>
+      )}
 
       <div className="rounded-xl border border-gold/40 bg-gold/5 p-3">
         <div className="font-mono text-[9px] uppercase tracking-wide text-gold">Insignias</div>

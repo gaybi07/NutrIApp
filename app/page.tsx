@@ -38,6 +38,7 @@ import { DataImport } from "@/components/DataImport";
 import { MealMemoryImport } from "@/components/MealMemoryImport";
 import { TodayCard } from "@/components/TodayCard";
 import { btn } from "@/components/buttonStyles";
+import { computeMonthStandard, recentMonths } from "@/lib/monthStandard";
 import { MonthCalendar } from "@/components/MonthCalendar";
 import { WeekGoalGrid } from "@/components/WeekGoalGrid";
 import { CasaCuentas } from "@/components/CasaCuentas";
@@ -1480,6 +1481,9 @@ export default function Home() {
           objectiveNames={myObjectives.objectives.filter((o) => o.estado === "activo").map((o) => o.nombre)}
           points={myPoints.total}
           achievementsDone={achievements.filter((a) => a.done || achievementClaims.claimed.has(`${a.kind}|${a.clave}`)).length}
+          standards={recentMonths(fmtDate(new Date()), 6).map((m) =>
+            computeMonthStandard(days, m, fmtDate(new Date()), goalKcal, settings.tdeeFallback, currentWeightKg, goalFixed, proteinTargetG)
+          )}
           isProfessional={isApprovedTrainer || isApprovedNutricionista}
           pro={myProfiles.pro}
           savePro={myProfiles.savePro}
