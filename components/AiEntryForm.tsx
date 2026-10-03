@@ -7,6 +7,7 @@ import { fmtDate, addDays, getMealItems, applyMealItems, suggestedMeal, macrosFo
 import { useMyNutritionPlan } from "@/lib/useMyNutritionPlan";
 import { LevelChip, quantities } from "@/components/PlanAlmanaque";
 import { btn } from "@/components/buttonStyles";
+import { SKIPPED_MEAL_MARK } from "@/lib/planCompliance";
 import { ingredientsToText, inventoryMessage } from "@/lib/planInventory";
 import { optionGrams } from "@/lib/density";
 import { RECIPES } from "@/lib/recipes";
@@ -85,6 +86,7 @@ export function AiEntryForm({
   authenticated,
   hasNutricionistaLink,
   weekPlan,
+  onSkipMeal,
 }: {
   days: DayEntry[];
   onUpsert: (entry: DayEntry) => void;
@@ -109,6 +111,8 @@ export function AiEntryForm({
   authenticated: boolean;
   hasNutricionistaLink: boolean;
   weekPlan: WeekPlan;
+  /** Marca (o desmarca) que ese día no hizo esa comida: queda en rojo. */
+  onSkipMeal?: (meal: MealKey, skipped: boolean, fecha: string) => void;
 }) {
   const [fecha, setFecha] = useState(fmtDate(new Date()));
   const [meal, setMeal] = useState<MealKey>(initialMeal || "des");
@@ -757,6 +761,17 @@ export function AiEntryForm({
           + Agregar comida
         </button>
       )}
+      {!addingMeal && !showPlanned && onSkipMeal && (() => {
+        const dayEntry = days.find((d) => d.fecha === fecha);
+        const loaded = dayEntry ? getMealItems(dayEntry, meal).length > 0 : false;
+        if (loaded) return null;
+        const skipped = Boolean(dayEntry?.omisiones?.some((o) => o.comida === meal && o.alimento === SKIPPED_MEAL_MARK));
+        return (
+          <button type="button" onClick={() => onSkipMeal(meal, !skipped, fecha)} className={`${skipped ? btn("neutral", "md", true) : btn("danger", "md", true)} mt-2`}>
+            {skipped ? `Deshacer: sí hice ${MEAL_LABELS[meal].toLowerCase()}` : `Me salté ${MEAL_LABELS[meal].toLowerCase()}`}
+          </button>
+        );
+      })()}
 
       {addingMeal && (
       <>

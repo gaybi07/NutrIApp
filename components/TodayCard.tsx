@@ -24,7 +24,6 @@ export function TodayCard({
   onLogSupplements,
   onLogSteps,
   onLogTraining,
-  onSkipMeal,
 }: {
   entry: DayEntry;
   goal: number;
@@ -44,8 +43,6 @@ export function TodayCard({
   onLogSupplements: () => void;
   onLogSteps: () => void;
   onLogTraining: () => void;
-  /** Marca (o desmarca) que hoy no hizo esa comida: queda en rojo. */
-  onSkipMeal?: (meal: MealKey, skipped: boolean) => void;
 }) {
   const today = new Date(`${entry.fecha}T00:00:00`);
   const dowLabel = DOW[today.getDay()];
@@ -141,27 +138,6 @@ export function TodayCard({
           <span>Suplementos</span>
         </button>
       </div>
-      {onSkipMeal && (
-        <div className="mt-2 rounded-xl border border-border bg-bg/30 px-2.5 py-2">
-          <div className="mb-1 font-mono text-[9px] uppercase tracking-[0.12em] text-textMuted">Hoy no hice (tocá para marcar)</div>
-          <div className="flex flex-wrap gap-1.5">
-            {QUICK_MEALS.filter((meal) => mealKcal[meal] === 0).map((meal) => (
-              <button
-                key={meal}
-                type="button"
-                onClick={() => onSkipMeal(meal, !isSkipped(meal))}
-                className={`rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide ${
-                  isSkipped(meal) ? "border-rust bg-rust/15 text-rust" : "border-border text-textMuted"
-                }`}
-              >
-                {isSkipped(meal) ? "✕ " : ""}
-                {MEAL_LABELS[meal]}
-              </button>
-            ))}
-            {QUICK_MEALS.every((meal) => mealKcal[meal] > 0) && <span className="text-[11px] text-textMuted">Ya cargaste todas las comidas.</span>}
-          </div>
-        </div>
-      )}
       <button
         type="button"
         onClick={onViewMeals}

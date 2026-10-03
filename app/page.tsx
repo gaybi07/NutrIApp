@@ -318,8 +318,8 @@ export default function Home() {
   // "Agregar a comidas" desde "Lo que te toca comer" (Comidas): la opción elegida del plan entra como comida de hoy.
   // "Hoy no hice esta comida": queda anotado en el día (como omisión de la comida entera) y se ve en rojo.
   const skipTodayMeal = useCallback(
-    (meal: MealKey, skipped: boolean) => {
-      const fecha = fmtDate(new Date());
+    (meal: MealKey, skipped: boolean, fechaDia?: string) => {
+      const fecha = fechaDia || fmtDate(new Date());
       const existing = days.find((d) => d.fecha === fecha) || emptyDay(fecha);
       const others = (existing.omisiones || []).filter((o) => !(o.comida === meal && o.alimento === SKIPPED_MEAL_MARK));
       upsertDay({
@@ -809,7 +809,6 @@ export default function Home() {
                         onLogSupplements={() => setPanel("suplementos")}
                         onLogSteps={() => setPanel("pasos")}
                         onLogTraining={() => setPanel("entreno")}
-                        onSkipMeal={skipTodayMeal}
                       />
                     </SortableSection>
                   );
@@ -1116,6 +1115,7 @@ export default function Home() {
                 authenticated={authenticated}
                 hasNutricionistaLink={hasNutricionistaLink}
                 weekPlan={weekPlan}
+                onSkipMeal={skipTodayMeal}
               />
             </div>
           </div>

@@ -306,19 +306,6 @@ export function TodayMeals({
                       🔒 Ya cargaste esta comida. Para cargar una opción distinta, quitá primero lo cargado.
                     </div>
                   )}
-                  {!alreadyLoaded && onSkipMeal && (
-                    <div className="mt-1.5 flex justify-end">
-                      {entry?.omisiones?.some((o) => o.comida === meal && o.alimento === SKIPPED_MEAL_MARK) ? (
-                        <button type="button" onClick={() => onSkipMeal(meal, false)} className={btn("neutral", "sm")}>
-                          Deshacer: sí la hice
-                        </button>
-                      ) : (
-                        <button type="button" onClick={() => onSkipMeal(meal, true)} className={btn("danger", "sm")}>
-                          Me la salté
-                        </button>
-                      )}
-                    </div>
-                  )}
                   <div className="mt-1.5 space-y-1.5">
                     {options.map((option, index) => {
                       const selected = selectedIndex === index;
@@ -375,6 +362,19 @@ export function TodayMeals({
                     >
                       + Agregar a comidas
                     </button>
+                  )}
+                  {!alreadyLoaded && onSkipMeal && (
+                    <div className="mt-2">
+                      {entry?.omisiones?.some((o) => o.comida === meal && o.alimento === SKIPPED_MEAL_MARK) ? (
+                        <button type="button" onClick={() => onSkipMeal(meal, false)} className={btn("neutral", "sm", true)}>
+                          Deshacer: sí la hice
+                        </button>
+                      ) : (
+                        <button type="button" onClick={() => onSkipMeal(meal, true)} className={btn("danger", "sm", true)}>
+                          Me la salté
+                        </button>
+                      )}
+                    </div>
                   )}
                   {compliance?.real && (
                     <div className="mt-2 border-t border-dashed border-border pt-1.5 text-[12px] text-text">
