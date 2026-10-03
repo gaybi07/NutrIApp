@@ -57,7 +57,6 @@ export function WeekGoalGrid({
 
   return (
     <div>
-      <div className="mb-2 font-display text-base leading-none text-text">Cómo fue cada día</div>
       <div className="grid grid-cols-7 gap-1.5">
         {cells.map((c) => (
           <button
