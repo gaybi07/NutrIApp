@@ -50,8 +50,10 @@ export function WeekGoalGrid({
     const prot = entry ? dayProt(entry) : 0;
     const hasData = kcal > 0;
     const kcalGoal = entry ? dayGoal(entry, goal, tdeeFallback, pesoKg, fixedGoal) : goal;
+    // Hoy sigue en curso: queda sin color y se pinta cuando termina el día.
     const status = hasData ? dayGoalStatus(kcal, kcalGoal, prot, proteinTarget) : null;
-    return { fecha, date, kcal, prot, kcalGoal, status, future: fecha > todayFecha, isToday: fecha === todayFecha };
+    const painted = fecha < todayFecha ? status : null;
+    return { fecha, date, kcal, prot, kcalGoal, status, painted, future: fecha > todayFecha, isToday: fecha === todayFecha };
   });
   const picked = cells.find((c) => c.fecha === selected) ?? null;
 
@@ -65,9 +67,9 @@ export function WeekGoalGrid({
             onClick={() => setSelected((prev) => (prev === c.fecha ? null : c.fecha))}
             aria-label={`${DOW_FULL[c.date.getDay()]} ${c.date.getDate()}`}
             className={`flex aspect-square flex-col items-center justify-center rounded-lg border font-mono ${
-              c.status ? "border-transparent" : "border-dashed border-border text-textMuted"
-            } ${c.isToday ? "ring-2 ring-text/70 ring-offset-1 ring-offset-surface" : ""} ${c.future ? "opacity-50" : ""}`}
-            style={c.status ? { background: STATUS_BG[c.status], color: STATUS_TEXT[c.status] } : undefined}
+              c.painted ? "border-transparent" : c.isToday ? "border-text/60 text-text" : "border-dashed border-border text-textMuted"
+            } ${c.future ? "opacity-50" : ""}`}
+            style={c.painted ? { background: STATUS_BG[c.painted], color: STATUS_TEXT[c.painted] } : undefined}
           >
             <span className="text-[9px] uppercase leading-none opacity-80">{DOW[c.date.getDay()]}</span>
             <span className="mt-0.5 text-[13px] font-bold leading-none">{c.date.getDate()}</span>
@@ -85,7 +87,7 @@ export function WeekGoalGrid({
               <div>
                 {picked.kcal.toLocaleString("es-AR")} de {picked.kcalGoal.toLocaleString("es-AR")} kcal · {picked.prot} de {proteinTarget} g de proteína
               </div>
-              <div className="text-textMuted">{DAY_STATUS_LABEL[picked.status]}</div>
+              <div className="text-textMuted">{picked.isToday ? "El día sigue en curso: el color se define cuando termina." : DAY_STATUS_LABEL[picked.status]}</div>
             </>
           ) : (
             <div className="text-textMuted">{picked.future ? "Todavía no llegó." : "No cargaste nada ese día."}</div>

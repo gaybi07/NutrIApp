@@ -978,12 +978,14 @@ export default function Home() {
                 // "Logros y puntos" ahora vive dentro del bloque "Tu objetivo" (todo junto en una sola sección).
                 if (blockId === "logros") return null;
                 if (blockId === "miniSemana") {
+                  // No es para el plan Básico: ahí directamente no aparece.
+                  if (isBasico) return null;
                   return (
                     <SortableSection key="miniSemana" id="miniSemana" onHide={() => hideInicioBlock("miniSemana")} dragDisabledOnDesktop>
                       <section className="rounded-2xl border border-border bg-surface/70 p-3">
                         <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Semana</div>
                         <div className="mb-2 font-display text-xl text-text">Mini resumen semanal</div>
-                        <BlurLock active={isBasico} title="Mini resumen semanal" onUpgrade={() => setPanel("planes")}>
+                        <>
                           <WeekGoalGrid
                             weekDates={weekDates}
                             weekDays={weekDays}
@@ -994,7 +996,7 @@ export default function Home() {
                             fixedGoal={goalFixed}
                             proteinTarget={proteinTargetG}
                           />
-                        </BlurLock>
+                        </>
                       </section>
                     </SortableSection>
                   );
