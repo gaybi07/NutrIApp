@@ -325,7 +325,7 @@ export function ShoppingListCard({
                   })}
               </div>
             )}
-            {exports.error && <div className="mt-1 text-[11px] text-rust">Falta correr la actualización de la base del grupo (migration 2026-10-07).</div>}
+            {exports.error && <div className="mt-1 text-[11px] text-rust">No se pudo exportar: {exports.error}. Si dice que la sesión venció, cerrá sesión y volvé a entrar.</div>}
             <button
               type="button"
               disabled={!allExported || included.length === 0}
