@@ -4,6 +4,7 @@ import { DayEntry, INTENSITY_STYLES, MealKey, MEAL_LABELS } from "@/lib/types";
 import { dayTotal, dayProt, dayGoal, getTrainingSessions } from "@/lib/calculations";
 import { SECTION_HELP } from "@/lib/helpText";
 import { Collapsible } from "@/components/Collapsible";
+import { SKIPPED_MEAL_MARK } from "@/lib/planCompliance";
 import { Sunrise, Utensils, Coffee, Moon, Cookie, Pill, CircleCheck, ListChecks } from "lucide-react";
 
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
@@ -23,6 +24,7 @@ export function TodayCard({
   onLogSupplements,
   onLogSteps,
   onLogTraining,
+  onSkipMeal,
 }: {
   entry: DayEntry;
   goal: number;
@@ -42,6 +44,8 @@ export function TodayCard({
   onLogSupplements: () => void;
   onLogSteps: () => void;
   onLogTraining: () => void;
+  /** Marca (o desmarca) que hoy no hizo esa comida: queda en rojo. */
+  onSkipMeal?: (meal: MealKey, skipped: boolean) => void;
 }) {
   const today = new Date(`${entry.fecha}T00:00:00`);
   const dowLabel = DOW[today.getDay()];
@@ -56,6 +60,7 @@ export function TodayCard({
   const intensidad = sessions.length === 1 ? sessions[0].intensidad : entry.entreno ? "moderado" : "ninguno";
   const trainingStyle = INTENSITY_STYLES[intensidad];
   const trainingLabel = sessions.length > 1 ? `${sessions.length} entrenamientos` : trainingStyle.label;
+  const isSkipped = (meal: MealKey) => Boolean(entry.omisiones?.some((o) => o.comida === meal && o.alimento === SKIPPED_MEAL_MARK));
   const mealKcal: Record<MealKey, number> = { des: entry.desK, alm: entry.almK, mer: entry.merK, cen: entry.cenK, col: entry.colK };
 
   return (
@@ -101,6 +106,7 @@ export function TodayCard({
       <div className="grid grid-cols-3 gap-2">
         {QUICK_MEALS.map((meal) => {
           const loaded = mealKcal[meal] > 0;
+          const skipped = !loaded && isSkipped(meal);
           const MealIcon = MEAL_ICON[meal];
           return (
             <button
@@ -108,12 +114,13 @@ export function TodayCard({
               type="button"
               onClick={() => onLogMeal(meal)}
               className={`relative flex h-16 flex-col items-center justify-center gap-1 rounded-xl border font-mono text-[10px] uppercase tracking-[0.06em] ${
-                loaded ? "border-sage/60 bg-sage/10 text-sage" : "border-gold/60 bg-gold text-white"
+                loaded ? "border-sage/60 bg-sage/10 text-sage" : skipped ? "border-rust/60 bg-rust/10 text-rust" : "border-gold/60 bg-gold text-white"
               }`}
             >
               {loaded && (
                 <span className="absolute right-1.5 top-1.5 leading-none"><CircleCheck size={16} strokeWidth={1.8} /></span>
               )}
+              {skipped && <span className="absolute right-1.5 top-1.5 font-mono text-[11px] leading-none">✕</span>}
               <span className="leading-none"><MealIcon size={16} strokeWidth={1.8} /></span>
               <span>{MEAL_LABELS[meal]}</span>
             </button>
@@ -134,6 +141,27 @@ export function TodayCard({
           <span>Suplementos</span>
         </button>
       </div>
+      {onSkipMeal && (
+        <div className="mt-2 rounded-xl border border-border bg-bg/30 px-2.5 py-2">
+          <div className="mb-1 font-mono text-[9px] uppercase tracking-[0.12em] text-textMuted">Hoy no hice (tocá para marcar)</div>
+          <div className="flex flex-wrap gap-1.5">
+            {QUICK_MEALS.filter((meal) => mealKcal[meal] === 0).map((meal) => (
+              <button
+                key={meal}
+                type="button"
+                onClick={() => onSkipMeal(meal, !isSkipped(meal))}
+                className={`rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide ${
+                  isSkipped(meal) ? "border-rust bg-rust/15 text-rust" : "border-border text-textMuted"
+                }`}
+              >
+                {isSkipped(meal) ? "✕ " : ""}
+                {MEAL_LABELS[meal]}
+              </button>
+            ))}
+            {QUICK_MEALS.every((meal) => mealKcal[meal] > 0) && <span className="text-[11px] text-textMuted">Ya cargaste todas las comidas.</span>}
+          </div>
+        </div>
+      )}
       <button
         type="button"
         onClick={onViewMeals}
