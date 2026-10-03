@@ -42,3 +42,35 @@ export function monthStatusFrom(statuses: DayGoalStatus[], minDays = 7): { statu
   const status: DayGoalStatus = avg >= 2.4 ? "violeta" : avg >= 1.6 ? "verde" : avg >= 0.8 ? "amarillo" : "rojo";
   return { status, counted, avg };
 }
+
+/** Escala de las kilocalorías solas (el fondo del cuadrado): cumplidas, pasadas hasta 10%, o pasadas más de 10%. */
+export type KcalStatus = "verde" | "amarillo" | "rojo";
+
+export function dayKcalStatus(kcal: number, kcalGoal: number): KcalStatus {
+  const ratio = kcalGoal > 0 ? kcal / kcalGoal : 0;
+  if (ratio > 1.1) return "rojo";
+  if (ratio > 1) return "amarillo";
+  return "verde";
+}
+
+/** Escala de la proteína sola (la manito): 15% o más extra, 95% o más, entre 75% y 95%, o por debajo de 75%. */
+export function dayProteinStatus(protein: number, proteinGoal: number): DayGoalStatus {
+  const ratio = proteinGoal > 0 ? protein / proteinGoal : 1;
+  if (ratio < 0.75) return "rojo";
+  if (ratio < 0.95) return "amarillo";
+  if (ratio >= 1.15) return "violeta";
+  return "verde";
+}
+
+export const KCAL_STATUS_LABEL: Record<KcalStatus, string> = {
+  verde: "Kcal dentro del objetivo",
+  amarillo: "Hasta 10% más de kcal",
+  rojo: "Más de 10% de kcal de más",
+};
+
+export const PROTEIN_STATUS_LABEL: Record<DayGoalStatus, string> = {
+  violeta: "Proteína 15% o más por encima",
+  verde: "Proteína al 95% o más",
+  amarillo: "Proteína entre 75% y 95%",
+  rojo: "Proteína por debajo del 75%",
+};

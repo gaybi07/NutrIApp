@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { DayEntry, MEAL_LABELS, MealKey } from "@/lib/types";
 import { addDays, dayGoal, dayProt, dayTotal, fmtDate, getMealItems, getTrainingSessions } from "@/lib/calculations";
-import { DAY_STATUS_LABEL, DAY_STATUS_ORDER, dayGoalStatus } from "@/lib/dayStatus";
+import { dayKcalStatus, dayProteinStatus } from "@/lib/dayStatus";
+import { DayCell, DayExplanation, DayLegend } from "@/components/DayCell";
 import { STATUS_BG, isGlow, statusCellStyle } from "@/components/WeekGoalGrid";
 import { btn } from "@/components/buttonStyles";
 import { computeMonthStandard } from "@/lib/monthStandard";
@@ -59,8 +60,14 @@ export function MonthCalendar({
     const kcal = entry ? dayTotal(entry) : 0;
     const prot = entry ? dayProt(entry) : 0;
     const kcalGoal = entry ? dayGoal(entry, goal, tdeeFallback, pesoKg, fixedGoal) : goal;
-    const status = kcal > 0 ? dayGoalStatus(kcal, kcalGoal, prot, proteinTarget) : null;
-    return { entry, kcal, prot, kcalGoal, status };
+    return {
+      entry,
+      kcal,
+      prot,
+      kcalGoal,
+      kcalStatus: kcal > 0 ? dayKcalStatus(kcal, kcalGoal) : null,
+      proteinStatus: kcal > 0 ? dayProteinStatus(prot, proteinTarget) : null,
+    };
   };
 
   const monthKey = `${cursor.year}-${String(cursor.month + 1).padStart(2, "0")}`;
@@ -129,24 +136,20 @@ export function MonthCalendar({
           <div className="grid grid-cols-7 gap-1.5">
             {cells.map((c, i) => {
               if (!c) return <span key={`e${i}`} />;
-              const isToday = c.fecha === todayFecha;
-              const future = c.fecha > todayFecha;
-              const { status } = info(c.fecha);
-              const painted = c.fecha < todayFecha ? status : null;
+              const { kcalStatus, proteinStatus } = info(c.fecha);
               return (
-                <button
+                <DayCell
                   key={c.fecha}
-                  type="button"
+                  label={`${c.day} de ${MONTHS[cursor.month]}`}
+                  day={c.day}
+                  kcalStatus={kcalStatus}
+                  proteinStatus={proteinStatus}
+                  closed={c.fecha < todayFecha}
+                  isToday={c.fecha === todayFecha}
+                  future={c.fecha > todayFecha}
+                  selected={selected === c.fecha}
                   onClick={() => setSelected((prev) => (prev === c.fecha ? null : c.fecha))}
-                  aria-label={`${c.day} de ${MONTHS[cursor.month]}`}
-                  className={`relative flex aspect-square items-center justify-center overflow-hidden rounded-lg border font-mono text-[13px] font-bold ${
-                    painted ? "border-transparent" : isToday ? "border-2 border-gold text-text" : "border-dashed border-border text-textMuted"
-                  } ${future ? "opacity-50" : ""} ${selected === c.fecha ? "ring-2 ring-text/60 ring-offset-1 ring-offset-surface" : ""}`}
-                  style={painted ? statusCellStyle(painted) : undefined}
-                >
-                  {isToday && status && <span aria-hidden className="absolute inset-0" style={{ background: STATUS_BG[status], opacity: 0.3 }} />}
-                  <span className="relative">{c.day}</span>
-                </button>
+                />
               );
             })}
           </div>
@@ -156,18 +159,16 @@ export function MonthCalendar({
               <div className="font-mono text-[10px] uppercase tracking-wide text-textMuted">
                 {DOW_FULL[pickedDate.getDay()]} {pickedDate.getDate()} de {MONTHS[pickedDate.getMonth()]}
               </div>
-              {picked.status ? (
-                <>
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="inline-block h-4 w-4 shrink-0 rounded" style={isGlow(picked.status) ? statusCellStyle(picked.status) : { background: STATUS_BG[picked.status] }} />
-                    <span className="font-semibold">
-                      {picked.fecha === todayFecha ? "Hoy, todavía en curso" : DAY_STATUS_LABEL[picked.status]}
-                    </span>
-                  </div>
-                  <div className="mt-1">
-                    {picked.kcal.toLocaleString("es-AR")} de {picked.kcalGoal.toLocaleString("es-AR")} kcal · {picked.prot} de {proteinTarget} g de proteína
-                  </div>
-                </>
+              {picked.kcalStatus && picked.proteinStatus ? (
+                <DayExplanation
+                  kcalStatus={picked.kcalStatus}
+                  proteinStatus={picked.proteinStatus}
+                  kcal={picked.kcal}
+                  kcalGoal={picked.kcalGoal}
+                  protein={picked.prot}
+                  proteinGoal={proteinTarget}
+                  inProgress={picked.fecha === todayFecha}
+                />
               ) : (
                 <div className="mt-1 text-textMuted">{picked.fecha > todayFecha ? "Todavía no llegó." : "No cargaste nada ese día."}</div>
               )}
@@ -206,14 +207,7 @@ export function MonthCalendar({
             </div>
           )}
 
-          <div className="mt-3 grid grid-cols-1 gap-1 sm:grid-cols-2">
-            {DAY_STATUS_ORDER.map((s) => (
-              <div key={s} className="flex items-center gap-1.5 text-[10px] text-textMuted">
-                <span className="inline-block h-3 w-3 shrink-0 rounded" style={isGlow(s) ? statusCellStyle(s) : { background: STATUS_BG[s] }} />
-                {DAY_STATUS_LABEL[s]}
-              </div>
-            ))}
-          </div>
+          <DayLegend />
         </div>
       </div>
     </div>

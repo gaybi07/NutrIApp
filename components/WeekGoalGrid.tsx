@@ -4,33 +4,26 @@ import { useState } from "react";
 import { DayEntry } from "@/lib/types";
 import { dayGoal, dayProt, dayTotal } from "@/lib/calculations";
 import { btn } from "@/components/buttonStyles";
-import { DAY_STATUS_LABEL, DAY_STATUS_ORDER, DayGoalStatus, dayGoalStatus } from "@/lib/dayStatus";
+import { DayGoalStatus, dayKcalStatus, dayProteinStatus } from "@/lib/dayStatus";
+import { DayCell, DayExplanation, DayLegend } from "@/components/DayCell";
 
 const DOW = ["D", "L", "M", "M", "J", "V", "S"];
 const DOW_FULL = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
 
 export const STATUS_BG: Record<DayGoalStatus, string> = {
-  violeta: "radial-gradient(circle at 30% 25%, #ddd6fe 0%, #a78bfa 35%, #8b5cf6 70%, #7c3aed 100%)",
-  verde: "linear-gradient(135deg, #4ade80 0%, #22c55e 100%)",
+  violeta: "#8b5cf6",
+  verde: "#22c55e",
   amarillo: "#facc15",
   rojo: "rgb(var(--color-rust))",
 };
 export const STATUS_TEXT: Record<DayGoalStatus, string> = { violeta: "#ffffff", verde: "#ffffff", amarillo: "#422006", rojo: "#ffffff" };
 
-/** Los dos mejores niveles llevan brillo (borde luminoso y halo); amarillo y rojo son de color común. */
-export const isGlow = (s: DayGoalStatus) => s === "violeta" || s === "verde";
+/** Ya no hay brillo ni bordes: los colores van lisos. (Se conserva por compatibilidad con quienes lo usan.) */
+export const isGlow = (_s: DayGoalStatus) => false;
 
-/** Estilo de un casillero ya cerrado. */
+/** Estilo de un casillero/franja ya cerrado: color liso, sin borde. */
 export function statusCellStyle(status: DayGoalStatus): React.CSSProperties {
-  const base: React.CSSProperties = { background: STATUS_BG[status], color: STATUS_TEXT[status] };
-  // Brillo suave: el violeta un poco más que el verde, que apenas brilla.
-  if (status === "violeta") {
-    return { ...base, border: "2px solid #ddd6fe", boxShadow: "0 0 8px 1px rgba(139, 92, 246, 0.55), inset 0 0 5px rgba(255,255,255,0.3)" };
-  }
-  if (status === "verde") {
-    return { ...base, border: "1.5px solid #bbf7d0", boxShadow: "0 0 5px 0 rgba(34, 197, 94, 0.4)" };
-  }
-  return base;
+  return { background: STATUS_BG[status], color: STATUS_TEXT[status] };
 }
 
 /**
@@ -69,10 +62,18 @@ export function WeekGoalGrid({
     const prot = entry ? dayProt(entry) : 0;
     const hasData = kcal > 0;
     const kcalGoal = entry ? dayGoal(entry, goal, tdeeFallback, pesoKg, fixedGoal) : goal;
-    // Hoy sigue en curso: queda sin color y se pinta cuando termina el día.
-    const status = hasData ? dayGoalStatus(kcal, kcalGoal, prot, proteinTarget) : null;
-    const painted = fecha < todayFecha ? status : null;
-    return { fecha, date, kcal, prot, kcalGoal, status, painted, future: fecha > todayFecha, isToday: fecha === todayFecha };
+    return {
+      fecha,
+      date,
+      kcal,
+      prot,
+      kcalGoal,
+      kcalStatus: hasData ? dayKcalStatus(kcal, kcalGoal) : null,
+      proteinStatus: hasData ? dayProteinStatus(prot, proteinTarget) : null,
+      closed: fecha < todayFecha,
+      future: fecha > todayFecha,
+      isToday: fecha === todayFecha,
+    };
   });
   const picked = cells.find((c) => c.fecha === selected) ?? null;
 
@@ -80,21 +81,19 @@ export function WeekGoalGrid({
     <div>
       <div className="grid grid-cols-7 gap-1.5">
         {cells.map((c) => (
-          <button
+          <DayCell
             key={c.fecha}
-            type="button"
+            label={`${DOW_FULL[c.date.getDay()]} ${c.date.getDate()}`}
+            day={c.date.getDate()}
+            dow={DOW[c.date.getDay()]}
+            kcalStatus={c.kcalStatus}
+            proteinStatus={c.proteinStatus}
+            closed={c.closed}
+            isToday={c.isToday}
+            future={c.future}
+            selected={selected === c.fecha}
             onClick={() => setSelected((prev) => (prev === c.fecha ? null : c.fecha))}
-            aria-label={`${DOW_FULL[c.date.getDay()]} ${c.date.getDate()}`}
-            className={`flex aspect-square flex-col items-center justify-center rounded-lg border font-mono ${
-              c.painted ? "border-transparent" : c.isToday ? "relative overflow-hidden border-2 border-gold text-text" : "border-dashed border-border text-textMuted"
-            } ${c.future ? "opacity-50" : ""}`}
-            style={c.painted ? statusCellStyle(c.painted) : undefined}
-          >
-            {/* Hoy: el color de cómo va el día, bien transparente, adentro de un recuadro violeta que marca "hoy". */}
-            {c.isToday && c.status && <span aria-hidden className="absolute inset-0" style={{ background: STATUS_BG[c.status], opacity: 0.3 }} />}
-            <span className="relative text-[9px] uppercase leading-none opacity-80">{DOW[c.date.getDay()]}</span>
-            <span className="relative mt-0.5 text-[13px] font-bold leading-none">{c.date.getDate()}</span>
-          </button>
+          />
         ))}
       </div>
 
@@ -103,24 +102,20 @@ export function WeekGoalGrid({
           <div className="font-mono text-[10px] uppercase tracking-wide text-textMuted">
             {DOW_FULL[picked.date.getDay()]} {picked.date.getDate()}
           </div>
-          {picked.status ? (
-            <>
-              <div>
-                {picked.kcal.toLocaleString("es-AR")} de {picked.kcalGoal.toLocaleString("es-AR")} kcal · {picked.prot} de {proteinTarget} g de proteína
-              </div>
-              <div className="text-textMuted">{picked.isToday ? "El día sigue en curso: el color final se define cuando termina." : DAY_STATUS_LABEL[picked.status]}</div>
-            </>
+          {picked.kcalStatus && picked.proteinStatus ? (
+            <DayExplanation
+              kcalStatus={picked.kcalStatus}
+              proteinStatus={picked.proteinStatus}
+              kcal={picked.kcal}
+              kcalGoal={picked.kcalGoal}
+              protein={picked.prot}
+              proteinGoal={proteinTarget}
+              inProgress={picked.isToday}
+            />
           ) : (
             <div className="text-textMuted">{picked.future ? "Todavía no llegó." : "No cargaste nada ese día."}</div>
           )}
-      <div className="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-2">
-        {DAY_STATUS_ORDER.map((s) => (
-          <div key={s} className="flex items-center gap-1.5 text-[10px] text-textMuted">
-            <span className="inline-block h-3 w-3 shrink-0 rounded" style={isGlow(s) ? statusCellStyle(s) : { background: STATUS_BG[s] }} />
-            {DAY_STATUS_LABEL[s]}
-          </div>
-        ))}
-      </div>
+          <DayLegend />
         </div>
       )}
 
