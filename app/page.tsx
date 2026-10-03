@@ -1281,8 +1281,12 @@ export default function Home() {
                 onOpenGroupList={() => {
                   setPanel(null);
                   setActiveTab("comidas");
+                  // Si ese bloque estaba oculto con el foquito, se vuelve a mostrar (si no, parece que no hay lista).
+                  saveSettings((prev) =>
+                    (prev.comidasHidden || []).includes("compras") ? { ...prev, comidasHidden: (prev.comidasHidden || []).filter((id) => id !== "compras") } : prev
+                  );
                   // Cuando Comidas termina de dibujarse, baja hasta la lista de compras (si no, queda arriba y parece que no pasó nada).
-                  setTimeout(() => document.getElementById("lista-compras")?.scrollIntoView({ behavior: "smooth", block: "start" }), 350);
+                  setTimeout(() => document.getElementById("lista-compras")?.scrollIntoView({ behavior: "smooth", block: "start" }), 600);
                 }}
               />
             </div>
