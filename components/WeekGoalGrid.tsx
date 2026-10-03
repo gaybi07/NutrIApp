@@ -90,9 +90,6 @@ export function WeekGoalGrid({
           ) : (
             <div className="text-textMuted">{picked.future ? "Todavía no llegó." : "No cargaste nada ese día."}</div>
           )}
-        </div>
-      )}
-
       <div className="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-2">
         {(["violeta", "verde", "amarillo", "rojo", "multicolor"] as DayGoalStatus[]).map((s) => (
           <div key={s} className="flex items-center gap-1.5 text-[10px] text-textMuted">
@@ -101,6 +98,10 @@ export function WeekGoalGrid({
           </div>
         ))}
       </div>
+        </div>
+      )}
+
+      {!picked && <div className="mt-1.5 text-center font-mono text-[9px] uppercase tracking-wide text-textMuted">Tocá un día para ver el detalle</div>}
     </div>
   );
 }
