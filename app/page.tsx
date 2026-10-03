@@ -1121,7 +1121,6 @@ export default function Home() {
           inventory={inventory}
           onAddPlannedMeal={addPlannedMeal}
           onSkipMeal={skipTodayMeal}
-          onOpenMonth={isBasico ? undefined : () => setPanel("mes")}
           order={settings.comidasOrder}
           onReorder={(comidasOrder) => saveSettings({ ...settings, comidasOrder })}
           hidden={settings.comidasHidden}
