@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { DayEntry, MEAL_LABELS, MealKey } from "@/lib/types";
 import { addDays, dayGoal, dayProt, dayTotal, fmtDate, getMealItems, getTrainingSessions } from "@/lib/calculations";
 import { DAY_STATUS_LABEL, DAY_STATUS_ORDER, dayGoalStatus } from "@/lib/dayStatus";
-import { STATUS_BG, statusCellStyle } from "@/components/WeekGoalGrid";
+import { STATUS_BG, isGlow, statusCellStyle } from "@/components/WeekGoalGrid";
 import { btn } from "@/components/buttonStyles";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 
@@ -137,7 +137,7 @@ export function MonthCalendar({
               {picked.status ? (
                 <>
                   <div className="mt-1 flex items-center gap-2">
-                    <span className="inline-block h-4 w-4 shrink-0 rounded" style={picked.status === "brillante" ? statusCellStyle(picked.status) : { background: STATUS_BG[picked.status] }} />
+                    <span className="inline-block h-4 w-4 shrink-0 rounded" style={isGlow(picked.status) ? statusCellStyle(picked.status) : { background: STATUS_BG[picked.status] }} />
                     <span className="font-semibold">
                       {picked.fecha === todayFecha ? "Hoy, todavía en curso" : DAY_STATUS_LABEL[picked.status]}
                     </span>
@@ -187,7 +187,7 @@ export function MonthCalendar({
           <div className="mt-3 grid grid-cols-1 gap-1 sm:grid-cols-2">
             {DAY_STATUS_ORDER.map((s) => (
               <div key={s} className="flex items-center gap-1.5 text-[10px] text-textMuted">
-                <span className="inline-block h-3 w-3 shrink-0 rounded" style={s === "brillante" ? statusCellStyle(s) : { background: STATUS_BG[s] }} />
+                <span className="inline-block h-3 w-3 shrink-0 rounded" style={isGlow(s) ? statusCellStyle(s) : { background: STATUS_BG[s] }} />
                 {DAY_STATUS_LABEL[s]}
               </div>
             ))}
