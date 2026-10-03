@@ -36,8 +36,8 @@ export function useHouseholdExports(householdId: string | null, weekStart: strin
       setLoaded(true);
       return;
     }
-    const { data: userData } = await supabase.auth.getUser();
-    setMyId(userData.user?.id ?? null);
+    const { data: sessionData } = await supabase.auth.getSession();
+    setMyId(sessionData.session?.user?.id ?? null);
     const { data, error: fetchError } = await supabase
       .from("household_week_selections")
       .select("user_id, nombre, items, exported_at")
@@ -60,9 +60,15 @@ export function useHouseholdExports(householdId: string | null, weekStart: strin
     const interval = setInterval(refetch, 30000);
     const onFocus = () => refetch();
     window.addEventListener("focus", onFocus);
+    // En el celular, volver a la app no siempre dispara "focus": se actualiza también al volver a verse la pantalla.
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refetch();
+    };
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       clearInterval(interval);
       window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [refetch]);
 

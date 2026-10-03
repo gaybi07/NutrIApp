@@ -251,7 +251,7 @@ export function ShoppingListCard({
               onClick={async () => {
                 await exports.exportMine(myExport);
               }}
-              className={`${btn(exports.mine && !myExportStale ? "neutral" : "secondary", "md", true)} ${which === "next" ? "" : "col-span-2"}`}
+              className={`${btn(exports.mine && !myExportStale ? "neutral" : "primary", "md", true)} ${which === "next" ? "" : "col-span-2"}`}
             >
               {exports.busy ? "Exportando..." : exports.mine ? (myExportStale ? "Actualizar lo exportado" : "Exportado a la cena compartida ✓") : "Exportar a la cena compartida"}
             </button>
@@ -326,14 +326,20 @@ export function ShoppingListCard({
               </div>
             )}
             {exports.error && <div className="mt-1 text-[11px] text-rust">No se pudo exportar: {exports.error}. Si dice que la sesión venció, cerrá sesión y volvé a entrar.</div>}
-            <button
-              type="button"
-              disabled={!allExported || included.length === 0}
-              onClick={() => markBuilt(dates[0], selectionKey)}
-              className={`${btn("primary", "md", true)} mt-2`}
-            >
-              {built ? "Actualizar lista compartida" : allExported ? "Armar lista compartida" : "Esperando a que exporten todos"}
-            </button>
+            {/* Cuando exportaron todos la lista se arma y se actualiza sola: no hace falta tocar nada. Si alguien cambia su
+                planificación, vuelve a exportar ("Actualizar lo exportado") y la lista se recalcula sola. */}
+            {!allExported ? (
+              <div className="mt-2 rounded-lg border border-dashed border-border px-2.5 py-2 text-center text-[12px] text-textMuted">
+                Esperando a que exporten todos para armar la lista compartida
+              </div>
+            ) : (
+              <div className="mt-2 rounded-lg border border-sage/40 bg-sage/10 px-2.5 py-2 text-center text-[12px] text-sage">
+                ✓ Lista compartida al día (se actualiza sola)
+              </div>
+            )}
+            {myExportStale && (
+              <div className="mt-1.5 text-center text-[11px] text-gold">Cambiaste tu planificación: tocá &quot;Actualizar lo exportado&quot; para que la lista del grupo lo tenga en cuenta.</div>
+            )}
           </div>
         )}
       </div>

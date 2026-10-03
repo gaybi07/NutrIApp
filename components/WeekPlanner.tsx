@@ -623,7 +623,7 @@ export function WeekPlanner({
             onClick={async () => {
               await exportsHook.exportMine(myExport);
             }}
-            className={`${btn(exportsHook.mine && !myExportStale ? "neutral" : "secondary", "md", true)} mt-2`}
+            className={`${btn(exportsHook.mine && !myExportStale ? "neutral" : "primary", "md", true)} mt-2`}
           >
             {exportsHook.busy ? "Exportando..." : exportsHook.mine ? (myExportStale ? "Actualizar lo exportado" : "Exportado a la cena compartida ✓") : "Exportar a la cena compartida"}
           </button>
