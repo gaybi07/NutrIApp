@@ -254,7 +254,8 @@ export type TrainingSchedule = Partial<Record<Weekday, string>>; // weekday -> R
 
 /** Estado de la postulación para ser entrenador certificado dentro de la app --
  * "ninguno" es el implícito (todavía no se postuló, no hay fila en la tabla). */
-export type TrainerStatus = "pendiente" | "aprobado" | "rechazado";
+/** "preaprobado" = título verificado, falta activar la cuenta profesional (pago o acceso de prueba dado por el admin). */
+export type TrainerStatus = "pendiente" | "preaprobado" | "aprobado" | "rechazado";
 
 /** Nivel de suscripción del entrenador (por cupo de alumnos, no por
  * funciones -- un entrenador gratis ve exactamente el mismo panel completo,

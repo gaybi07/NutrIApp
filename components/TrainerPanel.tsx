@@ -1,5 +1,6 @@
 "use client";
 
+import { PreapprovedCard } from "@/components/PreapprovedCard";
 import { ReactNode, useRef, useState } from "react";
 import { Check, ChevronRight, Plus, TriangleAlert } from "lucide-react";
 import { useTrainerApplication, useTrainerAdmin } from "@/lib/useTrainerApplication";
@@ -16,6 +17,7 @@ import { useMyReports } from "@/lib/useStudentReports";
 
 const STATUS_STYLE: Record<TrainerStatus, { label: string; color: string }> = {
   pendiente: { label: "Pendiente de revisión", color: "text-gold" },
+  preaprobado: { label: "Preaprobado: falta activar tu cuenta", color: "text-gold" },
   aprobado: { label: "Aprobado", color: "text-sage" },
   rechazado: { label: "Rechazado", color: "text-rust" },
 };
@@ -41,7 +43,7 @@ export function AdminRow({
 }: {
   app: TrainerApplication;
   busy: boolean;
-  onReview: (decision: "aprobado" | "rechazado", note: string) => void;
+  onReview: (decision: "preaprobado" | "aprobado" | "rechazado", note: string) => void;
   onView: () => void;
 }) {
   const [note, setNote] = useState("");
@@ -68,7 +70,7 @@ export function AdminRow({
             onChange={(event) => setNote(event.target.value)}
             className="mb-1.5 w-full"
           />
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-3 gap-1.5">
             <button
               type="button"
               disabled={busy}
@@ -80,12 +82,41 @@ export function AdminRow({
             <button
               type="button"
               disabled={busy}
+              onClick={() => onReview("preaprobado", note)}
+              className="rounded-lg border border-gold/50 bg-gold/10 px-2 py-1.5 font-mono text-[10px] uppercase tracking-wide text-gold disabled:opacity-50"
+            >
+              Preaprobar
+            </button>
+            <button
+              type="button"
+              disabled={busy}
               onClick={() => onReview("aprobado", note)}
               className="rounded-lg border border-sage/50 bg-sage/10 px-2 py-1.5 font-mono text-[10px] uppercase tracking-wide text-sage disabled:opacity-50"
             >
-              Aprobar
+              Activar ya
             </button>
           </div>
+          <div className="mt-1 text-[10px] text-textMuted">Preaprobar = título verificado, falta el pago. Activar ya = acceso de prueba sin pago.</div>
+        </div>
+      )}
+      {app.status === "preaprobado" && (
+        <div className="mt-2 grid grid-cols-2 gap-1.5">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onReview("rechazado", note)}
+            className="rounded-lg border border-rust/50 px-2 py-1.5 font-mono text-[10px] uppercase tracking-wide text-rust disabled:opacity-50"
+          >
+            Rechazar
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onReview("aprobado", note)}
+            className="rounded-lg border border-sage/50 bg-sage/10 px-2 py-1.5 font-mono text-[10px] uppercase tracking-wide text-sage disabled:opacity-50"
+          >
+            Activar cuenta
+          </button>
         </div>
       )}
     </div>
@@ -785,6 +816,11 @@ export function TrainerPanel({
                 {own.application.reviewNote && (
                   <div className="mt-1.5 text-[11px] text-textMuted">Nota del admin: {own.application.reviewNote}</div>
                 )}
+              </div>
+            )}
+            {own.application?.status === "preaprobado" && (
+              <div className="mb-3">
+                <PreapprovedCard quien="Entrenador" />
               </div>
             )}
             {(!own.application || own.application.status === "rechazado") && (

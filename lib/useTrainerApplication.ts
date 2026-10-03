@@ -176,7 +176,7 @@ export function useTrainerAdmin(authenticated: boolean, userEmail: string | null
   }, [isAdmin, refetch]);
 
   const review = useCallback(
-    async (id: string, decision: "aprobado" | "rechazado", note: string) => {
+    async (id: string, decision: "preaprobado" | "aprobado" | "rechazado", note: string) => {
       if (!supabase) return;
       setBusyId(id);
       const { error } = await supabase

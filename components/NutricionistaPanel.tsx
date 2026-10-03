@@ -10,9 +10,11 @@ import { TrainerLinkRequest, TrainerStatus, TrainerStudent } from "@/lib/types";
 import { NutritionPlanBuilder } from "@/components/NutritionPlanBuilder";
 import { PatientDetailScreen } from "@/components/PatientDetailScreen";
 import { AdminRow } from "@/components/TrainerPanel";
+import { PreapprovedCard } from "@/components/PreapprovedCard";
 
 const STATUS_STYLE: Record<TrainerStatus, { label: string; color: string }> = {
   pendiente: { label: "Pendiente de revisión", color: "text-gold" },
+  preaprobado: { label: "Preaprobado: falta activar tu cuenta", color: "text-gold" },
   aprobado: { label: "Aprobado", color: "text-sage" },
   rechazado: { label: "Rechazado", color: "text-rust" },
 };
@@ -430,6 +432,11 @@ export function NutricionistaPanel({ authenticated, userEmail }: { authenticated
                 {own.application.reviewNote && (
                   <div className="mt-1.5 text-[11px] text-textMuted">Nota del admin: {own.application.reviewNote}</div>
                 )}
+              </div>
+            )}
+            {own.application?.status === "preaprobado" && (
+              <div className="mb-3">
+                <PreapprovedCard quien="Nutricionista" />
               </div>
             )}
             {(!own.application || own.application.status === "rechazado") && (
