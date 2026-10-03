@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { DayEntry } from "@/lib/types";
 import { dayGoal, dayProt, dayTotal } from "@/lib/calculations";
-import { DAY_STATUS_LABEL, DayGoalStatus, dayGoalStatus } from "@/lib/dayStatus";
+import { DAY_STATUS_LABEL, DAY_STATUS_ORDER, DayGoalStatus, dayGoalStatus } from "@/lib/dayStatus";
 
 const DOW = ["D", "L", "M", "M", "J", "V", "S"];
 const DOW_FULL = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
@@ -95,7 +95,7 @@ export function WeekGoalGrid({
             <div className="text-textMuted">{picked.future ? "Todavía no llegó." : "No cargaste nada ese día."}</div>
           )}
       <div className="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-2">
-        {(["violeta", "verde", "amarillo", "rojo", "multicolor"] as DayGoalStatus[]).map((s) => (
+        {DAY_STATUS_ORDER.map((s) => (
           <div key={s} className="flex items-center gap-1.5 text-[10px] text-textMuted">
             <span className="inline-block h-3 w-3 shrink-0 rounded" style={{ background: STATUS_BG[s] }} />
             {DAY_STATUS_LABEL[s]}
