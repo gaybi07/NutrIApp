@@ -128,19 +128,7 @@ export default function Home() {
   const sharedWeekPlan = useSharedWeekPlan(household.household?.id ?? null);
   const weekPlan = settings.weekPlan || {};
   const saveWeekPlan = useCallback((next: typeof weekPlan) => saveSettings({ ...settings, weekPlan: next }), [settings, saveSettings]);
-  useEffect(() => {
-    const householdId = household.household?.id;
-    if (!householdId || !sharedWeekPlan.loaded || Object.keys(settings.weekPlan || {}).length > 0) return;
-    if (Object.keys(sharedWeekPlan.weekPlan).length === 0) return;
-    const flag = `registro:weekplan-seeded:${householdId}`;
-    try {
-      if (localStorage.getItem(flag)) return;
-      localStorage.setItem(flag, "1");
-    } catch {
-      return;
-    }
-    saveSettings({ ...settings, weekPlan: sharedWeekPlan.weekPlan });
-  }, [household.household?.id, sharedWeekPlan.loaded, sharedWeekPlan.weekPlan, settings, saveSettings]);
+  // (Se quitó la copia automática del plan compartido al plan propio: guardaba los ajustes por defecto encima de los reales.)
 
   const productMemory = useProductMemory();
   const [weekOffset, setWeekOffset] = useState(0);
