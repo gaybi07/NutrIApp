@@ -137,7 +137,9 @@ export function ShoppingListCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupMode, chosen, exports.rows]);
   const selectionKey = useMemo(() => `${which}|` + included.map((c) => `${c.key}:${c.title}`).join("|"), [which, included]);
-  const built = builtFor !== null || (chosen.length > 0 && rememberedWeeks.includes(dates[0]));
+  // En el grupo la lista sale de lo exportado: cuando exportaron todos queda armada sola (sin tocar "Armar lista").
+  const hasListSource = groupMode ? included.length > 0 : chosen.length > 0;
+  const built = builtFor !== null || (chosen.length > 0 && rememberedWeeks.includes(dates[0])) || (groupMode && allExported && included.length > 0);
   const [showFull, setShowFull] = useState(false);
   useEscapeKey(() => setShowFull(false), showFull);
   const stale = builtFor !== null && builtFor !== selectionKey;
@@ -336,13 +338,13 @@ export function ShoppingListCard({
         )}
       </div>
 
-      {chosen.length === 0 && (
+      {!hasListSource && (
         <div className="mt-2 rounded-lg border border-dashed border-border p-3 text-[12px] text-textMuted">
           Todavía no elegiste comidas para {which === "next" ? "la semana que viene" : "esta semana"}. Tocá &quot;Elegir mis comidas&quot; y después armá la lista.
         </div>
       )}
 
-      {built && chosen.length > 0 && (
+      {built && hasListSource && (
         <div className="mt-3">
           {stale && (
             <div className="mb-2 rounded-lg border border-gold/40 bg-gold/10 px-2.5 py-1.5 text-[12px] text-text">
