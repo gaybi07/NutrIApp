@@ -37,6 +37,7 @@ import { AuthPanel } from "@/components/AuthPanel";
 import { DataImport } from "@/components/DataImport";
 import { MealMemoryImport } from "@/components/MealMemoryImport";
 import { TodayCard } from "@/components/TodayCard";
+import { WeekGoalGrid } from "@/components/WeekGoalGrid";
 import { CasaCuentas } from "@/components/CasaCuentas";
 import { SKIPPED_MEAL_MARK } from "@/lib/planCompliance";
 import { PurchaseHistoryCard } from "@/components/PurchaseHistoryCard";
@@ -950,6 +951,17 @@ export default function Home() {
                           summary={summary}
                           goal={summary.avgGoal || goalKcal}
                           weight={settings.weeklyWeights?.[fmtDate(monday)]}
+                        />
+                        <div className="my-3 border-t border-dashed border-border" />
+                        <WeekGoalGrid
+                          weekDates={weekDates}
+                          weekDays={weekDays}
+                          todayFecha={fmtDate(new Date())}
+                          goal={goalKcal}
+                          tdeeFallback={settings.tdeeFallback}
+                          pesoKg={currentWeightKg}
+                          fixedGoal={goalFixed}
+                          proteinTarget={proteinTargetG}
                         />
                         <div className="my-3 border-t border-dashed border-border" />
                         <WeeklyChart
