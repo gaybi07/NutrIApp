@@ -239,6 +239,7 @@ export function WeekPlanner({
 
   const myPlan = useMyNutritionPlan(authenticated, hasNutricionistaLink, nextWeekDates[0]);
   const selection = usePlanSelection(authenticated, hasNutricionistaLink, nextWeekDates[0]);
+  const [confirmReplan, setConfirmReplan] = useState(false);
   const [sendStatus, setSendStatus] = useState("");
 
   // Opciones del Plan Nutricional del paciente, por fecha de la semana que
@@ -507,6 +508,40 @@ export function WeekPlanner({
             Completar con las opciones A
           </button>
           {importStatus && <div className="mt-1 normal-case tracking-normal text-textMuted">{importStatus}</div>}
+        </div>
+      )}
+
+      {totalPlannedCount > 0 && (
+        <div className="mb-2">
+          {!confirmReplan ? (
+            <button type="button" onClick={() => setConfirmReplan(true)} className={btn("danger", "sm", true)}>
+              Replanificar
+            </button>
+          ) : (
+            <div className="rounded-xl border border-rust/50 bg-rust/10 p-2.5">
+              <div className="text-[12px] text-text">
+                ¿Seguro? Se borran todas las comidas elegidas de la semana que viene para que vuelvas a elegir de cero. Lo que ya exportaste al grupo no se
+                borra hasta que vuelvas a exportar.
+              </div>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => setConfirmReplan(false)} className={btn("neutral", "sm", true)}>
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = { ...weekPlan };
+                    for (const fecha of nextWeekDates) delete next[fecha];
+                    onSave(next);
+                    setConfirmReplan(false);
+                  }}
+                  className={btn("dangerSolid", "sm", true)}
+                >
+                  Sí, replanificar
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
