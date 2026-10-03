@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import { GoalProgressInfo } from "@/lib/calculations";
 import { Collapsible } from "@/components/Collapsible";
 import { SECTION_HELP } from "@/lib/helpText";
@@ -17,7 +18,8 @@ function fmtDateAr(iso: string) {
   return `${d.getDate()}/${d.getMonth() + 1}`;
 }
 
-export function GoalProgress({ progress, openOnDesktop, setBy, extraLines }: { progress: GoalProgressInfo; openOnDesktop?: boolean; setBy?: string; extraLines?: string[] }) {
+export function GoalProgress({ progress, openOnDesktop, setBy, extraLines, children }: { progress: GoalProgressInfo; openOnDesktop?: boolean; setBy?: string; extraLines?: string[]; children?: ReactNode }) {
+  const extra = children ? <div className="mt-3">{children}</div> : null;
   const setByLine = setBy ? (
     <div className="mb-2 rounded-lg border border-gold/40 bg-gold/5 px-2.5 py-1.5">
       <div className="font-mono text-[9px] uppercase tracking-wide text-gold">{setBy}</div>
@@ -51,6 +53,7 @@ export function GoalProgress({ progress, openOnDesktop, setBy, extraLines }: { p
         <div className="mt-2 text-center text-[12px] text-textMuted">
           Sin meta de peso: la proteína alta sostiene el músculo mientras recomponés. Tu meta se mide con el objetivo corporal (cintura o % de grasa), acá abajo.
         </div>
+        {extra}
       </Collapsible>
     );
   }
@@ -133,6 +136,7 @@ export function GoalProgress({ progress, openOnDesktop, setBy, extraLines }: { p
           <div className={`mt-2 text-center text-[12px] ${colorMensaje}`}>{mensaje}</div>
         </>
       )}
+      {extra}
     </Collapsible>
   );
 }

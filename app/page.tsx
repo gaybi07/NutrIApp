@@ -37,6 +37,7 @@ import { AuthPanel } from "@/components/AuthPanel";
 import { DataImport } from "@/components/DataImport";
 import { MealMemoryImport } from "@/components/MealMemoryImport";
 import { TodayCard } from "@/components/TodayCard";
+import { btn } from "@/components/buttonStyles";
 import { WeekGoalGrid } from "@/components/WeekGoalGrid";
 import { CasaCuentas } from "@/components/CasaCuentas";
 import { SKIPPED_MEAL_MARK } from "@/lib/planCompliance";
@@ -449,6 +450,14 @@ export default function Home() {
     const g = settings.calculatorProfile?.metaCorporal;
     return g ? computeBodyGoalProgress(g, bodyMeasurements.items, fmtDate(new Date())) : null;
   }, [settings.calculatorProfile, bodyMeasurements.items]);
+  // Avisos de "toca registrar": el peso de esta semana, y las medidas si ya hay un objetivo corporal y pasaron 21 días.
+  const weightDue = Boolean(settings.calculatorProfile) && settings.weeklyWeights?.[thisWeekStart] == null;
+  const measureDue = (() => {
+    if (!hasNutricionistaLink || !settings.calculatorProfile?.metaCorporal) return false;
+    const last = bodyMeasurements.items.map((m) => m.fecha).sort().pop();
+    if (!last) return true;
+    return (new Date().getTime() - new Date(`${last}T00:00:00`).getTime()) / 86400000 >= 21;
+  })();
   const achievements = useMemo(
     () =>
       computeAchievements({
@@ -824,6 +833,7 @@ export default function Home() {
                   // propio tamaño según haya o no peso cargado esta semana.
                   return (
                     <SortableSection key="peso" id="peso" onHide={() => hideInicioBlock("peso")} dragDisabledOnDesktop>
+                      <div id="peso-semana" />
                       <WeeklyWeight
                         weekKey={fmtDate(monday)}
                         weights={settings.weeklyWeights || {}}
@@ -864,6 +874,27 @@ export default function Home() {
                 if (blockId === "objetivo") {
                   return (
                     <SortableSection key="objetivo" id="objetivo" onHide={() => hideInicioBlock("objetivo")} dragDisabledOnDesktop>
+                      {(weightDue || measureDue) && (
+                        <div className="mb-2 rounded-xl border border-yellow-500/60 bg-yellow-400/15 p-3">
+                          <div className="font-mono text-[9px] uppercase tracking-[0.15em] text-yellow-500">Toca registrar</div>
+                          <div className="mt-1 flex flex-wrap gap-2">
+                            {weightDue && (
+                              <button
+                                type="button"
+                                onClick={() => document.getElementById("peso-semana")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+                                className={btn("secondary", "sm")}
+                              >
+                                Cargar mi peso de esta semana
+                              </button>
+                            )}
+                            {measureDue && (
+                              <button type="button" onClick={() => setPanel("medidas")} className={btn("secondary", "sm")}>
+                                Cargar mis medidas
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
                       {linkPending && (
                         <button
                           type="button"
@@ -898,7 +929,30 @@ export default function Home() {
                         </div>
                       )}
                       {goalProgress && <GoalProgress progress={goalProgress} openOnDesktop setBy={nutritionGoal ? (trainingGoal ? "Objetivo validado por tus profesionales" : "Objetivo validado por tu Nutricionista") : trainingGoal ? "Objetivo validado por tu Entrenador" : undefined}
-                        extraLines={trainingGoal ? [`Entrenador: ${trainingGoal.sesionesSemana} sesiones por semana · ~${trainingGoal.volumenPlanificado.toLocaleString("es-AR")} kg de volumen`] : undefined} />}
+                        extraLines={trainingGoal ? [`Entrenador: ${trainingGoal.sesionesSemana} sesiones por semana · ~${trainingGoal.volumenPlanificado.toLocaleString("es-AR")} kg de volumen`] : undefined}>
+                        {settings.calculatorProfile && hasNutricionistaLink ? (
+                          <BodyGoalCard
+                            goal={settings.calculatorProfile.metaCorporal}
+                            measurements={bodyMeasurements.items}
+                            dailyDeficit={summary.avgDeficit > 0 ? summary.avgDeficit : Math.max(0, settings.tdeeFallback - goalKcal)}
+                            sexo={settings.calculatorProfile.sexo}
+                            onSaveGoal={(metaCorporal) => saveSettings((prev) => (prev.calculatorProfile ? { ...prev, calculatorProfile: { ...prev.calculatorProfile, metaCorporal } } : prev))}
+                            onSaveMeasurement={bodyMeasurements.save}
+                          />
+                        ) : null}
+                      </GoalProgress>}
+                      {!goalProgress && settings.calculatorProfile && hasNutricionistaLink && (
+                        <div className="mt-3">
+                          <BodyGoalCard
+                            goal={settings.calculatorProfile.metaCorporal}
+                            measurements={bodyMeasurements.items}
+                            dailyDeficit={summary.avgDeficit > 0 ? summary.avgDeficit : Math.max(0, settings.tdeeFallback - goalKcal)}
+                            sexo={settings.calculatorProfile.sexo}
+                            onSaveGoal={(metaCorporal) => saveSettings((prev) => (prev.calculatorProfile ? { ...prev, calculatorProfile: { ...prev.calculatorProfile, metaCorporal } } : prev))}
+                            onSaveMeasurement={bodyMeasurements.save}
+                          />
+                        </div>
+                      )}
                       {nutritionGoal && !settings.goalStyle && !goalStyleLocked && !ownDeficitMethod && (
                         <button
                           type="button"
@@ -915,18 +969,6 @@ export default function Home() {
                         </div>
                       )}
                       {/* Todo lo de objetivos y logros vive acá, en una sola sección. */}
-                      {settings.calculatorProfile && hasNutricionistaLink && (
-                        <div className="mt-3">
-                          <BodyGoalCard
-                            goal={settings.calculatorProfile.metaCorporal}
-                            measurements={bodyMeasurements.items}
-                            dailyDeficit={summary.avgDeficit > 0 ? summary.avgDeficit : Math.max(0, settings.tdeeFallback - goalKcal)}
-                            sexo={settings.calculatorProfile.sexo}
-                            onSaveGoal={(metaCorporal) => saveSettings((prev) => (prev.calculatorProfile ? { ...prev, calculatorProfile: { ...prev.calculatorProfile, metaCorporal } } : prev))}
-                            onSaveMeasurement={bodyMeasurements.save}
-                          />
-                        </div>
-                      )}
                       <div className="mt-3">
                         <AchievementsCard achievements={achievements} claimed={achievementClaims.claimed} totalPoints={myPoints.total} />
                       </div>

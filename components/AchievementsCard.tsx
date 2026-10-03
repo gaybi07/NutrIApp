@@ -18,6 +18,7 @@ const TABS: { id: AchievementPeriod; label: string; vacio: string }[] = [
 export function AchievementsCard({ achievements, claimed, totalPoints }: { achievements: Achievement[]; claimed: Set<string>; totalPoints: number }) {
   const [tab, setTab] = useState<AchievementPeriod>("dia");
   const [openDone, setOpenDone] = useState(false);
+  const [open, setOpen] = useState(false);
   const list = achievements.filter((a) => a.periodo === tab);
   const isDone = (a: Achievement) => a.done || claimed.has(`${a.kind}|${a.clave}`);
   const pending = list.filter((a) => !isDone(a));
@@ -27,14 +28,21 @@ export function AchievementsCard({ achievements, claimed, totalPoints }: { achie
 
   return (
     <section className="rounded-2xl border border-border bg-surface/70 p-3">
-      <div className="flex items-center justify-between gap-2">
+      <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} className="flex w-full items-center justify-between gap-2 text-left">
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Logros</div>
           <div className="font-display text-xl text-text">Sumá puntos</div>
         </div>
-        <span className="shrink-0 rounded-full border border-gold/40 bg-gold/10 px-2.5 py-1 font-mono text-[11px] font-bold text-gold">⭐ {totalPoints}</span>
-      </div>
+        <span className="flex shrink-0 items-center gap-2">
+          <span className="rounded-full border border-gold/40 bg-gold/10 px-2.5 py-1 font-mono text-[11px] font-bold text-gold">⭐ {totalPoints}</span>
+          <span className="font-mono text-[11px] text-textMuted" style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>
+            ▾
+          </span>
+        </span>
+      </button>
 
+      {open && (
+      <>
       <div className="mt-2 flex flex-wrap gap-1.5">
         {TABS.map((t) => (
           <button key={t.id} type="button" onClick={() => setTab(t.id)} className={chip(tab === t.id)}>
@@ -72,6 +80,8 @@ export function AchievementsCard({ achievements, claimed, totalPoints }: { achie
       <button type="button" onClick={() => setOpenDone(true)} className={`${btn("secondary", "sm", true)} mt-2`}>
         Ver logros alcanzados ({doneAll.length})
       </button>
+      </>
+      )}
 
       {openDone && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setOpenDone(false)}>

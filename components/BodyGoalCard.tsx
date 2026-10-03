@@ -91,10 +91,6 @@ export function BodyGoalCard({
     setMode("none");
   };
 
-  const lastAny = [...measurements].sort((a, b) => (a.fecha < b.fecha ? 1 : -1))[0];
-  const daysSinceAny = lastAny ? Math.round((new Date(`${today}T00:00:00`).getTime() - new Date(`${lastAny.fecha}T00:00:00`).getTime()) / 86400000) : null;
-  const dueForMeasure = daysSinceAny == null || daysSinceAny >= MEASURE_EVERY_DAYS;
-
   return (
     <section className="rounded-2xl border border-border bg-surface/70 p-3">
       <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Objetivo corporal</div>
@@ -142,12 +138,6 @@ export function BodyGoalCard({
             </>
           )}
         </>
-      )}
-
-      {dueForMeasure && mode === "none" && (goal || !coreMissing) && (
-        <div className="mt-2 rounded-lg border border-yellow-500/60 bg-yellow-400/15 px-2.5 py-1.5 text-[12px] text-text">
-          {daysSinceAny == null ? "Todavía no cargaste ninguna medición." : `Hace ${daysSinceAny} días que no te medís (se piden cada ${MEASURE_EVERY_DAYS}).`} Medite esta semana.
-        </div>
       )}
 
       {mode === "estimate" && (
