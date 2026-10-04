@@ -7,25 +7,23 @@ import { ProteinSymbol } from "@/components/DayCell";
 const NAME = { violeta: "Violeta", verde: "Verde", amarillo: "Amarillo", rojo: "Rojo" } as const;
 
 /**
- * Estandarte de un mes: un patrón con una barra por cada día cerrado. El FONDO de cada barra es cómo salió en kilocalorías y
- * la FRANJA DE ARRIBA cómo salió en proteína, separadas por una línea blanca (igual que los cuadraditos de cada día). Arriba
- * de todo se resume el mes entero en los dos colores.
+ * Estandarte de un mes, simple: TODO el fondo es un solo color, el promedio de las kilocalorías del mes, y por el medio pasa
+ * una línea ondulada con el promedio de la proteína, con los bordes blancos. Nada más.
  */
 export function MonthBanner({ standard }: { standard: MonthStandard }) {
-  const { daysDetail, kcalStatus, proteinStatus, kcalOk, proteinOk, counted } = standard;
+  const { kcalStatus, proteinStatus, kcalOk, proteinOk, counted } = standard;
+  const wave = "M0 32 Q 18.75 8 37.5 32 T 75 32 T 112.5 32 T 150 32 T 187.5 32 T 225 32 T 262.5 32 T 300 32";
   return (
     <div>
-      <div className="flex h-16 gap-[2px] overflow-hidden rounded-lg bg-white p-[2px]">
-        {daysDetail.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center rounded-md bg-bg/60 text-[11px] text-textMuted">Sin días cerrados todavía</div>
-        ) : (
-          daysDetail.map((d) => (
-            <div key={d.fecha} className="flex min-w-[3px] flex-1 flex-col gap-[2px]" title={d.fecha}>
-              <div className="h-[34%] rounded-t-sm" style={{ background: STATUS_BG[d.protein] }} />
-              <div className="flex-1 rounded-b-sm" style={{ background: STATUS_BG[d.kcal] }} />
-            </div>
-          ))
-        )}
+      <div className="h-16 overflow-hidden rounded-lg" style={{ background: kcalStatus ? STATUS_BG[kcalStatus] : "rgb(var(--color-bg) / 0.6)", border: kcalStatus ? undefined : "1px dashed rgb(var(--color-text-muted))" }}>
+        <svg viewBox="0 0 300 64" preserveAspectRatio="none" className="h-full w-full" aria-hidden>
+          {proteinStatus && (
+            <>
+              <path d={wave} fill="none" stroke="#ffffff" strokeWidth={13} strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+              <path d={wave} fill="none" style={{ stroke: STATUS_BG[proteinStatus] }} strokeWidth={7} strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+            </>
+          )}
+        </svg>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2 text-[12px]">
         <div className="flex items-center gap-2">
