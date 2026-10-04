@@ -39,6 +39,14 @@ const EMPTY_PRO: ProfessionalProfileData = { titulo: "", dedicacion: "", bio: ""
 export function useMyProfiles(authenticated: boolean) {
   const [personal, setPersonal] = useState<PersonalProfile>(EMPTY_PERSONAL);
   const [pro, setPro] = useState<ProfessionalProfileData>(EMPTY_PRO);
+  const [bannerPattern, setBannerPatternState] = useState<"onda" | "triangulos" | "dobles" | "cruz">(() => {
+    try {
+      const v = localStorage.getItem("registro:bannerPattern");
+      return v === "triangulos" || v === "dobles" || v === "cruz" ? v : "onda";
+    } catch {
+      return "onda";
+    }
+  });
 
   const refetch = useCallback(async () => {
     if (!supabase) return;
@@ -50,6 +58,10 @@ export function useMyProfiles(authenticated: boolean) {
       supabase.from("professional_profiles").select("titulo, dedicacion, bio, logros, whatsapp, mostrar_whatsapp").eq("user_id", userId).maybeSingle(),
     ]);
     if (p.data) setPersonal({ nombre: p.data.nombre ?? "", alias: p.data.alias ?? "" });
+    // El estilo del estandarte vive en una columna aparte: si todavía no existe (falta la migración) se ignora el error.
+    const bp = await supabase.from("user_profiles").select("banner_pattern").eq("user_id", userId).maybeSingle();
+    const saved = (bp.data as { banner_pattern?: string } | null)?.banner_pattern;
+    if (saved === "onda" || saved === "triangulos" || saved === "dobles" || saved === "cruz") setBannerPatternState(saved);
     if (q.data)
       setPro({
         titulo: q.data.titulo ?? "",
@@ -110,7 +122,17 @@ export function useMyProfiles(authenticated: boolean) {
     [refetch]
   );
 
-  return { personal, pro, savePersonal, savePro, refetch };
+  const saveBannerPattern = useCallback(async (value: "onda" | "triangulos" | "dobles" | "cruz") => {
+    setBannerPatternState(value);
+    try {
+      localStorage.setItem("registro:bannerPattern", value);
+    } catch {}
+    if (!supabase) return;
+    const { data: auth } = await supabase.auth.getUser();
+    if (auth.user?.id) await supabase.from("user_profiles").upsert({ user_id: auth.user.id, banner_pattern: value });
+  }, []);
+
+  return { personal, pro, bannerPattern, saveBannerPattern, savePersonal, savePro, refetch };
 }
 
 /** Perfil de un profesional (vinculado conmigo, o el mío). Devuelve null si no hay permiso o falta la migración. */

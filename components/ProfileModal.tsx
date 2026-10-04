@@ -7,7 +7,8 @@ import { PersonalProfile, ProfessionalProfileData, ProfessionalProfileView, fetc
 import { Avatar, ProfessionalLinkedCard, ProfessionalShortCard } from "@/components/ProfileCards";
 import { btn, chip } from "@/components/buttonStyles";
 import { MonthStandard } from "@/lib/monthStandard";
-import { MonthBanner } from "@/components/MonthBanner";
+import { StandardSection } from "@/components/StandardSection";
+import type { BannerPattern } from "@/components/MonthBanner";
 import { STATUS_BG, isGlow, statusCellStyle } from "@/components/WeekGoalGrid";
 
 const PLAN_LABEL: Record<ClientPlan, string> = { basico: "Básico", premium: "Premium", autoentreno: "Autoentreno", premium_plus: "Premium+" };
@@ -25,6 +26,8 @@ export interface ProfileModalProps {
   achievementsDone: number;
   /** Estandarte: el color de cada mes reciente (el actual primero). */
   standards?: MonthStandard[];
+  bannerPattern?: BannerPattern;
+  onBannerPattern?: (pattern: BannerPattern) => void;
   /** Solo si es profesional aprobado: aparece la pestaña "Profesional". */
   isProfessional: boolean;
   pro: ProfessionalProfileData;
@@ -40,7 +43,7 @@ const Field = ({ label, children }: { label: string; children: React.ReactNode }
 );
 
 export function ProfileModal(props: ProfileModalProps) {
-  const { email, personal, savePersonal, plan, modo, sexo, objectiveNames, points, achievementsDone, standards, isProfessional, pro, savePro, onClose } = props;
+  const { email, personal, savePersonal, plan, modo, sexo, objectiveNames, points, achievementsDone, standards, isProfessional, pro, savePro, onClose, bannerPattern, onBannerPattern } = props;
   const [tab, setTab] = useState<"personal" | "profesional">("personal");
   const initials = initialsOf(personal.nombre, personal.alias, email);
 
@@ -85,6 +88,8 @@ export function ProfileModal(props: ProfileModalProps) {
             points={points}
             achievementsDone={achievementsDone}
             standards={standards}
+            bannerPattern={bannerPattern}
+            onBannerPattern={onBannerPattern}
           />
         ) : (
           <ProfessionalTab personal={personal} pro={pro} savePro={savePro} initials={initials} />
@@ -104,7 +109,9 @@ function PersonalTab({
   points,
   achievementsDone,
   standards,
-}: Pick<ProfileModalProps, "personal" | "savePersonal" | "plan" | "modo" | "sexo" | "objectiveNames" | "points" | "achievementsDone" | "standards">) {
+  bannerPattern,
+  onBannerPattern,
+}: Pick<ProfileModalProps, "personal" | "savePersonal" | "plan" | "modo" | "sexo" | "objectiveNames" | "points" | "achievementsDone" | "standards" | "bannerPattern" | "onBannerPattern">) {
   const [nombre, setNombre] = useState(personal.nombre);
   const [alias, setAlias] = useState(personal.alias);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
@@ -172,43 +179,7 @@ function PersonalTab({
         )}
       </div>
 
-      {standards && standards.length > 0 && (() => {
-        const MONTH_NAMES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
-        const nameOf = (ym: string) => MONTH_NAMES[Number(ym.slice(5)) - 1];
-        const current = standards[0];
-        // El estandarte muestra el mes en curso si ya tiene al menos 7 días cerrados; si no, el último mes que sí tiene color.
-        const main = current.status ? current : standards.find((m) => m.status) ?? current;
-        const isCurrent = main.month === current.month;
-        const style = (m: MonthStandard) =>
-          m.status ? { background: STATUS_BG[m.status], color: m.status === "verde" ? "#0f3d2d" : m.status === "amarillo" ? "#4a2f00" : "#ffffff" } : { border: "1px dashed rgb(var(--color-text-muted))" };
-        return (
-          <div className="rounded-xl border border-border bg-bg/40 p-3">
-            <div className="font-mono text-[9px] uppercase tracking-wide text-gold">Estandarte</div>
-            <div className="mt-1.5 flex items-baseline justify-between gap-2">
-              <span className="font-display text-lg capitalize">{nameOf(main.month)}</span>
-              <span className="font-mono text-[10px] uppercase tracking-wide text-textMuted">{main.counted} días cerrados</span>
-            </div>
-            <div className="mt-1.5">
-              <MonthBanner standard={main} />
-            </div>
-            {!isCurrent && (
-              <div className="mt-1.5 text-[11px] text-textMuted">
-                {nameOf(current.month).replace(/^./, (c) => c.toUpperCase())} todavía junta datos: {current.counted} de 7 días cerrados. Cuando llegue a 7, el estandarte pasa a ser el de este mes.
-              </div>
-            )}
-            {standards.length > 1 && (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {standards.map((m) => (
-                  <span key={m.month} title={`${nameOf(m.month)}: ${m.counted} días`} className="rounded-md px-2 py-1 font-mono text-[9px] uppercase" style={{ ...style(m), color: m.status ? style(m).color : "rgb(var(--color-text-muted))" }}>
-                    {nameOf(m.month).slice(0, 3)}
-                  </span>
-                ))}
-              </div>
-            )}
-            <div className="mt-1.5 text-[11px] text-textMuted">Cada mes se resume en un color, con los días ya cerrados. Cuanto más violeta, mejor.</div>
-          </div>
-        );
-      })()}
+      {standards && standards.length > 0 && <StandardSection standards={standards} pattern={bannerPattern ?? "onda"} onPatternChange={(p) => onBannerPattern?.(p)} />}
 
       <div className="rounded-xl border border-gold/40 bg-gold/5 p-3">
         <div className="font-mono text-[9px] uppercase tracking-wide text-gold">Insignias</div>
