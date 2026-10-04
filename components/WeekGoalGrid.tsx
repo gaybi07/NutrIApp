@@ -10,13 +10,14 @@ import { DayCell, DayExplanation, DayLegend } from "@/components/DayCell";
 const DOW = ["D", "L", "M", "M", "J", "V", "S"];
 const DOW_FULL = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
 
+// Mismos colores del tema que ya usa la app en el resto de las pantallas (violeta de acento, verde menta, ámbar y rojo).
 export const STATUS_BG: Record<DayGoalStatus, string> = {
-  violeta: "#8b5cf6",
-  verde: "#22c55e",
-  amarillo: "#facc15",
+  violeta: "rgb(var(--color-accent))",
+  verde: "rgb(var(--color-sage))",
+  amarillo: "rgb(var(--color-carbs))",
   rojo: "rgb(var(--color-rust))",
 };
-export const STATUS_TEXT: Record<DayGoalStatus, string> = { violeta: "#ffffff", verde: "#ffffff", amarillo: "#422006", rojo: "#ffffff" };
+export const STATUS_TEXT: Record<DayGoalStatus, string> = { violeta: "#ffffff", verde: "#0f3d2d", amarillo: "#4a2f00", rojo: "#ffffff" };
 
 /** Ya no hay brillo ni bordes: los colores van lisos. (Se conserva por compatibilidad con quienes lo usan.) */
 export const isGlow = (_s: DayGoalStatus) => false;

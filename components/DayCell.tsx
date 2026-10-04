@@ -2,7 +2,7 @@
 
 import { Circle, Star, Triangle, X } from "lucide-react";
 import { DayGoalStatus, KcalStatus, KCAL_STATUS_LABEL, PROTEIN_STATUS_LABEL } from "@/lib/dayStatus";
-import { STATUS_BG } from "@/components/WeekGoalGrid";
+import { STATUS_BG, STATUS_TEXT } from "@/components/WeekGoalGrid";
 
 /**
  * Casillero de un día con doble indicador y la misma escala de colores: el FONDO es cómo salió en kilocalorías y el SÍMBOLO
@@ -53,7 +53,7 @@ export function DayCell({
       className={`relative flex aspect-square flex-col items-center justify-center overflow-hidden rounded-lg font-mono ${
         painted ? "" : isToday ? "border-2 border-gold text-text" : "border border-dashed border-border text-textMuted"
       } ${future ? "opacity-50" : ""} ${selected ? "ring-2 ring-text/60 ring-offset-1 ring-offset-surface" : ""}`}
-      style={painted ? { background: STATUS_BG[kcalStatus!], color: kcalStatus === "amarillo" ? "#422006" : "#ffffff" } : undefined}
+      style={painted ? { background: STATUS_BG[kcalStatus!], color: STATUS_TEXT[kcalStatus!] } : undefined}
     >
       {isToday && kcalStatus && <span aria-hidden className="absolute inset-0" style={{ background: STATUS_BG[kcalStatus], opacity: 0.3 }} />}
       {dow && <span className="relative text-[9px] uppercase leading-none opacity-80">{dow}</span>}
