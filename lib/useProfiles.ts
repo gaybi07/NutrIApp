@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/browser";
+import type { BannerPattern, BannerStyles } from "@/components/MonthBanner";
 
 export interface PersonalProfile {
   nombre: string;
@@ -39,12 +40,12 @@ const EMPTY_PRO: ProfessionalProfileData = { titulo: "", dedicacion: "", bio: ""
 export function useMyProfiles(authenticated: boolean) {
   const [personal, setPersonal] = useState<PersonalProfile>(EMPTY_PERSONAL);
   const [pro, setPro] = useState<ProfessionalProfileData>(EMPTY_PRO);
-  const [bannerPattern, setBannerPatternState] = useState<"onda" | "triangulos" | "dobles" | "cruz">(() => {
+  const [bannerStyles, setBannerStyles] = useState<BannerStyles>(() => {
     try {
-      const v = localStorage.getItem("registro:bannerPattern");
-      return v === "triangulos" || v === "dobles" || v === "cruz" ? v : "onda";
+      const raw = localStorage.getItem("registro:bannerStyles");
+      return raw ? (JSON.parse(raw) as BannerStyles) : { months: {} };
     } catch {
-      return "onda";
+      return { months: {} };
     }
   });
 
@@ -58,10 +59,10 @@ export function useMyProfiles(authenticated: boolean) {
       supabase.from("professional_profiles").select("titulo, dedicacion, bio, logros, whatsapp, mostrar_whatsapp").eq("user_id", userId).maybeSingle(),
     ]);
     if (p.data) setPersonal({ nombre: p.data.nombre ?? "", alias: p.data.alias ?? "" });
-    // El estilo del estandarte vive en una columna aparte: si todavía no existe (falta la migración) se ignora el error.
-    const bp = await supabase.from("user_profiles").select("banner_pattern").eq("user_id", userId).maybeSingle();
-    const saved = (bp.data as { banner_pattern?: string } | null)?.banner_pattern;
-    if (saved === "onda" || saved === "triangulos" || saved === "dobles" || saved === "cruz") setBannerPatternState(saved);
+    // Los estilos del estandarte viven en una columna aparte: si todavía no existe (falta la migración) se ignora el error.
+    const bs = await supabase.from("user_profiles").select("banner_styles").eq("user_id", userId).maybeSingle();
+    const saved = (bs.data as { banner_styles?: BannerStyles | null } | null)?.banner_styles;
+    if (saved && typeof saved === "object") setBannerStyles({ default: saved.default, months: saved.months ?? {} });
     if (q.data)
       setPro({
         titulo: q.data.titulo ?? "",
@@ -122,17 +123,28 @@ export function useMyProfiles(authenticated: boolean) {
     [refetch]
   );
 
-  const saveBannerPattern = useCallback(async (value: "onda" | "triangulos" | "dobles" | "cruz") => {
-    setBannerPatternState(value);
-    try {
-      localStorage.setItem("registro:bannerPattern", value);
-    } catch {}
-    if (!supabase) return;
-    const { data: auth } = await supabase.auth.getUser();
-    if (auth.user?.id) await supabase.from("user_profiles").upsert({ user_id: auth.user.id, banner_pattern: value });
-  }, []);
+  /** Guarda el estilo para un mes ("mes") o para todos ("todos"). Una vez guardado no se cambia: si ya hay uno, no hace nada. */
+  const saveBannerStyle = useCallback(
+    async (scope: "mes" | "todos", month: string, pattern: BannerPattern) => {
+      let next: BannerStyles | null = null;
+      setBannerStyles((prev) => {
+        if (prev.months[month] !== undefined || prev.default !== undefined) return prev;
+        next = scope === "todos" ? { ...prev, default: pattern } : { ...prev, months: { ...prev.months, [month]: pattern } };
+        return next;
+      });
+      await Promise.resolve();
+      if (!next) return;
+      try {
+        localStorage.setItem("registro:bannerStyles", JSON.stringify(next));
+      } catch {}
+      if (!supabase) return;
+      const { data: auth } = await supabase.auth.getUser();
+      if (auth.user?.id) await supabase.from("user_profiles").upsert({ user_id: auth.user.id, banner_styles: next });
+    },
+    []
+  );
 
-  return { personal, pro, bannerPattern, saveBannerPattern, savePersonal, savePro, refetch };
+  return { personal, pro, bannerStyles, saveBannerStyle, savePersonal, savePro, refetch };
 }
 
 /** Perfil de un profesional (vinculado conmigo, o el mío). Devuelve null si no hay permiso o falta la migración. */

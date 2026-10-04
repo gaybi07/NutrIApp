@@ -8,7 +8,7 @@ import { Avatar, ProfessionalLinkedCard, ProfessionalShortCard } from "@/compone
 import { btn, chip } from "@/components/buttonStyles";
 import { MonthStandard } from "@/lib/monthStandard";
 import { StandardSection } from "@/components/StandardSection";
-import type { BannerPattern } from "@/components/MonthBanner";
+import type { BannerPattern, BannerStyles } from "@/components/MonthBanner";
 import { STATUS_BG, isGlow, statusCellStyle } from "@/components/WeekGoalGrid";
 
 const PLAN_LABEL: Record<ClientPlan, string> = { basico: "Básico", premium: "Premium", autoentreno: "Autoentreno", premium_plus: "Premium+" };
@@ -26,8 +26,8 @@ export interface ProfileModalProps {
   achievementsDone: number;
   /** Estandarte: el color de cada mes reciente (el actual primero). */
   standards?: MonthStandard[];
-  bannerPattern?: BannerPattern;
-  onBannerPattern?: (pattern: BannerPattern) => void;
+  bannerStyles?: BannerStyles;
+  onSaveBannerStyle?: (scope: "mes" | "todos", month: string, pattern: BannerPattern) => void;
   /** Solo si es profesional aprobado: aparece la pestaña "Profesional". */
   isProfessional: boolean;
   pro: ProfessionalProfileData;
@@ -43,7 +43,7 @@ const Field = ({ label, children }: { label: string; children: React.ReactNode }
 );
 
 export function ProfileModal(props: ProfileModalProps) {
-  const { email, personal, savePersonal, plan, modo, sexo, objectiveNames, points, achievementsDone, standards, isProfessional, pro, savePro, onClose, bannerPattern, onBannerPattern } = props;
+  const { email, personal, savePersonal, plan, modo, sexo, objectiveNames, points, achievementsDone, standards, isProfessional, pro, savePro, onClose, bannerStyles, onSaveBannerStyle } = props;
   const [tab, setTab] = useState<"personal" | "profesional">("personal");
   const initials = initialsOf(personal.nombre, personal.alias, email);
 
@@ -88,8 +88,8 @@ export function ProfileModal(props: ProfileModalProps) {
             points={points}
             achievementsDone={achievementsDone}
             standards={standards}
-            bannerPattern={bannerPattern}
-            onBannerPattern={onBannerPattern}
+            bannerStyles={bannerStyles}
+            onSaveBannerStyle={onSaveBannerStyle}
           />
         ) : (
           <ProfessionalTab personal={personal} pro={pro} savePro={savePro} initials={initials} />
@@ -109,9 +109,9 @@ function PersonalTab({
   points,
   achievementsDone,
   standards,
-  bannerPattern,
-  onBannerPattern,
-}: Pick<ProfileModalProps, "personal" | "savePersonal" | "plan" | "modo" | "sexo" | "objectiveNames" | "points" | "achievementsDone" | "standards" | "bannerPattern" | "onBannerPattern">) {
+  bannerStyles,
+  onSaveBannerStyle,
+}: Pick<ProfileModalProps, "personal" | "savePersonal" | "plan" | "modo" | "sexo" | "objectiveNames" | "points" | "achievementsDone" | "standards" | "bannerStyles" | "onSaveBannerStyle">) {
   const [nombre, setNombre] = useState(personal.nombre);
   const [alias, setAlias] = useState(personal.alias);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
@@ -179,7 +179,7 @@ function PersonalTab({
         )}
       </div>
 
-      {standards && standards.length > 0 && <StandardSection standards={standards} pattern={bannerPattern ?? "onda"} onPatternChange={(p) => onBannerPattern?.(p)} />}
+      {standards && standards.length > 0 && <StandardSection standards={standards} styles={bannerStyles ?? { months: {} }} onSaveStyle={(scope, month, pattern) => onSaveBannerStyle?.(scope, month, pattern)} />}
 
       <div className="rounded-xl border border-gold/40 bg-gold/5 p-3">
         <div className="font-mono text-[9px] uppercase tracking-wide text-gold">Insignias</div>

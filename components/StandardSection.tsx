@@ -2,23 +2,26 @@
 
 import { useState } from "react";
 import { MonthStandard } from "@/lib/monthStandard";
-import { BANNER_PATTERNS, BannerPattern, MonthBanner } from "@/components/MonthBanner";
-import { btn, chip } from "@/components/buttonStyles";
+import { BannerPattern, BannerStyles, MonthBanner, WeekStrip, isStyleLocked, patternFor } from "@/components/MonthBanner";
+import { fmtDate } from "@/lib/calculations";
+import { StandardDesigner } from "@/components/StandardDesigner";
+import { btn } from "@/components/buttonStyles";
 
 const MONTH_NAMES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
 
-/** Estandarte del perfil: el mes en curso (transparente, "así venís") con flechas para ver los anteriores y el estilo de la línea. */
+/** Estandarte del perfil: el mes en curso (transparente, "así venís") con flechas para ver los anteriores y un botón de estilo. */
 export function StandardSection({
   standards,
-  pattern,
-  onPatternChange,
+  styles,
+  onSaveStyle,
 }: {
   /** El mes en curso primero, después los anteriores. */
   standards: MonthStandard[];
-  pattern: BannerPattern;
-  onPatternChange: (pattern: BannerPattern) => void;
+  styles: BannerStyles;
+  onSaveStyle: (scope: "mes" | "todos", month: string, pattern: BannerPattern) => void;
 }) {
   const [index, setIndex] = useState(0);
+  const [designing, setDesigning] = useState(false);
   const standard = standards[Math.min(index, standards.length - 1)];
   const name = MONTH_NAMES[Number(standard.month.slice(5)) - 1];
   return (
@@ -39,16 +42,23 @@ export function StandardSection({
         </span>
       </div>
       <div className="mt-1.5">
-        <MonthBanner standard={standard} pattern={pattern} inProgress={index === 0} />
+        <MonthBanner standard={standard} pattern={patternFor(styles, standard.month)} inProgress={index === 0} />
+        <WeekStrip standard={standard} pattern={patternFor(styles, standard.month)} todayFecha={fmtDate(new Date())} />
       </div>
-      <div className="mt-3 font-mono text-[9px] uppercase tracking-wide text-textMuted">Estilo de la línea</div>
-      <div className="mt-1 flex flex-wrap gap-1.5">
-        {BANNER_PATTERNS.map((p) => (
-          <button key={p.id} type="button" onClick={() => onPatternChange(p.id)} className={chip(pattern === p.id)}>
-            {p.label}
-          </button>
-        ))}
-      </div>
+      <button type="button" onClick={() => setDesigning(true)} className={`${btn("secondary", "sm", true)} mt-3`}>
+        {isStyleLocked(styles, standard.month) ? "Ver estilo 🔒" : "Estilo"}
+      </button>
+      {designing && (
+        <StandardDesigner
+          standard={standard}
+          styles={styles}
+          onSave={(scope, pattern) => {
+            onSaveStyle(scope, standard.month, pattern);
+            setDesigning(false);
+          }}
+          onClose={() => setDesigning(false)}
+        />
+      )}
     </div>
   );
 }

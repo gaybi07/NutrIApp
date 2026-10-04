@@ -1490,8 +1490,8 @@ export default function Home() {
           ]}
           points={myPoints.total}
           achievementsDone={achievements.filter((a) => a.done || achievementClaims.claimed.has(`${a.kind}|${a.clave}`)).length}
-          bannerPattern={myProfiles.bannerPattern}
-          onBannerPattern={myProfiles.saveBannerPattern}
+          bannerStyles={myProfiles.bannerStyles}
+          onSaveBannerStyle={(scope, month, pattern) => myProfiles.saveBannerStyle(scope, month, pattern)}
           standards={recentMonths(fmtDate(new Date()), 6).map((m) =>
             computeMonthStandard(days, m, fmtDate(new Date()), goalKcal, settings.tdeeFallback, currentWeightKg, goalFixed, proteinTargetG)
           )}
