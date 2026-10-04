@@ -54,10 +54,10 @@ export function patternFor(styles: BannerStyles, month: string): BannerPattern {
 export const isStyleLocked = (styles: BannerStyles, month: string) => styles.months[month] !== undefined || styles.default !== undefined;
 
 /** La línea del estandarte (solo el dibujo), reutilizable para las miniaturas del diseñador. */
-export function BannerArt({ pattern, lineColor, background, inProgress = false, heightClass = "h-16" }: { pattern: BannerPattern; lineColor: string; background: string; inProgress?: boolean; heightClass?: string }) {
+export function BannerArt({ pattern, lineColor, background, inProgress = false, heightClass = "h-16", flat = false }: { pattern: BannerPattern; lineColor: string; background: string; inProgress?: boolean; heightClass?: string; flat?: boolean }) {
   const def = PATTERNS[pattern];
   return (
-    <div className={`${heightClass} overflow-hidden rounded-lg`} style={{ background, opacity: inProgress ? 0.55 : 1 }}>
+    <div className={`${heightClass} overflow-hidden ${flat ? "" : "rounded-lg"}`} style={{ background, opacity: inProgress ? 0.55 : 1 }}>
       <svg viewBox="0 0 300 64" preserveAspectRatio="xMidYMid slice" className="h-full w-full" aria-hidden>
         {def.paths.map((d, i) => (
           <g key={i}>
@@ -73,23 +73,40 @@ export function BannerArt({ pattern, lineColor, background, inProgress = false, 
   );
 }
 
-/** Franja de cuatro mini estandartes, uno por semana del mes, todos con el mismo estilo que el estandarte grande. */
-export function WeekStrip({ standard, pattern, todayFecha }: { standard: MonthStandard; pattern: BannerPattern; todayFecha: string }) {
+/**
+ * La pieza completa, como una sola imagen: arriba el estandarte del mes y pegadas abajo las cuatro semanas, todo con el mismo
+ * estilo de línea y separado por líneas blancas.
+ */
+export function StandardFlag({ standard, pattern, inProgress, todayFecha }: { standard: MonthStandard; pattern: BannerPattern; inProgress: boolean; todayFecha: string }) {
+  const ready = standard.kcalStatus !== null && standard.proteinStatus !== null;
   return (
-    <div className="mt-2 grid grid-cols-4 gap-1.5">
-      {standard.weeks.map((w, i) => {
-        const ready = w.kcalStatus !== null && w.proteinStatus !== null;
-        return (
-          <div key={w.start}>
-            {ready ? (
-              <BannerArt pattern={pattern} lineColor={STATUS_BG[w.proteinStatus!]} background={STATUS_BG[w.kcalStatus!]} inProgress={w.end >= todayFecha} heightClass="h-9" />
+    <div>
+      <div className="overflow-hidden rounded-xl bg-white p-[2px]">
+        <div className="overflow-hidden rounded-[10px]">
+          {ready ? (
+            <BannerArt pattern={pattern} lineColor={STATUS_BG[standard.proteinStatus!]} background={STATUS_BG[standard.kcalStatus!]} inProgress={inProgress} heightClass="h-20" flat />
+          ) : (
+            <div className="flex h-20 items-center justify-center bg-bg/60 px-3 text-center text-[12px] text-textMuted">
+              Hacen falta 7 días cerrados para calcularlo. Llevás {standard.counted}.
+            </div>
+          )}
+        </div>
+        <div className="mt-[2px] grid grid-cols-4 gap-[2px] overflow-hidden rounded-[10px]">
+          {standard.weeks.map((w) => {
+            const weekReady = w.kcalStatus !== null && w.proteinStatus !== null;
+            return weekReady ? (
+              <BannerArt key={w.start} pattern={pattern} lineColor={STATUS_BG[w.proteinStatus!]} background={STATUS_BG[w.kcalStatus!]} inProgress={w.end >= todayFecha} heightClass="h-11" flat />
             ) : (
-              <div className="h-9 rounded-lg" style={{ border: "1px dashed rgb(var(--color-text-muted))" }} />
-            )}
-            <div className="mt-0.5 text-center font-mono text-[8.5px] uppercase tracking-wide text-textMuted">Sem {i + 1}</div>
-          </div>
-        );
-      })}
+              <div key={w.start} className="h-11 bg-bg/60" />
+            );
+          })}
+        </div>
+      </div>
+      <div className="mt-1 grid grid-cols-4 gap-[2px] text-center font-mono text-[8.5px] uppercase tracking-wide text-textMuted">
+        {standard.weeks.map((w, i) => (
+          <span key={w.start}>Sem {i + 1}</span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -99,18 +116,12 @@ export function WeekStrip({ standard, pattern, todayFecha }: { standard: MonthSt
  * línea (con el patrón que elige cada uno) del color del promedio de la proteína, con los bordes blancos. Si el mes todavía está
  * en curso se ve transparente; si no tiene los 7 días cerrados mínimos, dice cuántos faltan.
  */
-export function MonthBanner({ standard, pattern = "onda", inProgress = false }: { standard: MonthStandard; pattern?: BannerPattern; inProgress?: boolean }) {
+export function MonthBanner({ standard, pattern = "onda", inProgress = false, todayFecha }: { standard: MonthStandard; pattern?: BannerPattern; inProgress?: boolean; todayFecha: string }) {
   const { kcalStatus, proteinStatus, kcalOk, proteinOk, counted } = standard;
   const ready = kcalStatus !== null && proteinStatus !== null;
   return (
     <div>
-      {ready ? (
-        <BannerArt pattern={pattern} lineColor={STATUS_BG[proteinStatus!]} background={STATUS_BG[kcalStatus!]} inProgress={inProgress} />
-      ) : (
-        <div className="flex h-16 items-center justify-center rounded-lg px-3 text-center text-[12px] text-textMuted" style={{ border: "1px dashed rgb(var(--color-text-muted))" }}>
-          Hacen falta 7 días cerrados para calcularlo. Llevás {counted}.
-        </div>
-      )}
+      <StandardFlag standard={standard} pattern={pattern} inProgress={inProgress} todayFecha={todayFecha} />
       {ready && (
         <div className="mt-2 grid grid-cols-2 gap-2 text-[12px]">
           <div className="flex items-center gap-2">

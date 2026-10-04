@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { MonthStandard } from "@/lib/monthStandard";
-import { BannerPattern, BannerStyles, MonthBanner, WeekStrip, isStyleLocked, patternFor } from "@/components/MonthBanner";
+import { BannerPattern, BannerStyles, MonthBanner, isStyleLocked, patternFor } from "@/components/MonthBanner";
 import { fmtDate } from "@/lib/calculations";
 import { StandardDesigner } from "@/components/StandardDesigner";
 import { btn } from "@/components/buttonStyles";
@@ -42,8 +42,7 @@ export function StandardSection({
         </span>
       </div>
       <div className="mt-1.5">
-        <MonthBanner standard={standard} pattern={patternFor(styles, standard.month)} inProgress={index === 0} />
-        <WeekStrip standard={standard} pattern={patternFor(styles, standard.month)} todayFecha={fmtDate(new Date())} />
+        <MonthBanner standard={standard} pattern={patternFor(styles, standard.month)} inProgress={index === 0} todayFecha={fmtDate(new Date())} />
       </div>
       <button type="button" onClick={() => setDesigning(true)} className={`${btn("secondary", "sm", true)} mt-3`}>
         {isStyleLocked(styles, standard.month) ? "Ver estilo 🔒" : "Estilo"}
