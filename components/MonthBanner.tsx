@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { MonthStandard } from "@/lib/monthStandard";
 import { STATUS_BG } from "@/components/WeekGoalGrid";
 import { ProteinSymbol } from "@/components/DayCell";
@@ -74,35 +75,66 @@ export function BannerArt({ pattern, lineColor, background, inProgress = false, 
 }
 
 /**
- * La pieza completa, como una sola imagen: arriba el estandarte del mes y pegadas abajo las cuatro semanas, todo con el mismo
- * estilo de línea y separado por líneas blancas.
+ * La pieza completa, como UNA sola imagen: el estandarte del mes arriba y las cuatro semanas pegadas abajo. La línea del estilo
+ * elegido atraviesa todo el dibujo de punta a punta, así que se une de arriba hacia abajo; cada tramo se pinta con su propio
+ * color (el del mes arriba, el de cada semana abajo) y con su propio fondo de kilocalorías, separados por líneas blancas.
  */
 export function StandardFlag({ standard, pattern, inProgress, todayFecha }: { standard: MonthStandard; pattern: BannerPattern; inProgress: boolean; todayFecha: string }) {
-  const ready = standard.kcalStatus !== null && standard.proteinStatus !== null;
+  const uid = useId().replace(/:/g, "");
+  const H = 118; // alto total del dibujo; arriba 0-72 (mes), abajo 74-118 (semanas)
+  const TOP = 72;
+  const def = PATTERNS[pattern];
+  const k = H / 64; // los estilos están dibujados en una caja de 64 de alto: se estiran para atravesar todo
+  const monthReady = standard.kcalStatus !== null && standard.proteinStatus !== null;
+  const zones = [
+    { id: "m", x: 0, y: 0, w: 300, h: TOP, bg: monthReady ? STATUS_BG[standard.kcalStatus!] : null, line: monthReady ? STATUS_BG[standard.proteinStatus!] : null, dim: inProgress },
+    ...standard.weeks.map((w, i) => {
+      const ready = w.kcalStatus !== null && w.proteinStatus !== null;
+      return { id: `w${i}`, x: i * 75, y: TOP + 2, w: 75, h: H - TOP - 2, bg: ready ? STATUS_BG[w.kcalStatus!] : null, line: ready ? STATUS_BG[w.proteinStatus!] : null, dim: w.end >= todayFecha };
+    }),
+  ];
   return (
     <div>
-      <div className="overflow-hidden rounded-xl bg-white p-[2px]">
-        <div className="overflow-hidden rounded-[10px]">
-          {ready ? (
-            <BannerArt pattern={pattern} lineColor={STATUS_BG[standard.proteinStatus!]} background={STATUS_BG[standard.kcalStatus!]} inProgress={inProgress} heightClass="h-20" flat />
-          ) : (
-            <div className="flex h-20 items-center justify-center bg-bg/60 px-3 text-center text-[12px] text-textMuted">
-              Hacen falta 7 días cerrados para calcularlo. Llevás {standard.counted}.
-            </div>
-          )}
-        </div>
-        <div className="mt-[2px] grid grid-cols-4 gap-[2px] overflow-hidden rounded-[10px]">
-          {standard.weeks.map((w) => {
-            const weekReady = w.kcalStatus !== null && w.proteinStatus !== null;
-            return weekReady ? (
-              <BannerArt key={w.start} pattern={pattern} lineColor={STATUS_BG[w.proteinStatus!]} background={STATUS_BG[w.kcalStatus!]} inProgress={w.end >= todayFecha} heightClass="h-11" flat />
-            ) : (
-              <div key={w.start} className="h-11 bg-bg/60" />
-            );
-          })}
-        </div>
+      <div className="relative overflow-hidden rounded-xl bg-white p-[2px]">
+        <svg viewBox={`0 0 300 ${H}`} preserveAspectRatio="none" className="block h-32 w-full rounded-[10px]" aria-hidden>
+          <defs>
+            {zones.map((z) => (
+              <clipPath key={z.id} id={`${uid}-${z.id}`}>
+                <rect x={z.x} y={z.y} width={z.w} height={z.h} />
+              </clipPath>
+            ))}
+          </defs>
+          {zones.map((z) => (
+            <g key={z.id} clipPath={`url(#${uid}-${z.id})`} opacity={z.dim && z.bg ? 0.55 : 1}>
+              <rect x={z.x} y={z.y} width={z.w} height={z.h} style={{ fill: z.bg ?? "rgb(var(--color-bg) / 0.6)" }} />
+              {z.line && (
+                <>
+                  {def.paths.map((d, i) => (
+                    <g key={i} transform={`scale(1 ${k})`}>
+                      <path d={d} fill="none" stroke="#ffffff" strokeWidth={13} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                      <path d={d} fill="none" style={{ stroke: z.line ?? undefined }} strokeWidth={7} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                    </g>
+                  ))}
+                  {def.dots?.map((c, i) => (
+                    <circle key={i} cx={c.cx} cy={c.cy * k} r={c.r} style={{ fill: z.line! }} stroke="#ffffff" strokeWidth={3} vectorEffect="non-scaling-stroke" />
+                  ))}
+                </>
+              )}
+            </g>
+          ))}
+          {/* Líneas blancas que separan el mes de las semanas y las semanas entre sí */}
+          <rect x={0} y={TOP} width={300} height={2} fill="#ffffff" />
+          {[75, 150, 225].map((x) => (
+            <rect key={x} x={x - 1} y={TOP} width={2} height={H - TOP} fill="#ffffff" />
+          ))}
+        </svg>
+        {!monthReady && (
+          <div className="pointer-events-none absolute inset-x-0 top-[2px] flex h-[72px] items-center justify-center px-4 text-center text-[12px] text-textMuted" style={{ height: "56%" }}>
+            Hacen falta 7 días cerrados para calcularlo. Llevás {standard.counted}.
+          </div>
+        )}
       </div>
-      <div className="mt-1 grid grid-cols-4 gap-[2px] text-center font-mono text-[8.5px] uppercase tracking-wide text-textMuted">
+      <div className="mt-1 grid grid-cols-4 text-center font-mono text-[8.5px] uppercase tracking-wide text-textMuted">
         {standard.weeks.map((w, i) => (
           <span key={w.start}>Sem {i + 1}</span>
         ))}
