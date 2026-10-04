@@ -97,7 +97,27 @@ function StandardExplanation({ standard }: { standard: MonthStandard }) {
         </div>
       </div>
       <div>
-        <div className="font-semibold">Qué significa cada color (según el porcentaje de días cumplidos)</div>
+        <div className="font-semibold">Cómo se pinta un día en kilocalorías</div>
+        <div className="mt-1 space-y-0.5 text-textMuted">
+          <div className="flex items-center gap-2">{dot("violeta")} Violeta: comiste entre el 95% y el 100% de tu objetivo (justo)</div>
+          <div className="flex items-center gap-2">{dot("verde")} Verde: menos del 95% de tu objetivo (dentro)</div>
+          <div className="flex items-center gap-2">{dot("amarillo")} Amarillo: te pasaste hasta un 10%</div>
+          <div className="flex items-center gap-2">{dot("rojo")} Rojo: te pasaste más de un 10%</div>
+        </div>
+        <div className="mt-1 text-[11px] text-textMuted">Para el mes, violeta y verde cuentan como día cumplido en kcal.</div>
+      </div>
+      <div>
+        <div className="font-semibold">Cómo se pinta un día en proteína</div>
+        <div className="mt-1 space-y-0.5 text-textMuted">
+          <div className="flex items-center gap-2">{dot("violeta", true)} Violeta: 15% o más por encima de tu objetivo</div>
+          <div className="flex items-center gap-2">{dot("verde", true)} Verde: desde el 95% hasta el 115%</div>
+          <div className="flex items-center gap-2">{dot("amarillo", true)} Amarillo: entre el 75% y el 95%</div>
+          <div className="flex items-center gap-2">{dot("rojo", true)} Rojo: menos del 75%</div>
+        </div>
+        <div className="mt-1 text-[11px] text-textMuted">Para el mes, violeta y verde cuentan como día cumplido en proteína.</div>
+      </div>
+      <div>
+        <div className="font-semibold">Qué significa cada color del mes (según el porcentaje de días cumplidos)</div>
         <div className="mt-1 space-y-0.5 text-textMuted">
           <div className="flex items-center gap-2">{dot("violeta")} Violeta: 90% o más de los días</div>
           <div className="flex items-center gap-2">{dot("verde")} Verde: entre 70% y 90%</div>
