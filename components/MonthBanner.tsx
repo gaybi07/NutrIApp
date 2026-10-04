@@ -12,7 +12,7 @@ const NAME = { violeta: "Violeta", verde: "Verde", amarillo: "Amarillo", rojo: "
  * de todo se resume el mes entero en los dos colores.
  */
 export function MonthBanner({ standard }: { standard: MonthStandard }) {
-  const { daysDetail, kcalStatus, proteinStatus } = standard;
+  const { daysDetail, kcalStatus, proteinStatus, kcalOk, proteinOk, counted } = standard;
   return (
     <div>
       <div className="flex h-16 gap-[2px] overflow-hidden rounded-lg bg-white p-[2px]">
@@ -32,7 +32,7 @@ export function MonthBanner({ standard }: { standard: MonthStandard }) {
           <span className="inline-block h-4 w-4 shrink-0 rounded" style={kcalStatus ? { background: STATUS_BG[kcalStatus] } : { border: "1px dashed rgb(var(--color-text-muted))" }} />
           <span>
             <span className="block font-mono text-[9px] uppercase tracking-wide text-textMuted">Kilocalorías (fondo)</span>
-            {kcalStatus ? NAME[kcalStatus] : "Juntando datos"}
+            {kcalStatus ? `${NAME[kcalStatus]} · ${kcalOk} de ${counted} días en objetivo` : "Juntando datos"}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -44,7 +44,7 @@ export function MonthBanner({ standard }: { standard: MonthStandard }) {
           </span>
           <span>
             <span className="block font-mono text-[9px] uppercase tracking-wide text-textMuted">Proteína (franja)</span>
-            {proteinStatus ? NAME[proteinStatus] : "Juntando datos"}
+            {proteinStatus ? `${NAME[proteinStatus]} · ${proteinOk} de ${counted} días al 95% o más` : "Juntando datos"}
           </span>
         </div>
       </div>

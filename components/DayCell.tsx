@@ -73,7 +73,7 @@ export function DayCell({
 
 /** Leyenda: el fondo mide las kcal y la manito la proteína, los dos con la misma escala de colores. */
 export function DayLegend() {
-  const kcal: KcalStatus[] = ["verde", "amarillo", "rojo"];
+  const kcal: KcalStatus[] = ["violeta", "verde", "amarillo", "rojo"];
   const prot: DayGoalStatus[] = ["violeta", "verde", "amarillo", "rojo"];
   return (
     <div className="mt-3 space-y-2">

@@ -43,13 +43,14 @@ export function monthStatusFrom(statuses: DayGoalStatus[], minDays = 7): { statu
   return { status, counted, avg };
 }
 
-/** Escala de las kilocalorías solas (el fondo del cuadrado): cumplidas, pasadas hasta 10%, o pasadas más de 10%. */
-export type KcalStatus = "verde" | "amarillo" | "rojo";
+/** Escala de las kilocalorías solas (el fondo del cuadrado): justo en el objetivo (95% a 100%), dentro del objetivo, pasadas hasta 10%, o pasadas más de 10%. */
+export type KcalStatus = "violeta" | "verde" | "amarillo" | "rojo";
 
 export function dayKcalStatus(kcal: number, kcalGoal: number): KcalStatus {
   const ratio = kcalGoal > 0 ? kcal / kcalGoal : 0;
   if (ratio > 1.1) return "rojo";
   if (ratio > 1) return "amarillo";
+  if (ratio >= 0.95) return "violeta";
   return "verde";
 }
 
@@ -63,7 +64,8 @@ export function dayProteinStatus(protein: number, proteinGoal: number): DayGoalS
 }
 
 export const KCAL_STATUS_LABEL: Record<KcalStatus, string> = {
-  verde: "Kcal dentro del objetivo",
+  violeta: "Kcal justo en el objetivo (95% a 100%)",
+  verde: "Kcal dentro del objetivo (menos de 95%)",
   amarillo: "Hasta 10% más de kcal",
   rojo: "Más de 10% de kcal de más",
 };
