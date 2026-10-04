@@ -50,18 +50,18 @@ export function DayCell({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className={`relative flex aspect-square flex-col items-center justify-center overflow-hidden rounded-lg font-mono ${
+      className={`relative flex aspect-[3/4] flex-col items-center justify-center gap-1 overflow-hidden rounded-lg font-mono ${
         painted ? "" : isToday ? "border-2 border-gold text-text" : "border border-dashed border-border text-textMuted"
       } ${future ? "opacity-50" : ""} ${selected ? "ring-2 ring-text/60 ring-offset-1 ring-offset-surface" : ""}`}
       style={painted ? { background: STATUS_BG[kcalStatus!], color: STATUS_TEXT[kcalStatus!] } : undefined}
     >
       {isToday && kcalStatus && <span aria-hidden className="absolute inset-0" style={{ background: STATUS_BG[kcalStatus], opacity: 0.3 }} />}
       {dow && <span className="relative text-[9px] uppercase leading-none opacity-80">{dow}</span>}
-      <span className="relative text-[13px] font-bold leading-none">{day}</span>
+      <span className="relative text-[14px] font-bold leading-none">{day}</span>
       {hasData && proteinStatus && (
         <span
           aria-hidden
-          className="relative mt-0.5 flex h-[17px] w-[17px] items-center justify-center rounded-full"
+          className="relative flex h-[18px] w-[18px] items-center justify-center rounded-full"
           style={{ background: "#ffffff", color: STATUS_BG[proteinStatus], opacity: closed ? 1 : 0.75 }}
         >
           <ProteinSymbol status={proteinStatus} size={11} />
