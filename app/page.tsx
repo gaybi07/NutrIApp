@@ -69,7 +69,7 @@ import { useSharedWeekPlan } from "@/lib/useSharedWeekPlan";
 import { useHousehold } from "@/lib/useHousehold";
 import { useTrainerApplication } from "@/lib/useTrainerApplication";
 import { useTrainerLink } from "@/lib/useTrainerLink";
-import { computeBodyGoalProgress } from "@/lib/bodyGoal";
+import { BODY_METRICS, computeBodyGoalProgress } from "@/lib/bodyGoal";
 import { ProfileModal } from "@/components/ProfileModal";
 import { initialsOf, useMyProfiles } from "@/lib/useProfiles";
 import { MeasurementsPanel } from "@/components/MeasurementsPanel";
@@ -1478,7 +1478,16 @@ export default function Home() {
           plan={clientPlan}
           modo={settings.calculatorProfile?.modo}
           sexo={settings.calculatorProfile?.sexo}
-          objectiveNames={myObjectives.objectives.filter((o) => o.estado === "activo").map((o) => o.nombre)}
+          objectiveNames={[
+            // El objetivo de peso de la calculadora, el objetivo corporal y los que fijaron los profesionales: todos juntos.
+            ...(goalProgress
+              ? [goalProgress.modo === "recomponer" ? "Recomposición corporal" : `${goalProgress.modo === "perder" ? "Bajar" : "Subir"} hasta ${goalProgress.metaKg} kg`]
+              : []),
+            ...(settings.calculatorProfile?.metaCorporal
+              ? [`${BODY_METRICS.find((m) => m.id === settings.calculatorProfile!.metaCorporal!.medida)?.label ?? "Medida"}: ${settings.calculatorProfile.metaCorporal.inicial} → ${settings.calculatorProfile.metaCorporal.meta} cm`]
+              : []),
+            ...myObjectives.objectives.filter((o) => o.estado === "activo").map((o) => o.nombre),
+          ]}
           points={myPoints.total}
           achievementsDone={achievements.filter((a) => a.done || achievementClaims.claimed.has(`${a.kind}|${a.clave}`)).length}
           standards={recentMonths(fmtDate(new Date()), 6).map((m) =>
