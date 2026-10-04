@@ -9,6 +9,8 @@ export interface WeekStandard {
   counted: number;
   kcalStatus: DayGoalStatus | null;
   proteinStatus: DayGoalStatus | null;
+  kcalOk: number;
+  proteinOk: number;
 }
 
 export interface MonthStandard {
@@ -84,6 +86,8 @@ export function computeMonthStandard(
       start,
       end,
       counted: part.length,
+      kcalOk: ok((x) => x.kcal === "verde" || x.kcal === "violeta"),
+      proteinOk: ok((x) => x.protein === "verde" || x.protein === "violeta"),
       kcalStatus: ready ? pct(ok((x) => x.kcal === "verde" || x.kcal === "violeta")) : null,
       proteinStatus: ready ? pct(ok((x) => x.protein === "verde" || x.protein === "violeta")) : null,
     };
