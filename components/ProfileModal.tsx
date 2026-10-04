@@ -7,6 +7,7 @@ import { PersonalProfile, ProfessionalProfileData, ProfessionalProfileView, fetc
 import { Avatar, ProfessionalLinkedCard, ProfessionalShortCard } from "@/components/ProfileCards";
 import { btn, chip } from "@/components/buttonStyles";
 import { MonthStandard } from "@/lib/monthStandard";
+import { MonthBanner } from "@/components/MonthBanner";
 import { STATUS_BG, isGlow, statusCellStyle } from "@/components/WeekGoalGrid";
 
 const PLAN_LABEL: Record<ClientPlan, string> = { basico: "Básico", premium: "Premium", autoentreno: "Autoentreno", premium_plus: "Premium+" };
@@ -183,11 +184,12 @@ function PersonalTab({
         return (
           <div className="rounded-xl border border-border bg-bg/40 p-3">
             <div className="font-mono text-[9px] uppercase tracking-wide text-gold">Estandarte</div>
-            <div className="mt-1.5 flex items-center justify-between gap-2 rounded-lg px-3 py-3" style={style(main)}>
-              <span className="font-display text-lg capitalize">
-                {main.status ? `${{ violeta: "Violeta", verde: "Verde", amarillo: "Amarillo", rojo: "Rojo" }[main.status]} · ${nameOf(main.month)}` : "Juntando datos"}
-              </span>
-              <span className="font-mono text-[10px] uppercase tracking-wide opacity-90">{main.counted} días</span>
+            <div className="mt-1.5 flex items-baseline justify-between gap-2">
+              <span className="font-display text-lg capitalize">{nameOf(main.month)}</span>
+              <span className="font-mono text-[10px] uppercase tracking-wide text-textMuted">{main.counted} días cerrados</span>
+            </div>
+            <div className="mt-1.5">
+              <MonthBanner standard={main} />
             </div>
             {!isCurrent && (
               <div className="mt-1.5 text-[11px] text-textMuted">
