@@ -39,6 +39,7 @@ import { MealMemoryImport } from "@/components/MealMemoryImport";
 import { TodayCard } from "@/components/TodayCard";
 import { btn } from "@/components/buttonStyles";
 import { computeMonthStandard, recentMonths } from "@/lib/monthStandard";
+import { WeightQuickForm } from "@/components/WeightQuickForm";
 import { MonthCalendar } from "@/components/MonthCalendar";
 import { WeekGoalGrid } from "@/components/WeekGoalGrid";
 import { CasaCuentas } from "@/components/CasaCuentas";
@@ -140,7 +141,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<MainTab>("inicio");
   const [panel, setPanel] = useState<
     | "calc" | "ai" | "pasos" | "entreno" | "sueno" | "datos" | "planificador"
-    | "tema" | "tamano-letra" | "meta-diaria" | "medidas" | "perfil" | "mes" | "solapas" | "herramientas" | "secciones" | "entrenador"
+    | "tema" | "tamano-letra" | "meta-diaria" | "medidas" | "perfil" | "mes" | "peso" | "solapas" | "herramientas" | "secciones" | "entrenador"
     | "nutricionista" | "ver-comidas" | "suplementos" | "planes" | "vincular-profesional"
     | null
   >(null);
@@ -826,6 +827,8 @@ export default function Home() {
                   );
                 }
                 if (blockId === "peso") {
+                  // Si el peso de esta semana está pendiente, no se muestra la tarjeta grande: alcanza con el aviso amarillo "Toca registrar".
+                  if (weightDue && fmtDate(monday) === thisWeekStart) return null;
                   // Antes, una vez cargado el peso de la semana, TODO el bloque
                   // desaparecía -- pero WeeklyWeight ya se achica solo a una fila
                   // compacta en ese caso (nada de cartel grande de "pendiente"),
@@ -883,7 +886,7 @@ export default function Home() {
                             {weightDue && (
                               <button
                                 type="button"
-                                onClick={() => document.getElementById("peso-semana")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+                                onClick={() => setPanel("peso")}
                                 className={btn("secondary", "sm")}
                               >
                                 Cargar mi peso de esta semana
@@ -1453,6 +1456,22 @@ export default function Home() {
               Cerrar
             </button>
             <GoalStyleSettings settings={settings} onSave={saveSettings} locked={goalStyleLocked} />
+          </div>
+        </div>
+      )}
+
+      {panel === "peso" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4 backdrop-blur-sm" onClick={() => setPanel(null)}>
+          <div className="relative w-full max-w-sm rounded-2xl border border-border bg-surface p-4 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-gold">Control semanal</div>
+            <div className="mb-2 font-display text-xl text-text">Peso de esta semana</div>
+            <WeightQuickForm
+              onSave={(kg) => {
+                saveWeeklyWeight(thisWeekStart, kg);
+                setPanel(null);
+              }}
+              onCancel={() => setPanel(null)}
+            />
           </div>
         </div>
       )}
