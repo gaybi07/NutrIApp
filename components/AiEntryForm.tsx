@@ -82,6 +82,7 @@ export function AiEntryForm({
   consumeAmounts,
   disableAi,
   initialMeal,
+  initialFecha,
   onInventoryDelta,
   authenticated,
   hasNutricionistaLink,
@@ -101,6 +102,8 @@ export function AiEntryForm({
   /** Se tocó un botón de comida puntual en Inicio (Desayuno/Almuerzo/etc.) --
    * ya no hace falta el desplegable de "¿cuál comida?", ya se sabe. */
   initialMeal?: MealKey | null;
+  /** Día con el que abre la carga (por defecto hoy) -- p. ej. "Cargar la cena de ayer". */
+  initialFecha?: string | null;
   /** Igual que MealsEditor.onInventoryDelta -- editar un item de "Ya
    * cargado" que vino de la Alacena tiene que ajustar el stock, no solo el
    * registro de la comida. */
@@ -114,7 +117,7 @@ export function AiEntryForm({
   /** Marca (o desmarca) que ese día no hizo esa comida: queda en rojo. */
   onSkipMeal?: (meal: MealKey, skipped: boolean, fecha: string) => void;
 }) {
-  const [fecha, setFecha] = useState(fmtDate(new Date()));
+  const [fecha, setFecha] = useState(initialFecha || fmtDate(new Date()));
   const [meal, setMeal] = useState<MealKey>(initialMeal || "des");
   const [mode, setMode] = useState<"ia" | "alacena" | "buscar" | "preparacion">(disableAi ? "buscar" : "alacena");
   // Preparación elegida en el modo "Preparación guardada", con las

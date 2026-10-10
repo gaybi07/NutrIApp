@@ -149,6 +149,7 @@ export default function Home() {
   // "ai" abra directo en esa comida, sin el desplegable de selección --
   // null cuando se abre desde un lugar que no sabe cuál (ej. Macros).
   const [aiMeal, setAiMeal] = useState<MealKey | null>(null);
+  const [aiFecha, setAiFecha] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const trainerApplication = useTrainerApplication(authenticated, userEmail);
   const isApprovedTrainer = trainerApplication.application?.status === "aprobado";
@@ -660,6 +661,7 @@ export default function Home() {
           weekDays={weekDays}
           onLogMeal={() => {
             setAiMeal(null);
+            setAiFecha(null);
             setPanel("ai");
           }}
           weightKg={currentWeightKg}
@@ -816,6 +818,12 @@ export default function Home() {
                         pesoKg={currentWeightKg}
                         onLogMeal={(meal) => {
                           setAiMeal(meal);
+                          setAiFecha(null);
+                          setPanel("ai");
+                        }}
+                        onLogYesterdayDinner={() => {
+                          setAiMeal("cen");
+                          setAiFecha(fmtDate(addDays(new Date(), -1)));
                           setPanel("ai");
                         }}
                         onViewMeals={() => setPanel("ver-comidas")}
@@ -1184,6 +1192,7 @@ export default function Home() {
                 consumeAmounts={consumeAmounts}
                 disableAi={isBasico}
                 initialMeal={aiMeal}
+                initialFecha={aiFecha}
                 onInventoryDelta={handleMealInventoryDelta}
                 authenticated={authenticated}
                 hasNutricionistaLink={hasNutricionistaLink}
@@ -1624,6 +1633,7 @@ export default function Home() {
                   ? undefined
                   : () => {
                       setAiMeal(null);
+                      setAiFecha(null);
                       setPanel("ai");
                     }
               }

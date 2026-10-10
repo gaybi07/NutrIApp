@@ -4,6 +4,7 @@ import { DayEntry, INTENSITY_STYLES, MealKey, MEAL_LABELS } from "@/lib/types";
 import { dayTotal, dayProt, dayGoal, getTrainingSessions } from "@/lib/calculations";
 import { SECTION_HELP } from "@/lib/helpText";
 import { Collapsible } from "@/components/Collapsible";
+import { btn } from "@/components/buttonStyles";
 import { SKIPPED_MEAL_MARK } from "@/lib/planCompliance";
 import { Sunrise, Utensils, Coffee, Moon, Cookie, Pill, CircleCheck, ListChecks } from "lucide-react";
 
@@ -20,6 +21,7 @@ export function TodayCard({
   pesoKg,
   fixedGoal = false,
   onLogMeal,
+  onLogYesterdayDinner,
   onViewMeals,
   onLogSupplements,
   onLogSteps,
@@ -36,6 +38,8 @@ export function TodayCard({
   /** Qué comida se tocó -- antes abría siempre el mismo formulario y ahí
    * adentro había que elegir de un desplegable; ahora se sabe de entrada. */
   onLogMeal: (meal: MealKey) => void;
+  /** Para quien no pudo cargar la cena de anoche: abre la carga ya puesta en ayer. */
+  onLogYesterdayDinner: () => void;
   /** Ver/editar lo ya cargado hoy, colapsado por comida -- mismo componente
    * que "Modificar comidas de la semana", pero sin tener que bajar hasta esa
    * sección ni elegir el día (ya se sabe que es hoy). */
@@ -138,6 +142,9 @@ export function TodayCard({
           <span>Suplementos</span>
         </button>
       </div>
+      <button type="button" onClick={onLogYesterdayDinner} className={`mt-2 ${btn("secondary", "sm", true)}`}>
+        <Moon size={16} strokeWidth={1.8} /> Cargar la cena de ayer
+      </button>
       <button
         type="button"
         onClick={onViewMeals}
